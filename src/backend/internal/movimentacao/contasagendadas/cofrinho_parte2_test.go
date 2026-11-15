@@ -100,15 +100,16 @@ func TestPagarComCofrinhoEscolhido(t *testing.T) {
 		if c.status != 204 {
 			continue
 		}
-		var guardado *string
+		var guardado, desde *string
 		var lancado string
-		if err := db.QueryRow(`SELECT a."ReservaNome", t."ReservaNome" FROM "ContaAgendada" AS a
+		if err := db.QueryRow(`SELECT a."ReservaNome", a."ReservaDesde", t."ReservaNome" FROM "ContaAgendada" AS a
 			INNER JOIN "PagamentoCofrinho" AS p ON p."ContaAgendadaId" = a."Id" INNER JOIN "Transacao" AS t ON t."Id" = p."TransacaoId"
-			WHERE a."Id" = ?`, c.id).Scan(&guardado, &lancado); err != nil {
+			WHERE a."Id" = ?`, c.id).Scan(&guardado, &desde, &lancado); err != nil {
 			t.Fatalf("%s: %v", c.nome, err)
 		}
 		querGuardado := c.nome == "guardando"
-		if (guardado != nil) != querGuardado || (querGuardado && *guardado != "Emergência") ||
+		// Guardado, o "Pago com" vale a partir de hoje (ReservaDesde), como ao salvar a conta a pagar.
+		if (guardado != nil) != querGuardado || (querGuardado && (*guardado != "Emergência" || desde == nil || *desde != "2026-10-14")) ||
 			(lancado != "Viagem" && lancado != "Emergência") {
 			t.Errorf("%s: guardado %v, lançado pelo cofrinho %q", c.nome, guardado, lancado)
 		}
@@ -116,8 +117,9 @@ func TestPagarComCofrinhoEscolhido(t *testing.T) {
 }
 
 // Regra (#691): a lista oferece lançar pelo cofrinho o último pagamento recente (até 45 dias) de uma conta com "Pago
-// com" que ficou sem despesa; não oferece se ela já foi lançada pelo cofrinho, se a cobrança do banco com o texto está
-// no extrato no dia ou se o pagamento é antigo.
+// com" que ficou sem despesa; não oferece se ela já foi lançada pelo cofrinho (com a descrição ou o valor dela), se a
+// cobrança do banco com o texto está no extrato no dia ou se o pagamento é antigo. Outro gasto do cofrinho no dia, de
+// outra descrição e outro valor, é de outra conta: ainda oferece.
 func TestUltimoSemDespesa(t *testing.T) {
 	t.Parallel()
 	casos := []struct {
@@ -130,7 +132,10 @@ func TestUltimoSemDespesa(t *testing.T) {
 		{"pago há 45 dias", testeapoio.Dia(2026, 8, 30), nil, "2026-08-30"},
 		{"pago há 46 dias", testeapoio.Dia(2026, 8, 29), nil, ""},
 		{"já lançado pelo cofrinho", dia(5), func(tr *testeapoio.Transacao) { tr.Descricao, tr.ReservaNome = "Luz", ptr("Emergência") }, ""},
-		{"lançado pelo cofrinho com outro nome", dia(5), func(tr *testeapoio.Transacao) {
+		{"lançado pelo cofrinho e renomeado depois: o valor é o dela", dia(5), func(tr *testeapoio.Transacao) {
+			tr.Descricao, tr.Valor, tr.ReservaNome = "Luz de casa", testeapoio.Valor("-100.0"), ptr("Emergência")
+		}, ""},
+		{"outro gasto do cofrinho no dia: outra descrição e outro valor", dia(5), func(tr *testeapoio.Transacao) {
 			tr.Descricao, tr.ReservaNome = "Outra", ptr("Emergência")
 		}, "2026-10-05"},
 		{"cobrança do banco no dia", dia(5), func(tr *testeapoio.Transacao) { tr.Descricao = "PAGAMENTO ENEL" }, ""},
@@ -168,6 +173,58 @@ func TestUltimoSemDespesa(t *testing.T) {
 				}
 				if obtido != c.quer {
 					t.Errorf("UltimoSemDespesa = %q, esperado %q", obtido, c.quer)
+				}
+			}
+		})
+	}
+}
+
+// Regra (#691, da revisão da #696): a baixa do app pelo cofrinho (PagamentoCofrinho com o lançamento) é a despesa do
+// pagamento, mesmo depois de renomear a conta a pagar ou o lançamento, e de mudar o valor ou a data dele em Transações:
+// a lista não oferece "lançar pelo cofrinho" de novo, que contaria a despesa duas vezes. Apagado o lançamento, oferece.
+func TestUltimoSemDespesaDepoisDaBaixaDoApp(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		nome   string
+		mudar  string
+		querem string
+	}{
+		{"conta a pagar renomeada", `UPDATE "ContaAgendada" SET "Descricao" = 'Condomínio Ed. Sol'`, ""},
+		{"lançamento renomeado e com outro valor",
+			`UPDATE "Transacao" SET "Descricao" = 'Condomínio de outubro', "Valor" = '-812.40'`, ""},
+		{"lançamento em outra data", `UPDATE "Transacao" SET "Data" = '2026-10-06'`, ""},
+		{"lançamento apagado", `DELETE FROM "Transacao"`, "2026-10-05"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			db, fab, mux := ambiente(t)
+			of := fab.Conta(func(x *testeapoio.Conta) { x.Origem = 2 })
+			agendada := fab.ContaAgendada(func(a *testeapoio.ContaAgendada) {
+				a.Descricao, a.Valor, a.ContaId, a.ReservaNome = "Condomínio", testeapoio.Valor("800.0"), &of.Id, ptr("Emergência")
+				a.ProximoVencimento = dia(5)
+			})
+			caminho := fmt.Sprintf("/api/contas-agendadas/%d", agendada.Id)
+			if r := testeapoio.Chamar(t, mux, "POST", caminho+"/pagar", `{"lancarTransacao":true,"data":"2026-10-05"}`); r.Status != 204 {
+				t.Fatalf("pagar pelo cofrinho: %d %s", r.Status, r.Corpo)
+			}
+			if _, err := db.Exec(c.mudar); err != nil {
+				t.Fatal(err)
+			}
+			type linha struct {
+				Id               int64
+				UltimoSemDespesa *string
+			}
+			for _, l := range lerJSON[[]linha](t, testeapoio.Chamar(t, mux, "GET", "/api/contas-agendadas", "").Corpo) {
+				if l.Id != agendada.Id {
+					continue
+				}
+				obtido := ""
+				if l.UltimoSemDespesa != nil {
+					obtido = *l.UltimoSemDespesa
+				}
+				if obtido != c.querem {
+					t.Errorf("UltimoSemDespesa = %q, esperado %q", obtido, c.querem)
 				}
 			}
 		})

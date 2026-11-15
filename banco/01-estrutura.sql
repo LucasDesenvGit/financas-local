@@ -417,6 +417,9 @@ CREATE TABLE IF NOT EXISTS ContaAgendada
     ChaveExtrato        TEXT    NULL,
     -- #691 (ADR 0063): "Pago com" um cofrinho (reserva) da conta de pagamento. NULL = o saldo da conta.
     ReservaNome         TEXT    NULL,
+    -- #691: o dia em que o "Pago com" foi marcado. A baixa automática só pega os vencimentos a partir dele, para não
+    -- lançar despesas em meses passados ao cadastrar uma conta com o vencimento antigo. NULL = sem limite.
+    ReservaDesde        TEXT    NULL,
     -- Preenchido pela API (ContaAgendada.CriadoEm = DateTime.UtcNow); sem DEFAULT no banco.
     CriadoEm            TEXT    NOT NULL,
     CONSTRAINT CK_ContaAgendada_Recorrencia CHECK (Recorrencia IN (0, 1, 2)),

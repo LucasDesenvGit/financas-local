@@ -135,12 +135,12 @@ func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
 const diasSemDespesa = 45
 
 // ultimosSemDespesa são as contas a pagar com "Pago com" um cofrinho cujo último pagamento (de até 45 dias) não tem
-// lançamento: nem do app pelo cofrinho (com a mesma descrição, na data), nem cobrança do banco com o texto da cobrança
-// na data. É o pagamento dado antes de marcar o cofrinho (#691).
+// lançamento: nem do app pelo cofrinho (o despesaDoCofrinho), nem cobrança do banco com o texto da cobrança na data. É
+// o pagamento dado antes de marcar o cofrinho (#691).
 func (s *Servico) ultimosSemDespesa(ctx context.Context, hoje tipos.Data) (map[int64]tipos.Data, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT a."Id", a."UltimoPagamentoEm", a."TextoCobranca",
-		EXISTS (SELECT 1 FROM "Transacao" AS t WHERE t."ContaId" = a."ContaId" AND t."Data" = a."UltimoPagamentoEm"
-			AND t."ReservaNome" IS NOT NULL AND t."Descricao" = a."Descricao")
+		EXISTS (SELECT 1 FROM "PagamentoCofrinho" AS p INNER JOIN "Transacao" AS t ON t."Id" = p."TransacaoId"
+			WHERE p."ContaAgendadaId" = a."Id" AND (t."Data" = a."UltimoPagamentoEm" OR p."ProximoVencimento" = a."ProximoVencimento"))
 		FROM "ContaAgendada" AS a INNER JOIN "Conta" AS c ON c."Id" = a."ContaId"
 		WHERE a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND a."UltimoPagamentoEm" IS NOT NULL
 		AND a."UltimoPagamentoEm" >= ? AND a."UltimoPagamentoEm" <= ?`, origemOpenFinance, hoje.SomarDias(-diasSemDespesa), hoje)
@@ -170,17 +170,52 @@ func (s *Servico) ultimosSemDespesa(ctx context.Context, hoje tipos.Data) (map[i
 	}
 	resultado := map[int64]tipos.Data{}
 	for _, c := range lista {
+		lancada, err := s.despesaDoCofrinho(ctx, c.id, c.data)
+		if err != nil {
+			return nil, err
+		}
 		cobrada := false
-		if c.texto != nil {
+		if !lancada && c.texto != nil {
 			if cobrada, err = s.cobradaNoDia(ctx, c.id, c.data, *c.texto); err != nil {
 				return nil, err
 			}
 		}
-		if !cobrada {
+		if !lancada && !cobrada {
 			resultado[c.id] = c.data
 		}
 	}
 	return resultado, nil
+}
+
+// despesaDoCofrinho diz se a conta da conta a pagar já tem, no dia, um lançamento do app pelo cofrinho que é este
+// pagamento: com a descrição da conta a pagar ou com o valor dela (o "lançar pelo cofrinho" grava os dois; um deles
+// pode mudar depois, em Transações ou renomeando a conta a pagar). A baixa do app (PagamentoCofrinho) já foi vista na
+// consulta. Outro lançamento do cofrinho no dia, de outra descrição e outro valor, não conta: é outra conta a pagar.
+func (s *Servico) despesaDoCofrinho(ctx context.Context, id int64, dia tipos.Data) (bool, error) {
+	var descricao string
+	var valor tipos.Decimal
+	if err := s.db.QueryRowContext(ctx, `SELECT "Descricao", "Valor" FROM "ContaAgendada" WHERE "Id" = ?`, id).
+		Scan(&descricao, &valor); err != nil {
+		return false, fmt.Errorf("ler a conta a pagar %d: %w", id, err)
+	}
+	linhas, err := s.db.QueryContext(ctx, `SELECT t."Descricao", t."Valor" FROM "Transacao" AS t
+		INNER JOIN "ContaAgendada" AS a ON a."ContaId" = t."ContaId"
+		WHERE a."Id" = ? AND t."Data" = ? AND t."ReservaNome" IS NOT NULL`, id, dia)
+	if err != nil {
+		return false, fmt.Errorf("ler os lançamentos do cofrinho do dia: %w", err)
+	}
+	defer linhas.Close()
+	for linhas.Next() {
+		var d string
+		var v tipos.Decimal
+		if err := linhas.Scan(&d, &v); err != nil {
+			return false, fmt.Errorf("ler lançamento do cofrinho do dia: %w", err)
+		}
+		if d == descricao || v.Decimal().Abs().Cmp(valor.Decimal().Abs()) == 0 {
+			return true, nil
+		}
+	}
+	return false, linhas.Err()
 }
 
 // cobradaNoDia diz se o extrato da conta da conta a pagar tem, no dia, uma saída do banco com o texto da cobrança.
@@ -352,6 +387,7 @@ type conta struct {
 	Observacao        *string
 	ChaveExtrato      *string
 	ReservaNome       *string
+	ReservaDesde      *tipos.Data // #691: de quando a baixa automática pelo cofrinho vale (o reservaDesde)
 	UltimoPagamentoEm *tipos.Data // só para ler (o pagamento pelo cofrinho guarda o de antes)
 }
 
@@ -387,6 +423,24 @@ func aplicar(c *conta, d salvarDto) {
 		c.ChaveExtrato = chave
 	}
 }
+
+// reservaDesde é o dia a partir do qual a baixa automática pelo cofrinho vale (#691, ContaAgendada.ReservaDesde): hoje
+// quando a conta a pagar passa a ser paga com um cofrinho, ou muda o que decide a baixa (a forma de cobrança, a conta,
+// reativada); senão, o de antes. Sem cofrinho, nil. Assim, cadastrar ou editar uma conta com o vencimento meses atrás
+// não lança despesas nos meses já fechados: esses vencimentos ficam com o "Pagar".
+func reservaDesde(antes, depois conta, hoje tipos.Data) *tipos.Data {
+	if depois.ReservaNome == nil {
+		return nil
+	}
+	mudou := antes.ReservaNome == nil || antes.ReservaDesde == nil || antes.FormaCobranca != depois.FormaCobranca ||
+		!mesmoId(antes.ContaId, depois.ContaId) || (!antes.Ativa && depois.Ativa)
+	if mudou {
+		return &hoje
+	}
+	return antes.ReservaDesde
+}
+
+func mesmoId(a, b *int64) bool { return (a == nil) == (b == nil) && (a == nil || *a == *b) }
 
 // aparado é o string.IsNullOrWhiteSpace(x) ? null : x.Trim().
 func aparado(x *string) *string {
@@ -445,24 +499,26 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request, id int64, d sal
 		respostas.Mensagem(w, http.StatusBadRequest, mensagem)
 		return
 	}
+	antes := c
 	aplicar(&c, d)
+	c.ReservaDesde = reservaDesde(antes, c, s.hoje())
 	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
 		if id == 0 {
 			_, err := tx.ExecContext(ctx, `INSERT INTO "ContaAgendada" ("Descricao", "Valor", "ProximoVencimento",
 				"Recorrencia", "CategoriaId", "ContaId", "Ativa", "UltimoPagamentoEm", "DataLimite", "FormaCobranca",
-				"TextoCobranca", "Observacao", "ChaveExtrato", "ReservaNome", "CriadoEm")
-				VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?)`,
+				"TextoCobranca", "Observacao", "ChaveExtrato", "ReservaNome", "ReservaDesde", "CriadoEm")
+				VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?)`,
 				c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia, c.CategoriaId, c.ContaId, c.Ativa, c.DataLimite,
-				c.FormaCobranca, c.TextoCobranca, c.Observacao, c.ChaveExtrato, c.ReservaNome, s.agora())
+				c.FormaCobranca, c.TextoCobranca, c.Observacao, c.ChaveExtrato, c.ReservaNome, c.ReservaDesde, s.agora())
 			if err != nil {
 				return fmt.Errorf("criar a conta a pagar: %w", err)
 			}
 		} else {
 			_, err := tx.ExecContext(ctx, `UPDATE "ContaAgendada" SET "Descricao" = ?, "Valor" = ?, "ProximoVencimento" = ?,
 				"Recorrencia" = ?, "CategoriaId" = ?, "ContaId" = ?, "Ativa" = ?, "DataLimite" = ?, "FormaCobranca" = ?,
-				"TextoCobranca" = ?, "Observacao" = ?, "ChaveExtrato" = ?, "ReservaNome" = ? WHERE "Id" = ?`,
+				"TextoCobranca" = ?, "Observacao" = ?, "ChaveExtrato" = ?, "ReservaNome" = ?, "ReservaDesde" = ? WHERE "Id" = ?`,
 				c.Descricao, c.Valor, c.ProximoVencimento, c.Recorrencia, c.CategoriaId, c.ContaId, c.Ativa, c.DataLimite,
-				c.FormaCobranca, c.TextoCobranca, c.Observacao, c.ChaveExtrato, c.ReservaNome, id)
+				c.FormaCobranca, c.TextoCobranca, c.Observacao, c.ChaveExtrato, c.ReservaNome, c.ReservaDesde, id)
 			if err != nil {
 				return fmt.Errorf("atualizar a conta a pagar %d: %w", id, err)
 			}
@@ -481,9 +537,9 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request, id int64, d sal
 func (s *Servico) ler(ctx context.Context, id int64, c *conta) (bool, error) {
 	err := s.db.QueryRowContext(ctx, `SELECT "Descricao", "Valor", "ProximoVencimento", "Recorrencia", "CategoriaId",
 		"ContaId", "Ativa", "DataLimite", "FormaCobranca", "TextoCobranca", "Observacao", "ChaveExtrato", "UltimoPagamentoEm",
-		"ReservaNome" FROM "ContaAgendada" WHERE "Id" = ?`, id).Scan(&c.Descricao, &c.Valor, &c.ProximoVencimento,
-		&c.Recorrencia, &c.CategoriaId, &c.ContaId, &c.Ativa, &c.DataLimite, &c.FormaCobranca, &c.TextoCobranca, &c.Observacao,
-		&c.ChaveExtrato, &c.UltimoPagamentoEm, &c.ReservaNome)
+		"ReservaNome", "ReservaDesde" FROM "ContaAgendada" WHERE "Id" = ?`, id).Scan(&c.Descricao, &c.Valor,
+		&c.ProximoVencimento, &c.Recorrencia, &c.CategoriaId, &c.ContaId, &c.Ativa, &c.DataLimite, &c.FormaCobranca,
+		&c.TextoCobranca, &c.Observacao, &c.ChaveExtrato, &c.UltimoPagamentoEm, &c.ReservaNome, &c.ReservaDesde)
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
@@ -598,8 +654,11 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 			"fora do cartão.")
 		return
 	}
+	desde := c.ReservaDesde
 	if escolhido != nil {
+		antes := c
 		c.ReservaNome = escolhido
+		desde = reservaDesde(antes, c, s.hoje())
 	}
 	peloCofrinho := lancar.Valor && c.ReservaNome != nil && origem == origemOpenFinance
 	if lancar.Valor && !peloCofrinho && origem != origemManual {
@@ -609,7 +668,8 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 	}
 	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
 		if escolhido != nil && guardar.Valor {
-			if _, err := tx.ExecContext(ctx, `UPDATE "ContaAgendada" SET "ReservaNome" = ? WHERE "Id" = ?`, *escolhido, id); err != nil {
+			if _, err := tx.ExecContext(ctx, `UPDATE "ContaAgendada" SET "ReservaNome" = ?, "ReservaDesde" = ? WHERE "Id" = ?`,
+				*escolhido, desde, id); err != nil {
 				return fmt.Errorf("guardar o cofrinho da conta a pagar %d: %w", id, err)
 			}
 		}
@@ -625,16 +685,15 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 		}
-		proximo, ativa := c.ProximoVencimento, false
-		if c.Ativa {
-			proximo, ativa = cobrancas.Avancar(c.ProximoVencimento, c.Recorrencia, c.DataLimite)
-		} else if p, ok := relatorios.ProximoVencimentoApos(c.ProximoVencimento, c.Recorrencia); ok {
-			proximo = p
-		}
+		proximo, ativa := cobrancas.ProximoDoPagamento(c.ProximoVencimento, c.Recorrencia, c.DataLimite, c.Ativa)
 		_, err := tx.ExecContext(ctx, `UPDATE "ContaAgendada" SET "UltimoPagamentoEm" = ?, "ProximoVencimento" = ?, "Ativa" = ?
 			WHERE "Id" = ?`, dataPagamento, proximo, ativa, id)
 		return err
 	})
+	if errors.Is(err, cobrancas.ErrContaEncerrada) {
+		respostas.Mensagem(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err != nil {
 		s.erroInterno(w, r, "pagar", err)
 		return

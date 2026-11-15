@@ -38,6 +38,33 @@ func TestAvancar(t *testing.T) {
 	}
 }
 
+// Regra (#691, como o "Pagar"): a conta a pagar ativa avança como no Avancar; a encerrada avança a data, se houver
+// próxima, e continua encerrada.
+func TestProximoDoPagamento(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		nome        string
+		recorrencia int64
+		ativa       bool
+		proximo     string
+		querAtiva   bool
+	}{
+		{"ativa mensal", 1, true, "2026-11-10", true},
+		{"ativa única encerra", 0, true, "2026-10-10", false},
+		{"encerrada mensal avança e continua encerrada", 1, false, "2026-11-10", false},
+		{"encerrada única fica", 0, false, "2026-10-10", false},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			proximo, ativa := ProximoDoPagamento(testeapoio.Dia(2026, 10, 10), c.recorrencia, nil, c.ativa)
+			if proximo.String() != c.proximo || ativa != c.querAtiva {
+				t.Errorf("ProximoDoPagamento = %s, %v; esperado %s, %v", proximo, ativa, c.proximo, c.querAtiva)
+			}
+		})
+	}
+}
+
 // naoGrava é o gatilho que recusa a operação na tabela, para o teste ver o erro voltar.
 func naoGrava(operacao, tabela string) string {
 	return `CREATE TRIGGER "nao_` + operacao + `_` + tabela + `" BEFORE ` + operacao + ` ON "` + tabela +

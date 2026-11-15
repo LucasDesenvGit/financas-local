@@ -89,6 +89,7 @@ type ContaAgendada struct {
 	Observacao        *string
 	ChaveExtrato      *string
 	ReservaNome       *string
+	ReservaDesde      *string
 	CriadoEm          string
 }
 
