@@ -192,8 +192,8 @@ func baixarPeloCofrinho(ctx context.Context, q consultas.DBTX, hoje tipos.Data, 
 	return baixas, nil
 }
 
-// baixaAutomatica é uma baixa automática recente, com o lançamento ainda lá, de conta a pagar que concilia.
-type baixaAutomatica struct {
+// baixaPeloCofrinho é uma baixa recente pelo cofrinho, com o lançamento ainda lá, de conta a pagar que concilia.
+type baixaPeloCofrinho struct {
 	transacao     int64
 	conta         int64
 	contaId       *int64
@@ -204,9 +204,12 @@ type baixaAutomatica struct {
 	ultimo        *tipos.Data
 }
 
-// desfazerDuplicadas apaga a baixa automática pelo cofrinho cuja cobrança chegou mesmo assim pelo extrato (o cofrinho
-// estava sem saldo e o banco tirou da conta, por exemplo): o texto da cobrança, até 10 dias antes ou depois do
-// vencimento e importada depois da baixa. Vale a do banco, e o último pagamento vai para a data dela. Devolve quantas.
+// desfazerDuplicadas apaga a baixa pelo cofrinho cuja cobrança chegou mesmo assim pelo extrato (o cofrinho estava sem
+// saldo e o banco tirou da conta, ou o "Foi paga com um cofrinho?" respondido antes de a cobrança atrasada chegar): o
+// texto da cobrança, até 10 dias antes ou depois do vencimento e importada depois da baixa. Vale para a automática e
+// para a do "Pagar" (a conta é cobrada sozinha: o banco manda a cobrança). Vale a do banco, e o último pagamento vai
+// para a data dela. Cada cobrança desfaz uma baixa só: duas contas com textos parecidos não somem com uma cobrança.
+// Devolve quantas.
 func desfazerDuplicadas(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
 	carregarRegras func() (map[int64]bool, error)) (int, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT p."TransacaoId", a."Id", a."ContaId", a."TextoCobranca", p."Vencimento",
@@ -214,24 +217,24 @@ func desfazerDuplicadas(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
 		FROM "PagamentoCofrinho" AS p
 		INNER JOIN "ContaAgendada" AS a ON a."Id" = p."ContaAgendadaId"
 		INNER JOIN "Transacao" AS t ON t."Id" = p."TransacaoId"
-		WHERE p."Automatico" AND a."FormaCobranca" <> ? AND a."TextoCobranca" IS NOT NULL AND t."Data" >= ?
+		WHERE a."FormaCobranca" <> ? AND a."TextoCobranca" IS NOT NULL AND t."Data" >= ?
 		ORDER BY p."Id"`, FormaAMao, hoje.SomarDias(-diasDaDuplicata))
 	if err != nil {
-		return 0, fmt.Errorf("ler as baixas automáticas pelo cofrinho: %w", err)
+		return 0, fmt.Errorf("ler as baixas pelo cofrinho: %w", err)
 	}
-	var baixas []baixaAutomatica
+	var baixas []baixaPeloCofrinho
 	for linhas.Next() {
-		var b baixaAutomatica
+		var b baixaPeloCofrinho
 		if err := linhas.Scan(&b.transacao, &b.conta, &b.contaId, &b.textoCobranca, &b.vencimento, &b.data, &b.criadoEm,
 			&b.ultimo); err != nil {
 			linhas.Close()
-			return 0, fmt.Errorf("ler baixa automática pelo cofrinho: %w", err)
+			return 0, fmt.Errorf("ler baixa pelo cofrinho: %w", err)
 		}
 		baixas = append(baixas, b)
 	}
 	linhas.Close()
 	if err := linhas.Err(); err != nil {
-		return 0, fmt.Errorf("ler as baixas automáticas pelo cofrinho: %w", err)
+		return 0, fmt.Errorf("ler as baixas pelo cofrinho: %w", err)
 	}
 	if len(baixas) == 0 {
 		return 0, nil
@@ -241,6 +244,7 @@ func desfazerDuplicadas(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
 		return 0, err
 	}
 	desfeitas := 0
+	usadas := map[int64]bool{}
 	for _, b := range baixas {
 		procurado := texto.ParaRegras(b.textoCobranca)
 		if procurado == "" {
@@ -253,7 +257,7 @@ func desfazerDuplicadas(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
 		}
 		var depois []candidata
 		for _, x := range candidatas {
-			if x.criadoEm.Tempo().After(b.criadoEm.Tempo()) {
+			if x.criadoEm.Tempo().After(b.criadoEm.Tempo()) && !usadas[x.id] {
 				depois = append(depois, x)
 			}
 		}
@@ -261,6 +265,7 @@ func desfazerDuplicadas(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
 		if casada == nil {
 			continue
 		}
+		usadas[casada.id] = true
 		if err := transacoes.Excluir(ctx, q, b.transacao); err != nil {
 			return desfeitas, err
 		}

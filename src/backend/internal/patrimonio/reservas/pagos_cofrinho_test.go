@@ -146,3 +146,27 @@ func TestNomeDaReservaPeloExtratoMaisRecente(t *testing.T) {
 		})
 	}
 }
+
+// Regra (#691, da revisão final): o gasto do app pago com um cofrinho conta só como retirada dele, nunca como
+// movimento de reserva do extrato, mesmo com a descrição de um ("Dinheiro retirado …", "Meli Dolar"): não cria outra
+// reserva nem mexe no Méli Dólar.
+func TestGastoDoCofrinhoNaoEhMovimentoDeReserva(t *testing.T) {
+	t.Parallel()
+	s, _, fab, conta := bancoDaLista(t, nil)
+	fab.Transacao(conta, func(tr *testeapoio.Transacao) {
+		tr.Descricao, tr.Valor, tr.Data = "Dinheiro reservado Emergência", testeapoio.Valor("-500.00"), testeapoio.Dia(2026, 10, 1)
+	})
+	fab.Transacao(conta, pagoCom("Emergência", "-120.00", 10), func(tr *testeapoio.Transacao) {
+		tr.Descricao = "Dinheiro retirado para o hotel"
+	})
+	fab.Transacao(conta, pagoCom("Emergência", "-30.00", 11), func(tr *testeapoio.Transacao) {
+		tr.Descricao = "Compra Meli Dolar"
+	})
+	lista, err := s.Listar(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(lista) != 1 || lista[0].Nome != "Emergência" || lista[0].Saldo.Decimal().Cmp(testeapoio.Valor("350").Decimal()) != 0 {
+		t.Errorf("Listar = %+v; esperado só a Emergência, com 350", lista)
+	}
+}

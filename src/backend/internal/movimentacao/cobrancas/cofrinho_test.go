@@ -440,3 +440,60 @@ func TestEncerradaPeloCofrinho(t *testing.T) {
 		}
 	})
 }
+
+// Regra (#691, da revisão final): a baixa pelo cofrinho dada pelo "Pagar" (o "Foi paga com um cofrinho?" respondido
+// antes de a cobrança atrasada chegar) também sai quando a cobrança chega pelo extrato: vale a do banco, sem a despesa
+// em dobro.
+func TestBaixaManualDuplicada(t *testing.T) {
+	t.Parallel()
+	db, fab, conta, agendada := cenarioDoCofrinho(t, func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+		a.TextoCobranca, a.ReservaDesde = ptr("ENEL"), ptrData(testeapoio.Dia(2026, 10, 12))
+	})
+	ctx := t.Context()
+	c := &ContaDoCofrinho{Id: agendada.Id, Descricao: "Conta de luz", Valor: testeapoio.Valor("100.0"),
+		ProximoVencimento: testeapoio.Dia(2026, 10, 10), Recorrencia: 1, ContaId: conta.Id, Ativa: true, ReservaNome: "Emergência"}
+	if err := PagarPeloCofrinho(ctx, db, c, testeapoio.Dia(2026, 10, 10), false, agoraDoTeste); err != nil {
+		t.Fatal(err)
+	}
+	fab.Transacao(conta, func(tr *testeapoio.Transacao) {
+		tr.Data, tr.Valor, tr.Descricao = testeapoio.Dia(2026, 10, 13), testeapoio.Valor("-98.0"), "PAGAMENTO ENEL"
+	})
+	mudaram, err := Conciliar(ctx, db, testeapoio.Dia(2026, 10, 14), agoraDoTeste)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if obtido, quer := estadoDoCofrinho(t, db, agendada.Id), "próximo 2026-11-10; último 2026-10-13"; obtido != quer || mudaram != 1 {
+		t.Errorf("Conciliar = %d, %q; esperado 1, %q", mudaram, obtido, quer)
+	}
+}
+
+// Regra (#691, da revisão final): uma cobrança do extrato desfaz uma baixa pelo cofrinho só. Duas contas a pagar com o
+// mesmo texto da cobrança e uma cobrança só: a outra baixa fica.
+func TestUmaCobrancaDesfazUmaBaixa(t *testing.T) {
+	t.Parallel()
+	db, fab, conta, _ := cenarioDoCofrinho(t, func(a *testeapoio.ContaAgendada, _ testeapoio.Conta) {
+		a.TextoCobranca = ptr("ENEL")
+	})
+	fab.ContaAgendada(func(a *testeapoio.ContaAgendada) {
+		a.Descricao, a.ProximoVencimento, a.FormaCobranca = "Conta de luz", testeapoio.Dia(2026, 10, 10), FormaDebitoAutomatico
+		a.ContaId, a.ReservaNome, a.TextoCobranca = &conta.Id, ptr("Emergência"), ptr("ENEL")
+	})
+	ctx := t.Context()
+	if mudaram, err := Conciliar(ctx, db, testeapoio.Dia(2026, 10, 14), agoraDoTeste); err != nil || mudaram != 2 {
+		t.Fatalf("Conciliar = %d, %v; esperado as 2 baixas", mudaram, err)
+	}
+	fab.Transacao(conta, func(tr *testeapoio.Transacao) {
+		tr.Data, tr.Valor, tr.Descricao = testeapoio.Dia(2026, 10, 13), testeapoio.Valor("-98.0"), "PAGAMENTO ENEL"
+	})
+	mudaram, err := Conciliar(ctx, db, testeapoio.Dia(2026, 10, 25), agoraDoTeste)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var lancamentos int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM "Transacao" WHERE "ReservaNome" IS NOT NULL`).Scan(&lancamentos); err != nil {
+		t.Fatal(err)
+	}
+	if mudaram != 1 || lancamentos != 1 {
+		t.Errorf("Conciliar = %d, %d lançamentos pelo cofrinho; esperado 1 e 1", mudaram, lancamentos)
+	}
+}

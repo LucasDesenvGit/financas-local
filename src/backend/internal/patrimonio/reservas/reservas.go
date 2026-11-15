@@ -85,12 +85,14 @@ type conferida struct {
 
 // De onde vêm os lançamentos de reserva: contas do Open Finance que entram no patrimônio, com a conexão ativa (ou
 // sem conexão), e a descrição do banco (que não muda quando você renomeia a transação). O LIKE é o filtro grosso do
-// C#; a regra exata fica em ExtrairNome e EhMeliDolar.
+// C#; a regra exata fica em ExtrairNome e EhMeliDolar. O gasto do app pago com um cofrinho (ReservaNome, #691) fica de
+// fora: a descrição dele é a que você digitou, e ele já conta pelo pagosPeloCofrinho.
 const deMovimentos = `SELECT t."ContaId", c."Nome", COALESCE(t."DescricaoOriginal", t."Descricao"), t."Data", t."Valor"
 	FROM "Transacao" AS t
 	INNER JOIN "Conta" AS c ON c."Id" = t."ContaId"
 	LEFT JOIN "ConexaoBancaria" AS b ON b."Id" = c."ConexaoBancariaId"
-	WHERE t."Status" = 1 AND c."Origem" = 2 AND NOT c."Arquivada" AND c."IncluirNoSaldo" AND (b."Id" IS NULL OR b."Ativa")`
+	WHERE t."Status" = 1 AND t."ReservaNome" IS NULL AND c."Origem" = 2 AND NOT c."Arquivada" AND c."IncluirNoSaldo"
+	AND (b."Id" IS NULL OR b."Ativa")`
 
 func (s *Servico) movimentos(ctx context.Context, filtro string) ([]movimento, error) {
 	linhas, err := s.db.QueryContext(ctx, deMovimentos+` AND (`+filtro+`)`)
