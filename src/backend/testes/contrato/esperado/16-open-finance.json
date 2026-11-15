@@ -811,6 +811,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "lancamentos": null,
       "mensagem": "Configure o Client ID e o Client Secret da Pluggy.",
       "sucesso": false,
       "transacoesAtualizadas": 0,
@@ -1022,6 +1023,22 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "lancamentos": {
+        "fim": "2026-10-08",
+        "ids": [
+          178,
+          179,
+          180,
+          181,
+          182,
+          183,
+          184,
+          185,
+          186,
+          187
+        ],
+        "inicio": "2026-10-02"
+      },
       "mensagem": "Sincronização concluída.",
       "sucesso": true,
       "transacoesAtualizadas": 0,
@@ -1988,6 +2005,17 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "lancamentos": {
+        "fim": "2026-10-10",
+        "ids": [
+          182,
+          183,
+          186,
+          187,
+          188
+        ],
+        "inicio": "2026-10-06"
+      },
       "mensagem": "Sincronização concluída.",
       "sucesso": true,
       "transacoesAtualizadas": 4,
@@ -2489,6 +2517,15 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "lancamentos": {
+        "fim": "2026-10-07",
+        "ids": [
+          182,
+          183,
+          189
+        ],
+        "inicio": "2026-10-05"
+      },
       "mensagem": "Sincronização concluída.",
       "sucesso": true,
       "transacoesAtualizadas": 2,
@@ -2893,6 +2930,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "lancamentos": null,
       "mensagem": "Sincronização concluída.",
       "sucesso": true,
       "transacoesAtualizadas": 0,
@@ -3200,6 +3238,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "lancamentos": null,
       "mensagem": "Sincronização concluída.",
       "sucesso": true,
       "transacoesAtualizadas": 0,
@@ -4048,6 +4087,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "lancamentos": null,
       "mensagem": "Nenhuma conexão ativa para sincronizar.",
       "sucesso": false,
       "transacoesAtualizadas": 0,

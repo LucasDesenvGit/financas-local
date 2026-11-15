@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.13.0] — 2026-11-15 · desenvolvimento
+
+### Funcionalidades
+- **Sincronização: "Ver em Transações" no aviso do resultado** (#688). O aviso "Sincronizado: 3 nova(s), 2 atualizada(s)." ganha a ação "Ver em Transações", que abre as Transações só com esses lançamentos, no período deles, com o filtro "Novas e atualizadas na sincronização" em "Filtrando:". Vale para o botão da barra de cima, o "Sincronizar" de Configurações e o "Adicionar" conexão.
+  - Sem nada novo nem atualizado, o aviso fica sem a ação; com mais de 200, a ação abre o período inteiro, e o aviso diz por quê.
+  - A resposta de `POST /api/open-finance/sincronizar` (e de `POST /api/open-finance/conexoes`) ganha `lancamentos`: os ids (até 200) e o período das transações novas e atualizadas, ou `null`.
+  - Com Transações já aberta, a tela segue a URL que muda por fora (a ação do aviso, o voltar do navegador), e pergunta antes se há trocas de categoria não salvas. No celular, a ação dos avisos vai para a linha de baixo do texto.
+
 ## [3.12.1] — 2026-11-10 · desenvolvimento
 
 ### Correções
