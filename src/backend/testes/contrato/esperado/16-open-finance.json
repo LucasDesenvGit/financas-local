@@ -1657,7 +1657,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 178,
+            "Id": 181,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "TED",
             "MesmaTitularidade": null,
@@ -1667,6 +1667,7 @@
             "PluggyCategoriaId": "01010000",
             "PluggyTransactionId": "tc-1",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 2,
             "TransferenciaGrupo": null,
@@ -1686,7 +1687,7 @@
             "Emergencia": 0,
             "Estabelecimento": "Mercado Falso LTDA",
             "FaturaCartaoId": null,
-            "Id": 179,
+            "Id": 182,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PIX",
             "MesmaTitularidade": 0,
@@ -1696,6 +1697,7 @@
             "PluggyCategoriaId": "05000000",
             "PluggyTransactionId": "tc-2",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -1715,7 +1717,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 180,
+            "Id": 183,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PIX",
             "MesmaTitularidade": 1,
@@ -1725,6 +1727,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-3",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -1744,7 +1747,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 181,
+            "Id": 184,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1754,6 +1757,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-4",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 2,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -1773,7 +1777,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 182,
+            "Id": 185,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1783,6 +1787,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-5",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 2,
             "TransferenciaGrupo": null,
@@ -1802,7 +1807,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 183,
+            "Id": 186,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1812,6 +1817,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-6",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -1831,7 +1837,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 184,
+            "Id": 187,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1841,6 +1847,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-7",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -1860,7 +1867,7 @@
             "Emergencia": 0,
             "Estabelecimento": "Loja Falsa",
             "FaturaCartaoId": 13,
-            "Id": 185,
+            "Id": 188,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "CARTAO",
             "MesmaTitularidade": null,
@@ -1870,6 +1877,7 @@
             "PluggyCategoriaId": "07000000",
             "PluggyTransactionId": "tk-1",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -1889,7 +1897,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 186,
+            "Id": 189,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1899,6 +1907,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tk-2",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 2,
             "TransferenciaGrupo": null,
@@ -1918,7 +1927,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 187,
+            "Id": 190,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PAGAMENTO_FATURA",
             "MesmaTitularidade": null,
@@ -1928,6 +1937,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tk-3",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 2,
             "TransferenciaGrupo": null,
@@ -2387,7 +2397,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 188,
+            "Id": 191,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2397,6 +2407,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-8",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 1,
             "Tipo": 2,
             "TransferenciaGrupo": null,
@@ -2406,7 +2417,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 182
+              "Id": 185
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2425,7 +2436,7 @@
           },
           {
             "chave": {
-              "Id": 183
+              "Id": 186
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2448,7 +2459,7 @@
           },
           {
             "chave": {
-              "Id": 186
+              "Id": 189
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2463,7 +2474,7 @@
           },
           {
             "chave": {
-              "Id": 187
+              "Id": 190
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2492,7 +2503,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 181,
+            "Id": 184,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2502,6 +2513,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-4",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 2,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -2861,7 +2873,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 189,
+            "Id": 192,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2871,6 +2883,7 @@
             "PluggyCategoriaId": null,
             "PluggyTransactionId": "tc-4",
             "RegraDescricaoId": null,
+            "ReservaNome": null,
             "Status": 2,
             "Tipo": 1,
             "TransferenciaGrupo": null,
@@ -2880,7 +2893,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 182
+              "Id": 185
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2899,7 +2912,7 @@
           },
           {
             "chave": {
-              "Id": 183
+              "Id": 186
             },
             "colunas": {
               "AtualizadoEm": {

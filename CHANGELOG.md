@@ -2,13 +2,34 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.13.0] — 2026-11-15 · desenvolvimento
+## [3.15.0] — 2026-11-16 · desenvolvimento
 
 ### Funcionalidades
 - **Sincronização: "Ver em Transações" no aviso do resultado** (#688). O aviso "Sincronizado: 3 nova(s), 2 atualizada(s)." ganha a ação "Ver em Transações", que abre as Transações só com esses lançamentos, no período deles, com o filtro "Novas e atualizadas na sincronização" em "Filtrando:". Vale para o botão da barra de cima, o "Sincronizar" de Configurações e o "Adicionar" conexão.
   - Sem nada novo nem atualizado, o aviso fica sem a ação; com mais de 200, a ação abre o período inteiro, e o aviso diz por quê.
   - A resposta de `POST /api/open-finance/sincronizar` (e de `POST /api/open-finance/conexoes`) ganha `lancamentos`: os ids (até 200) e o período das transações novas e atualizadas, ou `null`.
   - Com Transações já aberta, a tela segue a URL que muda por fora (a ação do aviso, o voltar do navegador), e pergunta antes se há trocas de categoria não salvas. No celular, a ação dos avisos vai para a linha de baixo do texto.
+
+## [3.14.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Cofrinho: registrar saída, a diferença da conferência e "foi paga com um cofrinho?"** (#691, parte 2).
+  - Investimentos › Reservas: "registrar saída" lança um gasto pago direto do cofrinho (uma compra, por exemplo), que entra nos relatórios e baixa a estimativa. Na conferência com a data de hoje, com o saldo abaixo da estimativa, "Registrar a diferença como gasto do cofrinho" lança a diferença em vez de ela sumir.
+  - Contas a pagar: o aviso "não veio" de um débito automático do Open Finance, depois de sincronizar, pergunta "Foi paga com um cofrinho?" e abre o "Pagar" com o cofrinho e a data do vencimento, podendo guardá-lo como "Pago com". A conta com "Pago com" cujo último pagamento ficou sem a despesa oferece "lançar pelo cofrinho".
+
+## [3.13.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Contas a pagar: "Pago com" um cofrinho** (#691, parte 1). No Mercado Pago, o débito automático pago com o dinheiro de um cofrinho sai direto da reserva e não chega pelo Open Finance: a despesa sumia do mês e o cofrinho ficava acima do real. Agora, numa conta a pagar de conta do Open Finance, o campo "Pago com" escolhe o saldo da conta ou um cofrinho dela (ou outro, pelo nome).
+  - Com "débito automático", o site lança a despesa sozinho no vencimento, com o valor e a categoria, e o vencimento avança; com "paga à mão", o "Pagar" lança a mesma despesa. Ela entra no mês, na categoria, nos orçamentos e nos relatórios; o cofrinho baixa e o saldo da conta não muda.
+  - O lançamento sozinho só pega os vencimentos a partir do dia em que o "Pago com" foi marcado: cadastrar a conta com o vencimento meses atrás não põe despesa em meses já fechados. Conta do banco arquivada não recebe baixa.
+  - A lista mostra "paga pelo cofrinho … em … (automático)", com "ajustar valor" e "desfazer". Se a cobrança chegar pelo extrato mesmo assim, vale a do banco e a do site sai sozinha. O "desfazer" não reativa uma conta a pagar que você encerrou depois.
+  - Banco: colunas `ContaAgendada.ReservaNome`, `ContaAgendada.ReservaDesde` e `Transacao.ReservaNome` e a tabela `PagamentoCofrinho` (ADR 0063, proposta). O site aplica sozinho ao iniciar.
+
+## [3.12.2] — 2026-11-11 · desenvolvimento
+
+### Correções
+- **Go 1.27.4 no site e no gerenciador** (#694). O 1.27.3 tem uma falha de segurança no `net/http` da biblioteca padrão (GO-2026-6859), que o `govulncheck` da CI passou a apontar e que travava todo PR com Go. Quem instala pelos scripts recebe a versão nova sozinho (a mais nova da linha 1.27).
 
 ## [3.12.1] — 2026-11-10 · desenvolvimento
 
