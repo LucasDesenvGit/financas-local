@@ -8,18 +8,18 @@ Use ao avaliar uma tela, ao revisar um PR com front-end e no fim do seu próprio
 
 ## Avaliar uma tela (UI/UX)
 
-Abra a tela pelos prints (skill `testar-no-navegador`, seção 2: claro e escuro, computador e celular) **e** pelo código. Do mais grave ao menos:
+Abra a tela pelos prints (skill `testar-no-navegador`, seção 2: claro e escuro, computador e celular) **e** pelo código. O critério de cada item (número, limite, padrão) está em `docs/UI-UX.md`; aqui só a ordem, do mais grave ao menos:
 
-1. **A pergunta principal da tela** está respondida no topo, e o resto atrás de `<app-mais-analises>`? (Shneiderman, Progressive Disclosure)
-2. **Teclado:** toda ação clicável tem `<button>`/`<a>`; clique em linha, bloco ou `<canvas>` não é o único caminho (WCAG 2.1.1).
-3. **Gráfico:** título, frase-resumo com a conclusão, "como ler", legenda com mais de uma série, e o resumo respeita "ocultar valores" (WCAG 1.1.1).
-4. **Campos:** rótulo visível em todo campo (o "R$" não conta), e o erro diz qual campo e o que está errado (WCAG 3.3.2 e 3.3.1).
-5. **Alvo** de clique e toque ≥ 24×24 px (WCAG 2.5.8); **contraste** de texto ≥ 4,5:1 e de borda ou estado de controle ≥ 3:1 (WCAG 1.4.3 e 1.4.11), inclusive cor fixa fora do tema, que o teste do tema não pega.
-6. **Dica e balão:** nada só em `title=`; o balão some com Esc e funciona no toque (WCAG 1.4.13).
-7. **Termos:** jargão (financeiro ou do sistema) com `<app-termo>` ou trocado por palavra de quem usa (Nielsen 2).
-8. **Estado:** carregando, vazio e erro têm texto (Nielsen 1); filtro ativo aparece em chips com "Limpar filtros"; voltar do navegador funciona (ADR 0018).
-9. **Consistência:** o mesmo controle do resto do site (`referencias/componentes.md`), interruptor só para efeito imediato (Kendrick, NN/g), a mesma cor para receita e despesa (Nielsen 4).
-10. **Celular:** nada rola para o lado, nada cortado, nada que feche sozinho com a rolagem do próprio toque.
+1. **A pergunta principal da tela** respondida no topo, o resto atrás de `<app-mais-analises>` (Shneiderman, Progressive Disclosure).
+2. **Teclado:** clique em linha, bloco ou `<canvas>` nunca é o único caminho (WCAG 2.1.1).
+3. **Gráfico se explica**, e o resumo respeita "ocultar valores" (WCAG 1.1.1).
+4. **Campos:** rótulo visível e erro que diz o campo (WCAG 3.3.2 e 3.3.1).
+5. **Alvo e contraste** (WCAG 2.5.8, 1.4.3 e 1.4.11), inclusive cor fixa fora do tema, que o teste do tema não pega.
+6. **Dica e balão:** nada só em `title=` (WCAG 1.4.13).
+7. **Termos:** jargão com `<app-termo>` ou trocado por palavra de quem usa (Nielsen 2).
+8. **Estado:** carregando, vazio e erro têm texto (Nielsen 1); filtro ativo em chips; voltar do navegador funciona (ADR 0018).
+9. **Consistência:** o controle de `referencias/componentes.md`, interruptor só para efeito imediato, a mesma cor para receita e despesa (Nielsen 4).
+10. **Celular:** a skill `revisar-no-celular`.
 
 Separe o que viu no print do que leu no código, e diga o que não deu para ver com a API falsa (dados reais, volume, telas que dependem do back-end de verdade).
 
