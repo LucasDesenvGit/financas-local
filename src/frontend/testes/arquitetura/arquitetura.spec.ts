@@ -63,7 +63,11 @@ const APRESENTACAO: Record<string, string> = {
   'paginas/patrimonio/investimentos-reservas.component.ts': 'aba "Reservas"',
   'paginas/patrimonio/investimentos-operacoes.component.ts': 'janela "Operações · ATIVO"',
   'paginas/patrimonio/investimentos-ativo.component.ts': 'janela "Ativo · TICKER"',
-  'paginas/patrimonio/investimentos-importacao.component.ts': 'janela "Importar compras e vendas do extrato"'
+  'paginas/patrimonio/investimentos-importacao.component.ts': 'janela "Importar compras e vendas do extrato"',
+  'paginas/planejamento/metas-assistente.component.ts': 'bloco "Quanto guardar este mês"',
+  'paginas/planejamento/metas-cartao.component.ts': 'o cartão de uma meta (a sanfona)',
+  'paginas/planejamento/metas-formulario.component.ts': 'janela "Nova meta" / "Editar meta"',
+  'paginas/planejamento/metas-aporte.component.ts': 'janela "Aporte"'
 };
 const PROIBIDOS_NA_APRESENTACAO = [/^core\/api\.service$/, /^@angular\/router$/];
 

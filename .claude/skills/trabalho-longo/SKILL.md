@@ -16,13 +16,7 @@ Qualquer retomada, inclusive depois de o contexto ser resumido, lê o plano e se
 
 ## 1. Quando sugerir
 
-**Ofereça** o esquema em uma frase quando qualquer um destes for verdade (critério objetivo, #280):
-- o pedido cita **mais de uma issue ou PR**, ou um **épico**, ou tem cara de muitas horas;
-- é a **2ª issue ou PR na mesma conversa**, ou a conversa **já foi resumida**: muitos pedidos pequenos seguidos também esbarram no limite, e foi assim que a skill deixou de ser oferecida numa sessão de mais de 10 PRs;
-- a pessoa fala em "deixar rodando", "continuar depois" ou "quando o limite voltar";
-- chegou o **lembrete do hook** `lembrar-trabalho-longo.sh` (link de issue/PR no pedido ou sessão longa).
-
-Não repita se já houver agendamento (`CronList`) ou se a pessoa recusou nesta conversa. Exemplo: "Isso dá umas N horas. Quer que eu deixe agendado para continuar sozinho se o limite de uso acabar no meio?" Não monte sem a pessoa concordar.
+**Ofereça** o esquema em uma frase nos casos do `CLAUDE.md`, "Pedido grande demais para uma vez só" (o critério e quando não repetir estão lá, #280), também quando o pedido tiver cara de muitas horas e quando chegar o lembrete do hook `lembrar-trabalho-longo.sh`. Exemplo: "Isso dá umas N horas. Quer que eu deixe agendado para continuar sozinho se o limite de uso acabar no meio?" Não monte sem a pessoa concordar.
 
 Diga junto as limitações (seção 3): a sessão precisa ficar aberta e o computador ligado.
 

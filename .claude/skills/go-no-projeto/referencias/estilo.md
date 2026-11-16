@@ -23,6 +23,20 @@ O que se espera de Go idiomático aqui, com a fonte de cada ponto. O que é regr
 | Comentário de documentação | frase completa, em português, começando pelo nome (`// Hoje devolve...`) | [Go Doc Comments](https://go.dev/doc/comment) |
 | Teste | tabela com `t.Run`, mensagem `Função(entrada) = obtido, esperado X` | [Go Test Comments](https://go.dev/wiki/TestComments#identify-the-function), ADR 0051 |
 
+## Contas, texto e JSON: o que o C# deixou
+
+O banco e o JSON continuam no formato do .NET (ADR 0049), e estas pegadinhas vieram da migração (a skill dela está na tag `v-ultimo-dotnet`, seção 4). O código de `internal/plataforma/tipos` e `texto` é a fonte; o comentário de cada função diz o detalhe.
+
+| Ponto | Como fica aqui | Por quê |
+|---|---|---|
+| Arredondar | `tipos.Arredondar(x, casas)` (bancário, e só mexe quando o valor tem mais casas: `250.0` continua `250.0`); `tipos.ArredondarLongeDoZero` só onde a regra pede o empate longe do zero. Nunca o `Round` do `shopspring/decimal` direto | o `Math.Round` do C# é bancário; o `Round` da biblioteca arredonda o .5 para cima e muda a escala do JSON |
+| Dividir e as outras contas | `tipos.Dividir` (devolve `ErrDivisaoPorZero` e `ErrEstouro`), `Multiplicar`, `Somar`, `Subtrair`, `Maior`, `Menor` | guardam a escala como o C# (gabarito em `internal/plataforma/tipos/testdata`); a biblioteca divide com 16 casas |
+| Ordem e busca em texto | a ordem pt-BR e as normalizações do `internal/plataforma/texto`; teste com "Ação" e "acao" | Go compara bytes, e o `LIKE` do SQLite só ignora caixa em ASCII |
+| Data | `time.Time` sempre com local explícito; `tipos.Data` só com ano, mês e dia | fuso trocado muda o mês do lançamento |
+| `enum` | tipo `int` nomeado, que sai **número** no JSON; não trocar por texto | é o contrato com o front-end |
+| Validação de entrada | na entrada, com o 400 e o `ValidationProblemDetails` do `internal/plataforma/respostas` (`LerObjeto`, `LerClasse`, `Validacao`) | a mesma mensagem e o mesmo status em todas as rotas |
+| Apagar com dependentes | o que o `ON DELETE` de `banco/01-estrutura.sql` não apaga, o Go apaga explícito, em `banco.EmTransacao` | parte da cascata era feita pelo EF Core, não pela chave, e há tabela que nenhum dos dois apagava (o `HistoricoInvestimento`, #575) |
+
 ## Onde divergimos dos guias de fora, e por quê
 
 Os guias conhecidos (Effective Go, CodeReviewComments, Google Go Style Guide, Uber Go Style Guide) e o hábito de quem vem de .NET ou de Clean Architecture sugerem coisas que o projeto decidiu **não** fazer. Ao ver uma sugestão destas num guia ou num revisor, a decisão do projeto vale.
