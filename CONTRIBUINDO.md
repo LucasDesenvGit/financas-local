@@ -215,7 +215,7 @@ O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração c
 O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/plataforma/testeapoio` ([README](src/backend/internal/plataforma/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
 
 **Uma etapa do #70 está pronta quando:**
-- cada regra da lista "Regras de negócio" do levantamento (skill `migrar-para-go`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
+- cada regra da lista "Regras de negócio" do levantamento (a skill da migração, guardada na tag `v-ultimo-dotnet`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
 - cada ponto de risco de equivalência do levantamento tem um teste;
 - cada endpoint tem caso de contrato, inclusive os de erro;
 - cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste com o SQLite real;
@@ -307,7 +307,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 ## Claude Code no projeto
 
 Quem usa o Claude Code no projeto recebe, pelo repositório:
-- **as skills de `.claude/skills/`**: `angular-no-projeto` e `testar-no-navegador` (front-end), `go-no-projeto` e `migrar-para-go` (Go) e `trabalho-longo`;
+- **as skills de `.claude/skills/`**: `angular-no-projeto`, `testar-no-navegador` e `revisar-no-celular` (front-end), `go-no-projeto` (Go), `reportar-erro` e `trabalho-longo`;
 - **os agentes de `.claude/agents/`**: `dev-angular` (#559) e `dev-go` (#560), que carregam as skills do assunto e têm um hook só deles (`.claude/hooks/bloquear-merge-em-agente.sh`) que barra `gh pr merge` e `git push` forçado;
 - **o hook de `.claude/settings.json`** (#280). A cada pedido, ele roda `.claude/hooks/lembrar-trabalho-longo.sh` (bash, sem dependência nova; no Windows, pelo Git Bash). Quando o pedido tem link de issue ou PR, cita um épico ou a sessão fica longa, ele lembra o Claude de oferecer a skill `trabalho-longo`, para o trabalho continuar sozinho quando o limite de uso voltar.
   - O hook nunca bloqueia o pedido.

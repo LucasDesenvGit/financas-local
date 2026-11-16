@@ -76,16 +76,10 @@ Diga numa frase, na pergunta, a causa provável e onde ela está, para a pessoa 
      - 📋 O que fazer;
      - ✅ Critérios de aceite.
   2. Ponha as etiquetas: `bug`, a da área (`api`, `web`, `open-finance`, `investimentos`, `scripts`) e a da prioridade (`prioridade: alta|média|baixa`).
-  3. Ligue a issue como sub-issue ao épico do assunto (`gh issue list --label "épico: ..."`). Veja o comando no `CLAUDE.md`, em "Git / commits".
+  3. Ligue a issue como sub-issue ao épico do assunto (`gh issue list --label "épico: ..."`; o comando está no `CONTRIBUINDO.md`, "Branches").
 - **Resolver agora:**
   1. Abra a issue como em "Só catalogar".
-  2. Siga o fluxo do `CLAUDE.md`:
-     - `gh issue edit <N> --add-label "em progresso"`;
-     - a branch `fix/<assunto>` a partir do `develop`;
-     - a correção;
-     - o **teste de regressão** que falha antes da correção (Go: ADR 0051; front-end: `testes/jest/regressao/`);
-     - a versão e o CHANGELOG;
-     - o PR com `Closes #N`.
+  2. Siga o fluxo de issue, branch `fix/<assunto>`, versão, CHANGELOG e PR do `CLAUDE.md` ("Git / commits"), com o **teste de regressão** que falha antes da correção (Go: ADR 0051; front-end: `testes/jest/regressao/`).
   3. No fim, peça à pessoa para marcar o erro como resolvido em Configurações › Erros quando a versão com a correção estiver publicada. Se ele voltar depois disso, ele reaparece em aberto, numa linha nova.
 
 ## 5. Resumo
