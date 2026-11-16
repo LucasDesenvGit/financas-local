@@ -54,13 +54,14 @@ export interface ContextoTransacoes {
 }
 
 /** #173 d): valores de ?de= em /transacoes, junto com ?ids=. */
-export type OrigemIdsUrl = 'fii-aportes' | 'fii-rendimentos' | 'trocos-automaticos';
+export type OrigemIdsUrl = 'fii-aportes' | 'fii-rendimentos' | 'trocos-automaticos' | 'sincronizacao';
 
 /** O que o chip de /transacoes diz de cada origem dos `ids` (Nielsen 2: as palavras da tela de onde se veio). */
 export const ORIGENS_IDS: Record<OrigemIdsUrl, string> = {
   'fii-aportes': 'Compras e vendas de FIIs',
   'fii-rendimentos': 'Rendimentos de FIIs',
-  'trocos-automaticos': 'Trocos classificados na sincronização'
+  'trocos-automaticos': 'Trocos classificados na sincronização',
+  sincronizacao: 'Novas e atualizadas na sincronização'
 };
 
 /** Máximo de lançamentos em ?ids= (o mesmo limite da API), para a URL não crescer sem fim. */
