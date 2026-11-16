@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.8] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Guias de instalação, operação e requisitos sem as notas da troca para o Go** (#714). O guia de instalação pelos scripts perde as seções "Sem o .NET" e "Migrar de uma instalação com SQL Server" (o que fazer ao vir da 2.x está na 3.0.0, abaixo). A volta à última versão com o .NET e a ferramenta que migrava do SQL Server ficam num lugar só, no [guia de operação](docs/OPERACAO.md#voltar-à-última-versão-com-o-net). Os requisitos não funcionais mostravam a memória (225 MB) e o tamanho da instalação (157 MB) de antes do Go: agora mostram a medição da #86 (28,3 MB e 19,2 MB).
+
 ## [3.15.7] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
