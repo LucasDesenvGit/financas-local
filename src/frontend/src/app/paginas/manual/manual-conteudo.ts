@@ -1303,7 +1303,7 @@ export const MANUAL: CapituloManual[] = [
           '“Como calculei” abre a conta linha a linha: as faixas do INSS, a dedução usada no IRRF (o INSS e os dependentes, ou o desconto simplificado, o que der menos imposto), a faixa, a redução da Lei 15.270/2025 (de 2026 em diante, para rendimento de até R$ 7.350,00) e a fonte de cada tabela.',
           'Aumento: em “Histórico de salários”, escolha o mês, informe o salário novo e clique em “Gravar aumento”. O salário vale por mês: o aumento conta para o mês inteiro, sem proporção pelos dias. Os meses antes do aumento continuam com o salário de antes; gravar de novo no mesmo mês troca o valor.',
           '“Apagar” tira um salário do histórico (os meses dele passam a usar o anterior). O primeiro salário, o da admissão, não sai: para mudar o valor dele, grave outro valor no mesmo mês.',
-          'Corrigiu a admissão para antes? O primeiro salário passa a valer desde o mês da nova admissão. A saída não pode ficar antes de um salário do histórico: apague esse salário antes.',
+          'Corrigiu a admissão? O primeiro salário passa a valer desde o mês da nova admissão, para antes ou para depois. Para depois, ela fica antes do primeiro aumento (ou apague o aumento antes). A saída não pode ficar antes de um salário do histórico: apague esse salário antes.',
           'Estágio e PJ ficam sem o cálculo do INSS e do IRRF.',
           '“+ Outro emprego” cadastra mais um; os outros aparecem em “Outros empregos”. “Editar emprego” muda os dados ou exclui o emprego.'
         ],
