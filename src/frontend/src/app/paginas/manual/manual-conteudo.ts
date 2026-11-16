@@ -1361,14 +1361,18 @@ export const MANUAL: CapituloManual[] = [
           'Abra Trabalho › Férias. Cada período aquisitivo (12 meses de trabalho, contados da admissão) mostra os dias de direito, os agendados, os vendidos, quantos sobram e até quando tirar (o concessivo, os 12 meses seguintes).',
           '“Vencida” quer dizer que o prazo passou com dias sobrando: a empresa paga essas férias em dobro. “Vencendo”: faltam 60 dias ou menos para o prazo.',
           'As faltas sem justificativa no período diminuem os dias de direito: até 5, 30 dias; de 6 a 14, 24; de 15 a 23, 18; de 24 a 32, 12; acima de 32, nenhum (CLT, art. 130). Digite as faltas no período.',
-          'Para agendar, escolha o período, o dia do início, os dias de férias e os vendidos (até 1/3, 10 de 30), e se a 1ª parcela do 13º vem junto. As férias podem ir em até 3 frações: uma de 14 dias ou mais e as outras de 5 ou mais.',
+          'Para agendar, escolha o período, o dia do início, os dias de férias e os vendidos (até 1/3, 10 de 30), e se a 1ª parcela do 13º vem junto. As férias podem ir em até 3 frações: uma de 14 dias ou mais e as outras de 5 ou mais. Com menos de 14 dias de direito (12, com 24 a 32 faltas), elas vão num bloco só. Uma fração não pode cruzar com outra já agendada.',
+          'A 1ª parcela do 13º vem junto com as férias uma vez por ano, e não em dezembro (ela vence em 30/11). Pedida nas férias, ela já aparece em Trabalho › 13º salário, com a data do pagamento delas.',
+          'Férias marcadas depois do prazo (o fim do concessivo) saem em dobro: os dias depois do prazo a empresa paga duas vezes (CLT, art. 137).',
           '“Ver a conta” mostra as férias e o 1/3 (com INSS e IRRF), o abono e o 1/3 dele (sem desconto), o 13º adiantado e o que cai na conta, até 2 dias antes do início. A remuneração é o salário do mês mais a média das horas extras dos 12 meses antes.',
-          '“Comparar 30 dias × vender 10” mostra lado a lado quanto entra em cada caso.',
+          '“Comparar” mostra lado a lado tirar todos os dias de direito × vender 1/3 deles (30 × vender 10; com 24 de direito, 24 × vender 8): quanto entra em cada caso.',
           '“Desmarcar” apaga um agendamento e devolve os dias ao período.'
         ],
         dicas: ['O salário do mês seguinte às férias vem menor: os dias de férias já foram pagos antes.',
           'Se marcar o 13º junto, informe a 1ª parcela em Trabalho › 13º salário quando ela vier, para a 2ª ser recalculada.'],
-        erros: ['“As férias de um período começam depois que ele termina”: o período aquisitivo ainda não completou 12 meses na data escolhida.'],
+        erros: ['“As férias de um período começam depois que ele termina”: o período aquisitivo ainda não completou 12 meses na data escolhida.',
+          '“Com N faltas, o direito cai para…”: as faltas novas deixariam o direito menor que o já agendado. Desmarque férias antes.',
+          '“As férias começam depois da saída do emprego”: as férias que sobraram vêm na rescisão (Trabalho › Rescisão).'],
         abrir: [{ rotulo: 'Abrir as Férias', rota: '/trabalho/ferias' }]
       }
     ]

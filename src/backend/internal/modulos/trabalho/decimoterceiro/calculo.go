@@ -49,8 +49,10 @@ type Entrada struct {
 	Dependentes      int64
 	PrimeiraEm       *tipos.Data    // informada: quando veio a 1ª parcela
 	PrimeiraValor    *tipos.Decimal // informada: quanto veio
-	Inss             encargos.TabelaInss
-	Irrf             encargos.TabelaIrrf
+	// PrimeiraComFerias: a 1ª veio com as férias do ano (a data é a do pagamento delas).
+	PrimeiraComFerias bool
+	Inss              encargos.TabelaInss
+	Irrf              encargos.TabelaIrrf
 }
 
 // Parcela é uma parcela do 13º.
@@ -60,6 +62,8 @@ type Parcela struct {
 	Informada bool          `json:"informada"` // a pessoa disse quanto e quando veio
 	// ValorInformado: o valor veio da pessoa (e não da metade calculada); a tela não grava o calculado como informado.
 	ValorInformado bool `json:"valorInformado"`
+	// ComFerias: a 1ª veio com as férias (a data é a do pagamento delas, e o valor, a metade calculada).
+	ComFerias bool `json:"comFerias"`
 }
 
 // Calculo é o 13º do ano.
@@ -100,7 +104,7 @@ func Calcular(e Entrada) Calculo {
 		c.Primeira.Valor, c.Primeira.Informada, c.Primeira.ValorInformado = centavos(e.PrimeiraValor.Decimal()), true, true
 	}
 	if e.PrimeiraEm != nil {
-		c.Primeira.Data, c.Primeira.Informada = *e.PrimeiraEm, true
+		c.Primeira.Data, c.Primeira.Informada, c.Primeira.ComFerias = *e.PrimeiraEm, true, e.PrimeiraComFerias
 	}
 
 	// O IR do 13º é exclusivo na fonte, separado do salário de dezembro: base = total - INSS - dependentes, sem o

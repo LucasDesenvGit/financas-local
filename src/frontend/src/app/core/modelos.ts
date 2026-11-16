@@ -943,7 +943,7 @@ export interface ResumoHolerite {
 
 /** #214: o 13º salário do ano (estimativa). */
 /** valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). */
-export interface ParcelaDecimo { valor: number; data: string; informada: boolean; valorInformado: boolean; }
+export interface ParcelaDecimo { valor: number; data: string; informada: boolean; valorInformado: boolean; comFerias?: boolean; }
 export interface DecimoTerceiro {
   ano: number; avos: number; salarioBase: number; mediaVariaveis: number; total: number;
   primeira: ParcelaDecimo; inss: CalculoInss; irrf: CalculoIrrf; segunda: ParcelaDecimo; liquido: number;
@@ -958,6 +958,8 @@ export interface DecimoTerceiro {
 /** #213: as férias. */
 export interface CalculoFerias {
   inicio: string; retorno: string; pagamento: string; dias: number; diasVendidos: number; remuneracao: number;
+  /** Os dias depois do fim do concessivo: pagos em dobro (CLT, art. 137). */
+  diasEmDobro: number;
   mediaVariaveis: number; ferias: number; tercoFerias: number; abono: number; tercoAbono: number;
   inss: CalculoInss; irrf: CalculoIrrf; adiantamentoDecimo: number; liquido: number;
 }

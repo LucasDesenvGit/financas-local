@@ -243,3 +243,33 @@ func TestReais(t *testing.T) {
 		}
 	}
 }
+
+// Revisão do #701: a 1ª parcela pedida nas férias aparece no 13º, com a data do pagamento delas; a informada à mão vale
+// mais.
+func TestPrimeiraParcelaComAsFerias(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBanco(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	s := NovoServico(db, empregos, holerite.NovoServico(db, empregos, rel, log), rel, log)
+	e, err := empregos.Criar(t.Context(), emprego.Dados{Empregador: "E", Admissao: testeapoio.Dia(2024, 3, 11), Regime: emprego.RegimeClt,
+		JornadaMensalHoras: 220, SalarioInicial: &[]tipos.Decimal{v("6000")}[0]})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{"2026-07-15", "2025-07-15"} {
+		if _, err := db.ExecContext(t.Context(), `INSERT INTO "FeriasAgendamento" ("EmpregoId", "PeriodoInicio", "Inicio", "Dias", "DiasVendidos",
+			"AdiantarDecimo", "CriadoEm") VALUES (?, '2025-03-11', ?, 20, 0, 1, '2026-01-01 00:00:00')`, e.Id, f); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r, err := s.Obter(t.Context(), e.Id, 2026)
+	if err != nil || !r.Primeira.ComFerias || !r.Primeira.Informada || r.Primeira.ValorInformado || r.Primeira.Data.String() != "2026-07-13" {
+		t.Fatalf("1ª com as férias = %+v (%v)", r.Primeira, err)
+	}
+	r, _ = s.DefinirPrimeira(t.Context(), e.Id, 2026, &[]tipos.Data{testeapoio.Dia(2026, 7, 10)}[0], nil)
+	if r.Primeira.ComFerias || r.Primeira.Data.String() != "2026-07-10" {
+		t.Fatalf("1ª informada = %+v", r.Primeira)
+	}
+}

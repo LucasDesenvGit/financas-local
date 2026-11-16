@@ -57,7 +57,7 @@ import { anoDaUrl } from './decimo-terceiro';
         <section class="painel-bloco" aria-labelledby="titulo-parcelas">
           <h2 id="titulo-parcelas">{{ emprego()!.empregador }}</h2>
           <dl class="resumo">
-            <dt>1ª parcela, {{ d.primeira.informada ? 'recebida em' : 'até' }} {{ d.primeira.data | date: 'dd/MM' }}</dt>
+            <dt>1ª parcela, {{ d.primeira.informada ? 'recebida em' : 'até' }} {{ d.primeira.data | date: 'dd/MM' }}@if (d.primeira.comFerias) { (com as férias)}</dt>
             <dd>{{ d.primeira.valor | currency }}</dd>
             <dt>2ª parcela, até {{ d.segunda.data | date: 'dd/MM' }}</dt><dd>{{ d.segunda.valor | currency }}</dd>
             <dt class="total">O 13º líquido</dt><dd class="total">{{ d.liquido | currency }}</dd>
@@ -139,7 +139,7 @@ export class TrabalhoDecimoTerceiroComponent implements OnInit {
   private mostrar(d: DecimoTerceiro): void {
     this.decimo.set(d);
     this.erro.set(null);
-    this.primeiraEm = d.primeira.informada ? d.primeira.data : null;
+    this.primeiraEm = d.primeira.informada && !d.primeira.comFerias ? d.primeira.data : null; // a das férias vem delas, não do formulário
     this.primeiraValor = d.primeira.valorInformado ? d.primeira.valor : null; // a metade calculada não vira valor informado
   }
 

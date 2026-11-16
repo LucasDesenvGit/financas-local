@@ -7,8 +7,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ### Funcionalidades
 - **Trabalho › Férias** (#213):
   - os períodos aquisitivos (de 12 em 12 meses desde a admissão), com os dias de direito pelas faltas, o que foi agendado, o que sobra e até quando tirar, com o aviso de férias vencidas (pagas em dobro) ou vencendo;
-  - agendar em até 3 frações (uma de 14 dias ou mais), vendendo até 1/3 dos dias e, se quiser, com a 1ª parcela do 13º junto;
-  - "Ver a conta": férias + 1/3 com INSS e IRRF, o abono e o 1/3 dele sem desconto, e o que cai na conta até 2 dias antes; "Comparar 30 dias × vender 10" lado a lado.
+  - agendar em até 3 frações (uma de 14 dias ou mais, ou um bloco só com menos de 14 de direito), sem cruzar uma com a outra, vendendo até 1/3 dos dias e, se quiser, com a 1ª parcela do 13º junto (uma vez por ano, e não em dezembro), que já aparece no 13º;
+  - "Ver a conta": férias + 1/3 com INSS e IRRF, o abono e o 1/3 dele sem desconto, e o que cai na conta até 2 dias antes; os dias depois do prazo em dobro; "Comparar" tirar tudo × vender 1/3, pelo direito do período, lado a lado.
   - Banco: as tabelas `FeriasFaltas` e `FeriasAgendamento`, criadas sozinhas ao iniciar. Não é receita.
 
 ## [3.19.0] — 2026-11-16 · desenvolvimento

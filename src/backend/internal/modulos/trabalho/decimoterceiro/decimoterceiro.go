@@ -114,6 +114,20 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return Resposta{}, fmt.Errorf("ler a 1ª parcela: %w", err)
 	}
+	// Sem a 1ª informada, a que veio com as férias do ano (#213, revisão do #701): paga até 2 dias antes do início.
+	if entrada.PrimeiraEm == nil && entrada.PrimeiraValor == nil {
+		var inicio tipos.Data
+		err := s.db.QueryRowContext(ctx, `SELECT "Inicio" FROM "FeriasAgendamento" WHERE "EmpregoId" = ? AND "AdiantarDecimo" = 1
+			AND "Inicio" >= ? AND "Inicio" < ? ORDER BY "Inicio" LIMIT 1`, empregoId, tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1)).
+			Scan(&inicio)
+		switch {
+		case err == nil:
+			pagamento := inicio.SomarDias(-2)
+			entrada.PrimeiraEm, entrada.PrimeiraComFerias = &pagamento, true
+		case !errors.Is(err, sql.ErrNoRows):
+			return Resposta{}, fmt.Errorf("ler as férias com o 13º: %w", err)
+		}
+	}
 	return Resposta{Calculo: Calcular(entrada), Saida: saida}, nil
 }
 
