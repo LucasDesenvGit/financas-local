@@ -186,6 +186,7 @@ class NotasDesenvolvimento(unittest.TestCase):
         resto = notas.split("## Tudo desde a última versão publicada\n\n", 1)[1]
         self.assertTrue(resto.startswith("### 2.1.0 — 2026-11-02 · desenvolvimento\n"), resto[:60])
         self.assertNotIn("Publicada.", resto)
+        self.assertNotIn("# Changelog", resto)  # o título do arquivo não gruda na última seção do changelog.d/
 
     def test_limite_menor_que_o_cabecalho_deixa_so_o_link(self):
         notas = self.gerar(changelog_desenvolvimento(3, 2), limite=10)

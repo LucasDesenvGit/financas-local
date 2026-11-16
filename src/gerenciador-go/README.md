@@ -7,7 +7,7 @@ O gerenciador do site em Go, com o [Wails v3](https://pkg.go.dev/github.com/wail
 | Janela igual à do `FormPrincipal.cs`, ícone na bandeja, uma cópia só, `--bandeja`, fechar destrói a janela (#418) | |
 | Situação do site (de 5 em 5 s, na janela e no ícone da bandeja), ligar, desligar e reiniciar pelo UAC, cópia do banco, preferências (#419) | |
 | Versão nova pelo GitHub Releases: procurar, "O que mudou", baixar conferindo o SHA-256 e abrir o instalador; "Receber versões de desenvolvimento" (#420, ADR 0053) |
-| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo `CHANGELOG.md` do clone (#432); "Atualizar o gerenciador e reabrir" quando a reinstalação dá certo (#430) | |
+| "Atualizar para a última do develop" na instalação de desenvolvimento pelos scripts, com a saída ao vivo (#428, ADR 0040), e "O que mudou" depois, pelo número e pelas seções que o clone calcula (`go run ./cmd/versao`, ADR 0070) e pelo `CHANGELOG.md` dele (#432); "Atualizar o gerenciador e reabrir" quando a reinstalação dá certo (#430) | |
 | Linux (#417): instalado pelo `scripts/linux/instalar-gerenciador.sh` com o atalho `br.financaslocal.Gerenciador.desktop` (#277); `systemctl --user` sem senha, tema pelo portal, "Iniciar com o sistema" (`~/.config/autostart`), registro do serviço, comando para atualizar, "sem login" (linger), ícones em SVG | |
 | Aviso na bandeja com a janela fechada: o site caiu, versão nova (#448) | |
 | "Restaurar uma cópia…" em Mais opções: confere o arquivo, guarda o banco de agora em `dados/antes-de-restaurar`, troca e liga de novo; no Windows, pelo UAC (`--restaurar`) (#533) | |

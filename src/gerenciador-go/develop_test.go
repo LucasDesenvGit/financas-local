@@ -45,6 +45,25 @@ func TestNotasDoDevelop(t *testing.T) {
 	}
 }
 
+// Regra: do CHANGELOG.md do clone vai só o que começa na primeira versão, para o título e a explicação do formato não
+// ficarem grudados na última seção que veio do -changelog.
+func TestDesdeAPrimeiraVersao(t *testing.T) {
+	t.Parallel()
+	casos := map[string]string{
+		"com o título": "# Changelog\n\nFormato.\n\n## [2.0.0] — x\n- a\n\n## [1.0.0] — y\n- b\n",
+		"sem o título": "## [2.0.0] — x\n- a\n\n## [1.0.0] — y\n- b\n",
+		"com CRLF":     "# Changelog\r\n\r\n## [2.0.0] — x\r\n- a\r\n\r\n## [1.0.0] — y\r\n- b\r\n",
+	}
+	for nome, texto := range casos {
+		if obtido := desdeAPrimeiraVersao(texto); obtido != "## [2.0.0] — x\n- a\n\n## [1.0.0] — y\n- b\n" {
+			t.Errorf("%s: %q", nome, obtido)
+		}
+	}
+	if obtido := desdeAPrimeiraVersao("# Changelog\n\nainda sem versão\n"); obtido != "" {
+		t.Errorf("sem versão nenhuma: %q", obtido)
+	}
+}
+
 // Regra: sem versão nova, sem novidade ou sem seção, não há "O que mudou".
 func TestNotasDoDevelopSemNada(t *testing.T) {
 	t.Parallel()

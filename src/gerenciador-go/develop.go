@@ -155,9 +155,22 @@ func (g *gerenciador) notasDaAtualizacao(raiz string, antes atualizacao.Versao, 
 	}
 	// As seções que o CHANGELOG.md do clone ainda tem de antes da troca (ADR 0070) vêm depois das novas.
 	if antigo, err := os.ReadFile(filepath.Join(raiz, "CHANGELOG.md")); err == nil {
-		changelog += "\n\n" + string(antigo)
+		changelog += "\n\n" + desdeAPrimeiraVersao(string(antigo))
 	}
 	return notasDoDevelop(nova, temNova, changelog, antes, temAntes)
+}
+
+// desdeAPrimeiraVersao tira o título e a explicação do formato do topo do CHANGELOG.md, que ficariam grudados na
+// última seção do que veio antes dele.
+func desdeAPrimeiraVersao(changelog string) string {
+	changelog = strings.ReplaceAll(changelog, "\r\n", "\n")
+	if strings.HasPrefix(changelog, "## [") {
+		return changelog
+	}
+	if _, resto, ok := strings.Cut(changelog, "\n## ["); ok {
+		return "## [" + resto
+	}
+	return ""
 }
 
 // notasDoDevelop é o "O que mudou" entre a versão de antes e a que veio (#432): as seções do changelog (o -changelog

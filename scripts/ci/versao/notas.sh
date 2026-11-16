@@ -146,7 +146,8 @@ fi
 # --versao: começa na seção da versão (ou na "[Não publicado]"), a publicada entra, e tira o "· desenvolvimento" dos
 # títulos. --desenvolvimento: começa no topo, que já é de desenvolvimento, e mantém o título e as linhas em branco.
 # O awk lê o arquivo (e não um pipe): ele sai ao chegar na última versão publicada, e um cat que sobrasse escrevendo
-# num pipe fechado derrubaria o script (SIGPIPE com pipefail).
+# num pipe fechado derrubaria o script (SIGPIPE com pipefail). Do CHANGELOG.md vai só o que começa na primeira versão:
+# o título e a explicação do formato, lá em cima, ficariam grudados na última seção que veio de changelog.d/.
 LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
     # Junta a seção que acabou, se ela couber inteira com o link; se não, para ali.
     function fechar() {
@@ -181,4 +182,4 @@ LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
             printf "%s", saida
             if (cortou) print "\n" link
         }
-    }' <(printf '%s\n\n' "$nao_publicado"; cat CHANGELOG.md)
+    }' <(printf '%s\n\n' "$nao_publicado"; sed -n '/^## \[/,$p' CHANGELOG.md)
