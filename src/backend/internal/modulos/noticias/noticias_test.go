@@ -1,10 +1,14 @@
 package noticias
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
@@ -89,7 +93,8 @@ func TestUmaFonteQueFalhaNaoDerrubaAsOutras(t *testing.T) {
 	a.srv.Em("GET", "/tabnews", testeapoio.RespostaDeFora{Arquivo: "../fontes/testdata/tabnews.json"}, testeapoio.ErroDoServidor)
 
 	err := a.m.Atualizar(t.Context())
-	if err == nil || !strings.Contains(err.Error(), "BBC News Brasil: respondeu 500") {
+	var fontes *FalhaDasFontes
+	if !errors.As(err, &fontes) || !strings.Contains(err.Error(), "BBC News Brasil: respondeu 500") {
 		t.Fatalf("erro = %v", err)
 	}
 	l := a.lista()
@@ -164,5 +169,59 @@ func TestNovoComAsFontesDaIssue(t *testing.T) {
 	m := Novo(testeapoio.NovoBancoVazio(t), testeapoio.RelogioDosTestes(), slog.New(slog.DiscardHandler))
 	if len(m.fontes) != 3 || m.fontes[2].ID != "tabnews" {
 		t.Fatalf("fontes = %+v", m.fontes)
+	}
+}
+
+// Revisão do #705: no "Atualizar agora", o erro do banco é 500 e vai para o log (antes, 200 com a lista velha e "Notícias
+// atualizadas"); a falha das fontes continua na lista; a tarefa buscando dá 409 na hora, sem gastar a vez; e a busca
+// segue com a aba fechada (o pedido cancelado não vira erro nas fontes).
+func TestAtualizarAgoraSemEngolirNemEsperar(t *testing.T) {
+	t.Parallel()
+	a := novo(t)
+	var registro bytes.Buffer
+	a.m.log = slog.New(slog.NewTextHandler(&registro, nil))
+	a.srv.Em("GET", "/g1", testeapoio.RespostaDeFora{Arquivo: "../fontes/testdata/g1.xml", TipoConteudo: "application/xml"})
+	a.srv.Em("GET", "/bbc", testeapoio.RespostaDeFora{Corpo: bbcFicticio, TipoConteudo: "application/xml"})
+	a.srv.Em("GET", "/tabnews", testeapoio.RespostaDeFora{Arquivo: "../fontes/testdata/tabnews.json"})
+	testeapoio.Chamar(t, a.mux, "PUT", "/api/modulos/noticias", `{"ligado":true}`).ConferirStatus(t, http.StatusOK)
+
+	// A tarefa está buscando: 409, sem pedir às fontes, e a vez não é gasta.
+	a.m.atualizando.Lock()
+	r := testeapoio.Chamar(t, a.mux, "POST", "/api/noticias/atualizar", "")
+	r.ConferirStatus(t, http.StatusConflict)
+	r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, MensagemBuscando))
+	a.m.atualizando.Unlock()
+	if len(a.srv.Pedidos()) != 0 {
+		t.Fatal("pediu às fontes com a tarefa buscando")
+	}
+
+	// O pedido cancelado (a aba fechou): a busca segue, e as fontes ficam sem erro.
+	ctx, cancelar := context.WithCancel(t.Context())
+	cancelar()
+	w := httptest.NewRecorder()
+	a.m.atualizarHTTP(w, httptest.NewRequestWithContext(ctx, "POST", "/api/noticias/atualizar", nil))
+	if l := a.lista(); w.Code != http.StatusOK || len(l.Noticias) != 6 || l.Fontes[0].Erro != nil || l.Fontes[2].Erro != nil {
+		t.Fatalf("cancelado: %d, %+v", w.Code, l)
+	}
+
+	// Todas as fontes respondem: sem erro nenhum.
+	if err := a.m.Atualizar(t.Context()); err != nil {
+		t.Fatalf("todas as fontes: %v", err)
+	}
+
+	// O banco recusa gravar: 500, e o erro no log.
+	if _, err := a.m.db.ExecContext(t.Context(), `CREATE TRIGGER "FalhaAoGuardar" BEFORE INSERT ON "Noticia"
+		BEGIN SELECT RAISE(ABORT, 'banco de teste ocupado'); END`); err != nil {
+		t.Fatal(err)
+	}
+	a.rel.andar(IntervaloAMao)
+	testeapoio.Chamar(t, a.mux, "POST", "/api/noticias/atualizar", "").ConferirStatus(t, http.StatusInternalServerError)
+	if !strings.Contains(registro.String(), "banco de teste ocupado") {
+		t.Fatalf("log = %s", registro.String())
+	}
+	// O erro do banco não é das fontes; o das fontes é.
+	var fontes *FalhaDasFontes
+	if err := a.m.Atualizar(t.Context()); err == nil || errors.As(err, &fontes) {
+		t.Fatalf("erro do banco = %v", err)
 	}
 }

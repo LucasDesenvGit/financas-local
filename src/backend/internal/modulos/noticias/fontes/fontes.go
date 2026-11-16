@@ -39,13 +39,14 @@ type Fonte struct {
 	Nome     string
 	URL      string
 	Ler      func([]byte) ([]Item, error)
-	Dominios []string // os hosts aceitos nos links das notícias
+	Dominios []string // os hosts aceitos nos links das notícias; ".globo.com" aceita qualquer subdomínio dele
 }
 
 // Padrao são as três fontes da #10.
 func Padrao() []Fonte {
 	return []Fonte{
-		{ID: "g1", Nome: "G1", URL: "https://g1.globo.com/rss/g1/", Ler: LerRSS, Dominios: []string{"g1.globo.com"}},
+		// O G1 também linka outros sites da Globo (ge.globo.com, valor.globo.com; revisão do #705).
+		{ID: "g1", Nome: "G1", URL: "https://g1.globo.com/rss/g1/", Ler: LerRSS, Dominios: []string{".globo.com"}},
 		{ID: "bbc", Nome: "BBC News Brasil", URL: "https://feeds.bbci.co.uk/portuguese/rss.xml", Ler: LerRSS,
 			Dominios: []string{"www.bbc.com", "www.bbc.co.uk"}},
 		{ID: "tabnews", Nome: "TabNews", URL: "https://www.tabnews.com.br/api/v1/contents?strategy=relevant&per_page=20",
@@ -124,12 +125,18 @@ func (c *Cliente) Buscar(ctx context.Context, f Fonte) ([]Item, error) {
 }
 
 // LinkPermitido: https:// num dos domínios da fonte, sem usuário e sem porta. Barra javascript:, http:// e outros sites.
+// O domínio que começa com ponto aceita os subdomínios dele (".globo.com": ge.globo.com, e não globo.com.exemplo).
 func LinkPermitido(link string, dominios []string) bool {
 	u, err := url.Parse(strings.TrimSpace(link))
 	if err != nil || u.Scheme != "https" || u.User != nil || u.Port() != "" {
 		return false
 	}
-	return slices.Contains(dominios, u.Host)
+	return slices.ContainsFunc(dominios, func(d string) bool {
+		if strings.HasPrefix(d, ".") {
+			return strings.HasSuffix(u.Host, d) && len(u.Host) > len(d)
+		}
+		return u.Host == d
+	})
 }
 
 // rss é o formato RSS 2.0 (só o que interessa).

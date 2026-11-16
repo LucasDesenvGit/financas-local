@@ -8,7 +8,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 - **Notícias, um módulo** (#10, ADR 0067, Proposta). Ligado em Configurações › Módulos (vem desligado, porque acessa a internet), aparece "Notícias" no menu:
   - as notícias do dia do G1, da BBC News Brasil e do TabNews: o título (abre no site da notícia, em outra aba), a fonte e quando saiu, com o filtro por fonte;
   - o site busca as fontes a cada 45 minutos e guarda as 20 mais novas de cada uma; "Atualizar agora" busca na hora (no máximo a cada 5 minutos);
-  - a situação de cada fonte: uma que falha mostra o aviso e não derruba as outras.
+  - a situação de cada fonte: uma que falha mostra o aviso e não derruba as outras;
+  - na revisão: o erro do banco no "Atualizar agora" aparece (antes, a tela dizia "Notícias atualizadas"), a busca não para se a aba fechar nem espera a de 45 minutos, a leitura que falha tem "Tentar de novo", e os links do G1 para outros sites da Globo (ge, valor) passam a aparecer.
   - Saídas de rede novas, só com o módulo ligado: `g1.globo.com`, `feeds.bbci.co.uk` e `www.tabnews.com.br`, só com o pedido do feed. Banco: as tabelas `Noticia` e `NoticiaFonte`.
 
 ## [3.16.0] — 2026-11-16 · desenvolvimento

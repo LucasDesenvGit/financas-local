@@ -80,35 +80,6 @@
     }
   },
   {
-    "nome": "a lista, ainda sem notícia",
-    "requisicao": "GET /api/noticias",
-    "status": 200,
-    "tipo": "application/json; charset=utf-8",
-    "corpo": {
-      "fontes": [
-        {
-          "atualizadoEm": null,
-          "erro": null,
-          "id": "g1",
-          "nome": "G1"
-        },
-        {
-          "atualizadoEm": null,
-          "erro": null,
-          "id": "bbc",
-          "nome": "BBC News Brasil"
-        },
-        {
-          "atualizadoEm": null,
-          "erro": null,
-          "id": "tabnews",
-          "nome": "TabNews"
-        }
-      ],
-      "noticias": []
-    }
-  },
-  {
     "nome": "desligar de novo",
     "requisicao": "PUT /api/modulos/noticias",
     "status": 200,

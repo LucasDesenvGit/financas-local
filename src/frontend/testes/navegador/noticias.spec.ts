@@ -50,3 +50,19 @@ test('Notícias: a lista, a fonte que falhou e o filtro', async ({ page }) => {
   await expect(page.getByText('Não deu para atualizar: BBC News Brasil. As outras fontes foram atualizadas.')).toBeVisible();
   expect(atualizou).toBe(true);
 });
+
+// Revisão do #705: a leitura que falha mostra o erro e "Tentar de novo", em vez de "Carregando…" para sempre.
+test('Notícias: a leitura que falha dá para tentar de novo', async ({ page, problemas }) => {
+  problemas.ignorar('status of 409');
+  const json = (status: number, corpo: unknown) => ({ status, contentType: 'application/json', body: JSON.stringify(corpo) });
+  let falhar = true;
+  await page.route('**/api/modulos', (r) => r.fulfill(json(200, [{ ...modulo, ligado: true }])));
+  await page.route('**/api/noticias', (r) => r.fulfill(falhar
+    ? json(409, { mensagem: 'O módulo Notícias está desligado. Ligue em Configurações › Módulos.' }) : json(200, lista)));
+  await page.goto('/noticias');
+  const aviso = page.getByRole('alert');
+  await expect(aviso).toContainText('Não deu para ler as notícias: O módulo Notícias está desligado.');
+  falhar = false;
+  await aviso.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(page.getByRole('link', { name: /Notícia fictícia do G1/ })).toBeVisible();
+});

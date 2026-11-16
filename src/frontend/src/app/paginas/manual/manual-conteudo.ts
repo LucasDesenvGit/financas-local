@@ -1296,7 +1296,9 @@ export const MANUAL: CapituloManual[] = [
         dicas: ['Só o pedido de cada fonte sai do computador, sem nada seu. As fontes ficam sabendo o endereço de internet da sua casa, como em qualquer site que você abre.',
           'As imagens das notícias não aparecem: o site não carrega nada de fora (é a regra de segurança dele).'],
         erros: ['“As notícias foram atualizadas há pouco”: espere 5 minutos para o “Atualizar agora”.',
-          'Uma fonte com “a última tentativa falhou”: o site dela não respondeu ou mudou o formato. Os detalhes ficam em Configurações › Erros.'],
+          'Uma fonte com “a última tentativa falhou”: o site dela não respondeu ou mudou o formato. Os detalhes ficam em Configurações › Erros.',
+          '“As notícias estão sendo buscadas agora”: a busca de 45 minutos está rodando; veja de novo em alguns segundos.',
+          '“Não deu para ler as notícias”: o site não respondeu (ele pode estar reiniciando). “Tentar de novo” lê outra vez.'],
         abrir: [{ rotulo: 'Abrir as Notícias', rota: '/noticias' }, { rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       }
     ]

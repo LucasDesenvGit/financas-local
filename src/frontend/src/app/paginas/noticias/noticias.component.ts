@@ -45,6 +45,12 @@ import { filtrarPorFonte, quandoFoiPublicada, situacaoDaFonte } from './noticias
       } @else {
         <p class="vazio">Nenhuma notícia guardada ainda. Clique em “Atualizar agora”, ou espere a próxima busca (a cada 45 minutos).</p>
       }
+    } @else if (erro(); as e) {
+      <!-- Nielsen 9: diz o que houve e dá a saída, em vez de "Carregando…" para sempre (revisão do #705). -->
+      <div class="aviso-inline" role="alert">
+        <p>Não deu para ler as notícias: {{ e }}</p>
+        <button type="button" class="botao" (click)="carregar()">Tentar de novo</button>
+      </div>
     } @else {
       <p class="texto-suave" role="status">Carregando…</p>
     }
@@ -63,6 +69,7 @@ export class NoticiasComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
   readonly dados = signal<ListaNoticias | null>(null);
+  readonly erro = signal<string | null>(null);
   readonly fonte = signal('');
   readonly ocupado = signal(false);
   readonly lista = computed(() => filtrarPorFonte(this.dados()?.noticias ?? [], this.fonte()));
@@ -70,7 +77,12 @@ export class NoticiasComponent implements OnInit {
   readonly quando = quandoFoiPublicada;
 
   ngOnInit(): void {
-    this.api.noticias().subscribe({ next: (d) => this.dados.set(d), error: (e) => this.avisos.erro(mensagemDeErro(e)) });
+    this.carregar();
+  }
+
+  carregar(): void {
+    this.erro.set(null);
+    this.api.noticias().subscribe({ next: (d) => this.dados.set(d), error: (e) => this.erro.set(mensagemDeErro(e)) });
   }
 
   atualizar(): void {

@@ -95,7 +95,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **De onde vem** | Das fontes, com o módulo Notícias ligado ([ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) |
 | **Sai do computador?** | Só o pedido do feed, a cada 45 minutos, sem nada seu (as fontes veem o endereço de internet da sua casa, como em qualquer site) |
 | **Por quanto tempo** | As 20 mais novas de cada fonte, trocadas a cada busca |
-| **Como apagar** | Desligar o módulo para de buscar; as guardadas ficam até a próxima busca de cada fonte |
+| **Como apagar** | Desligar o módulo para de buscar. As guardadas ficam no banco, sem aparecer, até o módulo ser ligado de novo e cada fonte ser buscada (a busca troca as dela). Não há botão para apagar antes: são notícias públicas, sem nada seu (revisão do #705) |
 
 ### Cotações, índices e categorias públicas
 

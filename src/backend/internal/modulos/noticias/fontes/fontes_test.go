@@ -155,6 +155,22 @@ func TestLinkPermitido(t *testing.T) {
 			t.Errorf("%q = %v; quer %v", link, got, quer)
 		}
 	}
+	// Revisão do #705: ".globo.com" aceita os subdomínios da Globo, e só eles.
+	globo := map[string]bool{
+		"https://ge.globo.com/futebol/ficticio.ghtml": true,
+		"https://valor.globo.com/ficticio":            true,
+		"https://g1.globo.com/a.ghtml":                true,
+		"https://globo.com/a":                         false,
+		"https://.globo.com/a":                        false,
+		"https://globo.com.exemplo.invalid/a":         false,
+		"https://naoglobo.com/a":                      false,
+		"http://ge.globo.com/a":                       false,
+	}
+	for link, quer := range globo {
+		if got := LinkPermitido(link, []string{".globo.com"}); got != quer {
+			t.Errorf(".globo.com, %q = %v; quer %v", link, got, quer)
+		}
+	}
 }
 
 func TestMaximoPorFonteEPadrao(t *testing.T) {

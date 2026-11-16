@@ -29,8 +29,18 @@ const ID = "noticias"
 const (
 	Intervalo      = 45 * time.Minute
 	IntervaloAMao  = 5 * time.Minute
+	PrazoAMao      = time.Minute // o "Atualizar agora" inteiro (cada fonte tem 15 segundos)
 	MensagemEspera = "As notícias foram atualizadas há pouco. Tente de novo em alguns minutos."
+	// MensagemBuscando: a tarefa de 45 minutos está buscando agora; o pedido não espera por ela (revisão do #705).
+	MensagemBuscando = "As notícias estão sendo buscadas agora. Veja de novo em alguns segundos."
 )
+
+// FalhaDasFontes são as fontes que não responderam: cada uma já guardou o erro (NoticiaFonte.Erro), e a lista volta com
+// ele. Erro de outro tipo (o banco) é do pedido, e não das fontes (revisão do #705).
+type FalhaDasFontes struct{ err error }
+
+func (f *FalhaDasFontes) Error() string { return f.err.Error() }
+func (f *FalhaDasFontes) Unwrap() error { return f.err }
 
 // Modulo é o Notícias.
 type Modulo struct {
@@ -76,11 +86,17 @@ func (m *Modulo) Tarefas() []modulos.Tarefa {
 	return []modulos.Tarefa{{Nome: "as notícias", Atraso: time.Minute, Intervalo: Intervalo, Ciclo: m.Atualizar}}
 }
 
-// Atualizar busca cada fonte e troca as notícias guardadas dela. A fonte que falha guarda o erro e fica com as notícias
-// de antes; o erro de todas volta junto (vira log, e aparece em Configurações › Erros).
+// Atualizar busca cada fonte e troca as notícias guardadas dela, uma atualização por vez. A fonte que falha guarda o erro
+// e fica com as notícias de antes; o erro de todas volta junto, num FalhaDasFontes (vira log, e aparece em
+// Configurações › Erros).
 func (m *Modulo) Atualizar(ctx context.Context) error {
 	m.atualizando.Lock()
 	defer m.atualizando.Unlock()
+	return m.buscar(ctx)
+}
+
+// buscar é o Atualizar, com a vez já tomada.
+func (m *Modulo) buscar(ctx context.Context) error {
 	var falhas []error
 	for _, f := range m.fontes {
 		agora := tipos.NovaDataHora(m.relogio.Agora())
@@ -117,7 +133,10 @@ func (m *Modulo) Atualizar(ctx context.Context) error {
 			return fmt.Errorf("guardar as notícias de %s: %w", f.Nome, err)
 		}
 	}
-	return errors.Join(falhas...)
+	if len(falhas) > 0 {
+		return &FalhaDasFontes{errors.Join(falhas...)}
+	}
+	return nil
 }
 
 // SituacaoDaFonte é o estado de uma fonte para a tela.
@@ -185,10 +204,12 @@ func tempo(d *tipos.DataHora) time.Time {
 	return d.Tempo()
 }
 
-func (m *Modulo) listarHTTP(w http.ResponseWriter, r *http.Request) {
-	l, err := m.Listar(r.Context())
+func (m *Modulo) listarHTTP(w http.ResponseWriter, r *http.Request) { m.responderLista(w, r.Context()) }
+
+func (m *Modulo) responderLista(w http.ResponseWriter, ctx context.Context) {
+	l, err := m.Listar(ctx)
 	if err != nil {
-		m.log.ErrorContext(r.Context(), "notícias: listar", "erro", err)
+		m.log.ErrorContext(ctx, "notícias: listar", "erro", err)
 		respostas.SemCorpo(w, http.StatusInternalServerError)
 		return
 	}
@@ -196,7 +217,8 @@ func (m *Modulo) listarHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // atualizarHTTP é o "Atualizar agora": no máximo uma vez a cada 5 minutos (429 antes disso). A falha de uma fonte não
-// é erro do pedido: a lista volta com o erro na fonte.
+// é erro do pedido: a lista volta com o erro na fonte. O erro do banco vai para o log (e Configurações › Erros) e é
+// 500 (revisão do #705). Com a tarefa de 45 minutos buscando, 409 na hora, sem esperar por ela e sem gastar a vez.
 func (m *Modulo) atualizarHTTP(w http.ResponseWriter, r *http.Request) {
 	m.mu.Lock()
 	agora := m.relogio.Agora()
@@ -205,9 +227,23 @@ func (m *Modulo) atualizarHTTP(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusTooManyRequests, MensagemEspera)
 		return
 	}
+	if !m.atualizando.TryLock() {
+		m.mu.Unlock()
+		respostas.Mensagem(w, http.StatusConflict, MensagemBuscando)
+		return
+	}
 	m.ultimaAMao = agora
 	m.mu.Unlock()
-	// O erro de cada fonte volta na lista (NoticiaFonte.Erro); o da tarefa de 45 minutos vai para Configurações › Erros.
-	_ = m.Atualizar(r.Context())
-	m.listarHTTP(w, r)
+	// A busca segue se a aba fechar no meio (senão o "context canceled" virava o erro das fontes que faltavam), com prazo.
+	ctx, cancelar := context.WithTimeout(context.WithoutCancel(r.Context()), PrazoAMao)
+	defer cancelar()
+	err := m.buscar(ctx)
+	m.atualizando.Unlock()
+	var fontes *FalhaDasFontes
+	if err != nil && !errors.As(err, &fontes) {
+		m.log.ErrorContext(ctx, "notícias: atualizar", "erro", err)
+		respostas.SemCorpo(w, http.StatusInternalServerError)
+		return
+	}
+	m.responderLista(w, ctx)
 }
