@@ -2,10 +2,30 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.15.2] — 2026-11-16 · desenvolvimento
+## [3.15.6] — 2026-11-16 · desenvolvimento
 
 ### Correções
 - **Dependências: SQLite 1.62.0, `x/sys` 0.50.0, `x/text` 0.44.0, Angular 22.2.6 e Lucide 1.72.0** (#744, Dependabot #737 a #743, juntos num PR só porque mexem nos mesmos `go.mod`, `go.sum` e `package-lock.json`). No site e no gerenciador, o `modernc.org/sqlite` vai de 1.61.1 a 1.62.0 e o `golang.org/x/sys` de 0.49.0 a 0.50.0; no site, o `golang.org/x/text` de 0.43.0 a 0.44.0. No front-end, o Angular (`common`, `compiler`, `core`, `forms`, `platform-browser`, `router` e `compiler-cli`) sobe uma correção, 22.2.5 → 22.2.6, o `@angular/build` e o `@angular/cli`, só de desenvolvimento, 22.2.6 → 22.2.7, e os ícones do `@lucide/angular` vão de 1.69.0 a 1.72.0. Os commits são os do Dependabot, trazidos por *cherry-pick*. Manual: não se aplica.
+
+## [3.15.5] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **A tela de Investimentos dividida em tela, apresentação e funções puras** (#731, item 8 da #689; ADR 0059). O componente da tela caiu de 1.516 para 545 linhas (e o template foi para `investimentos.component.html`): ela guarda o estado e fala com a API. Os avisos e cards do topo, os gráficos do Resumo, as abas Renda variável, Open Finance e Reservas e as janelas de operações, ativo e importação pelo extrato viraram componentes de apresentação (`investimentos-*.component.ts`), e a regra (aba na URL, posições, frases-resumo, gráficos, formulários, importação e avisos) foi para `investimentos.ts`, testada no Jest sem `TestBed` (`investimentos-logica.spec.ts` e `investimentos-formularios.spec.ts`). O formulário da operação, a conferência do saldo, o nome do investimento e a fonte das cotações ficaram na tela, que edita o estado deles direto. Nada muda para quem usa. Manual: não se aplica.
+
+## [3.15.4] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **ADRs grandes mais curtas** (#728, parte do #690): as ADRs 0051 (testes do Go), 0052 (gerenciador), 0029 (`.msi`), 0032 (controles padrão) e 0012 (instalador em PowerShell) ficam com a decisão, as alternativas e as consequências, em até ~1,6 mil palavras cada. O passo a passo e o histórico foram para o guia de cada assunto, com link: `CONTRIBUINDO.md` ("Testes do back-end (Go)"), `src/gerenciador-go/README.md`, `instalador/README.md`, `scripts/README.md` e `docs/UI-UX.md`. Nenhuma decisão mudou.
+
+## [3.15.3] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Skills do Claude Code mais curtas, e sai a `migrar-para-go`** (#727, grupo 7 da #690 e item 3c da #689). Nada muda para quem usa. A migração para o Go terminou na #86, e a skill dela sai: como um assunto era no C# fica na tag `v-ultimo-dotnet`. As pegadinhas que ainda valem para o Go de hoje (arredondar com `tipos.Arredondar`, as contas do `tipos`, texto com acento, `enum` como número, validação, cascata) passam para o estilo da `go-no-projeto`, e a regra da issue feita em partes, para o roteiro dela. Nas outras skills, o que só repetia o `docs/UI-UX.md`, as ADRs ou o `CONTRIBUINDO.md` vira o caminho e o link; a `testar-no-navegador` passa a dizer que a CSP vem do Go, e não do `Seguranca.cs`.
+
+## [3.15.2] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **A tela de Metas dividida em tela, componentes de apresentação e funções puras** (#732; ADR 0059). O `metas.component.ts` caiu de 992 para 333 linhas e fica só com o estado (as metas, o plano, o que está aberto, a simulação na URL) e as chamadas da API. O bloco "Quanto guardar este mês", o cartão de cada meta e as janelas "Nova meta / Editar meta" e "Aporte" viraram `metas-assistente`, `metas-cartao`, `metas-formulario` e `metas-aporte`, que recebem por `input()` e avisam por `output()`; as janelas editam uma cópia, e fechar sem salvar não muda nada. A regra (a simulação na URL, as sanfonas, o limite do valor por mês, a data alvo pelo valor por mês, "concluída" ao aumentar o alvo, a ordem de prioridade e o gráfico "Como está indo") foi para funções puras em `metas.ts`, com 24 casos em 0,5 s no Jest, sem abrir a tela. Os links para outras telas continuam na tela e entram nos componentes por projeção de conteúdo, porque o componente de apresentação não importa o roteador (regra 8 do teste de arquitetura). Saíram junto o `mesmoMes` e o `rotuloMes`, que nada chamava, e uma regra de CSS sem uso. Os testes do navegador não mudaram; os do Jest que mexiam no formulário pelos campos da tela passaram a usar a cópia que a janela edita. Os prints saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
 
 ## [3.15.1] — 2026-11-16 · desenvolvimento
 
