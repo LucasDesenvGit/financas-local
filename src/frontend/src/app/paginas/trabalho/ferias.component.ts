@@ -210,7 +210,7 @@ export class TrabalhoFeriasComponent implements OnInit {
   simular(): void {
     const e = this.emprego();
     if (!e || !this.inicio) return;
-    this.api.simularFerias(e.id, this.inicio, this.dias, this.vendidos ?? 0, this.adiantarDecimo).subscribe({
+    this.api.simularFerias(e.id, this.periodoInicio, this.inicio, this.dias, this.vendidos ?? 0, this.adiantarDecimo).subscribe({
       next: (c) => { this.comparacao.set(null); this.simulacao.set(c); },
       error: (err) => this.avisos.erro(mensagemDeErro(err))
     });
@@ -221,8 +221,8 @@ export class TrabalhoFeriasComponent implements OnInit {
     const inicio = this.inicio;
     if (!e || !inicio) return;
     const opcoes = this.opcoes();
-    this.api.simularFerias(e.id, inicio, opcoes.tirar, 0, this.adiantarDecimo).subscribe({
-      next: (trinta) => this.api.simularFerias(e.id, inicio, opcoes.vendendo, opcoes.vender, this.adiantarDecimo).subscribe({
+    this.api.simularFerias(e.id, this.periodoInicio, inicio, opcoes.tirar, 0, this.adiantarDecimo).subscribe({
+      next: (trinta) => this.api.simularFerias(e.id, this.periodoInicio, inicio, opcoes.vendendo, opcoes.vender, this.adiantarDecimo).subscribe({
         next: (vendendo) => {
           this.simulacao.set(null);
           this.comparacao.set({ trinta, vendendo, opcoes, diferenca: diferencaDaVenda(trinta.liquido, vendendo.liquido) });

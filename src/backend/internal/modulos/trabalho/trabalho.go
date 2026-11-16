@@ -38,8 +38,8 @@ type Modulo struct {
 func Novo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Modulo {
 	empregos := emprego.NovoServico(db, r, log)
 	holerites := holerite.NovoServico(db, empregos, r, log)
-	decimo := decimoterceiro.NovoServico(db, empregos, holerites, r, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, r, log)
+	decimo := decimoterceiro.NovoServico(db, empregos, holerites, r, log).ComFerias(asFerias)
 	oFgts := fgts.NovoServico(db, empregos, holerites, decimo, asFerias, r, log)
 	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimo, ferias: asFerias, fgts: oFgts,
 		receb:    recebimento.NovoServico(db, empregos, holerites, r, log),

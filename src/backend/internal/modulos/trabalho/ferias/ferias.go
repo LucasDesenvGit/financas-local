@@ -90,13 +90,48 @@ func (s *Servico) emprego(ctx context.Context, id int64) (emprego.Emprego, error
 	return e, nil
 }
 
-// Simular calcula uma fração sem gravar (para comparar "tirar 30" com "vender 10").
-func (s *Servico) Simular(ctx context.Context, empregoId int64, inicio tipos.Data, dias, vendidos int, adiantar bool) (Calculo, error) {
+// Simular calcula uma fração sem gravar (para comparar "tirar 30" com "vender 10"). Com o período, os dias depois do
+// concessivo dele saem em dobro, como no agendado (revisão do #701).
+func (s *Servico) Simular(ctx context.Context, empregoId int64, periodo *tipos.Data, inicio tipos.Data, dias, vendidos int, adiantar bool) (Calculo, error) {
 	e, err := s.emprego(ctx, empregoId)
 	if err != nil {
 		return Calculo{}, err
 	}
-	return s.calcular(ctx, e, inicio, dias, vendidos, adiantar, 0)
+	emDobro := 0
+	if periodo != nil {
+		for _, p := range Periodos(e.Admissao, e.Saida, relogio.Hoje(s.relogio)) {
+			if p.Inicio.Igual(*periodo) {
+				emDobro = DiasEmDobro(inicio, dias, p.FimConcessivo)
+			}
+		}
+	}
+	return s.calcular(ctx, e, inicio, dias, vendidos, adiantar, emDobro)
+}
+
+// AdiantamentoDoAno é a 1ª parcela do 13º do ano que veio com as férias (revisão do #701): o pagamento (2 dias antes do
+// início) e o valor que as férias pagaram (nil sem a tabela do mês). Os dois nil quando nenhuma férias do ano a traz.
+// O 13º pede por aqui, e não lê a tabela das férias.
+func (s *Servico) AdiantamentoDoAno(ctx context.Context, empregoId int64, ano int) (*tipos.Data, *tipos.Decimal, error) {
+	periodos, err := s.Listar(ctx, empregoId)
+	if errors.Is(err, errSemFerias) {
+		return nil, nil, nil
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, p := range periodos {
+		for _, a := range p.Agendamentos {
+			if !a.AdiantarDecimo || a.Inicio.Ano() != ano {
+				continue
+			}
+			pagamento := a.Inicio.SomarDias(-2)
+			if a.Calculo == nil {
+				return &pagamento, nil, nil
+			}
+			return &pagamento, &a.Calculo.AdiantamentoDecimo, nil
+		}
+	}
+	return nil, nil, nil
 }
 
 func (s *Servico) calcular(ctx context.Context, e emprego.Emprego, inicio tipos.Data, dias, vendidos int, adiantar bool, emDobro int) (Calculo, error) {
@@ -147,7 +182,7 @@ func (s *Servico) Listar(ctx context.Context, empregoId int64) ([]PeriodoComFeri
 		}
 		faltas[inicio.String()] = n
 	}
-	if err := linhas.Close(); err != nil {
+	if err := errors.Join(linhas.Err(), linhas.Close()); err != nil {
 		return nil, err
 	}
 	porPeriodo := map[string][]Agendamento{}
@@ -165,7 +200,7 @@ func (s *Servico) Listar(ctx context.Context, empregoId int64) ([]PeriodoComFeri
 		}
 		porPeriodo[periodo.String()] = append(porPeriodo[periodo.String()], a)
 	}
-	if err := linhas.Close(); err != nil {
+	if err := errors.Join(linhas.Err(), linhas.Close()); err != nil {
 		return nil, err
 	}
 
@@ -240,7 +275,8 @@ func (s *Servico) Agendar(ctx context.Context, empregoId int64, periodoInicio, i
 }
 
 // conferirAgenda olha a fração nova contra todas as já agendadas do emprego (revisão do #701): não pode cruzar com
-// outra; a 1ª parcela do 13º vem com uma férias só por ano, e não em dezembro, quando ela já venceu (30/11).
+// outra; a 1ª parcela do 13º vem com uma férias só por ano, e só se elas são pagas (2 dias antes do início) até 30/11,
+// quando a 1ª vence, e no mesmo ano.
 func (s *Servico) conferirAgenda(periodos []PeriodoComFerias, inicio tipos.Data, dias int, adiantar bool) string {
 	fim := inicio.SomarDias(dias - 1)
 	for _, p := range periodos {
@@ -254,8 +290,12 @@ func (s *Servico) conferirAgenda(periodos []PeriodoComFerias, inicio tipos.Data,
 			}
 		}
 	}
-	if adiantar && inicio.Mes() == time.December {
-		return "Em dezembro, a 1ª parcela do 13º já venceu (30/11): ela não vem com as férias."
+	pagamento := inicio.SomarDias(-2)
+	switch {
+	case adiantar && pagamento.Ano() != inicio.Ano():
+		return "As férias que começam em 1º ou 2 de janeiro são pagas no ano anterior: a 1ª parcela do 13º não vem com elas."
+	case adiantar && pagamento.Depois(tipos.NovaData(inicio.Ano(), time.November, 30)):
+		return "A 1ª parcela do 13º vence em 30/11, e estas férias são pagas depois (2 dias antes do início): ela não vem com elas."
 	}
 	return ""
 }
@@ -292,10 +332,16 @@ func (s *Servico) DefinirFaltas(ctx context.Context, empregoId int64, periodoIni
 	if periodo == nil {
 		return nil, erroDeValidacao(MensagemPeriodo)
 	}
-	// As faltas novas diminuem o direito: ele não pode ficar menor que o já agendado (revisão do #701).
-	if agendados := periodo.DiasGozados + periodo.DiasVendidos; DiasDeDireito(faltas) < agendados {
+	// As faltas novas diminuem o direito: ele não pode ficar menor que o já agendado, nem a venda passar de 1/3 dele
+	// (revisão do #701).
+	direito := DiasDeDireito(faltas)
+	if agendados := periodo.DiasGozados + periodo.DiasVendidos; direito < agendados {
 		return nil, erroDeValidacao(fmt.Sprintf("Com %d faltas, o direito cai para %d dias, menos que os %d já agendados: desmarque "+
-			"férias antes.", faltas, DiasDeDireito(faltas), agendados))
+			"férias antes.", faltas, direito, agendados))
+	}
+	if periodo.DiasVendidos > direito/3 {
+		return nil, erroDeValidacao(fmt.Sprintf("Com %d faltas, o direito cai para %d dias, e a venda vai até %d (1/3), menos que os %d "+
+			"já vendidos: desmarque férias antes.", faltas, direito, direito/3, periodo.DiasVendidos))
 	}
 	_, err = s.db.ExecContext(ctx, `INSERT INTO "FeriasFaltas" ("EmpregoId", "PeriodoInicio", "Faltas") VALUES (?, ?, ?)
 		ON CONFLICT ("EmpregoId", "PeriodoInicio") DO UPDATE SET "Faltas" = excluded."Faltas"`, empregoId, periodoInicio, faltas)
@@ -414,6 +460,10 @@ func (s *Servico) simularHTTP(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemSimular)
 		return
 	}
-	c, err := s.Simular(r.Context(), idDe(r, "id"), inicio, dias, vendidos, r.URL.Query().Get("adiantar") == "true")
+	var periodo *tipos.Data
+	if p, err := tipos.LerData(r.URL.Query().Get("periodo")); err == nil {
+		periodo = &p
+	}
+	c, err := s.Simular(r.Context(), idDe(r, "id"), periodo, inicio, dias, vendidos, r.URL.Query().Get("adiantar") == "true")
 	s.responder(w, r, c, err)
 }

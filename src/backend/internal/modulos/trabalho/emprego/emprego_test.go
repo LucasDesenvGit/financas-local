@@ -221,12 +221,13 @@ func TestAtualizarEmprego(t *testing.T) {
 	a := novo(t)
 	id := a.criar(empregoValido)
 	caminho := fmt.Sprintf("/api/trabalho/empregos/%d", id)
-	// Admissão depois do primeiro salário (março de 2024) deixaria um salário fora do emprego.
-	r := a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-04-01"}`)
-	r.ConferirStatus(t, http.StatusBadRequest)
-	r.ConferirJSON(t, `{"mensagem":"Há salário antes dessa admissão. Apague o salário antigo ou escolha uma admissão até março de 2024."}`)
+	// Admissão depois do primeiro salário (março de 2024): o salário vai junto (revisão do #698).
+	a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-04-01"}`).ConferirStatus(t, http.StatusOK)
+	if e, _ := a.s.Obter(t.Context(), id); len(e.Salarios) != 1 || e.Salarios[0].Inicio.String() != "2024-04-01" {
+		t.Fatalf("salários = %+v", e.Salarios)
+	}
 
-	r = a.chamar("PUT", caminho, `{"empregador":"Nova Razão","admissao":"2024-03-31","saida":"2026-10-31","regime":1,"dependentes":2}`)
+	r := a.chamar("PUT", caminho, `{"empregador":"Nova Razão","admissao":"2024-03-31","saida":"2026-10-31","regime":1,"dependentes":2}`)
 	r.ConferirStatus(t, http.StatusOK)
 	var e Emprego
 	decodificar(t, r, &e)
@@ -264,6 +265,30 @@ func TestAtualizarAdmissaoESaidaComOsSalarios(t *testing.T) {
 	r.ConferirStatus(t, http.StatusBadRequest)
 	r.ConferirJSON(t, `{"mensagem":"Há salário a partir de junho de 2025, depois dessa saída. Apague esse salário ou escolha uma saída a partir de junho de 2025."}`)
 	a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-01-31","saida":"2025-06-01"}`).ConferirStatus(t, http.StatusOK)
+
+	// Revisão do #698 (2ª): a admissão corrigida para depois leva junto o primeiro salário, até antes do 2º; no mês do 2º
+	// ou depois, a mensagem pede para apagar o aumento (que sai), e não o primeiro (que não sai).
+	outro := a.criar(empregoValido)
+	caminho = fmt.Sprintf("/api/trabalho/empregos/%d", outro)
+	a.chamar("POST", caminho+"/salarios", `{"inicio":"2025-06-01","salarioBruto":5500}`).ConferirStatus(t, http.StatusOK)
+	a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-06-10"}`).ConferirStatus(t, http.StatusOK)
+	e, _ = a.s.Obter(t.Context(), outro)
+	if len(e.Salarios) != 2 || e.Salarios[1].Inicio.String() != "2024-06-01" || e.Salarios[0].Inicio.String() != "2025-06-01" {
+		t.Fatalf("admissão para depois: %+v", e.Salarios)
+	}
+	a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2025-05-31"}`).ConferirStatus(t, http.StatusOK)
+	for _, admissao := range []string{"2025-06-01", "2025-07-15"} {
+		r = a.chamar("PUT", caminho, `{"empregador":"E","admissao":"`+admissao+`"}`)
+		r.ConferirStatus(t, http.StatusBadRequest)
+		r.ConferirJSON(t, `{"mensagem":"Há um aumento a partir de junho de 2025, que ficaria no começo do emprego. Apague esse aumento ou escolha uma admissão antes de junho de 2025."}`)
+	}
+	// Com um salário só, ele vai para a admissão nova, e a saída se confere com ela.
+	sozinho := a.criar(`{"empregador":"S","admissao":"2024-06-10","salarioBruto":3000}`)
+	a.chamar("PUT", fmt.Sprintf("/api/trabalho/empregos/%d", sozinho), `{"empregador":"S","admissao":"2024-03-01","saida":"2024-05-31"}`).
+		ConferirStatus(t, http.StatusOK)
+	if e, _ := a.s.Obter(t.Context(), sozinho); e.Salarios[0].Inicio.String() != "2024-03-01" {
+		t.Fatalf("um salário só: %+v", e.Salarios)
+	}
 }
 
 func TestExcluirEmpregoLevaOsSalarios(t *testing.T) {

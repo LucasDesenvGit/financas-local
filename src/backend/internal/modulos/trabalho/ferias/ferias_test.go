@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"testing"
 
@@ -111,6 +112,11 @@ func TestValidarFracoes(t *testing.T) {
 		{"18 de direito, vende 6 e tira 12 de uma vez", nil, 0, 18, 12, 6, ""},
 		{"12 de direito em duas frações", nil, 0, 12, 6, 0, MensagemFracoes},
 		{"a 2ª fração que fecha o direito sem nenhuma de 14", []int{6}, 0, 12, 6, 0, MensagemFracoes},
+		// Revisão do #701 (2ª): dias e vendidos enormes estouravam a soma e passavam.
+		{"dias enormes com uma fração antes", []int{12}, 0, 30, math.MaxInt - 5, 0, "Os dias passam do que sobra de férias neste período."},
+		{"dias no direito, sem fração antes", nil, 0, 30, 31, 0, "Os dias passam do que sobra de férias neste período."},
+		{"vendidos enormes com venda antes", []int{14}, 5, 30, 5, math.MaxInt - 2, "Dá para vender até 1/3 dos dias de direito."},
+		{"vende o direito inteiro", nil, 0, 9, 5, 10, "Dá para vender até 1/3 dos dias de direito."},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -153,6 +159,10 @@ func TestCalcularFerias(t *testing.T) {
 		// (139,6596) = 376,6002; IRRF isento pela redução (rendimento até 5000).
 		{"com a média das horas extras", func(e *Entrada) { e.Dias, e.SomaVariaveis = 15, v("1200.00") },
 			"3050.00 1016.67 0.00 0.00 376.60 0.00 0.00 3690.07"},
+		// Revisão do #701: 10 dos 30 dias em dobro. Férias 6000 x 40/30 = 8000 + 1/3 = 10666,67. A dobra (2000 + 666,67) fica
+		// fora do INSS (Lei 8.212, art. 28, § 9º, "d"): base 8000, INSS 921,51, como os 30 dias simples. O IRRF sobre o todo:
+		// 10666,67 - 921,51 = 9745,16 x 27,5% - 908,73 = 1771,19.
+		{"com 10 dias em dobro", func(e *Entrada) { e.Dias, e.DiasEmDobro = 30, 10 }, "8000.00 2666.67 0.00 0.00 921.51 1771.19 0.00 7973.97"},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -242,8 +252,12 @@ func TestFeriasPelaApi(t *testing.T) {
 		{"período que não existe", "POST", base, `{"periodoInicio":"2025-03-12","inicio":"2026-12-01","dias":30}`, 400, MensagemPeriodo},
 		{"sem o início", "POST", base, `{"periodoInicio":"2025-03-11","dias":30}`, 400, "Informe o período e o dia do início."},
 		{"fração curta", "POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-12-01","dias":4}`, 400, MensagemFracoes},
-		{"13º adiantado em dezembro", "POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-12-01","dias":30,"adiantarDecimo":true}`, 400,
-			"Em dezembro, a 1ª parcela do 13º já venceu (30/11): ela não vem com as férias."},
+		{"13º adiantado com o pagamento depois de 30/11", "POST", base,
+			`{"periodoInicio":"2025-03-11","inicio":"2026-12-03","dias":30,"adiantarDecimo":true}`, 400,
+			"A 1ª parcela do 13º vence em 30/11, e estas férias são pagas depois (2 dias antes do início): ela não vem com elas."},
+		{"13º adiantado com o pagamento no ano anterior", "POST", base,
+			`{"periodoInicio":"2025-03-11","inicio":"2027-01-02","dias":30,"adiantarDecimo":true}`, 400,
+			"As férias que começam em 1º ou 2 de janeiro são pagas no ano anterior: a 1ª parcela do 13º não vem com elas."},
 		{"JSON quebrado", "POST", base, `{"dias":`, 400, MensagemJSONInvalido},
 		{"sem tabela (dezembro de 2024)", "GET", base + "/simular?inicio=2024-12-01&dias=30", "", 409, MensagemSemTabela},
 		{"simular sem os dias", "GET", base + "/simular?inicio=2026-12-01", "", 400, MensagemSimular},
@@ -335,4 +349,85 @@ func TestFeriasPelaApi(t *testing.T) {
 	r.ConferirJSON(t, `{"mensagem":"As férias começam depois da saída do emprego: as que sobraram vêm na rescisão."}`)
 	chamar("DELETE", base+"/99", "").ConferirStatus(t, http.StatusNotFound)
 	chamar("DELETE", base+"/x", "").ConferirStatus(t, http.StatusNotFound)
+}
+
+// Revisão do #701 (2ª): a 1ª parcela do 13º vem com as férias pagas (2 dias antes do início) até 30/11 e no mesmo ano.
+func TestConferirAgendaPeloPagamento(t *testing.T) {
+	t.Parallel()
+	s := &Servico{}
+	casos := map[string]bool{"2026-12-01": true, "2026-12-02": true, "2026-12-03": false, "2027-01-02": false, "2027-01-03": true}
+	for inicio, pode := range casos {
+		d, _ := tipos.LerData(inicio)
+		if got := s.conferirAgenda(nil, d, 30, true) == ""; got != pode {
+			t.Errorf("início em %s: pode = %v, quero %v", inicio, got, pode)
+		}
+		if s.conferirAgenda(nil, d, 30, false) != "" {
+			t.Errorf("início em %s, sem o 13º: recusou", inicio)
+		}
+	}
+}
+
+// Revisão do #701 (2ª): o "Ver a conta" mostra a dobra do período (como o agendado); as faltas novas não deixam a venda
+// passar de 1/3 do direito; e o 13º pede às férias a 1ª parcela que veio com elas, no valor que elas pagaram.
+func TestSimularFaltasEAdiantamento(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	s := NovoServico(db, empregos, holerites, rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	Registrar(m, s)
+	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
+		return testeapoio.Chamar(t, m, metodo, caminho, corpo)
+	}
+	var e emprego.Emprego
+	_ = json.Unmarshal(chamar("POST", "/api/trabalho/empregos", `{"empregador":"E","admissao":"2024-03-11","salarioBruto":6000}`).Corpo, &e)
+	base := fmt.Sprintf("/api/trabalho/empregos/%d/ferias", e.Id)
+
+	// O 1º período (concessivo até 10/03/2026) simulado em 01/12/2026: os 20 dias em dobro; sem o período, simples.
+	var dobro, simples Calculo
+	_ = json.Unmarshal(chamar("GET", base+"/simular?periodo=2024-03-11&inicio=2026-12-01&dias=20", "").Corpo, &dobro)
+	_ = json.Unmarshal(chamar("GET", base+"/simular?inicio=2026-12-01&dias=20", "").Corpo, &simples)
+	if dobro.DiasEmDobro != 20 || simples.DiasEmDobro != 0 || dobro.Ferias.String() != "8000.00" {
+		t.Fatalf("simular: dobro %+v, simples %+v", dobro, simples)
+	}
+	var outro Calculo
+	_ = json.Unmarshal(chamar("GET", base+"/simular?periodo=2020-01-01&inicio=2026-12-01&dias=20", "").Corpo, &outro)
+	if outro.DiasEmDobro != 0 {
+		t.Fatalf("período que não existe: %+v", outro)
+	}
+
+	// 5 dias e 10 vendidos no 2º período: com 6 faltas o direito cai para 24, e a venda vai até 8.
+	chamar("POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-07-15","dias":5,"diasVendidos":10,"adiantarDecimo":true}`).
+		ConferirStatus(t, http.StatusOK)
+	r := chamar("PUT", base+"/faltas", `{"periodoInicio":"2025-03-11","faltas":6}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"Com 6 faltas, o direito cai para 24 dias, e a venda vai até 8 (1/3), menos que os 10 já vendidos: desmarque férias antes."}`)
+	chamar("PUT", base+"/faltas", `{"periodoInicio":"2025-03-11","faltas":5}`).ConferirStatus(t, http.StatusOK)
+	// Uma fração antes, no mesmo período, sem o 13º: a de julho, com ele, ainda é a que vale.
+	chamar("POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-04-01","dias":14}`).ConferirStatus(t, http.StatusOK)
+
+	// O aumento para 7000 em setembro não muda o que as férias de julho pagaram de 1ª parcela (3000, a metade de 6000).
+	chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/salarios", e.Id), `{"inicio":"2026-09-01","salarioBruto":7000}`).
+		ConferirStatus(t, http.StatusOK)
+	pagamento, valor, err := s.AdiantamentoDoAno(t.Context(), e.Id, 2026)
+	if err != nil || pagamento == nil || pagamento.String() != "2026-07-13" || valor == nil || valor.String() != "3000.00" {
+		t.Fatalf("adiantamento de 2026: %v %v %v", pagamento, valor, err)
+	}
+	if p, v, err := s.AdiantamentoDoAno(t.Context(), e.Id, 2025); p != nil || v != nil || err != nil {
+		t.Fatalf("2025, sem férias com o 13º: %v %v %v", p, v, err)
+	}
+	// Sem a tabela do mês (dezembro de 2024), vem só a data.
+	chamar("POST", base, `{"periodoInicio":"2024-03-11","inicio":"2024-09-10","dias":30}`) // antes do fim do período: recusado
+	pj := emprego.Emprego{}
+	_ = json.Unmarshal(chamar("POST", "/api/trabalho/empregos", `{"empregador":"P","admissao":"2020-01-01","salarioBruto":9000,"regime":3}`).Corpo, &pj)
+	if p, v, err := s.AdiantamentoDoAno(t.Context(), pj.Id, 2026); p != nil || v != nil || err != nil {
+		t.Fatalf("PJ: %v %v %v", p, v, err)
+	}
+	if _, _, err := s.AdiantamentoDoAno(t.Context(), 999, 2026); err == nil {
+		t.Fatal("emprego que não existe: sem erro")
+	}
 }

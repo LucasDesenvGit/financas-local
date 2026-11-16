@@ -34,7 +34,7 @@ test('Trabalho › Férias: períodos, a conta, 30 × vender 10 e agendar', asyn
   });
   await page.route('**/api/trabalho/empregos/1/ferias/simular**', (r) => {
     const q = new URL(r.request().url()).searchParams;
-    pedidos.push(`simular ${q.get('dias')} ${q.get('vendidos')}`);
+    pedidos.push(`simular ${q.get('periodo')} ${q.get('dias')} ${q.get('vendidos')}`);
     return r.fulfill(json(q.get('dias') === '30' ? conta(30, 0, 6040.64) : conta(20, 10, 7329.37)));
   });
 
@@ -56,6 +56,8 @@ test('Trabalho › Férias: períodos, a conta, 30 × vender 10 e agendar', asyn
   await agendar.getByLabel('Dias vendidos').fill('10');
   await agendar.getByRole('button', { name: 'Ver a conta' }).click();
   await expect(agendar.locator('.conta')).toContainText('Cai na conta até 29/11');
+  // A simulação vai com o período escolhido, para a dobra sair como no agendado (revisão do #701).
+  expect(pedidos.filter((p) => p.startsWith('simular'))).toEqual(['simular 2024-03-11 30 0', 'simular 2024-03-11 20 10', 'simular 2024-03-11 20 10']);
 
   const pasta = process.env['FOTOS_PASTA'];
   if (pasta) {
