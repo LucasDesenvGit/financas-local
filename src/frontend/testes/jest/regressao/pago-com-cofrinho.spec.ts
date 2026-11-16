@@ -1,6 +1,6 @@
 import { Conta, FormaCobranca, OrigemConta, Reserva } from '../../../src/app/core/modelos';
 import {
-  aceitaCofrinho, baixaSozinha, cofrinhoEncontrado, mostrarPagar, opcoesCofrinho, podeLancar, textoPagamentoCofrinho
+  aceitaCofrinho, baixaSozinha, cofrinhoEncontrado, mostrarPagar, opcoesCofrinho, podeLancar, textoOpcaoCofrinho, textoPagamentoCofrinho
 } from '../../../src/app/paginas/movimentacao/pago-com-cofrinho';
 import { abrirContasAPagar, contaAgendada } from '../apoio/contas-agendadas';
 import { diferencaComoGasto, podeRegistrarSaida } from '../../../src/app/paginas/patrimonio/reserva-conferencia';
@@ -16,6 +16,12 @@ describe('#691: pago com o cofrinho', () => {
     podeTerSaldoAnterior: false, conferenciaAntiga: false, ...campos
   });
   const conta = (origem: OrigemConta, id = 7) => ({ id, origem } as Conta);
+
+  it('#719: a opção mostra só o nome do cofrinho, sem "Cofrinho" na frente', () => {
+    expect(textoOpcaoCofrinho({ nome: 'Cofrinho da Virada', saldo: 120 })).toBe('Cofrinho da Virada');
+    expect(textoOpcaoCofrinho({ nome: 'Emergência', saldo: 900 })).toBe('Emergência');
+    expect(textoOpcaoCofrinho({ nome: 'Antigo', saldo: null })).toBe('Antigo (não encontrado nas reservas)');
+  });
 
   it('o cofrinho só vale em conta do Open Finance e fora do cartão', () => {
     expect(aceitaCofrinho(conta(OrigemConta.OpenFinance), FormaCobranca.DebitoAutomatico)).toBe(true);

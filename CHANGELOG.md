@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.15.1] — 2026-11-16 · desenvolvimento
+## [3.15.2] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
 - **Skills do Claude Code mais curtas, e sai a `migrar-para-go`** (#727, grupo 7 da #690 e item 3c da #689). Nada muda para quem usa. A migração para o Go terminou na #86, e a skill dela sai: como um assunto era no C# fica na tag `v-ultimo-dotnet`. As pegadinhas que ainda valem para o Go de hoje (arredondar com `tipos.Arredondar`, as contas do `tipos`, texto com acento, `enum` como número, validação, cascata) passam para o estilo da `go-no-projeto`, e a regra da issue feita em partes, para o roteiro dela. Nas outras skills, o que só repetia o `docs/UI-UX.md`, as ADRs ou o `CONTRIBUINDO.md` vira o caminho e o link; a `testar-no-navegador` passa a dizer que a CSP vem do Go, e não do `Seguranca.cs`.
+
+## [3.15.1] — 2026-11-16 · desenvolvimento
+
+### Correções
+- **Contas a pagar: o "Pago com" sem a palavra "Cofrinho" repetida** (#719). A lista punha "Cofrinho" antes de cada nome, e o nome quase sempre já tem a palavra ("Cofrinho Cofrinho da Virada"). Agora o campo se chama "Pago com o cofrinho" e a lista mostra só o nome, como no app do banco; a opção sem cofrinho virou "Nenhum (sai do saldo da conta)". O "Qual cofrinho" do "Pagar" também mostra só o nome.
 
 ## [3.15.0] — 2026-11-16 · desenvolvimento
 
