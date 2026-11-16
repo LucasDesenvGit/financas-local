@@ -73,6 +73,44 @@ func TestPeriodicaRodaNoAtrasoENoIntervaloEParaComOContexto(t *testing.T) {
 	})
 }
 
+// O sinal roda o ciclo na hora, no atraso e no intervalo; sinais seguidos viram um só.
+func TestPeriodicaOuAoSinal(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		inicio := time.Now()
+		var mu sync.Mutex
+		var quando []time.Duration
+		sinal := make(chan struct{}, 1)
+		ctx, cancelar := context.WithCancel(t.Context())
+		terminou := make(chan struct{})
+		go func() {
+			defer close(terminou)
+			PeriodicaOuAoSinal(ctx, slog.New(slog.DiscardHandler), "o teste", time.Hour, time.Hour, sinal, func(context.Context) error {
+				mu.Lock()
+				defer mu.Unlock()
+				quando = append(quando, time.Since(inicio))
+				return nil
+			})
+		}()
+		vezes := func() []time.Duration { mu.Lock(); defer mu.Unlock(); return append([]time.Duration{}, quando...) }
+
+		time.Sleep(time.Minute)
+		sinal <- struct{}{} // no atraso: roda aos 1 min
+		synctest.Wait()
+		time.Sleep(time.Minute)
+		sinal <- struct{}{} // no intervalo: roda aos 2 min
+		synctest.Wait()
+		time.Sleep(time.Hour) // e o ticker segue: 1 h depois do primeiro ciclo
+		synctest.Wait()
+		esperado := []time.Duration{time.Minute, 2 * time.Minute, time.Hour + time.Minute}
+		if obtido := vezes(); len(obtido) != len(esperado) || obtido[0] != esperado[0] || obtido[1] != esperado[1] || obtido[2] != esperado[2] {
+			t.Fatalf("rodou em %v, esperado %v", obtido, esperado)
+		}
+		cancelar()
+		synctest.Wait()
+		<-terminou
+	})
+}
+
 func TestPeriodicaCanceladaNoAtrasoNaoRoda(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancelar := context.WithCancel(t.Context())

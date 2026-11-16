@@ -9,13 +9,13 @@ Todos em `src/app/compartilhado/`, numa subpasta (`ui/`, `graficos/`, `bancos/`,
 | Preciso de… | Use | O que ele já faz |
 |---|---|---|
 | Qualquer gráfico | `<app-grafico [configuracao]="...">` (`grafico.component.ts`) | Chart.js em `<canvas>` (cabe na CSP), cores do tema, "ocultar valores", `dicaClique` e `itemClicavel` |
-| Gráfico de linha | o mesmo, com `type: 'line'` | `linhasNoPadrao` (`grafico-linhas.ts`): a principal preenchida até a base, com pontos; a tracejada sem nada. **Não use `fill: true`**; para fugir do padrão, o conjunto declara `fill: false` ou `pointRadius` |
-| Barras com linha | o mesmo, misto | `linhaPorCimaDasBarras` (`grafico-misto.ts`): a linha por cima, um ponto por mês. Linha de referência (média, meta) declara `pointRadius: 0` |
-| A frase-resumo e o "como ler" | `<app-grafico-explicado [resumo]="..." comoLer="...">` envolvendo o `<app-grafico>` | o padrão "gráfico se explica" de `docs/UI-UX.md`; o resumo é a alternativa em texto do `<canvas>` (WCAG 1.1.1) e respeita "ocultar valores" |
+| Gráfico de linha | o mesmo, com `type: 'line'` | `linhasNoPadrao` (`grafico-linhas.ts`): o padrão "gráfico de linha" de `docs/UI-UX.md` (sem `fill: true`, e como fugir dele) |
+| Barras com linha | o mesmo, misto | `linhaPorCimaDasBarras` (`grafico-misto.ts`): o padrão "barras com linha" de `docs/UI-UX.md` (e a linha de referência) |
+| A frase-resumo e o "como ler" | `<app-grafico-explicado [resumo]="..." comoLer="...">` envolvendo o `<app-grafico>` | o padrão "gráfico se explica" de `docs/UI-UX.md` (WCAG 1.1.1) |
 | Cor com significado | `CORES_GRAFICO` (`cores-graficos.ts`) | receita verde, despesa rosa, emergência laranja, em todas as telas |
 | Rosca de categorias | `rosca-categorias.ts` | junta as fatias menores que 3% em "Outras" (WCAG 2.5.8) |
-| Clique no gráfico | `(itemClicado)` **mais** um `<a>`/`<button>` com a mesma ação no HTML | clique no `<canvas>` nunca é o único caminho (WCAG 2.1.1; `docs/UI-UX.md`) |
-| Esconder análises de apoio | `<app-mais-analises chave="<tela>" conteudo="o que tem dentro">` com `<ng-template>` | botão com `aria-expanded`, conteúdo criado só ao abrir, escolha lembrada por tela em `financas.maisAnalises.<tela>` (Progressive Disclosure) |
+| Clique no gráfico | `(itemClicado)` **mais** um `<a>`/`<button>` com a mesma ação no HTML | WCAG 2.1.1 em `docs/UI-UX.md` |
+| Esconder análises de apoio | `<app-mais-analises chave="<tela>" conteudo="o que tem dentro">` com `<ng-template>` | o padrão "tela densa" de `docs/UI-UX.md`; a escolha fica em `financas.maisAnalises.<tela>` |
 
 ## Campos e controles (ADR 0032)
 
@@ -26,8 +26,8 @@ Todos em `src/app/compartilhado/`, numa subpasta (`ui/`, `graficos/`, `bancos/`,
 | Mês | `<app-seletor-mes [valor]="..." (mudou)="...">` (`seletor-mes.component.ts`) | ‹ › e o quadro de meses com o ano; mesmo padrão de subir de nível (#342) |
 | Escolher vários | `<app-seletor-multiplo>` (`seletor-multiplo.component.ts`) | no lugar do `<select multiple>`: caixas de marcar, resumo no botão ("3 categorias") |
 | Lista suspensa | `<select>` normal **com** a `ListaSuspensaDirective` nos `imports` (`lista-suspensa.directive.ts`, seletor `select:not([multiple])`) | a lista no visual do site, por cima do nativo, que continua dono do valor |
-| Interruptor (efeito imediato) | `<label class="interruptor"><input type="checkbox" role="switch" ...> Rótulo</label>` | o desenho está no `styles.css`; teclado e leitor de tela vêm do checkbox nativo. O que depende de "Salvar" é caixa de marcar, não interruptor |
-| Marcar linha de tabela | `<td><label class="celula-marcar"><input type="checkbox" [attr.aria-label]="'... ' + nome"></label></td>` e `[class.selecionada]` no `<tr>` | a célula inteira é o alvo; o nome da caixa diz qual linha |
+| Interruptor (efeito imediato) | `<label class="interruptor"><input type="checkbox" role="switch" ...> Rótulo</label>` | o desenho está no `styles.css`; teclado e leitor de tela vêm do checkbox nativo. Quando usar: `docs/UI-UX.md` e ADR 0032 |
+| Marcar linha de tabela | `<td><label class="celula-marcar"><input type="checkbox" [attr.aria-label]="'... ' + nome"></label></td>` e `[class.selecionada]` no `<tr>` | o padrão "seleção em tabela" de `docs/UI-UX.md` |
 | Janela por cima | `<app-modal [titulo]="..." [aberto]="..." (fechar)="...">` (`modal.component.ts`) | o último aberto fica por cima e o Esc fecha só ele. Prefira navegar para a tela de detalhe quando ela existe (ADR 0018) |
 | Perguntar antes de agir (excluir, descartar) | `await inject(ConfirmacaoService).confirmar({ mensagem, confirmar: '<verbo>', perigo })` (`confirmacao.service.ts`; o `<app-confirmacao>` já está no `layout`) | nunca `confirm()` ([ADR 0057](../../../../docs/adr/0057-confirmacao-pelo-modal-do-site-e-nao-pelo-confirm.md)); no teste, espie o `confirmar` do serviço |
 | Menu de ações | `<app-menu-acoes>` (`menu-acoes.component.ts`) | padrão Menu Button do WAI-ARIA: setas, Home/End, Esc devolve o foco |

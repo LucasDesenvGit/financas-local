@@ -11,8 +11,7 @@ import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component'
 import { CampoValorComponent } from '../../compartilhado/ui/campo-valor.component';
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
-import { empregoAtual } from './salario';
-import { MOTIVOS, TIPOS, descreverLancamento, totalDepositado, ultimosMeses } from './fgts';
+import { MOTIVOS, TIPOS, descreverLancamento, empregoDoFgts, empregosComFgts, totalDepositado, ultimosMeses } from './fgts';
 
 /**
  * #216 (ADR 0066): Trabalho › FGTS. O saldo estimado (os depósitos de 8%, corrigidos a 3% ao ano), conferido com o saldo
@@ -25,6 +24,15 @@ import { MOTIVOS, TIPOS, descreverLancamento, totalDepositado, ultimosMeses } fr
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina"><h1>FGTS</h1></header>
+    @if (empregos().length > 1) {
+      <label class="escolha-emprego">Emprego
+        <select name="emprego" [ngModel]="emprego()?.id" (ngModelChange)="trocar($event)">
+          @for (e of empregos(); track e.id) {
+            <option [ngValue]="e.id">{{ e.empregador }}@if (e.saida) { (saiu em {{ e.saida | date: 'MM/yyyy' }})}</option>
+          }
+        </select>
+      </label>
+    }
 
     @if (carregando()) {
       <p class="texto-suave" role="status">Carregando…</p>
@@ -106,6 +114,8 @@ import { MOTIVOS, TIPOS, descreverLancamento, totalDepositado, ultimosMeses } fr
     }
   `,
   styles: [`
+    .escolha-emprego { display: inline-flex; flex-direction: column; gap: 4px; margin-bottom: 12px; max-width: 100%; }
+    .escolha-emprego select { max-width: 100%; }
     .saldo { font-size: 1.8rem; font-weight: 700; margin: 4px 0; font-variant-numeric: tabular-nums; }
     .lancamentos { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
     .lancamentos li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -129,6 +139,7 @@ export class TrabalhoFgtsComponent implements OnInit {
   readonly carregando = signal(true);
   readonly ocupado = signal(false);
   readonly emprego = signal<Emprego | null>(null);
+  readonly empregos = signal<Emprego[]>([]);
   readonly fgts = signal<Fgts | null>(null);
   readonly erro = signal<string | null>(null);
   readonly meses = computed(() => ultimosMeses(this.fgts()?.meses ?? []));
@@ -141,9 +152,21 @@ export class TrabalhoFgtsComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.empregos().subscribe({
-      next: (lista) => { this.emprego.set(empregoAtual(lista)); this.carregando.set(false); this.carregar(); },
+      next: (lista) => {
+        this.empregos.set(empregosComFgts(lista));
+        this.emprego.set(empregoDoFgts(lista));
+        this.carregando.set(false);
+        this.carregar();
+      },
       error: (e) => { this.carregando.set(false); this.avisos.erro(mensagemDeErro(e)); }
     });
+  }
+
+  /** Outro emprego CLT: o FGTS dele (o de um emprego antigo continua lá, com o saque da rescisão). */
+  trocar(id: number): void {
+    this.emprego.set(this.empregos().find((e) => e.id === Number(id)) ?? null);
+    this.fgts.set(null);
+    this.carregar();
   }
 
   private carregar(): void {

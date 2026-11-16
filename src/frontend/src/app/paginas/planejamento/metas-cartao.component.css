@@ -1,0 +1,89 @@
+.aviso-cofrinho { margin: 0; padding: 6px 10px; border-radius: var(--raio-pequeno); background: var(--alerta-suave); font-size: 0.85rem; }
+.linha-prioridade { display: flex; align-items: center; gap: 6px; }
+.linha-prioridade .botao-icone { width: 28px; height: 28px; }
+/* #316: divisórias no cartão (o progresso, o plano do mês e as ações), na cor de linha do site. */
+.recomendado { margin: 8px 0 0; padding-top: 12px; border-top: 1px solid var(--linha); }
+:host(.cartao-meta) footer { border-top: 1px solid var(--linha); }
+/* #318: "Como está indo": a lista dos últimos aportes, data à esquerda e valor à direita. */
+.titulo-aportes { margin: 8px 0 4px; font-size: 0.86rem; font-weight: 600; color: var(--texto-suave); }
+.lista-aportes { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.lista-aportes li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+/* #335: cada meta é uma sanfona na largura toda (a lista é uma coluna). */
+.meta-titulo { margin: 0; font-size: 1rem; }
+.meta-alternar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; width: 100%; min-height: 44px; padding: 4px 6px;
+  margin: -4px -6px; box-sizing: content-box; border: 0; border-radius: var(--raio-pequeno); background: none;
+  font: inherit; font-weight: 600; color: var(--texto-forte); text-align: left; cursor: pointer;
+  transition: background-color var(--transicao);
+}
+.meta-alternar:hover { background: var(--superficie-2); }
+.meta-nome { flex: 1 1 160px; min-width: 0; }
+.meta-resumo-curto { font-weight: 400; font-size: 0.88rem; }
+.meta-seta { color: var(--texto-suave); transition: transform 0.2s ease; margin-left: auto; }
+.meta-alternar[aria-expanded="true"] .meta-seta { transform: rotate(90deg); }
+/* No celular, a seta fica na linha do nome (à direita), e o resumo vai inteiro para a linha de baixo. */
+@media (max-width: 760px) {
+  .meta-alternar .etiqueta { order: 2; }
+  .meta-seta { order: 3; }
+  .meta-resumo-curto { order: 4; flex-basis: 100%; }
+}
+.meta-conteudo { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.2s ease, visibility 0s linear 0s; }
+.meta-conteudo.fechado { grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.2s ease, visibility 0s linear 0.2s; }
+.meta-dentro { min-height: 0; overflow: hidden; }
+.meta-corpo { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--linha); }
+.meta-resumo, .meta-detalhe { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.meta-resumo { align-items: center; text-align: center; }
+.meta-resumo .linha-prioridade { justify-content: center; }
+/* No computador, aberta: o resumo (anel, valores, prazo, prioridade) centralizado à esquerda e o plano à direita. */
+@media (min-width: 901px) {
+  .meta-corpo { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 0 32px; align-items: stretch; }
+  /* As duas colunas centralizadas na vertical: o plano curto não deixa um buraco até as ações. */
+  .meta-resumo, .meta-detalhe { justify-content: center; }
+  .meta-detalhe { border-left: 1px solid var(--linha); padding-left: 32px; }
+  .meta-detalhe > .recomendado:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+  .meta-corpo > footer { grid-column: 1 / -1; margin-top: 12px; }
+}
+/* #359: aviso amarelo como o da recomendação: caixa com a barra à esquerda, o ⚠ na cor do alerta, o texto ao lado. */
+.aviso-prazo {
+  display: flex; gap: 8px; align-items: baseline; margin: 2px 0; padding: 8px 12px; border-radius: 10px;
+  background: var(--alerta-suave); border-left: 4px solid var(--alerta); font-size: 0.875rem; line-height: 1.5;
+}
+/* #359: na meta concluída (fundo verde), o hover do título é um verde translúcido, e não o cinza das outras. */
+:host(.cartao-meta.concluida) .meta-alternar:hover { background: color-mix(in srgb, var(--positivo) 14%, transparent); }
+.aviso-concluida {
+  display: flex; gap: 8px; align-items: baseline; margin: 0 0 6px; padding: 8px 12px; border-radius: 10px;
+  background: var(--positivo-suave); border-left: 4px solid var(--positivo); font-size: 0.875rem; line-height: 1.5;
+}
+.aviso-concluida .icone-aviso { color: var(--positivo); font-weight: 700; flex: none; }
+.aviso-concluida strong { color: var(--texto-forte); }
+.aviso-prazo .icone-aviso { color: var(--alerta); font-size: 1rem; line-height: 1; flex: none; }
+.aviso-prazo strong { color: var(--texto-forte); }
+.botao-plano, .botao-ajuste, .botao-evolucao { justify-self: start; padding-left: 0; }
+.ajuste-mes { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.ajuste-mes label { flex: 1 1 160px; font-size: 0.85rem; }
+/* #335: "Este mês: guarde" e "Consigo guardar outro valor" na mesma linha. */
+.recomendado { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
+.recomendado .botao-ajuste { padding: 0; min-height: 24px; }
+.mais-meses { display: flex; gap: 16px; margin-top: 4px; font-size: 0.85rem; }
+.saidas-prazo { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; margin-top: 4px; }
+.saidas-prazo .separador { color: var(--texto-suave); }
+.saidas-prazo .link { padding: 0; min-height: 24px; }
+.nota-plano { margin: 0; font-size: 0.8rem; }
+.tabela-plano { font-size: 0.8rem; }
+.tabela-plano th, .tabela-plano td { padding: 4px 6px; }
+/* #359: o ícone da meta no centro do anel, translúcido na cor dela, atrás do percentual. */
+.anel .anel-icone {
+  position: absolute; inset: 0; z-index: 1; display: grid; place-items: center;
+  color: var(--cor); opacity: 0.22; pointer-events: none;
+}
+.anel .anel-percentual { z-index: 2; text-shadow: 0 1px 2px var(--superficie); }
+/* #359: o miolo do anel enche de baixo para cima, na cor da meta (a do ícone), até o percentual guardado. */
+.anel::after {
+  background: linear-gradient(to top, color-mix(in srgb, var(--cor) 30%, var(--superficie)) calc(var(--pct) * 1%),
+    var(--superficie) calc(var(--pct) * 1%));
+}
+/* #316: ícone da meta, num círculo com a cor dela (a mesma do anel). */
+.icone-meta {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+  color: var(--cor); background: color-mix(in srgb, var(--cor) 22%, transparent);
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 var v = testeapoio.Valor
@@ -43,6 +44,38 @@ func TestPeriodos(t *testing.T) {
 	if p := Periodos(hoje, nil, hoje); len(p) != 1 || p[0].Completo {
 		t.Fatalf("começa hoje: %+v", p)
 	}
+	// Admissão em 29/02 (revisão do #701): o aniversário é 01/03 nos anos comuns e volta a 29/02 nos bissextos.
+	p = Periodos(testeapoio.Dia(2024, 2, 29), nil, testeapoio.Dia(2028, 3, 1))
+	var got []string
+	for _, x := range p {
+		got = append(got, x.Inicio.String()+".."+x.Fim.String()+"/"+x.FimConcessivo.String())
+	}
+	quer := []string{"2024-02-29..2025-02-28/2026-02-28", "2025-03-01..2026-02-28/2027-02-28", "2026-03-01..2027-02-28/2028-02-28",
+		"2027-03-01..2028-02-28/2029-02-28", "2028-02-29..2029-02-28/2030-02-28"}
+	if fmt.Sprint(got) != fmt.Sprint(quer) {
+		t.Fatalf("29/02:\n%v\nquer\n%v", got, quer)
+	}
+}
+
+func TestDiasEmDobro(t *testing.T) {
+	t.Parallel()
+	fim := testeapoio.Dia(2026, 3, 10)
+	casos := []struct {
+		inicio tipos.Data
+		dias   int
+		quer   int
+	}{
+		{testeapoio.Dia(2026, 2, 9), 30, 0},  // acaba no último dia do concessivo
+		{testeapoio.Dia(2026, 2, 10), 30, 1}, // um dia depois
+		{testeapoio.Dia(2026, 3, 1), 20, 10},
+		{testeapoio.Dia(2026, 3, 11), 30, 30}, // começa depois: tudo em dobro
+		{testeapoio.Dia(2026, 3, 10), 5, 4},
+	}
+	for _, c := range casos {
+		if got := DiasEmDobro(c.inicio, c.dias, fim); got != c.quer {
+			t.Errorf("DiasEmDobro(%s, %d) = %d; quer %d", c.inicio, c.dias, got, c.quer)
+		}
+	}
 }
 
 func TestValidarFracoes(t *testing.T) {
@@ -73,6 +106,11 @@ func TestValidarFracoes(t *testing.T) {
 		{"vendeu antes e não sobra uma de 14", []int{10}, 10, 30, 5, 0, MensagemFracoes},
 		{"a 3ª fração sem nenhuma de 14", []int{5, 5}, 0, 30, 5, 0, MensagemFracoes},
 		{"sem direito", nil, 0, 0, 14, 0, "Com mais de 32 faltas no período, não há férias (CLT, art. 130)."},
+		// Revisão do #701: os 14 dias só valem quando há fracionamento.
+		{"12 de direito num bloco só", nil, 0, 12, 12, 0, ""},
+		{"18 de direito, vende 6 e tira 12 de uma vez", nil, 0, 18, 12, 6, ""},
+		{"12 de direito em duas frações", nil, 0, 12, 6, 0, MensagemFracoes},
+		{"a 2ª fração que fecha o direito sem nenhuma de 14", []int{6}, 0, 12, 6, 0, MensagemFracoes},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -175,11 +213,15 @@ func TestFeriasPelaApi(t *testing.T) {
 	if len(p) != 3 || !p[0].Vencida || p[0].Saldo != 30 || p[1].Vencida || p[1].Vencendo || p[2].Completo {
 		t.Fatalf("períodos = %+v", p)
 	}
-	p = periodos(chamar("POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-12-01","dias":20,"diasVendidos":10,"adiantarDecimo":true}`))
+	p = periodos(chamar("POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-11-03","dias":20,"diasVendidos":10,"adiantarDecimo":true}`))
 	a := p[1].Agendamentos
-	if len(a) != 1 || p[1].Saldo != 0 || a[0].Calculo == nil || a[0].Calculo.Liquido.String() != "10329.37" {
+	if len(a) != 1 || p[1].Saldo != 0 || a[0].Calculo == nil || a[0].Calculo.Liquido.String() != "10329.37" || a[0].Calculo.DiasEmDobro != 0 {
 		t.Fatalf("agendado = %+v", p[1])
 	}
+	// Revisão do #701: as faltas não deixam o direito menor que o já agendado.
+	r := chamar("PUT", base+"/faltas", `{"periodoInicio":"2025-03-11","faltas":10}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"Com 10 faltas, o direito cai para 24 dias, menos que os 30 já agendados: desmarque férias antes."}`)
 	// As faltas reduzem o direito.
 	p = periodos(chamar("PUT", base+"/faltas", `{"periodoInicio":"2024-03-11","faltas":10}`))
 	if p[0].Faltas != 10 || p[0].DiasDireito != 24 || p[0].Saldo != 24 {
@@ -200,12 +242,16 @@ func TestFeriasPelaApi(t *testing.T) {
 		{"período que não existe", "POST", base, `{"periodoInicio":"2025-03-12","inicio":"2026-12-01","dias":30}`, 400, MensagemPeriodo},
 		{"sem o início", "POST", base, `{"periodoInicio":"2025-03-11","dias":30}`, 400, "Informe o período e o dia do início."},
 		{"fração curta", "POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-12-01","dias":4}`, 400, MensagemFracoes},
+		{"13º adiantado em dezembro", "POST", base, `{"periodoInicio":"2025-03-11","inicio":"2026-12-01","dias":30,"adiantarDecimo":true}`, 400,
+			"Em dezembro, a 1ª parcela do 13º já venceu (30/11): ela não vem com as férias."},
 		{"JSON quebrado", "POST", base, `{"dias":`, 400, MensagemJSONInvalido},
 		{"sem tabela (dezembro de 2024)", "GET", base + "/simular?inicio=2024-12-01&dias=30", "", 409, MensagemSemTabela},
-		{"simular sem os dias", "GET", base + "/simular?inicio=2026-12-01", "", 400, "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10)."},
-		{"simular vendendo 11", "GET", base + "/simular?inicio=2026-12-01&dias=19&vendidos=11", "", 400, "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10)."},
-		{"simular 31 dias", "GET", base + "/simular?inicio=2026-12-01&dias=31", "", 400, "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10)."},
-		{"simular data errada", "GET", base + "/simular?inicio=01/12/2026&dias=30", "", 400, "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10)."},
+		{"simular sem os dias", "GET", base + "/simular?inicio=2026-12-01", "", 400, MensagemSimular},
+		{"simular vendendo 11", "GET", base + "/simular?inicio=2026-12-01&dias=19&vendidos=11", "", 400, MensagemSimular},
+		{"simular 31 dias", "GET", base + "/simular?inicio=2026-12-01&dias=31", "", 400, MensagemSimular},
+		{"simular data errada", "GET", base + "/simular?inicio=01/12/2026&dias=30", "", 400, MensagemSimular},
+		{"simular vendidos que não é número", "GET", base + "/simular?inicio=2026-12-01&dias=20&vendidos=abc", "", 400, MensagemSimular},
+		{"simular dias e vendidos passam de 30", "GET", base + "/simular?inicio=2026-12-01&dias=25&vendidos=6", "", 400, MensagemSimular},
 		{"faltas negativas", "PUT", base + "/faltas", `{"periodoInicio":"2024-03-11","faltas":-1}`, 400, "As faltas vão de 0 a 366."},
 		{"faltas demais", "PUT", base + "/faltas", `{"periodoInicio":"2024-03-11","faltas":367}`, 400, "As faltas vão de 0 a 366."},
 		{"faltas sem período", "PUT", base + "/faltas", `{"faltas":3}`, 400, MensagemPeriodo},
@@ -229,17 +275,33 @@ func TestFeriasPelaApi(t *testing.T) {
 		t.Fatalf("simulações: %s, %s", c30.Liquido, c20.Liquido)
 	}
 	chamar("GET", base+"/simular?inicio=2026-12-01&dias=1", "").ConferirStatus(t, http.StatusOK)
+	chamar("GET", base+"/simular?inicio=2026-12-01&dias=20&vendidos=10", "").ConferirStatus(t, http.StatusOK)
 	chamar("PUT", base+"/faltas", `{"periodoInicio":"2024-03-11","faltas":366}`).ConferirStatus(t, http.StatusOK)
 	chamar("PUT", base+"/faltas", `{"periodoInicio":"2024-03-11","faltas":0}`).ConferirStatus(t, http.StatusOK)
 
 	// Duas frações no mesmo período somam; o período todo tirado não fica vencido, mesmo com o prazo passado.
-	chamar("POST", base, `{"periodoInicio":"2024-03-11","inicio":"2025-04-01","dias":14,"diasVendidos":5}`).ConferirStatus(t, http.StatusOK)
-	p = periodos(chamar("POST", base, `{"periodoInicio":"2024-03-11","inicio":"2025-07-01","dias":11}`))
-	if p[0].DiasGozados != 25 || p[0].DiasVendidos != 5 || p[0].Saldo != 0 || p[0].Vencida || len(p[0].Agendamentos) != 2 {
+	chamar("POST", base, `{"periodoInicio":"2024-03-11","inicio":"2025-04-01","dias":14,"diasVendidos":5,"adiantarDecimo":true}`).
+		ConferirStatus(t, http.StatusOK)
+	// Revisão do #701: a fração que cruza com outra (até no último dia) não passa, nem a 2ª 1ª parcela do 13º no ano.
+	r = chamar("POST", base, `{"periodoInicio":"2024-03-11","inicio":"2025-03-22","dias":11}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"Essas férias cruzam com as de 01/04/2025 a 14/04/2025: escolha outras datas."}`)
+	r = chamar("POST", base, `{"periodoInicio":"2024-03-11","inicio":"2025-07-01","dias":11,"adiantarDecimo":true}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"A 1ª parcela do 13º de 2025 já vem com as férias de 01/04/2025."}`)
+	// A que acaba na véspera passa, e sem o 13º ela não esbarra no 13º do ano; os vendidos das duas somam.
+	p = periodos(chamar("POST", base, `{"periodoInicio":"2024-03-11","inicio":"2025-03-21","dias":10,"diasVendidos":1}`))
+	if p[0].DiasGozados != 24 || p[0].DiasVendidos != 6 || p[0].Saldo != 0 || p[0].Vencida || len(p[0].Agendamentos) != 2 {
 		t.Fatalf("período tirado = %+v", p[0])
 	}
+	// A fração depois do fim do concessivo (10/03/2027) sai em dobro (CLT, art. 137): de 11 a 30/03, 20 dias. O 13º
+	// adiantado em outro ano passa.
+	p = periodos(chamar("POST", base, `{"periodoInicio":"2025-03-11","inicio":"2027-03-01","dias":30,"adiantarDecimo":true}`))
+	if c := p[1].Agendamentos[0].Calculo; c == nil || c.DiasEmDobro != 20 || c.Ferias.String() != "10000.00" || c.AdiantamentoDecimo.String() != "3000.00" {
+		t.Fatalf("em dobro = %+v", c)
+	}
 	// Março de 2025 tem tabela do INSS, mas não do IRRF (desde maio de 2025).
-	r := chamar("GET", base+"/simular?inicio=2025-03-20&dias=30", "")
+	r = chamar("GET", base+"/simular?inicio=2025-03-20&dias=30", "")
 	r.ConferirStatus(t, http.StatusConflict)
 	r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, MensagemSemTabela))
 
@@ -266,6 +328,11 @@ func TestFeriasPelaApi(t *testing.T) {
 	r.ConferirStatus(t, http.StatusBadRequest)
 	r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, MensagemSemFerias))
 	chamar("GET", "/api/trabalho/empregos/99/ferias", "").ConferirStatus(t, http.StatusNotFound)
+	// Férias depois da saída não se agendam: as que sobraram vêm na rescisão.
+	saiu := criar(`{"empregador":"S","admissao":"2024-01-02","saida":"2026-06-30","salarioBruto":3000}`)
+	r = chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/ferias", saiu), `{"periodoInicio":"2025-01-02","inicio":"2026-07-01","dias":30}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"As férias começam depois da saída do emprego: as que sobraram vêm na rescisão."}`)
 	chamar("DELETE", base+"/99", "").ConferirStatus(t, http.StatusNotFound)
 	chamar("DELETE", base+"/x", "").ConferirStatus(t, http.StatusNotFound)
 }

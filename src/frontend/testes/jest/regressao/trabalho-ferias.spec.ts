@@ -1,5 +1,5 @@
 import { PeriodoFerias } from '../../../src/app/core/modelos';
-import { diferencaDaVenda, periodoParaAgendar, primeiroDiaPossivel, situacaoDoPeriodo } from '../../../src/app/paginas/trabalho/ferias';
+import { diferencaDaVenda, faltasDigitadas, opcoesDaVenda, periodoParaAgendar, primeiroDiaPossivel, situacaoDoPeriodo } from '../../../src/app/paginas/trabalho/ferias';
 
 /** #213: as regras da tela Trabalho › Férias (as da CLT e o cálculo são da API, testados no Go). */
 describe('Trabalho › Férias (#213)', () => {
@@ -32,5 +32,21 @@ describe('Trabalho › Férias (#213)', () => {
 
   it('a diferença da venda, em centavos', () => {
     expect(diferencaDaVenda(6040.64, 7329.37)).toBe(1288.73);
+  });
+
+  it('tirar tudo × vender 1/3 pelo direito do período (revisão do #701)', () => {
+    expect(opcoesDaVenda(30)).toEqual({ tirar: 30, vendendo: 20, vender: 10 });
+    expect(opcoesDaVenda(24)).toEqual({ tirar: 24, vendendo: 16, vender: 8 });
+    expect(opcoesDaVenda(12)).toEqual({ tirar: 12, vendendo: 8, vender: 4 });
+  });
+
+  it('as faltas digitadas: o campo vazio ou errado não vira zero', () => {
+    expect(faltasDigitadas('')).toBeNull();
+    expect(faltasDigitadas(null)).toBeNull();
+    expect(faltasDigitadas('2.5')).toBeNull();
+    expect(faltasDigitadas(-1)).toBeNull();
+    expect(faltasDigitadas(367)).toBeNull();
+    expect(faltasDigitadas('0')).toBe(0);
+    expect(faltasDigitadas(366)).toBe(366);
   });
 });

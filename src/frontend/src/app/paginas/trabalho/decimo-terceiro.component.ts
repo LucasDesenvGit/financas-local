@@ -44,11 +44,20 @@ import { anoDaUrl } from './decimo-terceiro';
       @if (d.saida) {
         <p class="aviso-inline">Você saiu em {{ d.saida | date: 'dd/MM/yyyy' }}: o 13º proporcional vem na rescisão, e não nas datas abaixo.</p>
       }
+      @if (d.excedente > 0) {
+        <p class="aviso-inline">A 1ª parcela informada passa do 13º líquido em {{ d.excedente | currency }}: a 2ª fica zero, e a empresa
+          desconta essa diferença (na rescisão ou na folha). Confira o valor da 1ª.</p>
+      }
+      @if (d.mesesComHolerite < d.avos) {
+        <p class="aviso-inline">A média das horas extras conta {{ d.mesesComHolerite }} {{ d.mesesComHolerite === 1 ? 'mês' : 'meses' }} com
+          holerite de {{ d.avos }}: os meses sem holerite entram como zero. Abra os holerites que faltam em Trabalho › Holerites para a média
+          ficar certa.</p>
+      }
       <div class="grade-2">
         <section class="painel-bloco" aria-labelledby="titulo-parcelas">
           <h2 id="titulo-parcelas">{{ emprego()!.empregador }}</h2>
           <dl class="resumo">
-            <dt>1ª parcela, {{ d.primeira.informada ? 'recebida em' : 'até' }} {{ d.primeira.data | date: 'dd/MM' }}</dt>
+            <dt>1ª parcela, {{ d.primeira.informada ? 'recebida em' : 'até' }} {{ d.primeira.data | date: 'dd/MM' }}@if (d.primeira.comFerias) { (com as férias)}</dt>
             <dd>{{ d.primeira.valor | currency }}</dd>
             <dt>2ª parcela, até {{ d.segunda.data | date: 'dd/MM' }}</dt><dd>{{ d.segunda.valor | currency }}</dd>
             <dt class="total">O 13º líquido</dt><dd class="total">{{ d.liquido | currency }}</dd>
@@ -58,10 +67,12 @@ import { anoDaUrl } from './decimo-terceiro';
             <ul>
               <li>{{ d.avos }}/12 avos: cada mês do ano em que você trabalhou 15 dias ou mais.</li>
               <li>Salário de {{ d.salarioBase | currency }}{{ d.saida ? ' (o do mês da saída)' : ' (o de dezembro)' }} mais a média das horas
-                extras, do adicional noturno e do DSR dos holerites do ano ({{ d.mediaVariaveis | currency }}).</li>
+                extras, do adicional noturno e do DSR dos holerites do ano ({{ d.mediaVariaveis | currency }}). As horas de cada mês valem pelo
+                salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor.</li>
               <li>13º bruto: ({{ d.salarioBase | currency }} + {{ d.mediaVariaveis | currency }}) × {{ d.avos }}/12 = {{ d.total | currency }}.</li>
               <li>1ª parcela: {{ d.primeira.informada ? 'o que você informou' : 'metade do 13º, sem desconto' }}.</li>
-              <li>2ª parcela: o 13º, menos o INSS ({{ d.inss.valor | currency }}), o IRRF ({{ d.irrf.valor | currency }}) e a 1ª parcela.
+              <li>2ª parcela: o 13º, menos o INSS ({{ d.inss.valor | currency }}), o IRRF ({{ d.irrf.valor | currency }}) e a 1ª parcela (nunca
+                abaixo de zero).
                 O IR do 13º é separado do salário: base de {{ d.irrf.base | currency }}, na faixa de {{ aliquota(d.irrf.aliquota) }}@if (d.irrf.reducaoLei15270 > 0) {<span>, menos a redução da Lei 15.270/2025 ({{ d.irrf.reducaoLei15270 | currency }})</span>}.</li>
             </ul>
           </details>
@@ -128,8 +139,8 @@ export class TrabalhoDecimoTerceiroComponent implements OnInit {
   private mostrar(d: DecimoTerceiro): void {
     this.decimo.set(d);
     this.erro.set(null);
-    this.primeiraEm = d.primeira.informada ? d.primeira.data : null;
-    this.primeiraValor = d.primeira.informada ? d.primeira.valor : null;
+    this.primeiraEm = d.primeira.informada && !d.primeira.comFerias ? d.primeira.data : null; // a das férias vem delas, não do formulário
+    this.primeiraValor = d.primeira.valorInformado ? d.primeira.valor : null; // a metade calculada não vira valor informado
   }
 
   private carregar(): void {

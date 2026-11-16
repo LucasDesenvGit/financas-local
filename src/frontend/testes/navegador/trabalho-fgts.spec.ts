@@ -48,3 +48,25 @@ test('Trabalho › FGTS: o saldo, a conferência e um saque', async ({ page }) =
   expect(JSON.parse(pedidos[0])).toEqual({ data: '2026-11-11', tipo: 2, valor: 500, motivo: 2 });
   await expect(saldo).toContainText('Saque (saque-aniversário)');
 });
+
+// Revisão do #702: o FGTS de um emprego CLT antigo continua à mão, mesmo com o atual em PJ.
+test('Trabalho › FGTS: escolher o emprego', async ({ page }) => {
+  const json = (corpo: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(corpo) });
+  const pj = { ...emprego, id: 2, empregador: 'Cliente PJ', regime: 3 };
+  const antigo = { ...emprego, id: 3, empregador: 'Empresa Antiga', admissao: '2020-01-02', saida: '2025-06-30' };
+  const outro = { ...emprego, id: 4, empregador: 'Outra Empresa' };
+  const pedidos: string[] = [];
+  await page.route('**/api/modulos', (r) => r.fulfill(json([trabalho])));
+  await page.route('**/api/trabalho/empregos', (r) => r.fulfill(json([pj, outro, antigo])));
+  await page.route('**/api/trabalho/empregos/*/fgts', (r) => {
+    pedidos.push(new URL(r.request().url()).pathname);
+    return r.fulfill(json(fgts));
+  });
+  await page.goto('/trabalho/fgts');
+  const escolha = page.locator('.escolha-emprego select');
+  await expect(escolha.locator('option')).toHaveText(['Outra Empresa', 'Empresa Antiga (saiu em 06/2025)']);
+  await expect(page.getByRole('heading', { name: 'Outra Empresa' })).toBeVisible();
+  await escolha.selectOption({ label: 'Empresa Antiga (saiu em 06/2025)' });
+  await expect(page.getByRole('heading', { name: 'Empresa Antiga' })).toBeVisible();
+  expect(pedidos).toEqual(['/api/trabalho/empregos/4/fgts', '/api/trabalho/empregos/3/fgts']);
+});

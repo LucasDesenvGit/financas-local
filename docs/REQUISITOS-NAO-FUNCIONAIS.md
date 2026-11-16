@@ -10,12 +10,10 @@ Quanto o sistema pode gastar e o que ele garante, com número e meta. Mudou algo
 
 ## Eficiência
 
-As metas de memória e de disco são as do site em Go, sozinho desde a 3.0.0 (#85), sem o .NET desde a #86.
-
 | Atributo | Medida | Hoje | Meta | Como medir | Situação |
 |---|---|---|---|---|---|
-| Memória da API em uso | MB do processo, ocioso e no pico de uma sincronização | ~225 MB (21/10/2026, 2.23, Windows, `.msi`) | Até 60 MB | Método da #86: 5 minutos depois de subir, sem requisições, e durante uma sincronização, com 3 leituras | Combinada em 31/10/2026. O topo do palpite do épico #70 |
-| Tamanho da instalação | MB e arquivos de `%ProgramFiles%\FinancasLocal` e de `publicado/`, sem os dados | 157 MB (mesma medição) | Até 40 MB | Método da #86 | Combinada em 31/10/2026. O topo da estimativa do épico #70 |
+| Memória da API em uso | MB do processo, ocioso e no pico de uma sincronização | 28,3 MB logo depois de subir (03/11/2026, 3.2.7, Windows, scripts) | Até 60 MB | 5 minutos depois de subir, sem requisições, e durante uma sincronização, com 3 leituras | Medida na #86, só a leitura ociosa: o pico da sincronização não foi medido |
+| Tamanho da instalação | MB e arquivos de `%ProgramFiles%\FinancasLocal` e de `publicado/`, sem os dados | 19,2 MB e 62 arquivos em `publicado\api` (mesma medição); cerca de 35 MB no `.msi` (ensaio da #85) | Até 40 MB | O tamanho da pasta, antes e depois de atualizar | Medida na #86 |
 | Tempo de partida | Segundos do início da API até `GET /api/auth/estado` responder | 2,2 s (31/10/2026, 2.50.31, Windows) | Até 5 s | `medir-desempenho.py`, 3 partidas | Medida |
 | Tempo de resposta das telas principais | A chamada mais lenta ao abrir a tela | Painel 84 ms, Transações 23 ms, Investimentos 43 ms (mesma medição) | Até 300 ms por tela | `medir-desempenho.py`, com 5 anos de transações fictícias | Medida |
 
@@ -31,7 +29,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 
 | Atributo | Medida | Meta | Como medir | Situação |
 |---|---|---|---|---|
-| Exposição na rede | Endereço em que o sistema escuta | Só `127.0.0.1` | `Kestrel:Endpoints:Https:Url` no `appsettings.json`, recusado ao iniciar se não for de loopback (`config.ConferirSoLocal`, `TestConferirSoLocal`) | Conferida no teste |
+| Exposição na rede | Endereço em que o sistema escuta | Só `127.0.0.1` (o acesso pelo celular, desligado por padrão, é a exceção da [ADR 0061](adr/0061-acesso-pelo-celular-na-rede-local.md)) | `Kestrel:Endpoints:Https:Url` no `appsettings.json` (o nome veio do .NET, e o Go lê o mesmo, para as instalações antigas não mudarem), recusado ao iniciar se não for de loopback (`config.ConferirSoLocal`, `TestConferirSoLocal`) | Conferida no teste |
 | Saídas de rede | Domínios acessados | Só os da [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet) | Cada domínio novo pede uma ADR | Conferida na revisão do PR |
 | Dado mínimo enviado | O que vai em cada saída | Quantidades, valores e dados pessoais não saem | [Dados pessoais](DADOS-PESSOAIS.md) e [modelo de ameaças](MODELO-DE-AMEACAS.md) | Conferida na revisão do PR |
 | Scripts de terceiros no site | Domínios na CSP | Nenhum | CSP da API nos testes do navegador | Conferida: testes no navegador ([ADR 0041](adr/0041-testes-no-navegador-com-playwright.md)) |
@@ -45,7 +43,7 @@ As metas de partida e de telas dão de 2 a 4 vezes de folga sobre o medido, para
 | Cópia antes de mudar o banco | Cópia em `dados/backups` | Sempre que a estrutura mudar, guardando as 5 mais recentes | `AplicarEsquema` (`internal/plataforma/banco`) | Medida no código e nos testes do pacote |
 | Voltar de uma cópia | Restaurar e o site abrir | Funciona seguindo o [guia](OPERACAO.md#restaurar-uma-cópia) | Passo "Restaurar a cópia" dos workflows | Conferida na CI, nos scripts e no `.msi` |
 | Sem internet | O que continua funcionando | O site abre e mostra o que está no banco. Câmbio guardado continua valendo. Sincronização e cotações param até a internet voltar. Investimentos espera a falha do Banco Central só na primeira abertura: depois dela, a Selic fica 15 min sem nova tentativa (#534) | `medir-desempenho.py` com a saída num proxy que demora 2 s e fecha (o roteiro está no PR da #534) | Medida em 07/11/2026: `GET /api/carteira` levava ~4,0 s em toda abertura (série e meta, 2 s cada); agora ~2,0 s na primeira e ~3 ms nas seguintes |
-| Site fora do ar | O serviço | Reinício sozinho | A recuperação do serviço: `Restart=` da unidade do systemd e o `ServiceConfig` do `.msi` | Sem teste desde a #86 (o teste era do Go atrás do .NET, que voltava sozinho) |
+| Site fora do ar | O serviço | Reinício sozinho | A recuperação do serviço: `Restart=` da unidade do systemd e o `ServiceConfig` do `.msi` | Sem teste |
 
 ## Portabilidade
 

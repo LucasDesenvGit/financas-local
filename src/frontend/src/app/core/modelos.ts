@@ -291,6 +291,22 @@ export interface ContaAgendada {
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** Inativa por ter passado da data limite ao pagar. */
   encerrada: boolean;
+  /** #691: "Pago com" este cofrinho (reserva) da conta de pagamento; null = o saldo da conta. */
+  reservaNome: string | null;
+  /** #691: a última baixa que o app deu pelo cofrinho, com "Ajustar valor" e "Desfazer". */
+  ultimoPeloCofrinho: PagamentoCofrinho | null;
+  /** #691: o último pagamento (recente) que ficou sem despesa, para lançar pelo cofrinho. */
+  ultimoSemDespesa?: string | null;
+}
+
+/** #691: gasto pago direto de um cofrinho (POST /reservas/saida). */
+export interface SaidaReserva {
+  contaId: number; nome: string; data: string; valor: number; descricao: string; categoriaId: number | null;
+}
+
+/** #691: baixa de uma conta a pagar com a despesa saindo de um cofrinho (automática no vencimento ou pelo "Pagar"). */
+export interface PagamentoCofrinho {
+  transacaoId: number; data: string; valor: number; reservaNome: string; automatico: boolean; podeDesfazer: boolean;
 }
 
 export interface SalvarContaAgendada {
@@ -302,6 +318,8 @@ export interface SalvarContaAgendada {
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** #205: a chave da sugestão do extrato que originou o cadastro (vazia na edição: a ligação que já existe fica). */
   chaveExtrato?: string | null;
+  /** #691: "Pago com" este cofrinho da conta (null = o saldo da conta). */
+  reservaNome: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
@@ -310,6 +328,8 @@ export interface AvisoContaAgendada {
   contaAgendadaId: number; descricao: string; tipo: 'nao-veio' | 'mudou-de-cartao' | 'aumentou' | 'cartao-arquivado';
   texto: string; valorAnterior: number | null; valorNovo: number | null; contaNovaId: number | null;
   contaNovaNome: string | null; data: string | null;
+  /** #691: no "não veio" de conta do Open Finance sem "Pago com", depois de sincronizar: "foi paga com um cofrinho?". */
+  podeSerCofrinho?: boolean;
 }
 
 export interface SugestaoContaAgendada {
@@ -493,6 +513,16 @@ export interface SincronizacaoLog {
 
 export interface ResultadoSincronizacao {
   sucesso: boolean; transacoesNovas: number; transacoesAtualizadas: number; mensagem: string | null;
+  /** #688: quais foram as novas e as atualizadas; null quando não houve nenhuma. */
+  lancamentos: LancamentosSincronizados | null;
+}
+
+/** #688: as transações que uma sincronização trouxe ou mudou. */
+export interface LancamentosSincronizados {
+  /** Em ordem de id, até 200 (MAXIMO_IDS_URL); vazio quando passam disso. */
+  ids: number[];
+  /** Data mais antiga e mais recente entre elas (yyyy-MM-dd). */
+  inicio: string; fim: string;
 }
 
 /** Status leve da sincronização para a barra superior (UX-8). */
@@ -912,10 +942,15 @@ export interface ResumoHolerite {
 }
 
 /** #214: o 13º salário do ano (estimativa). */
-export interface ParcelaDecimo { valor: number; data: string; informada: boolean; }
+/** valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). */
+export interface ParcelaDecimo { valor: number; data: string; informada: boolean; valorInformado: boolean; comFerias?: boolean; }
 export interface DecimoTerceiro {
   ano: number; avos: number; salarioBase: number; mediaVariaveis: number; total: number;
   primeira: ParcelaDecimo; inss: CalculoInss; irrf: CalculoIrrf; segunda: ParcelaDecimo; liquido: number;
+  /** A 1ª informada passou do 13º líquido: a 2ª fica zero e a empresa desconta isto. */
+  excedente: number;
+  /** Os meses do ano com holerite calculado: os outros entram como zero na média das horas extras. */
+  mesesComHolerite: number;
   /** Saiu no ano: o 13º proporcional entra na rescisão. */
   saida: string | null;
 }
@@ -923,6 +958,8 @@ export interface DecimoTerceiro {
 /** #213: as férias. */
 export interface CalculoFerias {
   inicio: string; retorno: string; pagamento: string; dias: number; diasVendidos: number; remuneracao: number;
+  /** Os dias depois do fim do concessivo: pagos em dobro (CLT, art. 137). */
+  diasEmDobro: number;
   mediaVariaveis: number; ferias: number; tercoFerias: number; abono: number; tercoAbono: number;
   inss: CalculoInss; irrf: CalculoIrrf; adiantamentoDecimo: number; liquido: number;
 }

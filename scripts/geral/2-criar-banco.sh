@@ -78,6 +78,9 @@ adicionar_coluna_se_ausente "RegraDescricao" "ValorMinimo" "TEXT NULL"
 adicionar_coluna_se_ausente "RegraDescricao" "ValorMaximo" "TEXT NULL"
 adicionar_coluna_se_ausente "Meta" "Icone" "TEXT NULL"
 adicionar_coluna_se_ausente "Meta" "GuardarPorMes" "TEXT NULL"
+adicionar_coluna_se_ausente "ContaAgendada" "ReservaNome" "TEXT NULL"
+adicionar_coluna_se_ausente "ContaAgendada" "ReservaDesde" "TEXT NULL"
+adicionar_coluna_se_ausente "Transacao" "ReservaNome" "TEXT NULL"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

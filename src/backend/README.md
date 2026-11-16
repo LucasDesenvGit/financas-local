@@ -92,7 +92,7 @@ O mesmo executável roda como serviço nos dois sistemas (#84), sem mudar de op�
 
 ## Rodar
 
-Precisa do Go 1.27.3 ou mais novo (as anteriores têm falhas de segurança na biblioteca padrão).
+Precisa do Go 1.27.4 ou mais novo (as anteriores têm falhas de segurança na biblioteca padrão).
 
 **Em desenvolvimento**, com uma **cópia** do banco, ao lado do site instalado (que fica na 5443):
 

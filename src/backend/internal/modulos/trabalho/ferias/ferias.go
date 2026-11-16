@@ -2,6 +2,7 @@ package ferias
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
@@ -26,6 +28,7 @@ const (
 	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
 	MensagemPeriodo      = "Escolha um período do emprego."
 	MensagemAntes        = "As férias de um período começam depois que ele termina (12 meses de trabalho)."
+	MensagemSimular      = "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10), até 30 dias somados."
 )
 
 // AvisoVencendo: o concessivo termina em até 60 dias e ainda há dias para tirar.
@@ -93,16 +96,16 @@ func (s *Servico) Simular(ctx context.Context, empregoId int64, inicio tipos.Dat
 	if err != nil {
 		return Calculo{}, err
 	}
-	return s.calcular(ctx, e, inicio, dias, vendidos, adiantar)
+	return s.calcular(ctx, e, inicio, dias, vendidos, adiantar, 0)
 }
 
-func (s *Servico) calcular(ctx context.Context, e emprego.Emprego, inicio tipos.Data, dias, vendidos int, adiantar bool) (Calculo, error) {
+func (s *Servico) calcular(ctx context.Context, e emprego.Emprego, inicio tipos.Data, dias, vendidos int, adiantar bool, emDobro int) (Calculo, error) {
 	salario, ok := emprego.SalarioDoMes(e.Salarios, inicio)
 	if !ok {
 		return Calculo{}, erroDeValidacao("Não há salário no mês do início.")
 	}
 	mes := emprego.InicioDoMes(inicio)
-	soma, _, err := s.holerites.VariaveisEntre(ctx, e.Id, mes.SomarMeses(-12), mes)
+	soma, _, err := s.holerites.VariaveisEntre(ctx, e.Id, mes.SomarMeses(-12), mes, salario.SalarioBruto) // Súmula 347
 	if err != nil {
 		return Calculo{}, err
 	}
@@ -120,7 +123,7 @@ func (s *Servico) calcular(ctx context.Context, e emprego.Emprego, inicio tipos.
 		return Calculo{}, errSemTabela
 	}
 	return Calcular(Entrada{Inicio: inicio, Dias: dias, DiasVendidos: vendidos, SalarioBase: salario.SalarioBruto,
-		SomaVariaveis: soma, Dependentes: e.Dependentes, AdiantarDecimo: adiantar, Inss: tInss, Irrf: tIrrf}), nil
+		SomaVariaveis: soma, Dependentes: e.Dependentes, AdiantarDecimo: adiantar, DiasEmDobro: emDobro, Inss: tInss, Irrf: tIrrf}), nil
 }
 
 // Listar devolve os períodos do emprego com as férias agendadas e o que sobra.
@@ -144,7 +147,9 @@ func (s *Servico) Listar(ctx context.Context, empregoId int64) ([]PeriodoComFeri
 		}
 		faltas[inicio.String()] = n
 	}
-	linhas.Close()
+	if err := linhas.Close(); err != nil {
+		return nil, err
+	}
 	porPeriodo := map[string][]Agendamento{}
 	linhas, err = s.db.QueryContext(ctx, `SELECT "Id", "PeriodoInicio", "Inicio", "Dias", "DiasVendidos", "AdiantarDecimo"
 		FROM "FeriasAgendamento" WHERE "EmpregoId" = ? ORDER BY "Inicio"`, empregoId)
@@ -160,14 +165,16 @@ func (s *Servico) Listar(ctx context.Context, empregoId int64) ([]PeriodoComFeri
 		}
 		porPeriodo[periodo.String()] = append(porPeriodo[periodo.String()], a)
 	}
-	linhas.Close()
+	if err := linhas.Close(); err != nil {
+		return nil, err
+	}
 
 	lista := []PeriodoComFerias{}
 	for _, p := range Periodos(e.Admissao, e.Saida, hoje) {
 		pf := PeriodoComFerias{Periodo: p, Faltas: faltas[p.Inicio.String()], Agendamentos: []Agendamento{}}
 		pf.DiasDireito = DiasDeDireito(pf.Faltas)
 		for _, a := range porPeriodo[p.Inicio.String()] {
-			c, err := s.calcular(ctx, e, a.Inicio, a.Dias, a.DiasVendidos, a.AdiantarDecimo)
+			c, err := s.calcular(ctx, e, a.Inicio, a.Dias, a.DiasVendidos, a.AdiantarDecimo, DiasEmDobro(a.Inicio, a.Dias, p.FimConcessivo))
 			switch {
 			case err == nil:
 				a.Calculo = &c
@@ -206,6 +213,16 @@ func (s *Servico) Agendar(ctx context.Context, empregoId int64, periodoInicio, i
 	if !inicio.Depois(periodo.Fim) {
 		return nil, erroDeValidacao(MensagemAntes)
 	}
+	if msg := s.conferirAgenda(periodos, inicio, dias, adiantar); msg != "" {
+		return nil, erroDeValidacao(msg)
+	}
+	e, err := s.emprego(ctx, empregoId)
+	if err != nil {
+		return nil, err
+	}
+	if e.Saida != nil && inicio.Depois(*e.Saida) {
+		return nil, erroDeValidacao("As férias começam depois da saída do emprego: as que sobraram vêm na rescisão.")
+	}
 	existentes := make([]int, 0, len(periodo.Agendamentos))
 	for _, a := range periodo.Agendamentos {
 		existentes = append(existentes, a.Dias)
@@ -221,6 +238,29 @@ func (s *Servico) Agendar(ctx context.Context, empregoId int64, periodoInicio, i
 	}
 	return s.Listar(ctx, empregoId)
 }
+
+// conferirAgenda olha a fração nova contra todas as já agendadas do emprego (revisão do #701): não pode cruzar com
+// outra; a 1ª parcela do 13º vem com uma férias só por ano, e não em dezembro, quando ela já venceu (30/11).
+func (s *Servico) conferirAgenda(periodos []PeriodoComFerias, inicio tipos.Data, dias int, adiantar bool) string {
+	fim := inicio.SomarDias(dias - 1)
+	for _, p := range periodos {
+		for _, a := range p.Agendamentos {
+			fimA := a.Inicio.SomarDias(a.Dias - 1)
+			if !inicio.Depois(fimA) && !a.Inicio.Depois(fim) {
+				return fmt.Sprintf("Essas férias cruzam com as de %s a %s: escolha outras datas.", dataBR(a.Inicio), dataBR(fimA))
+			}
+			if adiantar && a.AdiantarDecimo && a.Inicio.Ano() == inicio.Ano() {
+				return fmt.Sprintf("A 1ª parcela do 13º de %d já vem com as férias de %s.", inicio.Ano(), dataBR(a.Inicio))
+			}
+		}
+	}
+	if adiantar && inicio.Mes() == time.December {
+		return "Em dezembro, a 1ª parcela do 13º já venceu (30/11): ela não vem com as férias."
+	}
+	return ""
+}
+
+func dataBR(d tipos.Data) string { return fmt.Sprintf("%02d/%02d/%d", d.Dia(), d.Mes(), d.Ano()) }
 
 // Desmarcar apaga uma fração agendada.
 func (s *Servico) Desmarcar(ctx context.Context, empregoId, id int64) ([]PeriodoComFerias, error) {
@@ -243,12 +283,19 @@ func (s *Servico) DefinirFaltas(ctx context.Context, empregoId int64, periodoIni
 	if err != nil {
 		return nil, err
 	}
-	achou := false
-	for _, p := range periodos {
-		achou = achou || p.Inicio.Igual(periodoInicio)
+	var periodo *PeriodoComFerias
+	for i := range periodos {
+		if periodos[i].Inicio.Igual(periodoInicio) {
+			periodo = &periodos[i]
+		}
 	}
-	if !achou {
+	if periodo == nil {
 		return nil, erroDeValidacao(MensagemPeriodo)
+	}
+	// As faltas novas diminuem o direito: ele não pode ficar menor que o já agendado (revisão do #701).
+	if agendados := periodo.DiasGozados + periodo.DiasVendidos; DiasDeDireito(faltas) < agendados {
+		return nil, erroDeValidacao(fmt.Sprintf("Com %d faltas, o direito cai para %d dias, menos que os %d já agendados: desmarque "+
+			"férias antes.", faltas, DiasDeDireito(faltas), agendados))
 	}
 	_, err = s.db.ExecContext(ctx, `INSERT INTO "FeriasFaltas" ("EmpregoId", "PeriodoInicio", "Faltas") VALUES (?, ?, ?)
 		ON CONFLICT ("EmpregoId", "PeriodoInicio") DO UPDATE SET "Faltas" = excluded."Faltas"`, empregoId, periodoInicio, faltas)
@@ -362,9 +409,9 @@ func (s *Servico) simularHTTP(w http.ResponseWriter, r *http.Request) {
 	texto, _ := respostas.ParametroDaQuery(r, "inicio")
 	inicio, err := tipos.LerData(texto)
 	dias, errDias := strconv.Atoi(r.URL.Query().Get("dias"))
-	vendidos, _ := strconv.Atoi(r.URL.Query().Get("vendidos"))
-	if err != nil || errDias != nil || dias < 1 || dias > 30 || vendidos < 0 || vendidos > 10 {
-		respostas.Mensagem(w, http.StatusBadRequest, "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10).")
+	vendidos, errVendidos := strconv.Atoi(cmp.Or(r.URL.Query().Get("vendidos"), "0"))
+	if err != nil || errDias != nil || errVendidos != nil || dias < 1 || vendidos < 0 || vendidos > 10 || dias+vendidos > 30 {
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemSimular)
 		return
 	}
 	c, err := s.Simular(r.Context(), idDe(r, "id"), inicio, dias, vendidos, r.URL.Query().Get("adiantar") == "true")
