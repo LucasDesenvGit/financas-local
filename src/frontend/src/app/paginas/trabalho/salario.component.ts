@@ -159,7 +159,8 @@ import {
                   <td class="direita">{{ l.salario.salarioBruto | currency }}</td>
                   <td class="direita">{{ l.variacao === null ? 'primeiro' : variacao(l.variacao) }}</td>
                   <td class="direita">
-                    @if (historico().length > 1) {
+                    <!-- O primeiro salário é o da admissão e não sai (revisão do #698: o botão levava a um erro). -->
+                    @if (l.variacao !== null) {
                       <button type="button" class="botao botao-pequeno" (click)="excluirSalario(e, l.salario.id, l.salario.inicio)">
                         Apagar<span class="so-leitor"> o salário de {{ nomeDoMes(l.salario.inicio) }}</span></button>
                     }
