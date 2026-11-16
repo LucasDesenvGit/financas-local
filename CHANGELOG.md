@@ -5,7 +5,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 ## [3.24.1] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
-- **ADR 0069 (Proposta): OCR do holerite escaneado ou foto** (#229). Compara o Tesseract como programa à parte, o tesseract.js no navegador (que pediria afrouxar a CSP), o OCR do Windows e os de nuvem (rejeitados), e propõe o Tesseract chamado pela API, opcional. De onde ele vem (instalado à parte ou no `.msi`), onde se liga e o modelo esperam a decisão; a implementação vem depois dela.
+- **ADR 0069 (Proposta): OCR do holerite escaneado ou foto** (#229). Compara o Tesseract como programa à parte, o tesseract.js no navegador (que pediria afrouxar a CSP), o OCR do Windows e os de nuvem (rejeitados), e propõe o Tesseract chamado pela API, opcional. De onde ele vem (instalado à parte ou no `.msi`), onde se liga e o modelo esperam a decisão; a implementação vem depois dela. Na revisão: a foto reduzida no navegador e a imagem conferida em bytes e em pixels antes de abrir; o Tesseract por um caminho fixo ou configurado, nunca pelo `PATH`; prazo e limite de memória do processo, e o que entra no modelo de ameaças.
 
 ## [3.24.0] — 2026-11-16 · desenvolvimento
 
