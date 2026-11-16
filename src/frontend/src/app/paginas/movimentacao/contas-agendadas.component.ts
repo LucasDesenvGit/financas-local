@@ -15,7 +15,7 @@ import {
 } from '../../core/modelos';
 import {
   OpcaoCofrinho, aceitaCofrinho, baixaSozinha, cofrinhoEncontrado, mostrarPagar, opcoesCofrinho, podeLancar,
-  textoPagamentoCofrinho
+  textoOpcaoCofrinho, textoPagamentoCofrinho
 } from './pago-com-cofrinho';
 import { LogoBancoComponent } from '../../compartilhado/bancos/logo-banco.component';
 import { SeloServicoComponent } from '../../compartilhado/bancos/selo-servico.component';
@@ -294,14 +294,14 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
           <!-- #691 (ADR 0063): de onde sai o dinheiro. Só em conta do Open Finance, fora do cartão (divulgação
                progressiva); os cofrinhos da conta numa lista, para escolher em vez de digitar (Nielsen 6). -->
           @if (aceitaCofrinho(fm)) {
-            <label>Pago com
+            <label>Pago com o cofrinho
               <select name="pagoCom" [ngModel]="outroCofrinho ? OUTRO : fm.reservaNome" (ngModelChange)="escolherCofrinho(fm, $event)"
                 aria-describedby="ajuda-cofrinho">
-                <option [ngValue]="null">Saldo da conta</option>
+                <option [ngValue]="null">Nenhum (sai do saldo da conta)</option>
                 @for (r of opcoesCofrinho(fm); track r.nome) {
-                  <option [ngValue]="r.nome">Cofrinho {{ r.nome }}{{ r.saldo === null ? ' (não encontrado nas reservas)' : '' }}</option>
+                  <option [ngValue]="r.nome">{{ textoOpcaoCofrinho(r) }}</option>
                 }
-                <option [ngValue]="OUTRO">Outro cofrinho…</option>
+                <option [ngValue]="OUTRO">Outro…</option>
               </select>
             </label>
             @if (outroCofrinho) {
@@ -358,7 +358,7 @@ import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.di
             @if (opcoesCofrinhoDe(pg).length) {
               <label>Qual cofrinho
                 <select name="cofrinhoPagamento" [(ngModel)]="cofrinhoNoPagamento" required>
-                  @for (r of opcoesCofrinhoDe(pg); track r.nome) { <option [ngValue]="r.nome">Cofrinho {{ r.nome }}</option> }
+                  @for (r of opcoesCofrinhoDe(pg); track r.nome) { <option [ngValue]="r.nome">{{ textoOpcaoCofrinho(r) }}</option> }
                 </select>
               </label>
             } @else {
@@ -462,7 +462,7 @@ export class ContasAgendadasComponent implements OnInit {
   /** Sugestão que originou o formulário aberto: ao salvar, ela sai da lista mesmo se a descrição for editada. */
   private chaveSugestaoEmCadastro: string | null = null;
   pagando: ContaAgendada | null = null;
-  /** #691: "Pago com" → "Outro cofrinho…": o nome é digitado. */
+  /** #691: "Pago com o cofrinho" → "Outro…": o nome é digitado. */
   outroCofrinho = false;
   readonly OUTRO = '__outro__';
   /** #691: conta a pagar com o valor pago pelo cofrinho em ajuste. */
@@ -475,7 +475,7 @@ export class ContasAgendadasComponent implements OnInit {
     this.carregar();
     this.api.contas().subscribe((c) => this.contas.set(c));
     this.api.categorias().subscribe((c) => this.categorias.set(c));
-    // Complementar: sem as reservas, o "Pago com" mostra só o saldo da conta e o "Outro cofrinho…".
+    // Complementar: sem as reservas, o "Pago com o cofrinho" mostra só o "Nenhum" e o "Outro…".
     this.api.reservas().subscribe({ next: (r) => this.reservas.set(r), error: () => this.reservas.set([]) });
   }
 
@@ -512,6 +512,7 @@ export class ContasAgendadasComponent implements OnInit {
   /* -------------------------- #691: pago com o cofrinho -------------------------- */
 
   readonly textoPagamentoCofrinho = textoPagamentoCofrinho;
+  readonly textoOpcaoCofrinho = textoOpcaoCofrinho;
 
   aceitaCofrinho(fm: SalvarContaAgendada): boolean {
     return aceitaCofrinho(this.contas().find((c) => c.id === fm.contaId), fm.formaCobranca);
