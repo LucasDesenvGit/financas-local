@@ -5,8 +5,7 @@ package ficticios
 
 import (
 	"bytes"
-	"crypto/md5"
-	"crypto/rc4"
+	_ "embed"
 	"fmt"
 	"strings"
 
@@ -19,43 +18,25 @@ type Texto struct {
 	Texto string
 }
 
-// preenchimento da senha do PDF (PDF 32000-1:2008, §7.6.3.3, Algoritmo 2).
-var preenchimento = []byte{
-	0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
-	0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A,
-}
+// SenhaFicticia é a senha do PDF fictício com senha (um CPF inventado).
+const SenhaFicticia = "12345678900"
+
+// comSenha é a via clássica criptografada com RC4 de 40 bits (revisão 2), como muitos holerites que os bancos e as
+// empresas mandam, com a SenhaFicticia. É um arquivo pronto, gerado uma vez a partir da ViaClassica: o código não
+// cifra nada (revisão do #706: o CodeQL não aceita RC4 no código, nem nos testes).
+//
+//go:embed testdata/via-classica-com-senha.pdf
+var comSenha []byte
+
+// ComSenha devolve uma cópia do PDF fictício com senha (a ViaClassica, com a SenhaFicticia).
+func ComSenha() []byte { return bytes.Clone(comSenha) }
 
 // GerarPDF monta um PDF de verdade, mínimo, com Courier (cada letra com 600/1000 da fonte de largura) e WinAnsi,
-// uma página por lista. Com senha, o PDF sai criptografado com RC4 de 40 bits (revisão 2), como muitos holerites que
-// os bancos e as empresas mandam (a senha é o CPF ou a data de nascimento).
-func GerarPDF(paginas [][]Texto, senha string) []byte {
+// uma página por lista. O PDF com senha é o ComSenha, pronto.
+func GerarPDF(paginas [][]Texto) []byte {
 	var objs []string
 	kids := []string{}
 	n := len(paginas)
-	o := bytes.Repeat([]byte{0x4F}, 32) // a biblioteca não confere a senha do dono: basta ter 32 bytes
-	id := []byte("holerite-ficticio")
-	p := uint32(0xFFFFFFFC)
-	var chave []byte
-	if senha != "" {
-		h := md5.New()
-		h.Write(append([]byte(senha), preenchimento[:32-len(senha)]...))
-		h.Write(o)
-		h.Write([]byte{byte(p), byte(p >> 8), byte(p >> 16), byte(p >> 24)})
-		h.Write(id)
-		chave = h.Sum(nil)[:5]
-	}
-	cifrar := func(obj int, dados []byte) []byte {
-		if chave == nil {
-			return dados
-		}
-		h := md5.New()
-		h.Write(chave)
-		h.Write([]byte{byte(obj), byte(obj >> 8), byte(obj >> 16), 0, 0})
-		c, _ := rc4.NewCipher(h.Sum(nil)[:10])
-		saida := make([]byte, len(dados))
-		c.XORKeyStream(saida, dados)
-		return saida
-	}
 	// 1 catálogo, 2 páginas, 3 fonte, depois página e conteúdo de cada uma.
 	for i, pg := range paginas {
 		var c strings.Builder
@@ -67,7 +48,7 @@ func GerarPDF(paginas [][]Texto, senha string) []byte {
 		}
 		c.WriteString("ET\n")
 		pagina, conteudo := 4+2*i, 5+2*i
-		corpo := cifrar(conteudo, []byte(c.String()))
+		corpo := c.String()
 		kids = append(kids, fmt.Sprintf("%d 0 R", pagina))
 		objs = append(objs, fmt.Sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents %d 0 R >>", conteudo),
 			fmt.Sprintf("<< /Length %d >>\nstream\n%s\nendstream", len(corpo), corpo))
@@ -76,27 +57,25 @@ func GerarPDF(paginas [][]Texto, senha string) []byte {
 		fmt.Sprintf("<< /Type /Pages /Kids [%s] /Count %d >>", strings.Join(kids, " "), n),
 		"<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding /FirstChar 32 /LastChar 255 /Widths [" +
 			strings.TrimSpace(strings.Repeat("600 ", 224)) + "] >>"}, objs...)
-	extra := ""
-	if chave != nil {
-		u := make([]byte, 32)
-		c, _ := rc4.NewCipher(chave)
-		c.XORKeyStream(u, preenchimento)
-		todos = append(todos, fmt.Sprintf("<< /Filter /Standard /V 1 /R 2 /Length 40 /O <%x> /U <%x> /P %d >>", o, u, int32(p)))
-		extra = fmt.Sprintf(" /Encrypt %d 0 R /ID [<%x> <%x>]", len(todos), id, id)
-	}
+	return Montar(todos)
+}
+
+// Montar junta os objetos (o 1º é o catálogo) num PDF com a tabela xref certa. Os testes do leitor montam com ele os
+// PDFs malformados de propósito (ciclo na árvore de páginas, bomba de descompressão; revisão do #706).
+func Montar(objetos []string) []byte {
 	var b bytes.Buffer
 	b.WriteString("%PDF-1.4\n")
-	offsets := make([]int, len(todos))
-	for i, o := range todos {
+	offsets := make([]int, len(objetos))
+	for i, o := range objetos {
 		offsets[i] = b.Len()
 		fmt.Fprintf(&b, "%d 0 obj\n%s\nendobj\n", i+1, o)
 	}
 	xref := b.Len()
-	fmt.Fprintf(&b, "xref\n0 %d\n0000000000 65535 f \n", len(todos)+1)
+	fmt.Fprintf(&b, "xref\n0 %d\n0000000000 65535 f \n", len(objetos)+1)
 	for _, o := range offsets {
 		fmt.Fprintf(&b, "%010d 00000 n \n", o)
 	}
-	fmt.Fprintf(&b, "trailer\n<< /Size %d /Root 1 0 R%s >>\nstartxref\n%d\n%%%%EOF\n", len(todos)+1, extra, xref)
+	fmt.Fprintf(&b, "trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", len(objetos)+1, xref)
 	return b.Bytes()
 }
 

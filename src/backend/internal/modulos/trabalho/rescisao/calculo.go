@@ -6,6 +6,7 @@ package rescisao
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/shopspring/decimal"
 
@@ -54,17 +55,19 @@ func DiasDeAviso(admissao, saida tipos.Data) int {
 
 // AvisoPago são os dias de aviso que a empresa paga e a data projetada da saída (o aviso indenizado conta como tempo
 // de serviço, para o 13º e as férias). Na dispensa sem justa causa indenizada, todos os dias; no acordo indenizado, a
-// metade (art. 484-A); nos outros casos, nenhum.
-func AvisoPago(tipo, aviso int64, admissao, saida tipos.Data) (dias int, projetada tipos.Data) {
+// metade (art. 484-A), com o meio dia (33 dias pagam 16,5; revisão do #704; a projeção conta os dias inteiros); nos
+// outros casos, nenhum.
+func AvisoPago(tipo, aviso int64, admissao, saida tipos.Data) (dias decimal.Decimal, projetada tipos.Data) {
+	dias = decimal.Zero
 	if aviso == AvisoIndenizado {
 		switch tipo {
 		case SemJustaCausa:
-			dias = DiasDeAviso(admissao, saida)
+			dias = decimal.NewFromInt(int64(DiasDeAviso(admissao, saida)))
 		case Acordo:
-			dias = DiasDeAviso(admissao, saida) / 2
+			dias = decimal.NewFromInt(int64(DiasDeAviso(admissao, saida))).Div(decimal.NewFromInt(2))
 		}
 	}
-	return dias, saida.SomarDias(dias)
+	return dias, saida.SomarDias(int(dias.IntPart()))
 }
 
 // AvosFerias são os meses do período aquisitivo em curso até a data (a fração de 15 dias ou mais conta), até 12.
@@ -98,9 +101,12 @@ type Entrada struct {
 	Dependentes       int64
 	Vencidas          []FeriasVencidas
 	AvosFerias        int           // do período em curso, até a data projetada
-	Avos13            int           // do ano da saída, até a data projetada
+	Avos13            int           // do ano da saída, até a data projetada (zero se o 13º do ano já foi pago inteiro)
+	Avos13Seguinte    int           // do ano seguinte, quando o aviso projeta a saída para ele (revisão do #704)
 	PrimeiraParcela13 tipos.Decimal // a 1ª parcela do 13º que já veio
-	SaldoFgts         tipos.Decimal
+	SaldoFgts         tipos.Decimal // até o mês antes da saída
+	BaseMultaFgts     tipos.Decimal // os depósitos corrigidos até o mês antes da saída, sem descontar os saques
+	SaqueAniversario  bool          // optou pelo saque-aniversário: na dispensa e no acordo, só a multa sai
 	Inss              encargos.TabelaInss
 	Irrf              encargos.TabelaIrrf
 }
@@ -114,12 +120,14 @@ type Linha struct {
 
 // Fgts é o FGTS na rescisão.
 type Fgts struct {
-	Saldo            tipos.Decimal `json:"saldo"`            // o estimado até a saída
+	Saldo            tipos.Decimal `json:"saldo"`            // o estimado até o mês antes da saída
 	DepositoRescisao tipos.Decimal `json:"depositoRescisao"` // 8% do saldo de salário, do aviso e do 13º
+	BaseDaMulta      tipos.Decimal `json:"baseDaMulta"`      // os depósitos corrigidos, sem descontar os saques
 	PercentualMulta  int           `json:"percentualMulta"`  // 40, 20 ou 0
 	Multa            tipos.Decimal `json:"multa"`
-	PercentualSaque  int           `json:"percentualSaque"` // 100, 80 ou 0
-	Sacavel          tipos.Decimal `json:"sacavel"`         // o que dá para sacar: a parte do saldo e a multa
+	PercentualSaque  int           `json:"percentualSaque"`  // 100, 80 ou 0
+	Sacavel          tipos.Decimal `json:"sacavel"`          // o que dá para sacar: a parte do saldo e a multa
+	SaqueAniversario bool          `json:"saqueAniversario"` // optou pelo saque-aniversário: só a multa sai
 }
 
 // Calculo é a rescisão calculada.
@@ -186,10 +194,14 @@ func Calcular(e Entrada) Calculo {
 
 	dias := diasNoMes(e.Saida, e.Admissao)
 	saldo := verba("Saldo de salário", fmt.Sprintf("%d dias", dias), e.SalarioMes.Decimal().Mul(decimal.NewFromInt(int64(dias))).Div(trinta))
-	aviso := verba("Aviso prévio indenizado", fmt.Sprintf("%d dias", diasPagos), remuneracao.Mul(decimal.NewFromInt(int64(diasPagos))).Div(trinta))
+	aviso := verba("Aviso prévio indenizado", strings.ReplaceAll(diasPagos.String(), ".", ",")+" dias", remuneracao.Mul(diasPagos).Div(trinta))
 	decimo, ferias := decimal.Zero, decimal.Zero
 	if e.Tipo != JustaCausa {
-		decimo = verba("13º proporcional", fmt.Sprintf("%d/12", e.Avos13), remuneracao.Mul(decimal.NewFromInt(int64(e.Avos13))).Div(doze))
+		referencia := fmt.Sprintf("%d/12", e.Avos13)
+		if e.Avos13Seguinte > 0 {
+			referencia = fmt.Sprintf("%d/12 do ano da saída e %d/12 do seguinte", e.Avos13, e.Avos13Seguinte)
+		}
+		decimo = verba("13º proporcional", referencia, remuneracao.Mul(decimal.NewFromInt(int64(e.Avos13+e.Avos13Seguinte))).Div(doze))
 		prop := verba("Férias proporcionais", fmt.Sprintf("%d/12", e.AvosFerias), remuneracao.Mul(decimal.NewFromInt(int64(e.AvosFerias))).Div(doze))
 		ferias = ferias.Add(prop).Add(verba("1/3 das férias proporcionais", "", prop.Div(tres)))
 	}
@@ -227,9 +239,10 @@ func Calcular(e Entrada) Calculo {
 	c.TotalVerbas, c.TotalDescontos = centavos(total), centavos(descontos)
 	c.Liquido = centavos(total.Sub(descontos))
 
-	// O FGTS: o depósito da rescisão, a multa e o saque.
+	// O FGTS: o depósito da rescisão (o mês da saída, o aviso e o 13º do ano, que o saldo de antes não tem), a multa
+	// sobre todos os depósitos (sem descontar os saques) e o saque.
 	deposito := saldo.Add(aviso).Add(decimo).Mul(oito).Round(2)
-	base := e.SaldoFgts.Decimal().Add(deposito)
+	base := e.BaseMultaFgts.Decimal().Add(deposito)
 	multa, saque := 0, 0
 	switch e.Tipo {
 	case SemJustaCausa:
@@ -239,10 +252,15 @@ func Calcular(e Entrada) Calculo {
 	case FimExperiencia:
 		saque = 100
 	}
+	if e.SaqueAniversario && multa > 0 {
+		saque = 0 // quem optou pelo saque-aniversário saca só a multa (Lei 13.932/2019)
+	}
 	valorMulta := base.Mul(decimal.NewFromInt(int64(multa))).Div(decimal.NewFromInt(100)).Round(2)
-	sacavel := base.Mul(decimal.NewFromInt(int64(saque))).Div(decimal.NewFromInt(100)).Add(valorMulta)
-	c.Fgts = Fgts{Saldo: centavos(e.SaldoFgts.Decimal()), DepositoRescisao: tipos.DeDecimal(deposito), PercentualMulta: multa,
-		Multa: tipos.DeDecimal(valorMulta), PercentualSaque: saque, Sacavel: centavos(sacavel)}
+	saldoSacavel := e.SaldoFgts.Decimal().Add(deposito)
+	sacavel := saldoSacavel.Mul(decimal.NewFromInt(int64(saque))).Div(decimal.NewFromInt(100)).Add(valorMulta)
+	c.Fgts = Fgts{Saldo: centavos(e.SaldoFgts.Decimal()), DepositoRescisao: tipos.DeDecimal(deposito), BaseDaMulta: centavos(base),
+		PercentualMulta: multa, Multa: tipos.DeDecimal(valorMulta), PercentualSaque: saque, Sacavel: centavos(sacavel),
+		SaqueAniversario: e.SaqueAniversario}
 	// O seguro-desemprego: só na dispensa sem justa causa, com 12 meses ou mais de emprego (na 1ª vez que pede).
 	c.SeguroDesemprego = e.Tipo == SemJustaCausa && AnosCompletos(e.Admissao, e.Saida) >= 1
 	return c

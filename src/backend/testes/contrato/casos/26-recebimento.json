@@ -1,5 +1,5 @@
 {
-  "descricao": "Recebimento do salário (#212, ADR 0065): o crédito na conta ligado ao holerite, sem contar duas vezes. Usa o holerite 1 (outubro de 2026) do 22-holerite; as sugestões vêm dos créditos do base.sql entre 15/10 e 15/11/2026. O 22-holerite deixa o módulo ligado. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "descricao": "Recebimento do salário (#212, ADR 0065): o crédito na conta ligado ao holerite, sem contar duas vezes. Usa o holerite 1 (outubro de 2026) do 22-holerite; as sugestões vêm dos créditos do base.sql entre 15/10 e 15/11/2026. O 22-holerite deixa o módulo ligado. Roda com a sessão 'principal', logada pelo 00-auth. Depois, um holerite de janeiro de 2026: o salário de 05/02 do base.sql vem como sugestão, é ligado e desligado, e o holerite é excluído no fim (revisão do #703).",
   "casos": [
     {
       "nome": "o recebimento de outubro",
@@ -10,12 +10,61 @@
       "nome": "ligar uma transação que não existe",
       "metodo": "POST",
       "caminho": "/api/trabalho/holerites/1/recebimentos",
-      "corpo": { "transacaoId": 999999 }
+      "corpo": {
+        "transacaoId": 999999
+      }
     },
     {
       "nome": "holerite que não existe",
       "metodo": "GET",
       "caminho": "/api/trabalho/holerites/999/recebimentos"
+    },
+    {
+      "nome": "abrir o holerite de janeiro",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/holerites",
+      "corpo": {
+        "mes": "2026-01"
+      },
+      "capturar": {
+        "holeriteJaneiro": "/id"
+      }
+    },
+    {
+      "nome": "o salário de fevereiro sugerido para janeiro",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos",
+      "comentario": "O salário de 05/02/2026 do base.sql (a transação 41) vem como sugestão."
+    },
+    {
+      "nome": "ligar o salário ao holerite",
+      "comentario": "A parte que falta do líquido; a transação já tinha a categoria Salário e fica como estava.",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos",
+      "corpo": {
+        "transacaoId": 41
+      },
+      "capturar": {
+        "ligacao": "/recebimentos/0/id"
+      }
+    },
+    {
+      "nome": "ligar o mesmo de novo",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos",
+      "corpo": {
+        "transacaoId": 41
+      }
+    },
+    {
+      "nome": "desligar",
+      "metodo": "DELETE",
+      "caminho": "/api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos/{{ligacao}}"
+    },
+    {
+      "nome": "excluir o holerite de janeiro",
+      "metodo": "DELETE",
+      "caminho": "/api/trabalho/holerites/{{holeriteJaneiro}}"
     }
   ]
 }

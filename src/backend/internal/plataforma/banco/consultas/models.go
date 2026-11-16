@@ -88,6 +88,8 @@ type ContaAgendada struct {
 	TextoCobranca     *string
 	Observacao        *string
 	ChaveExtrato      *string
+	ReservaNome       *string
+	ReservaDesde      *string
 	CriadoEm          string
 }
 
@@ -279,11 +281,15 @@ type HoleriteLancamento struct {
 }
 
 type HoleriteRecebimento struct {
-	Id          int64
-	HoleriteId  int64
-	TransacaoId int64
-	Valor       string
-	CriadoEm    string
+	Id                 int64
+	HoleriteId         int64
+	TransacaoId        *int64
+	Valor              string
+	ContaId            int64
+	TransacaoData      string
+	TransacaoValor     string
+	TransacaoDescricao string
+	CriadoEm           string
 }
 
 type HoleriteRubricaEscolha struct {
@@ -403,6 +409,17 @@ type Orcamento struct {
 	Valor       string
 }
 
+type PagamentoCofrinho struct {
+	Id                      int64
+	ContaAgendadaId         int64
+	TransacaoId             *int64
+	Vencimento              string
+	ProximoVencimento       string
+	UltimoPagamentoAnterior *string
+	Automatico              int64
+	CriadoEm                string
+}
+
 type PagamentoEmprestimo struct {
 	Id             int64
 	EmprestimoId   int64
@@ -446,12 +463,13 @@ type RegraDescricao struct {
 }
 
 type Rescisao struct {
-	EmpregoId int64
-	Data      string
-	Tipo      int64
-	Aviso     int64
-	Calculo   string
-	CriadoEm  string
+	EmpregoId     int64
+	Data          string
+	Tipo          int64
+	Aviso         int64
+	Calculo       string
+	SaidaAnterior *string
+	CriadoEm      string
 }
 
 type ReservaConferencium struct {
@@ -514,6 +532,7 @@ type Transacao struct {
 	DescricaoManual     int64
 	TransferenciaGrupo  *string
 	Observacao          *string
+	ReservaNome         *string
 	CriadoEm            string
 	AtualizadoEm        string
 }

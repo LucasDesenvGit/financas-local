@@ -1,7 +1,7 @@
 # 0037. Reservas pelo valor que o Open Finance informa; a estimativa pelo extrato fica para o resto
 
 - **Status:** Aceita
-- **Data:** 2026-10-19 (issue #168); atualizada em 2026-10-20 (issue #237)
+- **Data:** 2026-10-19 (issue #168); atualizada em 2026-10-20 (issue #237); caminhos do código em 2026-11-15 (#712)
 - **Relacionadas:** substitui a [0010](0010-reservas-estimadas-pelo-extrato.md) (reservas estimadas pelo extrato)
 
 ## Contexto
@@ -20,17 +20,17 @@ O MeuPluggy mostra, na conta do Mercado Pago, **"Reservado: R$ …"** com o valo
 
 ## Decisão
 
-- **A sincronização lê o `bankData` das contas bancárias** (`ReservaService.DoOpenFinance`):
+- **A sincronização lê o `bankData` das contas bancárias** (`reservasDoOpenFinance`, em `internal/openfinance/sincronizacao`):
   - as reservas com nome e valor de `reservedBalances` (procurando campos como `amount`/`balance`/`value` e `name`/`description`), gravadas em `Conta.ReservasInformadas` (JSON);
   - o total em `Conta.SaldoReservado`. Sem os detalhes, vale o `automaticallyInvestedBalance` positivo;
   - nada informado = `null`, e vale a estimativa;
   - o nome dos campos de cada item (sem valores) vai para o log, para conferir a estrutura real.
-- **Nas contas com o reservado informado, ele substitui a estimativa só onde veio pelo nome** (`ReservaService.SubstituirPeloBanco`, ajustado na #237):
+- **Nas contas com o reservado informado, ele substitui a estimativa só onde veio pelo nome** (`substituirPeloBanco`, em `internal/patrimonio/reservas`, ajustado na #237):
   - **com nomes:** uma reserva por nome da lista detalhada, marcada como "informado pelo banco". O nome do extrato é mantido quando bate, para não quebrar as metas ligadas a um cofrinho (#89);
   - **reserva do extrato fora da lista detalhada:** continua estimada (com a conferência, se houver), sem a etiqueta, com "conferir saldo" e o aviso de que não está na lista do banco (`ForaDaListaDoBanco`);
   - **só com o total:** cada reserva do extrato continua estimada e conferível, sem a etiqueta. O que o total passa da soma delas vira a linha "Reservado" ("restante do total do banco", `RestanteDoBanco`), sem conferência: conferir as outras reservas ajusta esse valor. Sem reserva no extrato, essa linha é o total inteiro. Se a soma das reservas passa do total, a linha não aparece.
 - **Na tela:** só a reserva que veio pelo nome da lista do banco aparece como "informado pelo banco" e não tem "conferir saldo"; a linha do restante também não tem. A conferência das outras pede confirmação quando o valor foge muito do esperado: menos de 1/10 ou mais de 10× a estimativa ou o total guardado.
-- **Nos totais:** patrimônio, total investido e reserva de emergência usam o mesmo `ReservaService` e não mudam de lugar.
+- **Nos totais:** patrimônio, total investido e reserva de emergência usam o mesmo `internal/patrimonio/reservas` e não mudam de lugar.
 
 ## Consequências
 
@@ -44,5 +44,5 @@ O MeuPluggy mostra, na conta do Mercado Pago, **"Reservado: R$ …"** com o valo
   - **Nome diferente entre o banco e o extrato (#237, *inferido*):** a reserva do extrato que não está na lista detalhada continua contando pela estimativa, e pode contar duas vezes o mesmo dinheiro se o banco a manda com outro nome. A tela avisa e sugere conferir essa com zero; preferimos isso a zerar em silêncio.
   - **Coluna nova em `Conta`:** `SaldoReservado` e `ReservasInformadas`, por `adicionar_coluna_se_ausente`.
 - **Na prática:**
-  - regras de leitura e de substituição só em `Servicos/Investimentos/ReservaService.cs`;
-  - quem soma reservas usa `ReservaService.ListarAsync`/`TotalAsync` ou `CarteiraService.ComposicaoAsync`.
+  - a leitura do `bankData` só em `internal/openfinance/sincronizacao` (`reservasDoOpenFinance`), e a substituição só em `internal/patrimonio/reservas` (`substituirPeloBanco`);
+  - quem soma reservas usa o `Listar`/`Total` de `internal/patrimonio/reservas` ou o `Composicao` de `internal/patrimonio/carteira`.

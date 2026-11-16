@@ -12,9 +12,8 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 	"unicode"
-
-	"github.com/ledongthuc/pdf"
 )
 
 // Limites do arquivo (ADR 0068).
@@ -68,49 +67,16 @@ type letra struct {
 }
 
 // LerPDF abre o PDF (com a senha, se tiver) e devolve as linhas de cada página. Só extrai texto: script, formulário e
-// anexo dentro do PDF não rodam (a biblioteca não executa nada).
-func LerPDF(dados []byte, senha string) (paginas [][]Linha, err error) {
+// anexo dentro do PDF não rodam (a biblioteca não executa nada). Um PDF por vez, com prazo e com o conteúdo limitado
+// (conteudo.go, revisão do #706).
+func LerPDF(dados []byte, senha string) ([][]Linha, error) {
 	if len(dados) > TamanhoMaximo {
 		return nil, ErrGrande
 	}
 	if !bytes.HasPrefix(dados, []byte("%PDF-")) { // pelo conteúdo, não pela extensão
 		return nil, ErrNaoEPDF
 	}
-	defer func() {
-		if r := recover(); r != nil { // PDF malformado: a biblioteca pode entrar em pânico no conteúdo de uma página
-			paginas, err = nil, ErrIlegivel // sem o detalhe: ele pode ter texto do PDF (#228, nada do holerite no log)
-		}
-	}()
-	tentativas := 0
-	r, err := pdf.NewReaderEncrypted(bytes.NewReader(dados), int64(len(dados)), func() string {
-		tentativas++
-		if tentativas > 1 {
-			return "" // a senha errada não vira um laço
-		}
-		return senha
-	})
-	switch {
-	case errors.Is(err, pdf.ErrInvalidPassword):
-		return nil, ErrSenha
-	case err != nil:
-		return nil, ErrIlegivel
-	}
-	if r.NumPage() > PaginasMaximo {
-		return nil, ErrGrande
-	}
-	algumTexto := false
-	for i := 1; i <= r.NumPage(); i++ {
-		var letras []letra
-		for _, t := range r.Page(i).Content().Text {
-			letras = append(letras, letra{s: t.S, x: t.X, y: t.Y, w: t.W, fonte: t.FontSize})
-			algumTexto = algumTexto || strings.TrimSpace(t.S) != ""
-		}
-		paginas = append(paginas, Agrupar(letras))
-	}
-	if !algumTexto {
-		return nil, ErrSemTexto
-	}
-	return paginas, nil
+	return comPrazo(vaga, prazo, func(limite time.Time) ([][]Linha, error) { return lerComLimites(dados, senha, limite) })
 }
 
 // Agrupar junta as letras em linhas (a mesma altura, com folga de 2 pontos) e as linhas em células: um vão de mais

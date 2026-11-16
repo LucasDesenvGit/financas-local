@@ -1,6 +1,6 @@
 # 0005. Segredos criptografados no banco com ASP.NET Data Protection
 
-- **Status:** Substituída por [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md): desde a #85, os segredos são do Go (AES-256-GCM, prefixo `v2:`, `internal/segredos`, com a chave protegida pelo DPAPI no Windows), e o Data Protection saiu com o .NET na #86.
+- **Status:** Substituída por [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md): desde a #85, os segredos são do Go (AES-256-GCM, prefixo `v2:`, `internal/plataforma/segredos`, com a chave protegida pelo DPAPI no Windows), e o Data Protection saiu com o .NET na #86.
 - **Data:** 2026-10-15
 - **Relacionadas:** [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md)
 
@@ -23,6 +23,6 @@ Guardamos os segredos criptografados com ASP.NET Data Protection na tabela `Conf
 - **Positivas:** o segredo é configurado pela tela; uma cópia do banco sozinha não revela nada; a mesma solução nos dois sistemas.
 - **Negativas:**
   - no Linux a proteção das chaves é só a permissão de arquivo — quem lê `dados/` com a conta do serviço lê as chaves;
-  - os segredos ficam presos às chaves daquela instalação: ao trocar de máquina ou sistema, ou ao migrar com `Financas.MigrarSqlite`, eles precisam ser informados de novo;
+  - os segredos ficam presos às chaves daquela instalação: ao trocar de máquina ou sistema, eles precisam ser informados de novo;
   - perder `dados/chaves` torna os segredos ilegíveis (o backup do banco não basta).
-- **Na prática:** segredo novo usa `ConfiguracaoService.DefinirAsync(chave, valor, protegido: true)`; nunca em `appsettings`, log ou DTO de resposta. Em desenvolvimento as chaves ficam em `dados/chaves-dev`.
+- **O que continua no Go (0049):** o segredo é configurado pela tela, fica cifrado na `Configuracao` e nunca vai para arquivo de configuração, log ou resposta da API; só o esquema de cifra e a proteção da chave mudaram.

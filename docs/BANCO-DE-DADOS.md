@@ -116,11 +116,18 @@ erDiagram
         INTEGER CategoriaId FK
         INTEGER ContaId FK
     }
+    PagamentoCofrinho {
+        INTEGER Id PK
+        INTEGER ContaAgendadaId FK
+        INTEGER TransacaoId FK
+    }
     Categoria ||--o{ Orcamento : "CategoriaId: CASCADE"
     Conta |o--o{ Meta : "ContaId: SET NULL"
     Meta ||--o{ MetaAporte : "MetaId: CASCADE"
     Categoria |o--o{ ContaAgendada : "CategoriaId: SET NULL"
     Conta |o--o{ ContaAgendada : "ContaId: SET NULL"
+    ContaAgendada ||--o{ PagamentoCofrinho : "ContaAgendadaId: CASCADE"
+    Transacao |o--o{ PagamentoCofrinho : "TransacaoId: SET NULL"
 ```
 
 ### Investimentos
@@ -273,7 +280,7 @@ erDiagram
     Emprego ||--o{ FeriasAgendamento : "EmpregoId: CASCADE"
     Emprego ||--o{ FgtsLancamento : "EmpregoId: CASCADE"
     Holerite ||--o{ HoleriteRecebimento : "HoleriteId: CASCADE"
-    Transacao ||--o{ HoleriteRecebimento : "TransacaoId: CASCADE"
+    Transacao |o--o{ HoleriteRecebimento : "TransacaoId: SET NULL"
     Emprego ||--o{ Rescisao : "EmpregoId: CASCADE"
     Emprego ||--o{ HoleriteRubricaEscolha : "EmpregoId: CASCADE"
 ```

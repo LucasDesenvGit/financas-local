@@ -146,12 +146,18 @@ func DiasTrabalhados(mes, admissao tipos.Data, saida *tipos.Data) int {
 	return max(0, fim-inicio+1)
 }
 
-// DiasDoDsr são os dias úteis (segunda a sábado) e os de descanso (domingos) do mês, o padrão do DSR. Os feriados a
-// pessoa acerta no holerite.
+// feriadosNacionais são os feriados nacionais de data fixa (Leis 662/1949, 6.802/1980, 10.607/2002 e 14.759/2023), dia e
+// mês. Os de data móvel e os estaduais e municipais a pessoa acerta no holerite.
+var feriadosNacionais = map[[2]int]bool{{1, 1}: true, {21, 4}: true, {1, 5}: true, {7, 9}: true, {12, 10}: true,
+	{2, 11}: true, {15, 11}: true, {20, 11}: true, {25, 12}: true}
+
+// DiasDoDsr são os dias úteis (segunda a sábado) e os de descanso (domingos e os feriados nacionais fixos) do mês, o
+// padrão do DSR. Os outros feriados a pessoa acerta no holerite.
 func DiasDoDsr(mes tipos.Data) (uteis, descanso int64) {
 	fim := mes.SomarMeses(1)
 	for d := mes; d.Antes(fim); d = d.SomarDias(1) {
-		if time.Date(d.Ano(), d.Mes(), d.Dia(), 12, 0, 0, 0, time.UTC).Weekday() == time.Sunday {
+		domingo := time.Date(d.Ano(), d.Mes(), d.Dia(), 12, 0, 0, 0, time.UTC).Weekday() == time.Sunday
+		if domingo || feriadosNacionais[[2]int{d.Dia(), int(d.Mes())}] {
 			descanso++
 		} else {
 			uteis++

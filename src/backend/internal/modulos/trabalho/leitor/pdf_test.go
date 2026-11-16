@@ -17,9 +17,9 @@ func TestLerPDFRecusaComMensagemClara(t *testing.T) {
 	}
 	cinco := seis[:PaginasMaximo]
 	grande := append([]byte("%PDF-1.4\n"), bytes.Repeat([]byte(" "), TamanhoMaximo)...)
-	semTexto := ficticios.GerarPDF([][]ficticios.Texto{{}}, "")
-	soEspacos := ficticios.GerarPDF([][]ficticios.Texto{ficticios.Pagina(ficticios.Linha(0, 30, "   "))}, "")
-	comSenha := ficticios.GerarPDF(umaPagina, "12345678900")
+	semTexto := ficticios.GerarPDF([][]ficticios.Texto{{}})
+	soEspacos := ficticios.GerarPDF([][]ficticios.Texto{ficticios.Pagina(ficticios.Linha(0, 30, "   "))})
+	comSenha := ficticios.ComSenha()
 	casos := []struct {
 		nome  string
 		dados []byte
@@ -29,17 +29,17 @@ func TestLerPDFRecusaComMensagemClara(t *testing.T) {
 		{"texto qualquer com a extensão .pdf", []byte("isto não é um PDF"), "", ErrNaoEPDF},
 		{"vazio", nil, "", ErrNaoEPDF},
 		{"grande demais", grande, "", ErrGrande},
-		{"páginas demais", ficticios.GerarPDF(seis, ""), "", ErrGrande},
+		{"páginas demais", ficticios.GerarPDF(seis), "", ErrGrande},
 		{"corrompido", []byte("%PDF-1.4\nlixo sem estrutura"), "", ErrIlegivel},
-		{"corrompido no conteúdo", corromperConteudo(ficticios.GerarPDF(umaPagina, "")), "", ErrIlegivel},
+		{"corrompido no conteúdo", corromperConteudo(ficticios.GerarPDF(umaPagina)), "", ErrIlegivel},
 		{"escaneado (sem texto)", semTexto, "", ErrSemTexto},
 		{"só espaços", soEspacos, "", ErrSemTexto},
 		{"com senha, sem a senha", comSenha, "", ErrSenha},
 		{"com senha, a senha errada", comSenha, "98765432100", ErrSenha},
-		{"com senha, a certa", comSenha, "12345678900", nil},
-		{"sem senha, com uma senha à toa", ficticios.GerarPDF(umaPagina, ""), "qualquer", nil},
-		{"o máximo de páginas", ficticios.GerarPDF(cinco, ""), "", nil},
-		{"o cabeçalho depois do começo", append([]byte("x"), ficticios.GerarPDF(umaPagina, "")...), "", ErrNaoEPDF},
+		{"com senha, a certa", comSenha, ficticios.SenhaFicticia, nil},
+		{"sem senha, com uma senha à toa", ficticios.GerarPDF(umaPagina), "qualquer", nil},
+		{"o máximo de páginas", ficticios.GerarPDF(cinco), "", nil},
+		{"o cabeçalho depois do começo", append([]byte("x"), ficticios.GerarPDF(umaPagina)...), "", ErrNaoEPDF},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -53,7 +53,11 @@ func TestLerPDFRecusaComMensagemClara(t *testing.T) {
 				}
 				return
 			}
-			if len(paginas) == 0 || paginas[0][0].Texto() != "Holerite fictício" {
+			quero := "Holerite fictício"
+			if c.senha == ficticios.SenhaFicticia { // o PDF com senha pronto é a via clássica
+				quero = "EMPRESA FICTÍCIA DE TESTES LTDA Recibo de Pagamento de Salário"
+			}
+			if len(paginas) == 0 || paginas[0][0].Texto() != quero {
 				t.Errorf("páginas: %v", paginas)
 			}
 		})

@@ -8,8 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 type mux struct{ *http.ServeMux }
@@ -77,9 +80,9 @@ func TestHoleriteDoMesPelaApi(t *testing.T) {
 	a := novo(t)
 	empregoId := a.empregoDe5500()
 	h := a.criar(empregoId, "2026-10")
-	// Os dias do DSR vêm do calendário de outubro (27 úteis, 4 domingos); sem lançamentos, só o salário: 5500 - INSS
-	// 571,51 - IRRF (4892,80 x 27,5% - 908,73 = 436,79, menos a redução de 246,32) 190,47 = 4738,02.
-	if h.DiasUteis != 27 || h.DiasDescanso != 4 || h.Situacao != Aberto || h.Calculo.Liquido.String() != "4738.02" {
+	// Os dias do DSR vêm do calendário de outubro (26 úteis; 4 domingos e o 12/10); sem lançamentos, só o salário: 5500 -
+	// INSS 571,51 - IRRF (4892,80 x 27,5% - 908,73 = 436,79, menos a redução de 246,32) 190,47 = 4738,02.
+	if h.DiasUteis != 26 || h.DiasDescanso != 5 || h.Situacao != Aberto || h.Calculo.Liquido.String() != "4738.02" {
 		t.Fatalf("holerite novo = %+v (líquido %s)", h, h.Calculo.Liquido)
 	}
 	r := a.chamar("PUT", fmt.Sprintf("/api/trabalho/holerites/%d", h.Id), lancamentosDeOutubro)
@@ -277,11 +280,61 @@ func TestVariaveisDoAno(t *testing.T) {
 	a.criar(empregoId, "2026-11")              // só o salário: conta o mês, sem variáveis
 	a.criar(empregoId, "2025-12")              // outro ano
 	semTabela := a.criar(empregoId, "2025-03") // sem tabela do IRRF: não conta
-	soma, meses, err := a.s.VariaveisDoAno(t.Context(), empregoId, 2026)
+	cinco500 := tipos.DeDecimal(decimal.NewFromInt(5500))
+	soma, meses, err := a.s.VariaveisDoAno(t.Context(), empregoId, 2026, cinco500)
 	if err != nil || soma.String() != "545.37" || meses != 2 {
 		t.Fatalf("2026: soma %s em %d meses (%v); quer 545.37 em 2", soma, meses, err)
 	}
-	if soma, meses, _ := a.s.VariaveisDoAno(t.Context(), empregoId, 2025); soma.String() != "0.00" || meses != 1 || semTabela.Calculo != nil {
+	// Súmula 347 (revisão do #700): com o salário de agora 20% maior, as mesmas horas valem 20% mais.
+	if soma, _, _ := a.s.VariaveisDoAno(t.Context(), empregoId, 2026, tipos.DeDecimal(decimal.NewFromInt(6600))); soma.String() != "654.44" {
+		t.Fatalf("2026 com o salário de 6600: soma %s; quer 654.44 (545,37 × 1,2)", soma)
+	}
+	if soma, meses, _ := a.s.VariaveisDoAno(t.Context(), empregoId, 2025, cinco500); soma.String() != "0.00" || meses != 1 || semTabela.Calculo != nil {
 		t.Fatalf("2025: soma %s em %d meses", soma, meses)
+	}
+}
+
+// Revisão do #699: o holerite sem salário no mês (a admissão corrigida, por exemplo) ou fora do emprego fica com o
+// aviso e sem o cálculo, e a lista dos holerites não cai por causa dele; o "Abrir" sem salário recusa sem gravar.
+func TestHoleriteSemSalarioOuForaDoEmprego(t *testing.T) {
+	t.Parallel()
+	a := novo(t)
+	ctx := t.Context()
+	empregoId := a.empregoDe5500() // admissão em 11/03/2024, salário desde março de 2024
+	bom := a.criar(empregoId, "2026-10")
+	fora := a.criar(empregoId, "2024-03")
+	// O mês da admissão some do emprego (admissão corrigida para depois) e outubro perde o salário: à mão, no banco, o
+	// que a #698 já não deixa fazer pela API.
+	if _, err := a.s.db.ExecContext(ctx, `UPDATE "Emprego" SET "Admissao" = '2024-04-01' WHERE "Id" = ?`, empregoId); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.s.db.ExecContext(ctx, `UPDATE "SalarioVigencia" SET "Inicio" = '2026-11-01' WHERE "EmpregoId" = ?`, empregoId); err != nil {
+		t.Fatal(err)
+	}
+	r := a.chamar("GET", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", empregoId), "")
+	r.ConferirStatus(t, http.StatusOK)
+	lista := decodificar[[]Resumo](t, r)
+	if len(lista) != 2 || lista[0].Liquido != nil || lista[1].Liquido != nil {
+		t.Fatalf("lista = %+v", lista)
+	}
+	h := decodificar[Holerite](t, a.chamar("GET", fmt.Sprintf("/api/trabalho/holerites/%d", bom.Id), ""))
+	if h.Calculo != nil || h.Aviso == nil || *h.Aviso != avisos[ErrSemSalario] {
+		t.Fatalf("sem salário = %+v", h)
+	}
+	h = decodificar[Holerite](t, a.chamar("GET", fmt.Sprintf("/api/trabalho/holerites/%d", fora.Id), ""))
+	if h.Calculo != nil || h.Aviso == nil || *h.Aviso != avisos[ErrForaDoEmprego] {
+		t.Fatalf("fora do emprego = %+v", h)
+	}
+	for id, err := range map[int64]error{bom.Id: ErrSemSalario, fora.Id: ErrForaDoEmprego} {
+		r = a.chamar("POST", fmt.Sprintf("/api/trabalho/holerites/%d/fechar", id), "")
+		r.ConferirStatus(t, http.StatusConflict)
+		r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, "Não dá para fechar: "+avisos[err]))
+	}
+	// Abrir um mês sem salário recusa e não grava nada.
+	r = a.chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", empregoId), `{"mes":"2026-09"}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"Não há salário para esse mês: cadastre em Trabalho › Salário antes de abrir o holerite."}`)
+	if lista, _ := a.s.Listar(ctx, empregoId); len(lista) != 2 {
+		t.Fatalf("gravou o holerite recusado: %+v", lista)
 	}
 }

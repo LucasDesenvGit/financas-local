@@ -64,10 +64,15 @@ type Estimativa struct {
 
 func centavos(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v.Round(2)) }
 
+// DiaDoDeposito é até quando a empresa deposita o FGTS do mês, no mês seguinte (o FGTS Digital, desde 03/2024; antes
+// era o dia 7). O app só mostra o depósito de uma competência depois disso (*inferido*: há empresa que paga antes).
+const DiaDoDeposito = 20
+
 // Estimar monta o saldo mês a mês, de inicio até ate (os dois no dia 1). depositos[mes.String()] é o depósito de cada
-// mês. A ordem de cada mês: a correção do saldo de antes, o depósito, a distribuição e os saques do mês; se houve
-// conferência no mês, o saldo passa a ser o do app (a última conferência do mês), e o saque ou a distribuição com data
-// depois dela entram depois.
+// mês (a competência). A ordem de cada mês: a correção do saldo de antes, o depósito, a distribuição e os saques do mês;
+// se houve conferência no mês, o saldo passa a ser o do app (a última conferência do mês) mais os depósitos que o app
+// ainda não mostrava naquele dia (o do mês e, antes do dia 20, o do mês anterior; revisão do #702), e o saque ou a
+// distribuição com data depois dela entram depois.
 func Estimar(inicio, ate tipos.Data, depositos map[string]decimal.Decimal, lancamentos []Lancamento) Estimativa {
 	r := Estimativa{Meses: []Mes{}, Conferencias: []Conferencia{}}
 	saldo := decimal.Zero
@@ -105,9 +110,14 @@ func Estimar(inicio, ate tipos.Data, depositos map[string]decimal.Decimal, lanca
 			Distribuicao: centavos(distribuicao), Saques: centavos(saques)}
 		if conferencia != nil {
 			informado := conferencia.Valor.Decimal()
+			pendente := deposito
+			if conferencia.Data.Dia() < DiaDoDeposito && len(r.Meses) > 0 {
+				pendente = pendente.Add(r.Meses[len(r.Meses)-1].Deposito.Decimal())
+			}
+			estimado := saldo.Sub(pendente)
 			r.Conferencias = append(r.Conferencias, Conferencia{Data: conferencia.Data, Informado: centavos(informado),
-				Estimado: centavos(saldo), Diferenca: centavos(informado.Sub(saldo))})
-			saldo, m.Conferido = informado, true
+				Estimado: centavos(estimado), Diferenca: centavos(informado.Sub(estimado))})
+			saldo, m.Conferido = informado.Add(pendente), true
 		}
 		saldo = saldo.Add(depois)
 		m.Saldo = centavos(saldo)

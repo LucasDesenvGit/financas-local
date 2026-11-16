@@ -78,6 +78,24 @@ O `holeritepdf` classifica as rubricas:
 - **O erro não leva texto do PDF**, e o log da falha não leva o conteúdo.
 - **O PDF não é guardado.** Guardar como anexo fica para outra decisão.
 
+**Limites da leitura (revisão do #706, 16/11/2026):** o PDF vem de quem usa o site, e a biblioteca não se protege de um
+PDF malformado. Na revisão, um PDF de uns 200 bytes (a árvore de páginas com um `/Pages` filho dele mesmo) travou o
+`r.Page` para sempre, e um de 143 KB (o conteúdo em FlateDecode) abriu para 39 MB e levou o processo a uns 12 GB de
+memória. Por isso o `leitor/conteudo.go`:
+- **percorre a árvore de páginas e a cadeia de `Parent` com limite** (8 níveis, 64 nós): ciclo vira "o PDF não abriu";
+- **confere o tamanho aberto antes de ler:** 1 MB de conteúdo por página e 128 KB do `ToUnicode` de cada fonte, lidos
+  com teto (o resto nem é descomprimido);
+- **tira as letras com a mesma conta do `Content()` da biblioteca** (a posição de cada letra, conferida letra a letra
+  num teste contra a própria biblioteca), mas com **teto de 20 mil letras por página**, conferido antes de traduzir: a
+  tradução de um código pelo `ToUnicode` pode ser um texto enorme, e o teto usa o maior texto da tabela;
+- **lê um PDF por vez, com prazo de 5 segundos**, conferido a cada operador do conteúdo.
+- **O que fica de fora:** um laço da biblioteca que o prazo não alcança (ao abrir o PDF: a cadeia `/Prev` da tabela xref
+  ou `/Extends` dos fluxos de objetos, em ciclo) não para: a leitura desiste de esperar no prazo, mas a goroutine fica
+  presa, com a vaga, e as próximas leituras dizem "o leitor está lendo outro PDF" até o site reiniciar. Uma CPU ocupada,
+  e não uma a cada tentativa. Ler num processo à parte, com limite de memória e de tempo do sistema, resolveria tudo,
+  mas é outra fronteira (*inferido*; a #229 do OCR já vai ter um processo assim, ADR 0069).
+- Um holerite de verdade fica muito abaixo de todos os limites (uns 20 KB de conteúdo e 3 mil letras por página).
+
 **O que é gravado:**
 - **Nada sem "Confirmar":** a prévia mostra cada linha, o tipo, o trecho do PDF, as provas e os avisos (CNPJ, mês, salário, lido × calculado).
 - **O holerite lido é o do mês, fechado, com `Origem` = 2.** O cálculo guardado é montado com as linhas confirmadas. Assim, o 13º, as férias, o FGTS, a rescisão e o recebimento usam o lido sem mudança.
@@ -93,12 +111,15 @@ O `holeritepdf` classifica as rubricas:
   - Rubrica nova se ensina uma vez por emprego. Nome comum novo entra no dicionário com um teste.
 - **Negativas:**
   - **Não reconhece 100% dos holerites.** Um layout fora da anatomia comum não é lido, como o de uma coluna só de "Valor" com o sinal. Nesse caso, a prova real mostra o erro, ou a tela diz "não achei a tabela".
-  - Depende de uma biblioteca pequena. Se ela parar, o leitor fica na última versão que funciona, e trocar mexe só no `leitor/pdf.go`.
+  - Depende de uma biblioteca pequena. Se ela parar, o leitor fica na última versão que funciona, e trocar mexe só no `leitor/pdf.go` e no `leitor/conteudo.go`.
+  - A extração do texto é uma cópia da conta da biblioteca (para pôr os limites): uma versão nova dela que mude a conta
+    não muda o leitor sozinha. O teste `TestMesmaContaDaBiblioteca` avisa quando as duas se separam.
   - Holerite escaneado ou foto não tem texto: fica para o OCR (#229).
   - O base64 aumenta o pedido em um terço, e o limite de 700 KB é menor que o de 1 MB do site.
   - O "Desfazer" some se o serviço reiniciar nos 10 minutos. Aí, o caminho é "Reabrir" (com registro na auditoria) e "Excluir".
 - **Na prática:**
-  - **Nunca holerite real no repositório.** Os testes usam os PDFs fictícios do `leitor/ficticios`, gerados na hora (quatro estilos de sistemas de folha, com e sem senha). Layout novo entra lá, com empresa, CNPJ e valores inventados.
+  - **Nunca holerite real no repositório.** Os testes usam os PDFs fictícios do `leitor/ficticios`, gerados na hora (quatro estilos de sistemas de folha). O com senha é um arquivo pronto (`ficticios/testdata`), gerado uma vez da via clássica: o código não cifra nada (o CodeQL não aceita RC4, revisão do #706). Layout novo entra lá, com empresa, CNPJ e valores inventados.
+  - **A rubrica que o site não conhece vem sem tipo** na prévia, e o "Confirmar" espera a pessoa escolher (ou deixar a linha de fora): o "Outro" que o site sugeria não vira escolha lembrada sem ela escolher (revisão do #706). O rodapé do PDF (salário base, bases do INSS e do FGTS, FGTS do mês) vai de R$ 0,00 a R$ 9.999.999,99, como as linhas.
   - **Nome comum novo:** a expressão normalizada vai na regra do tipo em `holeritepdf/dicionario.go`. O teste confere a normalização e o caso.
   - **A `ledongthuc/pdf` está na tabela de bibliotecas da ADR 0049.** Trocar de biblioteca pede uma ADR nova.
   - **O critério de aceite com um holerite real** (#228) é conferido pelo usuário, fora do repositório.

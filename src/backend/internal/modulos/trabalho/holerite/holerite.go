@@ -43,10 +43,19 @@ var (
 	ErrAberto        = errors.New("holerite aberto")
 	ErrJaExiste      = errors.New("já existe holerite do mês")
 	ErrSemTabela     = errors.New("sem tabela do INSS ou do IRRF para o mês")
+	ErrSemSalario    = errors.New("sem salário no mês")
+	ErrForaDoEmprego = errors.New("mês fora do emprego")
 	ErrNaoELido      = errors.New("o holerite não é mais o lido do PDF")
 	// ErrInvalido é a família dos erros de validação, para quem chama de fora do pacote (a mensagem é o Error()).
 	ErrInvalido = errors.New("dados inválidos")
 )
+
+// avisos dos holerites sem cálculo: o holerite existe, e a lista e a tela continuam funcionando (revisão do #699).
+var avisos = map[error]string{
+	ErrSemTabela:     "Ainda não há tabela do INSS ou do IRRF para esse mês: o holerite fica sem o cálculo.",
+	ErrSemSalario:    "Não há salário para esse mês: cadastre em Trabalho › Salário. O holerite fica sem o cálculo.",
+	ErrForaDoEmprego: "Esse mês é de antes da admissão ou depois da saída: o holerite fica sem o cálculo. Exclua-o ou corrija o emprego.",
+}
 
 type erroDeValidacao struct{ mensagem string }
 
@@ -67,8 +76,10 @@ type Holerite struct {
 	FechadoEm    *tipos.DataHora   `json:"fechadoEm"`
 	Lancamentos  []LancamentoSalvo `json:"lancamentos"`
 	Calculo      *Calculo          `json:"calculo"`
-	// Aviso: não deu para calcular (sem tabela do mês). O holerite existe, sem o cálculo.
+	// Aviso: não deu para calcular (sem tabela, sem salário, mês fora do emprego). O holerite existe, sem o cálculo.
 	Aviso *string `json:"aviso"`
+	// semCalculo é o porquê do Aviso, para o Fechar recusar com a mensagem certa.
+	semCalculo error
 }
 
 // LancamentoSalvo é o lançamento com o id.
@@ -120,6 +131,9 @@ func (s *Servico) Criar(ctx context.Context, empregoId int64, mes tipos.Data) (H
 	}
 	if DiasTrabalhados(mes, e.Admissao, e.Saida) == 0 {
 		return Holerite{}, invalido("Escolha um mês em que o emprego estava ativo.")
+	}
+	if _, ok := emprego.SalarioDoMes(e.Salarios, mes); !ok {
+		return Holerite{}, invalido("Não há salário para esse mês: cadastre em Trabalho › Salário antes de abrir o holerite.")
 	}
 	uteis, descanso := DiasDoDsr(mes)
 	var id int64
@@ -179,15 +193,14 @@ func (s *Servico) Obter(ctx context.Context, id int64) (Holerite, error) {
 		return h, nil
 	}
 	c, err := s.calcular(ctx, h)
-	switch {
-	case errors.Is(err, ErrSemTabela):
-		aviso := "Ainda não há tabela do INSS ou do IRRF para esse mês: o holerite fica sem o cálculo."
-		h.Aviso = &aviso
-	case err != nil:
-		return Holerite{}, err
-	default:
-		h.Calculo = &c
+	if aviso, ok := avisos[err]; ok {
+		h.Aviso, h.semCalculo = &aviso, err
+		return h, nil
 	}
+	if err != nil {
+		return Holerite{}, err
+	}
+	h.Calculo = &c
 	return h, nil
 }
 
@@ -232,9 +245,12 @@ func (s *Servico) calcular(ctx context.Context, h Holerite) (Calculo, error) {
 	if err != nil {
 		return Calculo{}, err
 	}
+	if DiasTrabalhados(h.Mes, e.Admissao, e.Saida) == 0 {
+		return Calculo{}, ErrForaDoEmprego
+	}
 	salario, ok := emprego.SalarioDoMes(e.Salarios, h.Mes)
 	if !ok {
-		return Calculo{}, invalido("Não há salário para esse mês.")
+		return Calculo{}, ErrSemSalario
 	}
 	entrada := Entrada{Mes: h.Mes, Admissao: e.Admissao, Saida: e.Saida, SalarioContratual: salario.SalarioBruto,
 		JornadaHoras: e.JornadaMensalHoras, Dependentes: e.Dependentes, SemEncargos: e.Regime != emprego.RegimeClt,
@@ -386,25 +402,37 @@ func (s *Servico) Salvar(ctx context.Context, id, diasUteis, diasDescanso int64,
 	return s.Obter(ctx, id)
 }
 
-// Fechar congela o holerite: guarda o cálculo de agora, que não muda mais com o salário ou a tabela.
+// Fechar congela o holerite: guarda o cálculo de agora, que não muda mais com o salário ou a tabela. Lê os lançamentos e
+// grava na mesma transação, só se ele continua aberto: um "Salvar" no meio não deixa congelado um cálculo velho.
 func (s *Servico) Fechar(ctx context.Context, id int64) (Holerite, error) {
-	h, err := s.Obter(ctx, id)
+	err := banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+		h, _, err := s.ler(ctx, tx, id)
+		if err != nil {
+			return err
+		}
+		if h.Situacao == Fechado {
+			return ErrFechado
+		}
+		c, err := s.calcular(ctx, h)
+		if err != nil {
+			return err
+		}
+		dados, err := json.Marshal(c)
+		if err != nil {
+			return fmt.Errorf("guardar o cálculo: %w", err)
+		}
+		r, err := tx.ExecContext(ctx, `UPDATE "Holerite" SET "Situacao" = ?, "Calculo" = ?, "FechadoEm" = ? WHERE "Id" = ? AND "Situacao" = ?`,
+			Fechado, string(dados), tipos.NovaDataHora(s.relogio.Agora()), id, Aberto)
+		if err != nil {
+			return fmt.Errorf("fechar o holerite: %w", err)
+		}
+		if n, _ := r.RowsAffected(); n == 0 {
+			return ErrFechado
+		}
+		return nil
+	})
 	if err != nil {
 		return Holerite{}, err
-	}
-	if h.Situacao == Fechado {
-		return Holerite{}, ErrFechado
-	}
-	if h.Calculo == nil {
-		return Holerite{}, ErrSemTabela
-	}
-	dados, err := json.Marshal(h.Calculo)
-	if err != nil {
-		return Holerite{}, fmt.Errorf("guardar o cálculo: %w", err)
-	}
-	if _, err := s.db.ExecContext(ctx, `UPDATE "Holerite" SET "Situacao" = ?, "Calculo" = ?, "FechadoEm" = ? WHERE "Id" = ?`,
-		Fechado, string(dados), tipos.NovaDataHora(s.relogio.Agora()), id); err != nil {
-		return Holerite{}, fmt.Errorf("fechar o holerite: %w", err)
 	}
 	return s.Obter(ctx, id)
 }
@@ -525,7 +553,8 @@ func (s *Servico) DesfazerLido(ctx context.Context, id int64, existia bool) erro
 }
 
 // Estimativa é o cálculo do mês pelo salário e pelas tabelas, para comparar com o lido do PDF (#228): com os
-// lançamentos do holerite do mês, se houver, ou sem lançamentos. Nil quando não dá (sem salário ou sem tabela do mês).
+// lançamentos do holerite do mês, se houver, ou sem lançamentos. Nil quando não dá (sem salário, sem tabela ou fora
+// do emprego: os avisos do Obter).
 func (s *Servico) Estimativa(ctx context.Context, empregoId int64, mes tipos.Data) (*Calculo, error) {
 	mes = emprego.InicioDoMes(mes)
 	uteis, descanso := DiasDoDsr(mes)
@@ -542,8 +571,9 @@ func (s *Servico) Estimativa(ctx context.Context, empregoId int64, mes tipos.Dat
 	}
 	c, err := s.calcular(ctx, h)
 	var validacao erroDeValidacao
+	_, semCalculo := avisos[err]
 	switch {
-	case errors.Is(err, ErrSemTabela) || errors.As(err, &validacao):
+	case semCalculo || errors.As(err, &validacao):
 		return nil, nil
 	case errors.Is(err, emprego.ErrNaoEncontrado):
 		return nil, ErrNaoEncontrado
@@ -575,13 +605,17 @@ func (s *Servico) Excluir(ctx context.Context, id int64) error {
 // VariaveisDoAno soma as horas extras, o adicional noturno e o DSR dos holerites do ano (abertos e fechados) e diz em
 // quantos meses havia holerite. É a base da média do 13º e das férias (#213, #214). Holerite sem cálculo (sem tabela
 // do mês) não entra.
-func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int) (soma tipos.Decimal, meses int, err error) {
-	return s.VariaveisEntre(ctx, empregoId, tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1))
+//
+// Súmula 347 do TST (revisão do #700): as horas extras entram na média pelas horas, com o salário-hora de agora, e
+// não pelo valor em reais da época. O valor de cada mês vai corrigido pela razão salarioAtual ÷ o salário daquele mês:
+// é o mesmo que refazer as horas com a hora de agora, e vale também para o holerite lido do PDF, que não guarda as horas.
+func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int, salarioAtual tipos.Decimal) (soma tipos.Decimal, meses int, err error) {
+	return s.VariaveisEntre(ctx, empregoId, tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1), salarioAtual)
 }
 
 // VariaveisEntre é o VariaveisDoAno de um intervalo de meses: de inicio (incluído) até fim (fora). As férias usam os 12
 // meses antes do início delas (#213).
-func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, fim tipos.Data) (soma tipos.Decimal, meses int, err error) {
+func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, fim tipos.Data, salarioAtual tipos.Decimal) (soma tipos.Decimal, meses int, err error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id" FROM "Holerite" WHERE "EmpregoId" = ? AND "Mes" >= ? AND "Mes" < ?
 		ORDER BY "Mes"`, empregoId, inicio, fim)
 	if err != nil {
@@ -596,7 +630,9 @@ func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, f
 		}
 		ids = append(ids, id)
 	}
-	linhas.Close()
+	if err := linhas.Close(); err != nil {
+		return tipos.Decimal{}, 0, err
+	}
 	total := decimal.Zero
 	for _, id := range ids {
 		h, err := s.Obter(ctx, id)
@@ -607,11 +643,16 @@ func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, f
 			continue
 		}
 		meses++
+		doMes := decimal.Zero
 		for _, l := range h.Calculo.Proventos {
 			if l.Tipo == HoraExtra || l.Tipo == AdicionalNoturno || l.Tipo == TipoDSR {
-				total = total.Add(l.Valor.Decimal())
+				doMes = doMes.Add(l.Valor.Decimal())
 			}
 		}
+		if salarioDoMes := h.Calculo.SalarioContratual.Decimal(); salarioDoMes.IsPositive() {
+			doMes = doMes.Mul(salarioAtual.Decimal()).Div(salarioDoMes)
+		}
+		total = total.Add(doMes)
 	}
 	return centavos(total), meses, nil
 }

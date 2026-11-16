@@ -49,6 +49,10 @@ func TestDiasTrabalhados(t *testing.T) {
 		{"saída no dia 15", out, d(2024, 3, 11), &[]tipos.Data{d(2026, 10, 15)}[0], 15},
 		{"saída no dia 31", out, d(2024, 3, 11), &[]tipos.Data{d(2026, 10, 31)}[0], 30},
 		{"fevereiro inteiro, saída no último dia", fev, d(2024, 3, 11), &[]tipos.Data{d(2026, 2, 28)}[0], 30},
+		// Mês comercial (ADR 0065, revisão do #699): a admissão no dia 15 conta 30 − 15 + 1 = 16 dias, também em
+		// fevereiro, como a folha faz com o mês de 30 dias; a saída no dia 27 de fevereiro conta 27.
+		{"admissão em 15 de fevereiro: 16 dias do mês comercial", fev, d(2026, 2, 15), nil, 16},
+		{"saída em 27 de fevereiro", fev, d(2024, 3, 11), &[]tipos.Data{d(2026, 2, 27)}[0], 27},
 		{"entrou e saiu no mesmo mês", out, d(2026, 10, 5), &[]tipos.Data{d(2026, 10, 14)}[0], 10},
 		{"admissão depois do mês", out, d(2026, 11, 1), nil, 0},
 		{"saída antes do mês", out, d(2024, 3, 11), &[]tipos.Data{d(2026, 9, 30)}[0], 0},
@@ -66,11 +70,16 @@ func TestDiasTrabalhados(t *testing.T) {
 
 func TestDiasDoDsr(t *testing.T) {
 	t.Parallel()
-	// Outubro de 2026: 31 dias, 4 domingos (4, 11, 18, 25). Fevereiro de 2026: 28 dias, 4 domingos (1, 8, 15, 22).
+	// Outubro de 2026: 31 dias, 4 domingos (4, 11, 18, 25) e o 12/10 numa segunda. Fevereiro de 2026: 28 dias, 4
+	// domingos, sem feriado nacional fixo. Novembro de 2026: 5 domingos, 2/11 (segunda) e 20/11 (sexta); o 15/11 cai num
+	// domingo e não conta duas vezes. Dezembro de 2026: 4 domingos e o 25/12 (sexta). Janeiro de 2027: 5 domingos e o
+	// 1/1 (sexta). Revisão do #699: os feriados nacionais fixos já vêm como descanso.
 	for _, c := range []struct {
 		mes             tipos.Data
 		uteis, descanso int64
-	}{{testeapoio.Dia(2026, 10, 1), 27, 4}, {testeapoio.Dia(2026, 2, 1), 24, 4}, {testeapoio.Dia(2026, 11, 1), 25, 5}} {
+	}{{testeapoio.Dia(2026, 10, 1), 26, 5}, {testeapoio.Dia(2026, 2, 1), 24, 4}, {testeapoio.Dia(2026, 11, 1), 23, 7},
+		{testeapoio.Dia(2026, 12, 1), 26, 5}, {testeapoio.Dia(2027, 1, 1), 25, 6}, {testeapoio.Dia(2026, 4, 1), 25, 5},
+		{testeapoio.Dia(2026, 5, 1), 25, 6}, {testeapoio.Dia(2026, 9, 1), 25, 5}} {
 		u, d := DiasDoDsr(c.mes)
 		if u != c.uteis || d != c.descanso {
 			t.Errorf("%s: %d úteis e %d de descanso; quer %d e %d", c.mes, u, d, c.uteis, c.descanso)

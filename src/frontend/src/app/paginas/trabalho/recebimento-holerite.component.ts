@@ -25,7 +25,10 @@ import { situacaoDoRecebimento } from './recebimento';
         @if (r.recebimentos.length) {
           <ul class="creditos">
             @for (c of r.recebimentos; track c.id) {
-              <li><span>{{ c.data | date: 'dd/MM' }} · {{ c.descricao }} <span class="texto-suave">({{ c.conta }})</span></span>
+              <li><span>{{ c.data | date: 'dd/MM' }} · {{ c.descricao }}@if (c.conta) { <span class="texto-suave">({{ c.conta }})</span> }
+                  @if (c.sumiu) { <span class="aviso-linha">A transação sumiu na sincronização (o banco pode ter trocado o código dela): o site religa
+                    quando a nova aparecer. Se não voltar, desligue.</span> }
+                  @if (c.debito) { <span class="aviso-linha">Virou débito: não conta como recebido. Desligue.</span> }</span>
                 <span class="valor">{{ c.valorLigado | currency }}@if (c.valorLigado !== c.valor) { <span class="texto-suave"> de {{ c.valor | currency }}</span> }</span>
                 <button type="button" class="botao botao-pequeno" [disabled]="ocupado()" (click)="desligar(c.id)">Desligar<span class="so-leitor"> o crédito de {{ c.data | date: 'dd/MM' }}</span></button></li>
             }
@@ -69,6 +72,7 @@ import { situacaoDoRecebimento } from './recebimento';
     .creditos li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .creditos .valor { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .motivos { display: block; font-size: 0.8rem; }
+    .aviso-linha { display: block; font-size: 0.8rem; color: var(--atencao, inherit); }
     .situacao { margin: 0 0 8px; }
     .tom-atencao { color: var(--atencao, inherit); font-weight: 600; }
   `]
@@ -77,15 +81,24 @@ export class RecebimentoHoleriteComponent {
   private readonly api = inject(ApiService);
   private readonly avisos = inject(AvisosService);
   readonly holeriteId = input.required<number>();
+  /** Muda quando o holerite muda ("Salvar e calcular", "Reabrir"): o líquido e a diferença são lidos de novo. */
+  readonly versao = input<string>('');
   readonly dados = signal<RecebimentosHolerite | null>(null);
   readonly ocupado = signal(false);
   readonly situacao = computed(() => situacaoDoRecebimento(this.dados()!));
+  /** O último pedido: a resposta de um pedido velho (o holerite anterior) é ignorada (revisão do #703). */
+  private pedido = 0;
 
   constructor() {
     effect(() => {
       const id = this.holeriteId();
+      this.versao();
+      const este = ++this.pedido;
       this.dados.set(null);
-      this.api.recebimentosHolerite(id).subscribe({ next: (r) => this.dados.set(r), error: (e) => this.avisos.erro(mensagemDeErro(e)) });
+      this.api.recebimentosHolerite(id).subscribe({
+        next: (r) => { if (este === this.pedido) this.dados.set(r); },
+        error: (e) => { if (este === this.pedido) this.avisos.erro(mensagemDeErro(e)); }
+      });
     });
   }
 
@@ -99,8 +112,9 @@ export class RecebimentoHoleriteComponent {
 
   private acao(pedido: ReturnType<ApiService['recebimentosHolerite']>, mensagem: string): void {
     this.ocupado.set(true);
+    const este = ++this.pedido;
     pedido.subscribe({
-      next: (r) => { this.ocupado.set(false); this.dados.set(r); this.avisos.sucesso(mensagem); },
+      next: (r) => { this.ocupado.set(false); if (este === this.pedido) this.dados.set(r); this.avisos.sucesso(mensagem); },
       error: (e) => { this.ocupado.set(false); this.avisos.erro(mensagemDeErro(e)); }
     });
   }

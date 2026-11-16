@@ -40,13 +40,17 @@ func TestAvisoEAvos(t *testing.T) {
 	}
 	saida := dia(2026, 12, 15)
 	for _, c := range []struct {
+		saida       tipos.Data
 		tipo, aviso int64
-		dias        int
-	}{{SemJustaCausa, AvisoIndenizado, 36}, {Acordo, AvisoIndenizado, 18}, {SemJustaCausa, AvisoTrabalhado, 0},
-		{PedidoDemissao, AvisoIndenizado, 0}, {JustaCausa, SemAviso, 0}} {
-		d, p := AvisoPago(c.tipo, c.aviso, adm, saida)
-		if d != c.dias || !p.Igual(saida.SomarDias(c.dias)) {
-			t.Errorf("tipo %d, aviso %d: %d dias (%s); quer %d", c.tipo, c.aviso, d, p, c.dias)
+		dias        string
+		projecao    int
+	}{{saida, SemJustaCausa, AvisoIndenizado, "36", 36}, {saida, Acordo, AvisoIndenizado, "18", 18}, {saida, SemJustaCausa, AvisoTrabalhado, "0", 0},
+		{saida, PedidoDemissao, AvisoIndenizado, "0", 0}, {saida, JustaCausa, SemAviso, "0", 0},
+		// Revisão do #704: no acordo, 33 dias de aviso pagam 16,5 (a projeção conta 16).
+		{dia(2026, 3, 10), Acordo, AvisoIndenizado, "16.5", 16}} {
+		d, p := AvisoPago(c.tipo, c.aviso, adm, c.saida)
+		if d.String() != c.dias || !p.Igual(c.saida.SomarDias(c.projecao)) {
+			t.Errorf("tipo %d, aviso %d: %s dias (%s); quer %s", c.tipo, c.aviso, d, p, c.dias)
 		}
 	}
 	// 11/03 a 15/12: 9 meses inteiros e 5 dias (não conta); até 25/12, 15 dias (conta); 12 no máximo.
@@ -85,13 +89,13 @@ func tabelas(t *testing.T) (encargos.TabelaInss, encargos.TabelaIrrf) {
 
 // Os cinco tipos com as mesmas entradas (contas no comentário). Salário 6000, saída em 15/12/2026, 2 anos de casa (36
 // dias de aviso), 10/12 de férias, 12/12 de 13º (com 3000 da 1ª parcela já pagos), 30 dias de férias vencidas simples
-// e 10000 de FGTS.
+// e 10000 de FGTS (com 2000 de saques antes: a base da multa é 12000).
 func TestCalcularOsCincoTipos(t *testing.T) {
 	t.Parallel()
 	ti, tr := tabelas(t)
 	base := Entrada{Admissao: dia(2024, 3, 11), Saida: dia(2026, 12, 15), SalarioMes: v("6000.00"),
 		Vencidas: []FeriasVencidas{{Inicio: dia(2025, 3, 11), Dias: 30}}, AvosFerias: 10, Avos13: 12,
-		PrimeiraParcela13: v("3000.00"), SaldoFgts: v("10000.00"), Inss: ti, Irrf: tr}
+		PrimeiraParcela13: v("3000.00"), SaldoFgts: v("10000.00"), BaseMultaFgts: v("12000.00"), Inss: ti, Irrf: tr}
 	casos := []struct {
 		nome                       string
 		tipo, aviso                int64
@@ -101,10 +105,11 @@ func TestCalcularOsCincoTipos(t *testing.T) {
 	}{
 		// Saldo 3000 (15 dias) + aviso 7200 (36 dias) + 13º 6000 + férias 5000 + 1666,67 + vencidas 6000 + 2000 = 30866,67.
 		// INSS do saldo 248,60; IRRF do saldo 0; INSS do 13º 641,51; IRRF do 13º 385,10; a 1ª parcela 3000 = 4275,21.
-		// FGTS: 8% de 16200 = 1296; multa 40% de 11296 = 4518,40; saca 11296 + 4518,40.
-		{"sem justa causa", SemJustaCausa, AvisoIndenizado, "30866.67", "4275.21", "26591.46", "1296.00", "4518.40", "15814.40", true},
-		// Aviso pela metade (18 dias, 3600); multa 20% de 11008 e saque de 80%.
-		{"acordo", Acordo, AvisoIndenizado, "27266.67", "4275.21", "22991.46", "1008.00", "2201.60", "11008.00", false},
+		// FGTS: 8% de 16200 = 1296; multa 40% de 12000 + 1296 = 5318,40 (os saques não saem da base, revisão do #704);
+		// saca o saldo 11296 + 5318,40.
+		{"sem justa causa", SemJustaCausa, AvisoIndenizado, "30866.67", "4275.21", "26591.46", "1296.00", "5318.40", "16614.40", true},
+		// Aviso pela metade (18 dias, 3600); multa 20% de 13008 = 2601,60 e saque de 80% de 11008 = 8806,40.
+		{"acordo", Acordo, AvisoIndenizado, "27266.67", "4275.21", "22991.46", "1008.00", "2601.60", "11408.00", false},
 		// Não cumpriu o aviso: desconta 30 dias (6000); sem multa e sem saque.
 		{"pedido de demissão sem cumprir o aviso", PedidoDemissao, AvisoIndenizado, "23666.67", "10275.21", "13391.46", "720.00", "0.00", "0.00", false},
 		{"pedido de demissão cumprindo o aviso", PedidoDemissao, AvisoTrabalhado, "23666.67", "4275.21", "19391.46", "720.00", "0.00", "0.00", false},
@@ -191,11 +196,27 @@ func TestRescisaoPelaApi(t *testing.T) {
 	base := fmt.Sprintf("/api/trabalho/empregos/%d/rescisao", id)
 	c := ler(chamar("GET", base+"/simular?tipo=1&aviso=2&saida=2026-12-15", ""), http.StatusOK)
 	// O 1º período venceu em 10/03/2026 sem tirar (em dobro: 12000 + 4000); o 2º, simples (6000 + 2000); o 3º, 10/12 até
-	// a data projetada (20/01/2027). A 1ª parcela do 13º (3000, de 30/11) já veio. O resto como no caso "sem justa causa":
-	// 30866,67 + 16000 = 46866,67 de verbas, 4275,21 de descontos.
-	if c.TotalVerbas.String() != "46866.67" || c.Liquido.String() != "42591.46" || c.DataProjetada.String() != "2027-01-20" ||
+	// a data projetada (20/01/2027). A 1ª parcela do 13º (3000, de 30/11) já veio. O aviso projeta a saída para 2027:
+	// o 13º ganha 1/12 de 2027 (500; revisão do #704). O resto como no caso "sem justa causa": 30866,67 + 16000 + 500 =
+	// 47366,67 de verbas; os descontos sobem com o INSS e o IRRF do 13º maior.
+	if c.TotalVerbas.String() != "47366.67" || c.DataProjetada.String() != "2027-01-20" || c.Verbas[2].Valor.String() != "6500.00" ||
 		!c.Fgts.Saldo.Decimal().IsPositive() || c.Fgts.PercentualMulta != 40 || !c.SeguroDesemprego {
 		t.Fatalf("simulação = %s, %s, %s\n%+v", c.TotalVerbas, c.Liquido, c.DataProjetada, c.Verbas)
+	}
+	// O FGTS vai até novembro (o mês da saída e o 13º vêm no depósito da rescisão; revisão do #704), e o depósito é 8%
+	// de 3000 + 7200 + 6500 = 1336.
+	if c.Fgts.DepositoRescisao.String() != "1336.00" || !c.Fgts.BaseDaMulta.Decimal().Equal(c.Fgts.Saldo.Decimal().Add(c.Fgts.DepositoRescisao.Decimal())) {
+		t.Fatalf("FGTS = %+v", c.Fgts)
+	}
+	// Saindo depois de 20/12, o 13º do ano já veio inteiro: só entra o do ano seguinte, pelo aviso.
+	fimDeAno := ler(chamar("GET", base+"/simular?tipo=1&aviso=2&saida=2026-12-28", ""), http.StatusOK)
+	if fimDeAno.Verbas[2].Descricao != "13º proporcional" || fimDeAno.Verbas[2].Referencia != "0/12 do ano da saída e 1/12 do seguinte" {
+		t.Fatalf("saída em 28/12 = %+v", fimDeAno.Verbas)
+	}
+	for _, d := range fimDeAno.Descontos {
+		if strings.HasPrefix(d.Descricao, "1ª parcela") {
+			t.Fatalf("1ª parcela descontada depois do 13º inteiro: %+v", fimDeAno.Descontos)
+		}
 	}
 
 	// Saindo antes de 30/11, a 1ª parcela do 13º ainda não veio: não desconta.
@@ -209,7 +230,7 @@ func TestRescisaoPelaApi(t *testing.T) {
 	r.ConferirStatus(t, http.StatusOK)
 	var lista []Comparacao
 	_ = json.Unmarshal(r.Corpo, &lista)
-	if len(lista) != 5 || lista[0].Liquido.String() != "42591.46" || lista[1].Aviso != AvisoTrabalhado || lista[3].Aviso != SemAviso {
+	if len(lista) != 5 || lista[0].Liquido.String() != "42836.64" || lista[1].Aviso != AvisoTrabalhado || lista[3].Aviso != SemAviso {
 		t.Fatalf("comparação = %+v", lista)
 	}
 
@@ -231,7 +252,8 @@ func TestRescisaoPelaApi(t *testing.T) {
 		t.Fatalf("remuneração com a média = %s", c.Remuneracao)
 	}
 
-	// Registrar fecha o emprego; o registro fica congelado; não registra duas vezes; desfazer reabre.
+	// Registrar fecha o emprego; o registro fica congelado; não registra duas vezes; desfazer reabre (e devolve a saída
+	// que o emprego já tinha, revisão do #704).
 	chamar("GET", base, "").ConferirJSON(t, `{"registrada":null}`)
 	reg := ler(chamar("POST", base, `{"tipo":3,"aviso":2,"saida":"2026-12-15"}`), http.StatusCreated)
 	e, _ := empregos.Obter(t.Context(), id)
@@ -253,6 +275,13 @@ func TestRescisaoPelaApi(t *testing.T) {
 		t.Fatalf("desfeito, a saída ficou: %v", e.Saida)
 	}
 	chamar("DELETE", base, "").ConferirStatus(t, http.StatusNotFound)
+	comSaida := criar(`{"empregador":"S","admissao":"2024-03-11","saida":"2026-10-31","salarioBruto":6000}`)
+	baseSaida := fmt.Sprintf("/api/trabalho/empregos/%d/rescisao", comSaida)
+	ler(chamar("POST", baseSaida, `{"tipo":1,"aviso":2,"saida":"2026-10-31"}`), http.StatusCreated)
+	chamar("DELETE", baseSaida, "").ConferirStatus(t, http.StatusNoContent)
+	if e, _ := empregos.Obter(t.Context(), comSaida); e.Saida == nil || e.Saida.String() != "2026-10-31" {
+		t.Fatalf("desfeito, a saída de antes sumiu: %v", e.Saida)
+	}
 
 	pj := criar(`{"empregador":"P","admissao":"2020-01-01","salarioBruto":9000,"regime":3}`)
 	casos := []struct {
@@ -290,4 +319,41 @@ func TestRescisaoPelaApi(t *testing.T) {
 	}
 	chamar("GET", "/api/trabalho/empregos/99/rescisao", "").ConferirStatus(t, http.StatusNotFound)
 	chamar("GET", "/api/trabalho/empregos/99/rescisao/simular?tipo=1&aviso=2&saida=2026-12-15", "").ConferirStatus(t, http.StatusNotFound)
+}
+
+// Revisão do #704: com o saque-aniversário, a dispensa e o acordo só liberam a multa; o fim da experiência, sem multa,
+// segue liberando o saldo. O 13º do ano seguinte, quando o aviso projeta a saída para ele, entra junto.
+func TestRescisaoComSaqueAniversarioEAnoSeguinte(t *testing.T) {
+	t.Parallel()
+	ti, tr := tabelas(t)
+	base := Entrada{Admissao: dia(2024, 3, 11), Saida: dia(2026, 12, 15), SalarioMes: v("6000.00"), AvosFerias: 10, Avos13: 12,
+		PrimeiraParcela13: v("3000.00"), SaldoFgts: v("10000.00"), BaseMultaFgts: v("12000.00"), SaqueAniversario: true, Inss: ti, Irrf: tr}
+	casos := []struct {
+		tipo, aviso    int64
+		multa, sacavel string
+		percentual     int
+	}{
+		{SemJustaCausa, AvisoIndenizado, "5318.40", "5318.40", 0},
+		{Acordo, AvisoIndenizado, "2601.60", "2601.60", 0},
+		{FimExperiencia, SemAviso, "0.00", "10720.00", 100},
+	}
+	for _, c := range casos {
+		e := base
+		e.Tipo, e.Aviso = c.tipo, c.aviso
+		r := Calcular(e)
+		if r.Fgts.Multa.String() != c.multa || r.Fgts.Sacavel.String() != c.sacavel || r.Fgts.PercentualSaque != c.percentual || !r.Fgts.SaqueAniversario {
+			t.Errorf("tipo %d: %+v", c.tipo, r.Fgts)
+		}
+	}
+	semSeguinte := base
+	semSeguinte.Tipo, semSeguinte.Aviso = SemJustaCausa, AvisoIndenizado
+	if r := Calcular(semSeguinte); r.Verbas[2].Referencia != "12/12" {
+		t.Fatalf("13º sem o ano seguinte = %+v", r.Verbas[2])
+	}
+	e := base
+	e.Tipo, e.Aviso, e.Avos13Seguinte, e.SaqueAniversario = SemJustaCausa, AvisoIndenizado, 1, false
+	r := Calcular(e)
+	if r.Verbas[2].Descricao != "13º proporcional" || r.Verbas[2].Referencia != "12/12 do ano da saída e 1/12 do seguinte" || r.Verbas[2].Valor.String() != "6500.00" {
+		t.Fatalf("13º com o ano seguinte = %+v", r.Verbas[2])
+	}
 }

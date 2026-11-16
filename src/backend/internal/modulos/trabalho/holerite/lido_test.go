@@ -31,11 +31,11 @@ func TestGravarEDesfazerOLido(t *testing.T) {
 	h, existia, err := a.s.GravarLido(ctx, id, lido("2026-09-17"))
 	if err != nil || existia || h.Situacao != Fechado || h.Origem != LidoDoPdf || h.Mes.String() != "2026-09-01" || h.FechadoEm == nil ||
 		h.Calculo == nil || h.Calculo.Liquido.Decimal().String() != "4100" || h.Calculo.Mes.String() != "2026-09-01" ||
-		h.DiasUteis != 26 || h.DiasDescanso != 4 {
+		h.DiasUteis != 25 || h.DiasDescanso != 5 { // 7/9 é feriado nacional (revisão do #699)
 		t.Fatalf("novo: %+v %t %v", h, existia, err)
 	}
 	// As horas extras lidas entram nas variáveis do ano, como as digitadas.
-	if soma, meses, _ := a.s.VariaveisDoAno(ctx, id, 2026); soma.Decimal().String() != "100" || meses != 1 {
+	if soma, meses, _ := a.s.VariaveisDoAno(ctx, id, 2026, tipos.DeDecimal(decimal.RequireFromString("4000"))); soma.Decimal().String() != "100" || meses != 1 {
 		t.Errorf("variáveis: %s %d", soma.Decimal().String(), meses)
 	}
 	if _, _, err := a.s.GravarLido(ctx, id, lido("2026-09-01")); !errors.Is(err, ErrFechado) {

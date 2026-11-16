@@ -33,7 +33,9 @@ var (
 	ErrNaoEncontrado = errors.New("emprego não encontrado")
 	ErrInvalido      = errors.New("dados inválidos")
 	ErrUltimoSalario = errors.New("o emprego precisa de pelo menos um salário")
-	ErrSemTabela     = errors.New("sem tabela do INSS ou do IRRF para o mês")
+	// ErrPrimeiroSalario: a vigência mais antiga é o salário da admissão e não sai.
+	ErrPrimeiroSalario = errors.New("o primeiro salário é o da admissão")
+	ErrSemTabela       = errors.New("sem tabela do INSS ou do IRRF para o mês")
 )
 
 // erroDeValidacao é o ErrInvalido com a mensagem para a pessoa.
@@ -199,7 +201,9 @@ func (s *Servico) Criar(ctx context.Context, d Dados) (Emprego, error) {
 	return s.Obter(ctx, id)
 }
 
-// Atualizar troca os dados do emprego (o salário muda pelas vigências).
+// Atualizar troca os dados do emprego (o salário muda pelas vigências). A admissão mudada para antes leva junto o
+// começo do primeiro salário (senão os meses do meio ficariam sem salário); a saída não pode deixar um salário que
+// começa depois dela.
 func (s *Servico) Atualizar(ctx context.Context, id int64, d Dados) (Emprego, error) {
 	if err := validar(&d, false); err != nil {
 		return Emprego{}, err
@@ -208,18 +212,28 @@ func (s *Servico) Atualizar(ctx context.Context, id int64, d Dados) (Emprego, er
 		if err := s.conferirConta(ctx, tx, d.ContaId); err != nil {
 			return err
 		}
-		var primeiro *tipos.Data
-		err := tx.QueryRowContext(ctx, `SELECT (SELECT MIN("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = e."Id")
-			FROM "Emprego" e WHERE e."Id" = ?`, id).Scan(&primeiro)
+		var primeiro, ultimo *tipos.Data
+		err := tx.QueryRowContext(ctx, `SELECT (SELECT MIN("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = e."Id"),
+			(SELECT MAX("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = e."Id") FROM "Emprego" e WHERE e."Id" = ?`, id).
+			Scan(&primeiro, &ultimo)
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrNaoEncontrado
 		}
 		if err != nil {
 			return fmt.Errorf("ler o primeiro salário: %w", err)
 		}
-		if primeiro != nil && InicioDoMes(d.Admissao).Depois(*primeiro) {
+		admissao := InicioDoMes(d.Admissao)
+		if primeiro != nil && admissao.Depois(*primeiro) {
 			return invalido("Há salário antes dessa admissão. Apague o salário antigo ou escolha uma admissão até " +
 				nomeDoMes(*primeiro) + ".")
+		}
+		if ultimo != nil && d.Saida != nil && ultimo.Depois(*d.Saida) {
+			return invalido("Há salário a partir de " + nomeDoMes(*ultimo) + ", depois dessa saída. Apague esse salário ou " +
+				"escolha uma saída a partir de " + nomeDoMes(*ultimo) + ".")
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE "SalarioVigencia" SET "Inicio" = ? WHERE "EmpregoId" = ? AND "Inicio" > ?
+			AND "Inicio" = (SELECT MIN("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = ?)`, admissao, id, admissao, id); err != nil {
+			return fmt.Errorf("levar o primeiro salário para a admissão: %w", err)
 		}
 		r, err := tx.ExecContext(ctx, `UPDATE "Emprego" SET "Empregador" = ?, "Cnpj" = ?, "Admissao" = ?, "Saida" = ?,
 			"Regime" = ?, "JornadaMensalHoras" = ?, "Dependentes" = ?, "ContaId" = ? WHERE "Id" = ?`,
@@ -287,12 +301,18 @@ func (s *Servico) DefinirSalario(ctx context.Context, empregoId int64, inicio ti
 	return s.Obter(ctx, empregoId)
 }
 
-// ExcluirSalario apaga uma vigência. A última que sobrou não sai (o emprego precisa de um salário).
+// ExcluirSalario apaga uma vigência. A última que sobrou não sai (o emprego precisa de um salário), nem a mais antiga,
+// a da admissão: sem ela, os meses do começo ficariam sem salário.
 func (s *Servico) ExcluirSalario(ctx context.Context, empregoId, salarioId int64) (Emprego, error) {
 	err := banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
 		var n int
-		if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM "SalarioVigencia" WHERE "EmpregoId" = ?`, empregoId).Scan(&n); err != nil {
+		var primeiro sql.NullInt64
+		if err := tx.QueryRowContext(ctx, `SELECT COUNT(*), (SELECT "Id" FROM "SalarioVigencia" WHERE "EmpregoId" = ? ORDER BY "Inicio" LIMIT 1)
+			FROM "SalarioVigencia" WHERE "EmpregoId" = ?`, empregoId, empregoId).Scan(&n, &primeiro); err != nil {
 			return fmt.Errorf("contar os salários: %w", err)
+		}
+		if n > 1 && primeiro.Int64 == salarioId {
+			return ErrPrimeiroSalario
 		}
 		r, err := tx.ExecContext(ctx, `DELETE FROM "SalarioVigencia" WHERE "Id" = ? AND "EmpregoId" = ?`, salarioId, empregoId)
 		if err != nil {
