@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.2] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **A tela de Metas dividida em tela, componentes de apresentação e funções puras** (#732; ADR 0059). O `metas.component.ts` caiu de 992 para 333 linhas e fica só com o estado (as metas, o plano, o que está aberto, a simulação na URL) e as chamadas da API. O bloco "Quanto guardar este mês", o cartão de cada meta e as janelas "Nova meta / Editar meta" e "Aporte" viraram `metas-assistente`, `metas-cartao`, `metas-formulario` e `metas-aporte`, que recebem por `input()` e avisam por `output()`; as janelas editam uma cópia, e fechar sem salvar não muda nada. A regra (a simulação na URL, as sanfonas, o limite do valor por mês, a data alvo pelo valor por mês, "concluída" ao aumentar o alvo, a ordem de prioridade e o gráfico "Como está indo") foi para funções puras em `metas.ts`, com 24 casos em 0,5 s no Jest, sem abrir a tela. Os links para outras telas continuam na tela e entram nos componentes por projeção de conteúdo, porque o componente de apresentação não importa o roteador (regra 8 do teste de arquitetura). Saíram junto o `mesmoMes` e o `rotuloMes`, que nada chamava, e uma regra de CSS sem uso. Os testes do navegador não mudaram; os do Jest que mexiam no formulário pelos campos da tela passaram a usar a cópia que a janela edita. Os prints saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
+
 ## [3.15.1] — 2026-11-16 · desenvolvimento
 
 ### Correções
