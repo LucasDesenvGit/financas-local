@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
@@ -93,11 +94,14 @@ type Catalogo struct {
 	log     *slog.Logger
 	modulos []Modulo
 	porID   map[string]Modulo
+	mu      sync.Mutex
+	sinais  map[string][]chan struct{} // por módulo, um canal por tarefa: o "acabou de ser ligado"
 }
 
 // NovoCatalogo devolve o catálogo vazio: cada módulo entra com Adicionar, no internal/api.
 func NovoCatalogo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Catalogo {
-	return &Catalogo{db: db, conf: configuracao.Novo(db, r), q: consultas.New(db), relogio: r, log: log, porID: map[string]Modulo{}}
+	return &Catalogo{db: db, conf: configuracao.Novo(db, r), q: consultas.New(db), relogio: r, log: log, porID: map[string]Modulo{},
+		sinais: map[string][]chan struct{}{}}
 }
 
 // Adicionar põe o módulo no catálogo. Erro de quem escreveu o módulo (id inválido ou repetido, sem nome, acessa a
@@ -172,6 +176,9 @@ func (c *Catalogo) Definir(ctx context.Context, r *http.Request, id string, liga
 	})
 	if err != nil {
 		return Situacao{}, fmt.Errorf("gravar o módulo %s: %w", id, err)
+	}
+	if ligado {
+		c.acordar(id)
 	}
 	lista, err := c.Listar(ctx)
 	if err != nil {

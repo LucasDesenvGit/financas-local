@@ -1301,10 +1301,11 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Configurações › Módulos.',
           'Cada módulo mostra o que faz e se acessa a internet (e para onde). Ligue ou desligue pelo interruptor: vale na hora, sem recarregar a página, e em qualquer navegador.',
-          'Ligado, a tela do módulo aparece no menu. Desligado, ela some; se você abrir o endereço dela, o site mostra que o módulo está desligado, com o botão para ligar.',
+          'Ligado, a tela do módulo aparece no menu, e o que ele faz em segundo plano (buscar as notícias, por exemplo) roda na hora. Desligado, ela some; se você abrir o endereço dela, o site mostra que o módulo está desligado, com o botão para ligar.',
           'Desligar não apaga nada: os dados do módulo ficam guardados e voltam quando você ligar de novo.',
           'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).'
         ],
+        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). Clique em “Tentar de novo”; enquanto isso, as telas dos módulos ficam fora do menu.'],
         abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       },
       {
