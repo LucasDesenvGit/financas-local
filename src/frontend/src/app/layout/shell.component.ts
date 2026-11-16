@@ -11,9 +11,11 @@ import { ConfirmacaoComponent } from '../compartilhado/ui/confirmacao.component'
 import { IconeComponent } from '../compartilhado/ui/icone.component';
 import { Icones } from '../compartilhado/ui/icones';
 import { MenuUsuarioComponent } from './menu-usuario.component';
+import { ModulosService } from '../core/modulos.service';
 import { LucideIcon } from '@lucide/angular';
 
-export interface ItemMenu { rota: string; rotulo: string; icone: LucideIcon; }
+/** `modulo`: a tela é de um módulo (#191, ADR 0064) e só aparece com ele ligado. */
+export interface ItemMenu { rota: string; rotulo: string; icone: LucideIcon; modulo?: string; }
 
 /**
  * Grupo do menu (#227, ADR 0046): telas do mesmo assunto, atrás de um cabeçalho que abre e fecha. São os mesmos
@@ -97,6 +99,11 @@ export function filtrarMenu(menu: EntradaMenu[], telaVisivel: (tela: ItemMenu) =
     const telas = e.telas.filter(telaVisivel);
     return telas.length ? [{ ...e, telas }] : [];
   });
+}
+
+/** A tela aparece no menu: tela do núcleo sempre; a de um módulo, só com ele ligado (#191). */
+export function telaDeModuloVisivel(tela: ItemMenu, ligado: (modulo: string) => boolean): boolean {
+  return !tela.modulo || ligado(tela.modulo);
 }
 
 /** Nome estável da tela para o roteiro (#194): "/contas-a-pagar" → "menu-tela-contas-a-pagar". */
@@ -266,11 +273,15 @@ export class ShellComponent {
   readonly Icones = Icones;
   readonly roteiroDaTela = roteiroDaTela;
 
+  private readonly modulos = inject(ModulosService);
   /**
-   * Quais telas aparecem no menu. Hoje todas; os módulos que se ligam e desligam (#190) trocam esta função, e a
-   * tela de módulo desligado some do grupo (e o grupo, se ficar vazio).
+   * Quais telas aparecem no menu: a de um módulo (#191, ADR 0064) só com ele ligado, e some do grupo (e o grupo, se
+   * ficar vazio). Ligar ou desligar em Configurações › Módulos muda o menu na hora.
    */
-  readonly telaVisivel = signal<(tela: ItemMenu) => boolean>(() => true);
+  readonly telaVisivel = computed(() => {
+    this.modulos.lista(); // muda junto com a lista
+    return (tela: ItemMenu) => telaDeModuloVisivel(tela, (id) => this.modulos.ligado(id));
+  });
   readonly entradas = computed(() => filtrarMenu(MENU, this.telaVisivel()));
 
   /**
@@ -290,6 +301,7 @@ export class ShellComponent {
   private ultimaTela: string | null = null;
 
   constructor() {
+    this.modulos.carregar();
     // O grupo da tela aberta abre sozinho ao entrar nela: pelo menu, por link de outra tela, pelo voltar ou pela URL.
     this.abrirGrupoDaTelaAtual(this.router.url);
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd), takeUntilDestroyed())

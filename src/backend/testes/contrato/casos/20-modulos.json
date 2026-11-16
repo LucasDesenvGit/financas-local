@@ -1,0 +1,29 @@
+{
+  "descricao": "Módulos (#191, ADR 0064): GET /api/modulos e PUT /api/modulos/{id}. Nesta versão o catálogo ainda não tem módulo: a lista vem vazia e ligar um id qualquer é 404. Os módulos entram com os casos deles. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "lista vazia, sem módulo nesta versão",
+      "metodo": "GET",
+      "caminho": "/api/modulos"
+    },
+    {
+      "nome": "ligar um módulo que não existe",
+      "metodo": "PUT",
+      "caminho": "/api/modulos/nenhum",
+      "corpo": { "ligado": true }
+    },
+    {
+      "nome": "sem o ligado",
+      "comentario": "O id é conferido depois do corpo: corpo sem o ligado é 400, mesmo de módulo que não existe.",
+      "metodo": "PUT",
+      "caminho": "/api/modulos/nenhum",
+      "corpo": {}
+    },
+    {
+      "nome": "sem login",
+      "metodo": "GET",
+      "caminho": "/api/modulos",
+      "sessao": "visitante"
+    }
+  ]
+}

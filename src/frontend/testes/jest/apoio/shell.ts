@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, provideRouter } from '@angular/router';
 import { IconeComponent } from '../../../src/app/compartilhado/ui/icone.component';
 import { ShellComponent } from '../../../src/app/layout/shell.component';
+import { ApiService } from '../../../src/app/core/api.service';
+import { of } from 'rxjs';
 
 @Component({ template: '<p>tela</p>' })
 class TelaFalsaComponent {}
@@ -32,7 +34,8 @@ export async function abrirShell(
   if (opcoes.gruposFechados) localStorage.setItem(ShellComponent.CHAVE_GRUPOS, JSON.stringify(opcoes.gruposFechados));
   const girar = instalarMidia(opcoes.celular ?? false);
   TestBed.configureTestingModule({
-    providers: [provideRouter([{ path: '**', component: TelaFalsaComponent }])]
+    // A lista de módulos (#191) vem vazia; o teste dos módulos troca o ModulosService.lista.
+    providers: [provideRouter([{ path: '**', component: TelaFalsaComponent }]), { provide: ApiService, useValue: { modulos: () => of([]) } }]
   });
   TestBed.overrideComponent(ShellComponent, {
     set: { imports: [RouterOutlet, RouterLink, RouterLinkActive, IconeComponent], schemas: [NO_ERRORS_SCHEMA] }
