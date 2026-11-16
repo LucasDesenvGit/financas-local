@@ -1,7 +1,9 @@
 package decimoterceiro
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -244,29 +246,50 @@ func TestReais(t *testing.T) {
 	}
 }
 
-// Revisão do #701: a 1ª parcela pedida nas férias aparece no 13º, com a data do pagamento delas; a informada à mão vale
-// mais.
+// feriasFalsas é a 1ª parcela que as férias dizem ter pago.
+type feriasFalsas struct {
+	pagamento *tipos.Data
+	valor     *tipos.Decimal
+	err       error
+}
+
+func (f feriasFalsas) AdiantamentoDoAno(context.Context, int64, int) (*tipos.Data, *tipos.Decimal, error) {
+	return f.pagamento, f.valor, f.err
+}
+
+// Revisão do #701: a 1ª parcela pedida nas férias aparece no 13º, com a data do pagamento delas e o valor que elas
+// pagaram (2ª revisão: não a metade do 13º); sem o valor (sem tabela no mês delas), a metade; a informada à mão vale
+// mais; o erro das férias sobe.
 func TestPrimeiraParcelaComAsFerias(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBanco(t)
 	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, rel, log)
-	s := NovoServico(db, empregos, holerite.NovoServico(db, empregos, rel, log), rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
 	e, err := empregos.Criar(t.Context(), emprego.Dados{Empregador: "E", Admissao: testeapoio.Dia(2024, 3, 11), Regime: emprego.RegimeClt,
-		JornadaMensalHoras: 220, SalarioInicial: &[]tipos.Decimal{v("6000")}[0]})
+		JornadaMensalHoras: 220, SalarioInicial: &[]tipos.Decimal{v("7000")}[0]})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range []string{"2026-07-15", "2025-07-15"} {
-		if _, err := db.ExecContext(t.Context(), `INSERT INTO "FeriasAgendamento" ("EmpregoId", "PeriodoInicio", "Inicio", "Dias", "DiasVendidos",
-			"AdiantarDecimo", "CriadoEm") VALUES (?, '2025-03-11', ?, 20, 0, 1, '2026-01-01 00:00:00')`, e.Id, f); err != nil {
-			t.Fatal(err)
-		}
-	}
+	pagamento := testeapoio.Dia(2026, 7, 13)
+	s := NovoServico(db, empregos, holerites, rel, log).ComFerias(feriasFalsas{pagamento: &pagamento, valor: &[]tipos.Decimal{v("3000")}[0]})
 	r, err := s.Obter(t.Context(), e.Id, 2026)
-	if err != nil || !r.Primeira.ComFerias || !r.Primeira.Informada || r.Primeira.ValorInformado || r.Primeira.Data.String() != "2026-07-13" {
-		t.Fatalf("1ª com as férias = %+v (%v)", r.Primeira, err)
+	if err != nil || !r.Primeira.ComFerias || !r.Primeira.Informada || r.Primeira.ValorInformado || r.Primeira.Data.String() != "2026-07-13" ||
+		r.Primeira.Valor.String() != "3000.00" || !r.Segunda.Valor.Decimal().Equal(r.Liquido.Decimal().Sub(v("3000").Decimal())) {
+		t.Fatalf("1ª com as férias = %+v, 2ª %+v (%v)", r.Primeira, r.Segunda, err)
+	}
+	semValor := NovoServico(db, empregos, holerites, rel, log).ComFerias(feriasFalsas{pagamento: &pagamento})
+	if r, _ := semValor.Obter(t.Context(), e.Id, 2026); !r.Primeira.ComFerias || r.Primeira.Valor.String() != "3500.00" {
+		t.Fatalf("sem o valor das férias = %+v", r.Primeira)
+	}
+	if r, _ := NovoServico(db, empregos, holerites, rel, log).ComFerias(feriasFalsas{}).Obter(t.Context(), e.Id, 2026); r.Primeira.ComFerias ||
+		r.Primeira.Data.String() != "2026-11-30" {
+		t.Fatalf("sem férias com o 13º = %+v", r.Primeira)
+	}
+	falha := errors.New("banco ocupado")
+	if _, err := NovoServico(db, empregos, holerites, rel, log).ComFerias(feriasFalsas{err: falha}).Obter(t.Context(), e.Id, 2026); !errors.Is(err, falha) {
+		t.Fatalf("erro das férias: %v", err)
 	}
 	r, _ = s.DefinirPrimeira(t.Context(), e.Id, 2026, &[]tipos.Data{testeapoio.Dia(2026, 7, 10)}[0], nil)
 	if r.Primeira.ComFerias || r.Primeira.Data.String() != "2026-07-10" {

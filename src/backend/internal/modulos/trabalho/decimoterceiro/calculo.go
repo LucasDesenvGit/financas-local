@@ -51,8 +51,10 @@ type Entrada struct {
 	PrimeiraValor    *tipos.Decimal // informada: quanto veio
 	// PrimeiraComFerias: a 1ª veio com as férias do ano (a data é a do pagamento delas).
 	PrimeiraComFerias bool
-	Inss              encargos.TabelaInss
-	Irrf              encargos.TabelaIrrf
+	// ValorDasFerias: o que as férias pagaram de 1ª parcela (revisão do #701); nil, a metade do 13º.
+	ValorDasFerias *tipos.Decimal
+	Inss           encargos.TabelaInss
+	Irrf           encargos.TabelaIrrf
 }
 
 // Parcela é uma parcela do 13º.
@@ -62,7 +64,7 @@ type Parcela struct {
 	Informada bool          `json:"informada"` // a pessoa disse quanto e quando veio
 	// ValorInformado: o valor veio da pessoa (e não da metade calculada); a tela não grava o calculado como informado.
 	ValorInformado bool `json:"valorInformado"`
-	// ComFerias: a 1ª veio com as férias (a data é a do pagamento delas, e o valor, a metade calculada).
+	// ComFerias: a 1ª veio com as férias (a data é a do pagamento delas, e o valor, o que elas pagaram).
 	ComFerias bool `json:"comFerias"`
 }
 
@@ -100,6 +102,9 @@ func Calcular(e Entrada) Calculo {
 		MesesComHolerite: e.MesesComHolerite}
 
 	c.Primeira = Parcela{Valor: centavos(total.Div(decimal.NewFromInt(2))), Data: tipos.NovaData(e.Ano, 11, 30)}
+	if e.ValorDasFerias != nil {
+		c.Primeira.Valor = centavos(e.ValorDasFerias.Decimal())
+	}
 	if e.PrimeiraValor != nil {
 		c.Primeira.Valor, c.Primeira.Informada, c.Primeira.ValorInformado = centavos(e.PrimeiraValor.Decimal()), true, true
 	}

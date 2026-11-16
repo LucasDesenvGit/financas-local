@@ -57,7 +57,7 @@ import { anoDaUrl } from './decimo-terceiro';
         <section class="painel-bloco" aria-labelledby="titulo-parcelas">
           <h2 id="titulo-parcelas">{{ emprego()!.empregador }}</h2>
           <dl class="resumo">
-            <dt>1ª parcela, {{ d.primeira.informada ? 'recebida em' : 'até' }} {{ d.primeira.data | date: 'dd/MM' }}@if (d.primeira.comFerias) { (com as férias)}</dt>
+            <dt>1ª parcela, {{ d.primeira.comFerias ? 'paga com as férias em' : d.primeira.informada ? 'recebida em' : 'até' }} {{ d.primeira.data | date: 'dd/MM' }}</dt>
             <dd>{{ d.primeira.valor | currency }}</dd>
             <dt>2ª parcela, até {{ d.segunda.data | date: 'dd/MM' }}</dt><dd>{{ d.segunda.valor | currency }}</dd>
             <dt class="total">O 13º líquido</dt><dd class="total">{{ d.liquido | currency }}</dd>
@@ -70,7 +70,7 @@ import { anoDaUrl } from './decimo-terceiro';
                 extras, do adicional noturno e do DSR dos holerites do ano ({{ d.mediaVariaveis | currency }}). As horas de cada mês valem pelo
                 salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor.</li>
               <li>13º bruto: ({{ d.salarioBase | currency }} + {{ d.mediaVariaveis | currency }}) × {{ d.avos }}/12 = {{ d.total | currency }}.</li>
-              <li>1ª parcela: {{ d.primeira.informada ? 'o que você informou' : 'metade do 13º, sem desconto' }}.</li>
+              <li>1ª parcela: {{ d.primeira.comFerias ? 'a que veio com as férias, metade da remuneração do mês em que elas começam' : d.primeira.informada ? 'o que você informou' : 'metade do 13º, sem desconto' }}.</li>
               <li>2ª parcela: o 13º, menos o INSS ({{ d.inss.valor | currency }}), o IRRF ({{ d.irrf.valor | currency }}) e a 1ª parcela (nunca
                 abaixo de zero).
                 O IR do 13º é separado do salário: base de {{ d.irrf.base | currency }}, na faixa de {{ aliquota(d.irrf.aliquota) }}@if (d.irrf.reducaoLei15270 > 0) {<span>, menos a redução da Lei 15.270/2025 ({{ d.irrf.reducaoLei15270 | currency }})</span>}.</li>
