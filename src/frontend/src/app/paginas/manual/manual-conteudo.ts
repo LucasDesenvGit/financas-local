@@ -1380,8 +1380,9 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'FGTS',
         paraQueServe: 'Acompanhar o FGTS do emprego: quanto entra por mês, o saldo e os saques.',
         passos: [
-          'Abra Trabalho › FGTS. O saldo é estimado mês a mês desde a admissão: 8% da base do INSS do holerite do mês (ou do salário, sem holerite), mais 8% do 13º em dezembro e das férias (com o 1/3) no mês em que começam, corrigido a 3% ao ano.',
-          'Em “Lançar”, escolha “Saldo que vi no app do FGTS” e digite o saldo do app: a estimativa recomeça dali, e a tela mostra a diferença entre o app e o que o site estimava. Diferença grande pode ser depósito que a empresa não fez.',
+          'Abra Trabalho › FGTS. O saldo é estimado mês a mês desde a admissão: 8% da base do INSS do holerite do mês (ou do salário, sem holerite), mais 8% do 13º (a 1ª parcela no mês em que foi paga, o resto em dezembro) e das férias (com o 1/3) no mês em que começam, corrigido a 3% ao ano. Os dias de férias saem do salário do mês: as férias já pagam esses dias.',
+          'Com mais de um emprego CLT, escolha o emprego no alto da tela: o FGTS de um emprego antigo continua lá, e depois da saída o saldo segue corrigido, sem depósito.',
+          'Em “Lançar”, escolha “Saldo que vi no app do FGTS” e digite o saldo do app: a estimativa recomeça dali, e a tela mostra a diferença entre o app e o que o site estimava. A empresa deposita o FGTS do mês até o dia 20 do mês seguinte: o site soma depois da conferência os depósitos que o app ainda não mostrava naquele dia. Diferença grande pode ser depósito que a empresa não fez.',
           'Saque: escolha o motivo (rescisão, saque-aniversário, compra de imóvel ou outro). Distribuição de resultados: o valor que a Caixa creditou.',
           '“Os últimos meses” mostra a correção, o depósito, os saques e o saldo de cada mês; “conferido” marca o mês em que o saldo é o do app.',
           '“Excluir” apaga um lançamento, e o saldo é recalculado.'

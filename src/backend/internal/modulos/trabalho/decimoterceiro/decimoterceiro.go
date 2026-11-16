@@ -67,6 +67,12 @@ var (
 	errForaDoAno = errors.New("fora do ano")
 )
 
+// SemDecimo diz se o erro do Obter é só a falta do 13º no ano (não é CLT, o ano está fora do emprego, falta a tabela),
+// e não uma falha: quem soma o 13º (o FGTS) segue sem ele e devolve as outras.
+func SemDecimo(err error) bool {
+	return errors.Is(err, errSemDecimo) || errors.Is(err, errSemTabela) || errors.Is(err, errForaDoAno)
+}
+
 // Obter calcula o 13º do emprego no ano.
 func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta, error) {
 	e, err := s.empregos.Obter(ctx, empregoId)

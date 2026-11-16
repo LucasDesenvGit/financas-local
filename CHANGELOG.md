@@ -6,8 +6,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ### Funcionalidades
 - **Trabalho › FGTS** (#216, ADR 0066, Proposta):
-  - o saldo estimado mês a mês: 8% do bruto (do holerite, ou do salário), do 13º e das férias, corrigido a 3% ao ano;
-  - "Saldo que vi no app do FGTS": a estimativa recomeça do saldo do app, e a tela mostra a diferença (depósito que a empresa não fez, por exemplo);
+  - o saldo estimado mês a mês: 8% do bruto (do holerite, ou do salário, sem os dias de férias), do 13º (a 1ª parcela no mês em que foi paga) e das férias, corrigido a 3% ao ano; depois da saída, o saldo segue corrigido e os saques contam;
+  - "Saldo que vi no app do FGTS": a estimativa recomeça do saldo do app, mais os depósitos que o app ainda não mostrava (a empresa deposita até o dia 20 do mês seguinte), e a tela mostra a diferença (depósito que a empresa não fez, por exemplo);
+  - com mais de um emprego CLT, a escolha do emprego no alto da tela;
   - saques (rescisão, saque-aniversário, imóvel, outro) e a distribuição de resultados; os últimos meses com a correção, o depósito e o saldo.
   - O FGTS fica fora do patrimônio do Painel e dos relatórios. Banco: a tabela `FgtsLancamento`, criada sozinha ao iniciar.
 

@@ -1,5 +1,6 @@
+import { Emprego } from '../../../src/app/core/modelos';
 import { MesFgts, MotivoSaqueFgts as M, TipoLancamentoFgts as T } from '../../../src/app/core/modelos';
-import { descreverLancamento, totalDepositado, ultimosMeses } from '../../../src/app/paginas/trabalho/fgts';
+import { descreverLancamento, empregoDoFgts, empregosComFgts, totalDepositado, ultimosMeses } from '../../../src/app/paginas/trabalho/fgts';
 
 /** #216 (ADR 0066): as regras da tela Trabalho › FGTS (a estimativa é da API, testada no Go). */
 describe('Trabalho › FGTS (#216)', () => {
@@ -20,5 +21,14 @@ describe('Trabalho › FGTS (#216)', () => {
     expect(ultimosMeses(meses, 2)).toEqual([meses[13], meses[12]]);
     expect(totalDepositado([mes('a', 0.1), mes('b', 0.2)])).toBe(0.3);
     expect(totalDepositado([])).toBe(0);
+  });
+
+  it('os empregos com FGTS e o que a tela abre (revisão do #702)', () => {
+    const e = (id: number, regime: number, saida: string | null = null) => ({ id, regime, saida }) as unknown as Emprego;
+    const lista = [e(1, 3), e(2, 1, '2025-06-30'), e(3, 1)];
+    expect(empregosComFgts(lista).map((x) => x.id)).toEqual([2, 3]);
+    expect(empregoDoFgts(lista)?.id).toBe(3); // o CLT atual, mesmo depois de um PJ atual
+    expect(empregoDoFgts([e(1, 3)])?.id).toBe(1); // sem CLT, o atual (a API diz que não tem FGTS)
+    expect(empregoDoFgts([])).toBeNull();
   });
 });
