@@ -72,10 +72,12 @@ func (g *gerenciador) atualizarDevelop() {
 		g.trava.Unlock()
 		return
 	}
+	versaoDoSite := g.situacao.VersaoSite
 	g.dev.rodando, g.ocupado, g.dev.saida, g.dev.notas, g.dev.reabrir = true, true, nil, nil, false
 	g.dev.texto = "Buscando o develop no GitHub…"
 	g.trava.Unlock()
-	antes, temAntes := versaoDoClone(raiz)
+	// A versão de antes é a do site instalado (que o gerenciador já consulta): o clone não guarda mais o número (ADR 0070).
+	antes, temAntes := atualizacao.LerVersao(versaoDoSite)
 	defer func() {
 		g.trava.Lock()
 		g.dev.rodando, g.ocupado = false, false
@@ -96,7 +98,7 @@ func (g *gerenciador) atualizarDevelop() {
 		return
 	}
 
-	notas := notasDoDevelop(raiz, antes, temAntes)
+	notas := g.notasDaAtualizacao(raiz, antes, temAntes)
 	g.trava.Lock()
 	g.dev.notas = notas
 	g.trava.Unlock()
@@ -135,21 +137,33 @@ func (g *gerenciador) developNaTela() tela.Develop {
 		Notas: g.dev.notas != nil, ReabrirGerenciador: g.dev.reabrir && !g.dev.rodando}
 }
 
-// versaoDoClone é a versão do Directory.Build.props do clone (antes ou depois de trazer o develop).
-func versaoDoClone(raiz string) (atualizacao.Versao, bool) {
-	props, err := os.ReadFile(filepath.Join(raiz, "Directory.Build.props"))
+// notasDaAtualizacao pede ao clone, depois de trazer o develop, o número novo e as seções do que ainda não foi publicado
+// (src/backend/cmd/versao, ADR 0070), e monta o "O que mudou". Sem o Go ou com erro no cálculo, avisa na caixa de saída e
+// segue sem as notas: a reinstalação não depende delas.
+func (g *gerenciador) notasDaAtualizacao(raiz string, antes atualizacao.Versao, temAntes bool) *tela.Notas {
+	ctx := context.Background()
+	texto, err := desenvolvimento.CalcularVersao(ctx, raiz)
 	if err != nil {
-		return atualizacao.Versao{}, false
+		g.escrever("Não deu para calcular a versão nova, então o \"O que mudou\" fica de fora: " + err.Error())
+		return nil
 	}
-	return atualizacao.VersaoDoProjeto(string(props))
+	nova, temNova := atualizacao.LerVersao(texto)
+	changelog, err := desenvolvimento.CalcularVersao(ctx, raiz, "-changelog")
+	if err != nil {
+		g.escrever("Não deu para montar o \"O que mudou\": " + err.Error())
+		return nil
+	}
+	// As seções que o CHANGELOG.md do clone ainda tem de antes da troca (ADR 0070) vêm depois das novas.
+	if antigo, err := os.ReadFile(filepath.Join(raiz, "CHANGELOG.md")); err == nil {
+		changelog += "\n\n" + string(antigo)
+	}
+	return notasDoDevelop(nova, temNova, changelog, antes, temAntes)
 }
 
-// notasDoDevelop é o "O que mudou" entre a versão de antes e a que veio (#432): as seções do CHANGELOG.md do próprio
-// clone, sem rede. nil sem versão nova ou sem seção.
-func notasDoDevelop(raiz string, antes atualizacao.Versao, temAntes bool) *tela.Notas {
-	nova, ok := versaoDoClone(raiz)
-	changelog, err := os.ReadFile(filepath.Join(raiz, "CHANGELOG.md"))
-	if !ok || err != nil {
+// notasDoDevelop é o "O que mudou" entre a versão de antes e a que veio (#432): as seções do changelog (o -changelog
+// seguido do CHANGELOG.md do clone), sem rede. nil sem versão nova ou sem seção.
+func notasDoDevelop(nova atualizacao.Versao, temNova bool, changelog string, antes atualizacao.Versao, temAntes bool) *tela.Notas {
+	if !temNova {
 		return nil
 	}
 	var de *atualizacao.Versao
@@ -158,7 +172,7 @@ func notasDoDevelop(raiz string, antes atualizacao.Versao, temAntes bool) *tela.
 		de = &antes
 		titulo = "O que mudou desde a " + antes.String()
 	}
-	secoes := atualizacao.SecoesDoChangelog(string(changelog), de, nova)
+	secoes := atualizacao.SecoesDoChangelog(changelog, de, nova)
 	if secoes == "" {
 		return nil
 	}

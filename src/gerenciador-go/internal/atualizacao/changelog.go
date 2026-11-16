@@ -35,15 +35,3 @@ func SecoesDoChangelog(changelog string, antes *Versao, nova Versao) string {
 	fechar()
 	return strings.Join(escolhidas, "\n\n")
 }
-
-// versaoDoProps é a <Version> do Directory.Build.props.
-var versaoDoProps = regexp.MustCompile(`<Version>\s*([^<\s]+)\s*</Version>`)
-
-// VersaoDoProjeto lê a versão do Directory.Build.props (a única fonte da versão, CLAUDE.md).
-func VersaoDoProjeto(props string) (Versao, bool) {
-	m := versaoDoProps.FindStringSubmatch(props)
-	if m == nil {
-		return Versao{}, false
-	}
-	return LerVersao(m[1])
-}

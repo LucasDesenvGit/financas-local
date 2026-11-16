@@ -37,7 +37,10 @@ jobs:
       versao: ${{ steps.versao.outputs.versao }}
       rotulo: ${{ steps.versao.outputs.rotulo }}
     steps:
+      # Histórico inteiro: o número da versão é calculado pelos merges do git (ADR 0070, go run ./cmd/versao).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -59,18 +62,32 @@ jobs:
           key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
           restore-keys: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-
 
-      - name: Versão (Directory.Build.props; na tag, tem de ser igual)
+      # ADR 0070: o número é calculado (a base do Directory.Build.props e os merges do git). Na tag, o commit é o merge da
+      # release na main, e o número conferido é o do commit da release (-publicada), que veio do develop.
+      - name: Versão (calculada pelo go run ./cmd/versao; na tag, tem de ser igual)
         id: versao
         shell: pwsh
+        env:
+          TIPO_REF: ${{ github.ref_type }}
+          NOME_REF: ${{ github.ref_name }}
+          EXECUCAO: ${{ github.run_number }}
         run: |
-          $versao = ([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version | Select-Object -First 1
-          if ("${{ github.ref_type }}" -eq "tag" -and "${{ github.ref_name }}" -ne "v$versao") {
-            throw "A tag ${{ github.ref_name }} não bate com a versão do Directory.Build.props ($versao)."
+          $tag = $env:TIPO_REF -eq "tag"
+          Push-Location src/backend
+          try {
+            $versao = ("$(if ($tag) { go run ./cmd/versao -publicada } else { go run ./cmd/versao })").Trim()
+            if ($LASTEXITCODE -ne 0) { throw "go run ./cmd/versao falhou ($LASTEXITCODE)." }
+          } finally { Pop-Location }
+          if ($versao -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Versão calculada inválida: '$versao' (sem o histórico do git? O checkout precisa de fetch-depth: 0)."
+          }
+          if ($tag -and $env:NOME_REF -ne "v$versao") {
+            throw "A tag $env:NOME_REF não bate com a versão calculada no commit da release ($versao)."
           }
           "versao=$versao" >> $env:GITHUB_OUTPUT
           $p = $versao.Split('.'); "seguinte=$($p[0]).$($p[1]).$([int]$p[2] + 1)" >> $env:GITHUB_OUTPUT
           # Rótulo: o que o site e o gerenciador mostram e o nome do .msi. Fora da tag, versão de desenvolvimento.
-          $rotulo = if ("${{ github.ref_type }}" -eq "tag") { $versao } else { "$versao-dev.${{ github.run_number }}" }
+          $rotulo = if ($tag) { $versao } else { "$versao-dev.$env:EXECUCAO" }
           "rotulo=$rotulo" >> $env:GITHUB_OUTPUT
 
       - name: Sintaxe do configurar.ps1 (Windows PowerShell 5.1, o que o instalador usa)
@@ -101,8 +118,9 @@ jobs:
       - name: Gerar o .msi
         shell: pwsh
         run: |
-          if ("${{ github.ref_type }}" -eq "tag") { ./instalador/gerar-msi.ps1 }
-          else { ./instalador/gerar-msi.ps1 -Revisao ${{ github.run_number }} }
+          # A versão vai explícita: na tag, o commit é o da main, e o cálculo certo é o do commit da release (passo acima).
+          if ("${{ github.ref_type }}" -eq "tag") { ./instalador/gerar-msi.ps1 -Versao ${{ steps.versao.outputs.versao }} }
+          else { ./instalador/gerar-msi.ps1 -Versao ${{ steps.versao.outputs.versao }} -Revisao ${{ github.run_number }} }
 
       - name: Instalar (silencioso, como num computador novo)
         shell: pwsh
@@ -326,7 +344,10 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
+      # Histórico inteiro: o instalar-windows.ps1 calcula a versão pelos merges do git (ADR 0070).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Instalação antiga (instalar-windows.ps1)
         shell: powershell
@@ -392,10 +413,16 @@ jobs:
       # O título de cada PR nas notas (gh pr view); sem isto, as notas mostram só "PR #N".
       pull-requests: read
     steps:
-      # Histórico inteiro: as notas listam os PRs desde a versão de desenvolvimento anterior (#294).
+      # Histórico inteiro: as notas listam os PRs desde a versão de desenvolvimento anterior (#294) e o notas.sh calcula
+      # o número de cada merge para montar o CHANGELOG do que ainda não foi publicado (ADR 0070).
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: src/backend/go.mod
+          cache: false
 
       - uses: actions/download-artifact@v8
         with:

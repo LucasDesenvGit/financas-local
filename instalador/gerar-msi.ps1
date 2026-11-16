@@ -5,7 +5,7 @@
     wix-cli-x64.msi do GitHub Releases do WiX, que ja traz as extensoes UI e Util e nao pede o .NET, #446:
     https://github.com/wixtoolset/wix/releases/tag/v5.0.2; confira o SHA-256 do WIX_SHA256 do versao.yml).
 
-    .\instalador\gerar-msi.ps1                      # versao do Directory.Build.props
+    .\instalador\gerar-msi.ps1                      # versao calculada pelo go run ./cmd/versao (ADR 0070)
     .\instalador\gerar-msi.ps1 -Versao 2.1.1        # outra versao (ex.: testar a atualizacao)
     .\instalador\gerar-msi.ps1 -PularFront          # front-end ja compilado em src\frontend\dist
     .\instalador\gerar-msi.ps1 -SoPacote            # reaproveita a pasta publicada e so gera o .msi
@@ -39,8 +39,13 @@ function Executar([string]$programa, [string[]]$argumentos) {
 }
 
 if (-not $Versao) {
-    $props = [xml](Get-Content -LiteralPath (Join-Path $Raiz "Directory.Build.props") -Raw)
-    $Versao = ($props.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
+    # ADR 0070: o numero e calculado pelo Go (a base do Directory.Build.props e os merges do git), nao mais lido do arquivo.
+    # Sem o historico do git sai X.Y.Z-sem-git, que o .msi nao aceita (abaixo).
+    Push-Location (Join-Path $Raiz "src\backend")
+    try {
+        $Versao = ("$(& go run ./cmd/versao)").Trim()
+        if ($LASTEXITCODE -ne 0) { throw "go run ./cmd/versao falhou ($LASTEXITCODE)." }
+    } finally { Pop-Location }
 }
 if ($Versao -notmatch '^\d+\.\d+\.\d+$') { throw "Versao invalida: '$Versao' (use X.Y.Z)." }
 # O Windows Installer so aceita numeros ate 65535 em cada parte e compara so X.Y.Z (a revisao so identifica o pacote).

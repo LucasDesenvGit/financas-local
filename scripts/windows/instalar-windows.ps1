@@ -416,7 +416,7 @@ function Publicar {
 
         Etapa "[3/3] Compilando o back-end em Go"
         if (-not (Comando-Existe "go")) { ErroSai "Go nao encontrado (a etapa 1 devia ter instalado em ferramentas\go)." }
-        $versaoSistema = ([xml](Get-Content -LiteralPath (Join-Path $Raiz "Directory.Build.props") -Raw)).Project.PropertyGroup.Version | Select-Object -First 1
+        $versaoSistema = VersaoDoSistema
         Push-Location (Join-Path $Raiz "src\backend")
         try {
             Executar "go" @("build", "-trimpath",

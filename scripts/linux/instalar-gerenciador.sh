@@ -119,10 +119,10 @@ if [[ "$fechados" -gt 0 ]]; then
 fi
 
 # ------------------------------------------------------------------ Compilacao
-# Como o README do modulo: com cgo, sem F12 nem menu do botao direito (-tags production). A versao e a do
-# Directory.Build.props, como a do site.
+# Como o README do modulo: com cgo, sem F12 nem menu do botao direito (-tags production). A versao e a
+# do site: calculada pelo Go (ADR 0070).
 etapa "Compilando o gerenciador em Go em $destino"
-versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$Raiz/Directory.Build.props" | head -n1)"
+versao="$(versao_do_sistema)"
 (cd "$Raiz/src/gerenciador-go" && CGO_ENABLED=1 go build -tags production -trimpath \
     -ldflags "-s -w -X main.versao=$versao" -o "$executavel" .)
 cp "$Raiz/src/gerenciador-go/icone.png" "$destino/icone.png"
