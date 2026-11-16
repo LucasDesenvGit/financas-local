@@ -1301,14 +1301,16 @@ export const MANUAL: CapituloManual[] = [
           'Abra Trabalho › Salário. Na primeira vez, cadastre o emprego: empregador, CNPJ (opcional), admissão, regime, jornada mensal (220 h na CLT), dependentes para o IR, a conta onde o salário cai e o salário bruto.',
           '“O mês” mostra o salário bruto, o INSS, o IRRF e o líquido estimado. Use ‹ › ou o nome do mês para ver outro mês.',
           '“Como calculei” abre a conta linha a linha: as faixas do INSS, a dedução usada no IRRF (o INSS e os dependentes, ou o desconto simplificado, o que der menos imposto), a faixa, a redução da Lei 15.270/2025 (de 2026 em diante, para rendimento de até R$ 7.350,00) e a fonte de cada tabela.',
-          'Aumento: em “Histórico de salários”, informe o mês e o salário novo e clique em “Gravar aumento”. Os meses antes do aumento continuam com o salário de antes; gravar de novo no mesmo mês troca o valor.',
-          '“Apagar” tira um salário do histórico (os meses dele passam a usar o anterior). O primeiro salário não sai sozinho: o emprego precisa de pelo menos um.',
+          'Aumento: em “Histórico de salários”, escolha o mês, informe o salário novo e clique em “Gravar aumento”. O salário vale por mês: o aumento conta para o mês inteiro, sem proporção pelos dias. Os meses antes do aumento continuam com o salário de antes; gravar de novo no mesmo mês troca o valor.',
+          '“Apagar” tira um salário do histórico (os meses dele passam a usar o anterior). O primeiro salário, o da admissão, não sai: para mudar o valor dele, grave outro valor no mesmo mês.',
+          'Corrigiu a admissão para antes? O primeiro salário passa a valer desde o mês da nova admissão. A saída não pode ficar antes de um salário do histórico: apague esse salário antes.',
           'Estágio e PJ ficam sem o cálculo do INSS e do IRRF.',
           '“+ Outro emprego” cadastra mais um; os outros aparecem em “Outros empregos”. “Editar emprego” muda os dados ou exclui o emprego.'
         ],
         dicas: [
           'Nada do Trabalho entra nos relatórios: a receita continua sendo a transação do salário na conta. O Trabalho explica esse dinheiro (bruto, descontos), sem contar duas vezes.',
-          'O valor que vale é o do seu holerite: convenção coletiva, benefícios da empresa e arredondamentos mudam o número.'
+          'O valor que vale é o do seu holerite: convenção coletiva, benefícios da empresa e arredondamentos mudam o número.',
+          '“O mês” usa o salário cheio, mesmo no mês da admissão, da saída ou do aumento. O holerite do mês (Trabalho › Holerites) é que conta os dias.'
         ],
         erros: ['“Ainda não há tabela do INSS ou do IRRF para esse mês”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026. Para meses antes disso, não há estimativa.'],
         abrir: [{ rotulo: 'Abrir o Salário', rota: '/trabalho/salario' }]

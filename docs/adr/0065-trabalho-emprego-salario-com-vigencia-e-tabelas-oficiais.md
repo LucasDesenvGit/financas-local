@@ -28,7 +28,7 @@ O Trabalho é o primeiro módulo do site (ADR 0064): mora em `internal/modulos/t
 ### Emprego e salário
 
 - `Emprego`: empregador, CNPJ (opcional), admissão e saída, regime (CLT; estágio e PJ ficam "sem cálculo de encargos"), jornada mensal (padrão 220 h), dependentes para o IR e a conta onde o salário cai.
-- `SalarioVigencia`: o salário bruto a partir de um mês (sempre o dia 1). "Aumento a partir de…" cria uma linha nova; o salário de um mês é o da última vigência que começou até ele. O emprego nasce com a primeira vigência, no mês da admissão.
+- `SalarioVigencia`: o salário bruto a partir de um mês (sempre o dia 1). "Aumento a partir de…" (um seletor de mês) cria uma linha nova; o salário de um mês é o da última vigência que começou até ele, **sem proporção pelos dias** no mês do aumento (o holerite da empresa pode pagar proporcional; aqui é estimativa). O emprego nasce com a primeira vigência, no mês da admissão, e ela não sai: corrigir a admissão para antes leva o começo dela junto, e a saída não pode ficar antes de uma vigência (revisão do #698).
 
 ### Tabelas oficiais, por vigência
 
