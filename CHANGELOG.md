@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.10] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Teste "Campo de número (#283)" sem falso alarme fora da CI** (#747). O teste do navegador comparava dois prints byte a byte e falhava em parte das máquinas: ao redesenhar depois do estilo injetado, o Chromium suaviza a borda arredondada com 1 ponto de diferença em alguns pixels dos cantos. Agora conta só os pixels que mudam mais de 2 pontos; a setinha de verdade muda 330.
+
 ## [3.15.9] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
