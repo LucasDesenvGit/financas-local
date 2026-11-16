@@ -102,7 +102,7 @@ func (s *Servico) calcular(ctx context.Context, e emprego.Emprego, inicio tipos.
 		return Calculo{}, erroDeValidacao("Não há salário no mês do início.")
 	}
 	mes := emprego.InicioDoMes(inicio)
-	soma, _, err := s.holerites.VariaveisEntre(ctx, e.Id, mes.SomarMeses(-12), mes)
+	soma, _, err := s.holerites.VariaveisEntre(ctx, e.Id, mes.SomarMeses(-12), mes, salario.SalarioBruto) // Súmula 347
 	if err != nil {
 		return Calculo{}, err
 	}

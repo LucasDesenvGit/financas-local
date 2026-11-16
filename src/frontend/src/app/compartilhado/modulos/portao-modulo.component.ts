@@ -17,6 +17,12 @@ import { mensagemDeErro } from '../../core/erro.interceptor';
   template: `
     @if (modulos.lista() === null) {
       <p class="texto-suave" role="status">Carregando…</p>
+    } @else if (modulos.falhou()) {
+      <section class="painel-bloco" role="alert">
+        <h1>Não deu para ler os módulos</h1>
+        <p>O site não respondeu agora (ele pode estar reiniciando depois de uma atualização).</p>
+        <button type="button" class="botao botao-primario" (click)="modulos.carregar()">Tentar de novo</button>
+      </section>
     } @else if (modulo(); as m) {
       @if (m.ligado) {
         <router-outlet />

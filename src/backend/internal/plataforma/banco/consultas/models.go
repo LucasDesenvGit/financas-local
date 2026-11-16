@@ -88,6 +88,8 @@ type ContaAgendada struct {
 	TextoCobranca     *string
 	Observacao        *string
 	ChaveExtrato      *string
+	ReservaNome       *string
+	ReservaDesde      *string
 	CriadoEm          string
 }
 
@@ -375,6 +377,17 @@ type Orcamento struct {
 	Valor       string
 }
 
+type PagamentoCofrinho struct {
+	Id                      int64
+	ContaAgendadaId         int64
+	TransacaoId             *int64
+	Vencimento              string
+	ProximoVencimento       string
+	UltimoPagamentoAnterior *string
+	Automatico              int64
+	CriadoEm                string
+}
+
 type PagamentoEmprestimo struct {
 	Id             int64
 	EmprestimoId   int64
@@ -477,6 +490,7 @@ type Transacao struct {
 	DescricaoManual     int64
 	TransferenciaGrupo  *string
 	Observacao          *string
+	ReservaNome         *string
 	CriadoEm            string
 	AtualizadoEm        string
 }

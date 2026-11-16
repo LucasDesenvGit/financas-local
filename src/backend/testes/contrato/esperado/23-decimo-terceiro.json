@@ -7,6 +7,7 @@
     "corpo": {
       "ano": 2026,
       "avos": 12,
+      "excedente": 0.00,
       "inss": {
         "base": 6049.58,
         "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
@@ -54,17 +55,20 @@
       },
       "liquido": 4997.69,
       "mediaVariaveis": 49.58,
+      "mesesComHolerite": 2,
       "primeira": {
         "data": "2026-11-30",
         "informada": false,
-        "valor": 3024.79
+        "valor": 3024.79,
+        "valorInformado": false
       },
       "saida": null,
       "salarioBase": 6000.00,
       "segunda": {
         "data": "2026-12-20",
         "informada": false,
-        "valor": 1972.90
+        "valor": 1972.90,
+        "valorInformado": false
       },
       "total": 6049.58
     }
@@ -77,6 +81,7 @@
     "corpo": {
       "ano": 2026,
       "avos": 12,
+      "excedente": 0.00,
       "inss": {
         "base": 6049.58,
         "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
@@ -124,17 +129,20 @@
       },
       "liquido": 4997.69,
       "mediaVariaveis": 49.58,
+      "mesesComHolerite": 2,
       "primeira": {
         "data": "2026-07-10",
         "informada": true,
-        "valor": 2800.00
+        "valor": 2800.00,
+        "valorInformado": true
       },
       "saida": null,
       "salarioBase": 6000.00,
       "segunda": {
         "data": "2026-12-20",
         "informada": false,
-        "valor": 2197.69
+        "valor": 2197.69,
+        "valorInformado": false
       },
       "total": 6049.58
     },

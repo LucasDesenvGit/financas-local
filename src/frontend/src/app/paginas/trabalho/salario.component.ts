@@ -170,11 +170,14 @@ import {
           </table>
         </div>
         <form class="form-aumento" (ngSubmit)="aumento(e)" #fa="ngForm">
-          <label>Aumento a partir de (o mês) <app-campo-data name="inicio" [(ngModel)]="aumentoInicio" obrigatorio /></label>
+          <div class="aumento-mes"><span id="rotulo-aumento-mes">Aumento a partir de</span>
+            <app-seletor-mes aria-labelledby="rotulo-aumento-mes" [valor]="aumentoMes()" (mudou)="aumentoMes.set($event)" /></div>
           <label>Salário bruto novo <app-campo-valor name="valor" [(ngModel)]="aumentoValor" obrigatorio [minimo]="0.01" /></label>
           <button class="botao botao-primario" [disabled]="fa.invalid || salvando()">Gravar aumento</button>
         </form>
-        <p class="texto-suave">Os meses antes do aumento continuam com o salário de antes. Gravar no mesmo mês troca o valor.</p>
+        <p class="texto-suave">O salário vale por mês: o aumento conta para o mês inteiro, sem proporção pelos dias (o holerite
+          da empresa pode pagar o mês do aumento proporcional). Os meses antes continuam com o salário de antes. Gravar no mesmo
+          mês troca o valor.</p>
       </section>
 
       @if (outros().length) {
@@ -201,6 +204,7 @@ import {
     .como-calculei h3 { font-size: 0.95rem; margin: 12px 0 4px; }
     .como-calculei ul { margin: 0; padding-left: 20px; }
     .form-aumento { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 16px; }
+    .aumento-mes { display: flex; flex-direction: column; gap: 4px; }
     .aviso-estimativa { margin-top: 0; }
     .lista-simples { margin: 0; padding-left: 20px; }
   `]
@@ -236,7 +240,7 @@ export class TrabalhoSalarioComponent implements OnInit {
   readonly periodo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   readonly estimativa = signal<EstimativaSalario | null>(null);
   readonly erroEstimativa = signal<string | null>(null);
-  aumentoInicio: string | null = null;
+  readonly aumentoMes = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   aumentoValor: number | null = null;
 
   ngOnInit(): void {
@@ -324,13 +328,12 @@ export class TrabalhoSalarioComponent implements OnInit {
   }
 
   aumento(e: Emprego): void {
-    if (!this.aumentoInicio || this.aumentoValor === null) return;
+    if (this.aumentoValor === null) return;
     this.salvando.set(true);
-    this.api.definirSalario(e.id, this.aumentoInicio, this.aumentoValor).subscribe({
+    this.api.definirSalario(e.id, `${mesDaApi(this.aumentoMes())}-01`, this.aumentoValor).subscribe({
       next: (novo) => {
         this.salvando.set(false);
         this.avisos.sucesso(`Salário gravado a partir de ${nomeDoMes(novo.salarios[0].inicio)}.`);
-        this.aumentoInicio = null;
         this.aumentoValor = null;
         this.trocar(novo);
       },

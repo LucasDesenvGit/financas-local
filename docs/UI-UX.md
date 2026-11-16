@@ -44,6 +44,60 @@ A partir das referências acima (seguir, salvo motivo registrado):
 - **Seleção em tabela:** a célula inteira é o alvo (`label.celula-marcar`), a linha marcada fica destacada (`tr.selecionada`), e o nome da caixa diz qual linha é ([ADR 0032](adr/0032-controles-padrao-interruptor-e-campo-de-valor.md)).
 - O porquê e o custo aceito de cada padrão acima estão nas ADRs [0017](adr/0017-preferencias-de-exibicao-no-navegador.md) a [0021](adr/0021-componentes-padrao-para-graficos-e-telas-densas.md).
 
+## Controles padrão: como usar (ADR 0032)
+
+O porquê de cada controle e o custo aceito estão na [ADR 0032](adr/0032-controles-padrao-interruptor-e-campo-de-valor.md); aqui fica como usar.
+
+**Interruptor** (efeito imediato):
+- `<label class="interruptor"><input type="checkbox" role="switch" …> Rótulo</label>`. Formulário com "Salvar" usa `label.checkbox`.
+- Rótulo curto, palavra-chave primeiro, que não muda com o estado ("Mostrar arquivadas", nunca "Esconder arquivadas").
+- Trilho de 40×24 px e rótulo clicável; foco visível; animação curta da bolinha, desligada com `prefers-reduced-motion`.
+- Estado de tela vai na URL, como o `?arquivadas=1` de Contas e cartões, com `replaceUrl`.
+- Teste: `testes/jest/usabilidade/interruptor.spec.ts`.
+
+**Caixa de marcar e seleção em tabelas** (#133):
+- 18 px, borda em `--texto-suave`, marcada em `--primaria` com o visto, e parcial (`indeterminate`) com um traço.
+- Na tabela, a célula inteira é o alvo (`label.celula-marcar`, ≥ 24 px), e a linha marcada fica destacada (`tr.selecionada`). O nome da caixa diz a linha ("Selecionar: descrição, data, valor"), respeitando "ocultar valores".
+- Em Transações também há Shift+clique (intervalo), "todas desta página" com estado parcial e Esc para limpar. A contagem diz "M em outras páginas" (aria-live), e a barra de ações abre animando e fica fixa no topo.
+
+**Campo de data** (`app-campo-data`, `compartilhado/ui/campo-data.component.ts`):
+- `<app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio />`.
+- Entrega o mesmo `'AAAA-MM-DD'` ao `ngModel` (`''` quando vazio), e `(alterado)` faz o papel do `(change)` nativo.
+- **Digitar:** dd/mm/aaaa, com as barras entrando sozinhas e o ano sempre com 4 dígitos. Colar `AAAA-MM-DD` também funciona.
+- **Limites:** 1900–2099 por padrão, ou os da tela (`[maximo]="hoje"`).
+- **Calendário:** setas, Home/End, PageUp/PageDown, Shift para o ano e Esc, com « ‹ › », "Hoje" e "Limpar".
+- **Meses e anos pelo título** (#264): o título do mês ("outubro de 2026") troca a grade de dias pela de meses do ano. O título do ano ("2026") leva a uma página de 12 anos ("2020–2031", páginas a partir de 1900).
+  - Escolher desce um nível (ano → meses → dias), ‹ › trocam o ano ou a página, e Esc sobe um nível antes de fechar.
+  - Meses e anos fora dos limites ficam desabilitados; o escolhido e o de hoje, destacados, como os dias.
+  - Teclado nas grades: ← → um, ↑ ↓ uma linha, Home/End, PageUp/PageDown. Alvos de 44 px de altura.
+  - As setas continuam para quem anda mês a mês.
+- Testes: `testes/jest/usabilidade/calendario.spec.ts`, `testes/jest/regressao/calendario-meses-anos.spec.ts` e `testes/navegador/calendario.spec.ts`.
+
+**Lista suspensa** (`ListaSuspensaDirective`, `compartilhado/ui/lista-suspensa.directive.ts`):
+- Tela nova com `<select>` importa a diretiva.
+- O `<select>` nativo continua dono do valor (`ngModel`, `[ngValue]`, `(change)`), e o campo fechado tem a seta desenhada no CSS.
+- Teste: `lista-suspensa-aberta.spec.ts`.
+
+**Seletor de mês:** teste em `seletor-mes.spec.ts`.
+
+Dois testes falham se uma tela usar `type="date"` ou um `<select>` sem a diretiva.
+
+**Campo de valor** (`app-campo-valor`, `compartilhado/ui/campo-valor.component.ts`, só para dinheiro):
+- `<label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>`.
+- **Ao digitar:**
+  - os pontos de milhar entram a cada tecla ("124214" vira "124.214"), sem tirar o cursor do lugar (a posição é contada pelos dígitos);
+  - um ponto digitado vira a vírgula decimal, e letras são ignoradas;
+  - Backspace/Delete sobre um ponto de milhar apaga o dígito ao lado.
+- **Colar** (ou trocar o texto todo de uma vez) usa a leitura completa. Ao sair, completa as casas ("124.214,00").
+- **Parâmetros:**
+  - `moeda`: o símbolo dentro do campo, decorativo; o nome acessível diz "em reais" ou "em dólares";
+  - `casas`: máximo de casas, mínimo 2 (cotação usa 4);
+  - `minimo`, `obrigatorio` e `negativo` (saldo inicial, aporte);
+  - `compacto` e `rotulo`, para célula de tabela;
+  - `confirmado` + `enterConfirma`, para valor salvo na própria linha, como no orçamento.
+- Erro com `aria-invalid` e `aria-describedby`.
+- Testes: `testes/jest/regressao/campo-valor.spec.ts` e `testes/jest/usabilidade/campo-valor.spec.ts`. O primeiro tem uma trava que falha se um campo de dinheiro voltar a ser `type="number"`.
+
 ## Ao propor ou revisar
 
 Separar explicitamente o que vem dessas fontes do que é **julgamento próprio** (trade-off sem fonte direta), e dizer quando algo não foi validado com uso real. Fonte nova entra nesta tabela com link verificado, não citada de memória.

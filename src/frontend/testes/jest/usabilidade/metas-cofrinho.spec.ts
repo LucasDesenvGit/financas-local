@@ -34,9 +34,9 @@ describe('Usabilidade: cofrinho na meta', () => {
     const t = await abrirFormulario();
     await t.escolher('conta', 'Mercado Pago');
     await t.escolher('reserva', 'Viagem');
-    expect(t.tela.form!.reservaNome).toBe('Viagem');
+    expect(t.formulario().edicao()!.dados.reservaNome).toBe('Viagem');
     await t.escolher('conta', 'Cartão Roxo');
-    expect(t.tela.form!.reservaNome).toBeNull();
+    expect(t.formulario().edicao()!.dados.reservaNome).toBeNull();
   });
 
   it('explica que o saldo do cofrinho é estimado e leva para Investimentos › Reservas', async () => {
