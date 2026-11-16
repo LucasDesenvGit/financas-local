@@ -1,6 +1,7 @@
 package recebimento
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -197,5 +198,151 @@ func TestDistancia(t *testing.T) {
 	a, b := testeapoio.Dia(2026, 10, 30), testeapoio.Dia(2026, 11, 2)
 	if distancia(a, b) != 3 || distancia(b, a) != 3 || distancia(a, a) != 0 {
 		t.Fatalf("distância = %d, %d, %d", distancia(a, b), distancia(b, a), distancia(a, a))
+	}
+}
+
+// Revisão do #703 (2ª): o holerite liga X (05/11) e Y (06/11), de 1000, na mesma conta; a sincronização troca Y por Y'
+// (08/11). Religar não pode escolher X, que este holerite já liga (o índice único dava 500 em todo GET): escolhe Y'. Duas
+// sumidas de mesmo valor e uma transação nova só: uma religa, a outra continua sumida.
+func TestReligarNaoRepeteATransacaoDoHolerite(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	holerite.Registrar(m, holerites)
+	Registrar(m, NovoServico(db, empregos, holerites, rel, log))
+	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
+		return testeapoio.Chamar(t, m, metodo, caminho, corpo)
+	}
+	ler := func(r testeapoio.Resposta) Resposta {
+		t.Helper()
+		r.ConferirStatus(t, http.StatusOK)
+		var c Resposta
+		if err := json.Unmarshal(r.Corpo, &c); err != nil {
+			t.Fatalf("%s: %v", r.Corpo, err)
+		}
+		return c
+	}
+	fab := testeapoio.NovaFabrica(t, db, rel)
+	fab.Categoria(func(c *testeapoio.Categoria) { c.Nome, c.Tipo = "Salário", 2 })
+	conta := fab.Conta(func(c *testeapoio.Conta) { c.Nome = "Conta salário" })
+	credito := func(dia tipos.Data) testeapoio.Transacao {
+		return fab.Transacao(conta, func(x *testeapoio.Transacao) {
+			x.Data, x.Valor, x.Tipo, x.Descricao = dia, v("1000.00"), 2, "CREDITO FICTICIA"
+		})
+	}
+	apagar := func(ids ...int64) {
+		for _, id := range ids {
+			if _, err := db.ExecContext(t.Context(), `DELETE FROM "Transacao" WHERE "Id" = ?`, id); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	var e emprego.Emprego
+	_ = json.Unmarshal(chamar("POST", "/api/trabalho/empregos", `{"empregador":"Fictícia Comércio Ltda","admissao":"2024-03-11","salarioBruto":5500}`).Corpo, &e)
+	var holeriteId int64
+	novoHolerite := func(mes string) string {
+		var h holerite.Holerite
+		_ = json.Unmarshal(chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", e.Id), `{"mes":"`+mes+`"}`).Corpo, &h)
+		holeriteId = h.Id
+		return fmt.Sprintf("/api/trabalho/holerites/%d/recebimentos", h.Id)
+	}
+	// transacoes são as ligadas no banco (no JSON, o id do recebimento esconde o da transação).
+	transacoes := func() map[int64]bool {
+		linhas, err := db.QueryContext(t.Context(), `SELECT "TransacaoId" FROM "HoleriteRecebimento" WHERE "HoleriteId" = ? AND "TransacaoId" IS NOT NULL`, holeriteId)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer linhas.Close()
+		ids := map[int64]bool{}
+		for linhas.Next() {
+			var id int64
+			_ = linhas.Scan(&id)
+			ids[id] = true
+		}
+		return ids
+	}
+
+	caminho := novoHolerite("2026-10")
+	x, y := credito(testeapoio.Dia(2026, 11, 5)), credito(testeapoio.Dia(2026, 11, 6))
+	ler(chamar("POST", caminho, fmt.Sprintf(`{"transacaoId":%d}`, x.Id)))
+	ler(chamar("POST", caminho, fmt.Sprintf(`{"transacaoId":%d}`, y.Id)))
+	apagar(y.Id)
+	y2 := credito(testeapoio.Dia(2026, 11, 8))
+	c := ler(chamar("GET", caminho, ""))
+	if ids := transacoes(); len(c.Recebimentos) != 2 || c.Recebimentos[0].Sumiu || c.Recebimentos[1].Sumiu || !ids[x.Id] || !ids[y2.Id] {
+		t.Fatalf("religado = %+v", c.Recebimentos)
+	}
+
+	caminho = novoHolerite("2026-09")
+	a, b := credito(testeapoio.Dia(2026, 10, 3)), credito(testeapoio.Dia(2026, 10, 4))
+	ler(chamar("POST", caminho, fmt.Sprintf(`{"transacaoId":%d}`, a.Id)))
+	ler(chamar("POST", caminho, fmt.Sprintf(`{"transacaoId":%d}`, b.Id)))
+	apagar(a.Id, b.Id)
+	nova := credito(testeapoio.Dia(2026, 10, 5))
+	c = ler(chamar("GET", caminho, ""))
+	sumidas := 0
+	for _, r := range c.Recebimentos {
+		if r.Sumiu {
+			sumidas++
+		}
+	}
+	if ids := transacoes(); len(c.Recebimentos) != 2 || sumidas != 1 || len(ids) != 1 || !ids[nova.Id] {
+		t.Fatalf("duas sumidas, uma nova = %+v", c.Recebimentos)
+	}
+	ler(chamar("GET", caminho, "")) // e continua abrindo
+}
+
+// Revisão do #703 (2ª): religar é conserto; se falhar (aqui, um gatilho recusa o UPDATE), a tela abre do mesmo jeito, a
+// ligação continua sumida e a falha vai para o log.
+func TestReligarQueFalhaNaoDerrubaATela(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	var registro bytes.Buffer
+	log := slog.New(slog.NewTextHandler(&registro, nil))
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	holerite.Registrar(m, holerites)
+	Registrar(m, NovoServico(db, empregos, holerites, rel, log))
+	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
+		return testeapoio.Chamar(t, m, metodo, caminho, corpo)
+	}
+	fab := testeapoio.NovaFabrica(t, db, rel)
+	fab.Categoria(func(c *testeapoio.Categoria) { c.Nome, c.Tipo = "Salário", 2 })
+	conta := fab.Conta(func(c *testeapoio.Conta) { c.Nome = "Conta salário" })
+	credito := func(dia tipos.Data) testeapoio.Transacao {
+		return fab.Transacao(conta, func(x *testeapoio.Transacao) {
+			x.Data, x.Valor, x.Tipo, x.Descricao = dia, v("1000.00"), 2, "CREDITO FICTICIA"
+		})
+	}
+	var e emprego.Emprego
+	_ = json.Unmarshal(chamar("POST", "/api/trabalho/empregos", `{"empregador":"Fictícia Comércio Ltda","admissao":"2024-03-11","salarioBruto":5500}`).Corpo, &e)
+	var h holerite.Holerite
+	_ = json.Unmarshal(chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", e.Id), `{"mes":"2026-10"}`).Corpo, &h)
+	caminho := fmt.Sprintf("/api/trabalho/holerites/%d/recebimentos", h.Id)
+	x := credito(testeapoio.Dia(2026, 11, 5))
+	chamar("POST", caminho, fmt.Sprintf(`{"transacaoId":%d}`, x.Id)).ConferirStatus(t, http.StatusOK)
+	if _, err := db.ExecContext(t.Context(), `DELETE FROM "Transacao" WHERE "Id" = ?`, x.Id); err != nil {
+		t.Fatal(err)
+	}
+	credito(testeapoio.Dia(2026, 11, 6))
+	if _, err := db.ExecContext(t.Context(), `CREATE TRIGGER "FalhaAoReligar" BEFORE UPDATE OF "TransacaoId" ON "HoleriteRecebimento"
+		BEGIN SELECT RAISE(ABORT, 'falha de teste'); END`); err != nil {
+		t.Fatal(err)
+	}
+	registro.Reset()
+	r := chamar("GET", caminho, "")
+	r.ConferirStatus(t, http.StatusOK)
+	var c Resposta
+	_ = json.Unmarshal(r.Corpo, &c)
+	if len(c.Recebimentos) != 1 || !c.Recebimentos[0].Sumiu || !strings.Contains(registro.String(), "falha de teste") {
+		t.Fatalf("recebimentos = %+v; log = %s", c.Recebimentos, registro.String())
 	}
 }
