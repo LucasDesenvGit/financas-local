@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.7] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **ADRs substituídas mais curtas e a 0037 sem o código C#** (#712). A 0010, a 0028 e a 0033 ficam com o contexto, a decisão e o link para a ADR que as substituiu, sem o passo a passo do que saiu na #86 (de 4.117 para 2.556 palavras nas cinco). A 0010 continua com as regras da estimativa das reservas, que ainda valem nos bancos que não informam o reservado. A 0037 e a 0005 apontam para os pacotes do Go no lugar do `ReservaService.cs` e do `internal/segredos`.
+
 ## [3.15.6] — 2026-11-16 · desenvolvimento
 
 ### Correções
