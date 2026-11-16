@@ -74,3 +74,6 @@ internal/modulos/trabalho/recebimento  100
 internal/modulos/trabalho/rescisao     100
 internal/modulos/trabalho/leitor       100
 internal/modulos/trabalho/holeritepdf  100
+# #10: o módulo Notícias (ADR 0067), medido em 14/11/2026.
+internal/modulos/noticias              100
+internal/modulos/noticias/fontes       100

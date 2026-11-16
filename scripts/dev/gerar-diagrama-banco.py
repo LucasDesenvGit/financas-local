@@ -27,6 +27,7 @@ ASSUNTOS = {
                           "HoleriteLancamento", "DecimoTerceiro",
                           "FeriasFaltas", "FeriasAgendamento", "FgtsLancamento",
                           "HoleriteRecebimento", "Rescisao", "HoleriteRubricaEscolha"],
+    "Notícias (módulo)": ["Noticia", "NoticiaFonte"],
 }
 
 

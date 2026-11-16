@@ -12,12 +12,12 @@ import { abrirManual } from '../apoio/manual';
 describe('Regressão: Manual acompanha o site', () => {
   // As rotas das telas, com as de dentro de um módulo (#210: "trabalho/salario", dentro do portão do módulo).
   const telas = (rotas.find((r) => r.path === '' && r.children)!.children as Route[])
-    .flatMap((r) => (r.children ? r.children.map((f) => `${r.path}/${f.path}`) : [r.path!]))
+    .flatMap((r) => (r.children ? r.children.map((f) => (f.path ? `${r.path}/${f.path}` : r.path!)) : [r.path!])) // #10: a tela no filho vazio
     .filter((p) => p && !p.startsWith('manual'));
 
   it('toda tela do menu tem capítulo (e seção, quando indicada) no manual, também as de dentro dos grupos', () => {
     const itens = telasDoMenu();
-    expect(itens.length).toBe(19);   // #227: as 13 telas de antes, agora em grupos; e as 6 do Trabalho (módulo, #209)
+    expect(itens.length).toBe(20);   // #227: as 13 telas de antes, agora em grupos; as 6 do Trabalho (módulo, #209) e as Notícias (módulo, #10)
     for (const item of itens) {
       const ajuda = ajudaDaUrl(item.rota)!;
       expect(ajuda).toBeDefined();

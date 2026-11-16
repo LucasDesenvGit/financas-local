@@ -54,5 +54,7 @@ export const TELAS: { rota: string; titulo: RegExp }[] = [
   { rota: '/projecao', titulo: /Projeção/ },
   { rota: '/categorias', titulo: /Categorias/ },
   { rota: '/configuracoes', titulo: /Configurações/ },
-  { rota: '/manual', titulo: /Manual/ }
+  { rota: '/manual', titulo: /Manual/ },
+  // Módulo desligado na API falsa: confere a rota e o portão (revisão do #705); a tela ligada tem o teste dela.
+  { rota: '/noticias', titulo: /Notícias/ }
 ];

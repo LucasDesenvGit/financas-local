@@ -80,7 +80,9 @@ export const MENU: EntradaMenu[] = [
       { rota: '/trabalho/fgts', rotulo: 'FGTS', icone: Icones.trabalhoFgts, modulo: 'trabalho' },
       { rota: '/trabalho/rescisao', rotulo: 'Rescisão', icone: Icones.trabalhoRescisao, modulo: 'trabalho' }
     ]
-  }
+  },
+  // #10: o módulo Notícias (ADR 0064), uma tela solta: só aparece com ele ligado em Configurações › Módulos.
+  { rota: '/noticias', rotulo: 'Notícias', icone: Icones.noticias, modulo: 'noticias' }
 ];
 
 /** Todas as telas do menu, na ordem em que aparecem (as soltas e as de dentro dos grupos). */

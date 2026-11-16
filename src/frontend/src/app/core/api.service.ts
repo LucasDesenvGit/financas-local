@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SaidaReserva, SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, PreviaHoleritePdf, ConfirmarHoleritePdf, HoleritePdfGravado, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, CalculoRescisao, ComparacaoRescisao, TipoRescisao, AvisoRescisao, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, ListaNoticias, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, PreviaHoleritePdf, ConfirmarHoleritePdf, HoleritePdfGravado, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, CalculoRescisao, ComparacaoRescisao, TipoRescisao, AvisoRescisao, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -463,6 +463,9 @@ export class ApiService {
     return this.http.delete<void>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`);
   }
   tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
+  /** #10 (ADR 0067): as notícias guardadas e o "Atualizar agora" (no máximo a cada 5 minutos). */
+  noticias(): Observable<ListaNoticias> { return this.http.get<ListaNoticias>(`${this.base}/noticias`); }
+  atualizarNoticias(): Observable<ListaNoticias> { return this.http.post<ListaNoticias>(`${this.base}/noticias/atualizar`, {}); }
 
   /** #328: o acesso pelo celular na rede de casa. */
   situacaoCelular(): Observable<SituacaoCelular> { return this.http.get<SituacaoCelular>(`${this.base}/celular`); }

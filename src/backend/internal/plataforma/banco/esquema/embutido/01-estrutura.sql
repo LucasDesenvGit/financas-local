@@ -930,3 +930,25 @@ CREATE TABLE IF NOT EXISTS HoleriteRubricaEscolha
     CONSTRAINT FK_HoleriteRubricaEscolha_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX IF NOT EXISTS UX_HoleriteRubricaEscolha_Emprego_Rubrica ON HoleriteRubricaEscolha (EmpregoId, Codigo, Descricao);
+/* Notícias (#10, ADR 0067)                                            */
+/* ------------------------------------------------------------------ */
+/* Módulo Notícias (ADR 0064), desligado por padrão. A tarefa do módulo busca as fontes a cada 45 minutos e guarda as
+   20 mais novas de cada uma; a tela mostra o que está aqui. Fonte: 'g1', 'bbc', 'tabnews'. PublicadaEm e as datas em
+   UTC. NoticiaFonte: quando cada fonte foi atualizada e o último erro (uma fonte que falha não derruba as outras). */
+CREATE TABLE IF NOT EXISTS Noticia
+(
+    Id           INTEGER NOT NULL CONSTRAINT PK_Noticia PRIMARY KEY AUTOINCREMENT,
+    Fonte        TEXT    NOT NULL,
+    Titulo       TEXT    NOT NULL,
+    Link         TEXT    NOT NULL,
+    PublicadaEm  TEXT    NULL,
+    AtualizadoEm TEXT    NOT NULL
+);
+CREATE INDEX IF NOT EXISTS IX_Noticia_Fonte ON Noticia (Fonte);
+CREATE TABLE IF NOT EXISTS NoticiaFonte
+(
+    Fonte        TEXT NOT NULL CONSTRAINT PK_NoticiaFonte PRIMARY KEY,
+    AtualizadoEm TEXT NULL,
+    TentadaEm    TEXT NOT NULL,
+    Erro         TEXT NULL
+);

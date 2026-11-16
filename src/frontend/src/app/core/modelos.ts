@@ -1036,3 +1036,8 @@ export interface CalculoRescisao {
 export interface ComparacaoRescisao {
   tipo: TipoRescisao; nome: string; aviso: AvisoRescisao; liquido: number; multa: number; sacavel: number; seguroDesemprego: boolean;
 }
+
+/** #10 (ADR 0067): o módulo Notícias. Datas em UTC ("2026-11-14T12:30:00"). */
+export interface FonteNoticias { id: string; nome: string; atualizadoEm: string | null; erro: string | null; }
+export interface Noticia { fonte: string; fonteNome: string; titulo: string; link: string; publicadaEm: string | null; }
+export interface ListaNoticias { fontes: FonteNoticias[]; noticias: Noticia[]; }

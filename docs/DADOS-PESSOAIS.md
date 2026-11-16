@@ -107,6 +107,16 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **Por quanto tempo** | O PDF e a senha, só enquanto a leitura dura: não são gravados nem vão para o log (o erro não leva texto do PDF). Só os valores confirmados ficam, no holerite do mês (`Holerite.Calculo`, com `Origem` = 2). As escolhas das rubricas ficam até apagar o emprego |
 | **Como apagar** | Reabrir e excluir o holerite do mês; apagar o emprego apaga as escolhas |
 
+### Notícias (módulo)
+
+| | |
+|---|---|
+| **O que é** | `Noticia` e `NoticiaFonte`: as notícias públicas do G1, da BBC News Brasil e do TabNews (título, link, data) e quando cada fonte foi atualizada. Não é dado pessoal |
+| **De onde vem** | Das fontes, com o módulo Notícias ligado ([ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) |
+| **Sai do computador?** | Só o pedido do feed, a cada 45 minutos, sem nada seu (as fontes veem o endereço de internet da sua casa, como em qualquer site) |
+| **Por quanto tempo** | As 20 mais novas de cada fonte, trocadas a cada busca |
+| **Como apagar** | Desligar o módulo para de buscar. As guardadas ficam no banco, sem aparecer, até o módulo ser ligado de novo e cada fonte ser buscada (a busca troca as dela). Não há botão para apagar antes: são notícias públicas, sem nada seu (revisão do #705) |
+
 ### Cotações, índices e categorias públicas
 
 | | |

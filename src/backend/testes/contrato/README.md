@@ -89,6 +89,7 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 | `26-recebimento` | recebimento do salário (Trabalho) | #212 | `/api/trabalho/holerites/{id}/recebimentos` |
 | `27-rescisao` | rescisão do Trabalho | #215 | `/api/trabalho/empregos/{id}/rescisao` |
 | `28-holerite-pdf` | holerite em PDF do Trabalho | #228 | `/api/trabalho/empregos/{id}/holerites/pdf` |
+| `29-noticias` | módulo Notícias | #10 | `/api/noticias` |
 | `29` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
 | `90-go` | diagnóstico (`/api/go/saude`) | #231, #363 | `/api/go` |
 
