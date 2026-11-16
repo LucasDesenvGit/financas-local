@@ -201,9 +201,10 @@ func (s *Servico) Criar(ctx context.Context, d Dados) (Emprego, error) {
 	return s.Obter(ctx, id)
 }
 
-// Atualizar troca os dados do emprego (o salário muda pelas vigências). A admissão mudada para antes leva junto o
-// começo do primeiro salário (senão os meses do meio ficariam sem salário); a saída não pode deixar um salário que
-// começa depois dela.
+// Atualizar troca os dados do emprego (o salário muda pelas vigências). A admissão mudada leva junto o começo do
+// primeiro salário, para antes (senão os meses do meio ficariam sem salário) ou para depois, até antes do 2º salário
+// (revisão do #698: o primeiro não sai, então "apague o salário antigo" não tinha saída); a saída não pode deixar um
+// salário que começa depois dela.
 func (s *Servico) Atualizar(ctx context.Context, id int64, d Dados) (Emprego, error) {
 	if err := validar(&d, false); err != nil {
 		return Emprego{}, err
@@ -212,10 +213,10 @@ func (s *Servico) Atualizar(ctx context.Context, id int64, d Dados) (Emprego, er
 		if err := s.conferirConta(ctx, tx, d.ContaId); err != nil {
 			return err
 		}
-		var primeiro, ultimo *tipos.Data
-		err := tx.QueryRowContext(ctx, `SELECT (SELECT MIN("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = e."Id"),
-			(SELECT MAX("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = e."Id") FROM "Emprego" e WHERE e."Id" = ?`, id).
-			Scan(&primeiro, &ultimo)
+		var segundo, ultimo *tipos.Data
+		err := tx.QueryRowContext(ctx, `SELECT (SELECT "Inicio" FROM "SalarioVigencia" WHERE "EmpregoId" = e."Id" ORDER BY "Inicio"
+			LIMIT 1 OFFSET 1), (SELECT MAX("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = e."Id") FROM "Emprego" e WHERE e."Id" = ?`, id).
+			Scan(&segundo, &ultimo)
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrNaoEncontrado
 		}
@@ -223,16 +224,19 @@ func (s *Servico) Atualizar(ctx context.Context, id int64, d Dados) (Emprego, er
 			return fmt.Errorf("ler o primeiro salário: %w", err)
 		}
 		admissao := InicioDoMes(d.Admissao)
-		if primeiro != nil && admissao.Depois(*primeiro) {
-			return invalido("Há salário antes dessa admissão. Apague o salário antigo ou escolha uma admissão até " +
-				nomeDoMes(*primeiro) + ".")
+		if segundo != nil && !segundo.Depois(admissao) {
+			return invalido("Há um aumento a partir de " + nomeDoMes(*segundo) + ", que ficaria no começo do emprego. Apague " +
+				"esse aumento ou escolha uma admissão antes de " + nomeDoMes(*segundo) + ".")
+		}
+		if segundo == nil && ultimo != nil { // um salário só: ele vai para a admissão
+			ultimo = &admissao
 		}
 		if ultimo != nil && d.Saida != nil && ultimo.Depois(*d.Saida) {
 			return invalido("Há salário a partir de " + nomeDoMes(*ultimo) + ", depois dessa saída. Apague esse salário ou " +
 				"escolha uma saída a partir de " + nomeDoMes(*ultimo) + ".")
 		}
-		if _, err := tx.ExecContext(ctx, `UPDATE "SalarioVigencia" SET "Inicio" = ? WHERE "EmpregoId" = ? AND "Inicio" > ?
-			AND "Inicio" = (SELECT MIN("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = ?)`, admissao, id, admissao, id); err != nil {
+		if _, err := tx.ExecContext(ctx, `UPDATE "SalarioVigencia" SET "Inicio" = ? WHERE "EmpregoId" = ?
+			AND "Inicio" = (SELECT MIN("Inicio") FROM "SalarioVigencia" WHERE "EmpregoId" = ?)`, admissao, id, id); err != nil {
 			return fmt.Errorf("levar o primeiro salário para a admissão: %w", err)
 		}
 		r, err := tx.ExecContext(ctx, `UPDATE "Emprego" SET "Empregador" = ?, "Cnpj" = ?, "Admissao" = ?, "Saida" = ?,
