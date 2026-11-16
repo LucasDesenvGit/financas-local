@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.1] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **ADRs grandes mais curtas** (#728, parte do #690): as ADRs 0051 (testes do Go), 0052 (gerenciador), 0029 (`.msi`), 0032 (controles padrão) e 0012 (instalador em PowerShell) ficam com a decisão, as alternativas e as consequências, em até ~1,6 mil palavras cada. O passo a passo e o histórico foram para o guia de cada assunto, com link: `CONTRIBUINDO.md` ("Testes do back-end (Go)"), `src/gerenciador-go/README.md`, `instalador/README.md`, `scripts/README.md` e `docs/UI-UX.md`. Nenhuma decisão mudou.
+
 ## [3.15.0] — 2026-11-16 · desenvolvimento
 
 ### Funcionalidades

@@ -209,56 +209,75 @@ O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração c
 | Regra de negócio, cálculo, conversão, validação | `*_test.go` no pacote do assunto (`internal/<area>/<assunto>`) | tabela de casos com `t.Run` |
 | Consulta SQL, transação, cascata | o mesmo pacote | SQLite **de verdade** num arquivo do `t.TempDir()`, com o esquema real; sem mock de banco e sem `:memory:` |
 | Handler: status, validação, erro | o mesmo pacote | `httptest.NewRequestWithContext` + `httptest.NewRecorder`, com o usuário por `sessao.ComUsuario` |
-| O mesmo JSON e o mesmo banco de antes | `testes/contrato` (#72) | casos gravados do .NET até a #86; hoje, a regressão do Go (`rodar.sh --atualizar`, com o `git diff` conferido) |
-| Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | `httptest.NewServer` com respostas gravadas em `testdata/` |
+| O mesmo JSON e o mesmo banco de antes | `testes/contrato` (#72) | casos gravados do .NET até a #86; hoje, a regressão do Go (`rodar.sh --atualizar`, com o `git diff` conferido; abaixo) |
+| Pluggy, Yahoo/brapi, BCB, Mercado Bitcoin | o pacote do cliente | o cliente recebe a URL base e o `http.Client` pelo construtor, e o teste usa o `testeapoio.ServicoDeFora` (#460): um `httptest.NewTLSServer` com as rotas cadastradas, que responde com arquivos de `testdata/` ou com os erros prontos (tempo esgotado, 401, 429, 500, JSON quebrado, página vazia), confere os cabeçalhos e guarda os pedidos, com os cabeçalhos de segredo trocados por `<segredo>`. Pedido sem rota cadastrada é erro do teste |
+| O que está num `_windows.go` (DPAPI, serviço do Windows, registro do gerenciador) | um `_windows_test.go` do mesmo pacote | o `go` só o compila no Windows ([build constraints](https://pkg.go.dev/cmd/go#hdr-Build_constraints)); roda nos jobs "Go (Windows)" (#459) e "gerenciador em Go", sem o `-race` (no Windows ele pede cgo). O que grava no registro usa uma chave só do teste, apagada no `t.Cleanup`. Fica de fora o que pede administrador (UAC, instalar serviço), com o porquê no teste |
 
-O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/plataforma/testeapoio` ([README](src/backend/internal/plataforma/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`.
+O banco temporário, a fábrica de dados inventados, o relógio parado em Brasília e a chamada do handler com o usuário logado já existem: use o `internal/plataforma/testeapoio` ([README](src/backend/internal/plataforma/testeapoio/README.md)), só em arquivos `_test.go`. Tabela nova que o assunto precisa vira um método da `Fabrica`. Os pacotes que o `testeapoio` importa (`banco`, `relogio`, `tipos`, `sessao`) não podem importá-lo nos próprios testes (seria ciclo) e usam um ajudante local, como o `bancoDeTeste`.
+
+**Não repita** num lugar o que outro já confere: o contrato prova a equivalência com pelo menos um caso de sucesso e um por status de erro; o unitário cobre as variações da regra; o HTTP, cada ramo de validação.
+
+**Contrato, a regressão do Go** (#86, [ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md#atualização-de-2026-11-03-o-contrato-vira-a-regressão-do-go-issue-86-parte-3)):
+- `testes/contrato/rodar.sh` sobe o Go sozinho, com a linha do serviço instalado (`-aplicar-esquema -rotinas-de-partida`), o relógio de teste, a Pluggy falsa e sem rede (`unshare -rn` no Linux; senão, o proxy numa porta fechada). Roda no Linux e no Git Bash do Windows; o job da CI é o "contrato". Detalhes no [README do contrato](src/backend/testes/contrato/README.md);
+- **um esperado que já existe muda só de propósito**, com o motivo de cada um no PR (bug corrigido ou mudança pedida). Diferença que aparece sem querer é regressão: o código volta, e o esperado fica;
+- **caso novo** é gravado com `rodar.sh --atualizar`, e o `git diff` de `esperado/` tem de mostrar só ele. Endpoint novo: caso de contrato, inclusive os de erro (400, 401, 404, 409), mais o teste HTTP dos ramos de validação.
 
 **Uma etapa do #70 está pronta quando:**
 - cada regra da lista "Regras de negócio" do levantamento (skill `migrar-para-go`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
-- cada ponto de risco de equivalência do levantamento tem um teste;
+- cada ponto de risco de equivalência do levantamento (arredondamento, ordenação, texto, fuso, `null`, cascata) tem um teste: unitário, de integração ou de contrato;
 - cada endpoint tem caso de contrato, inclusive os de erro;
 - cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste com o SQLite real;
 - os casos-limite que se aplicam estão na tabela (o PR diz quais não se aplicam):
-  - valor negativo, zero, 8 casas, meio centavo;
-  - `NULL` e lista vazia (`[]`, nunca `null`);
-  - meia-noite em Brasília × UTC, horário de verão antigo;
-  - virada de mês e de ano, dias 29, 30 e 31;
-  - texto com acento e maiúsculas.
+  - valor negativo, zero, 8 casas, meio centavo (`0,125`: o `Math.Round` do C# arredonda para o par, [Microsoft Learn](https://learn.microsoft.com/dotnet/api/system.math.round); em Go, o `RoundBank`);
+  - `NULL` no banco e no JSON, e lista vazia (`[]`, nunca `null`);
+  - meia-noite em Brasília × UTC (23h30 em Brasília já é o dia seguinte em UTC), horário de verão antigo (até 2019);
+  - virada de mês e de ano, dias 29, 30 e 31, inclusive fevereiro de ano bissexto e o "mesmo dia no mês seguinte" a partir do dia 31;
+  - texto com acento e maiúsculas ("Ação" × "acao"), porque o `LIKE` do SQLite só ignora a caixa em ASCII ([sqlite.org](https://www.sqlite.org/lang_expr.html#the_like_glob_regexp_match_and_extract_operators));
+- `gofmt`, `go vet` e `go test -race` limpos, dentro dos pisos de cobertura e de tempo.
 
-**Teste novo prova que falha:** estrague o código de propósito (troque `RoundBank` por `Round`, tire um filtro, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta.
+A tabela regra → teste traz o nome do teste e do caso (*inferido: o formato*). O detalhe de cada etapa está num comentário do épico #70.
 
-**Teste de mutação (#373, #456):** o workflow "Teste de mutação (Go)" roda o gremlins nos pacotes de `scripts/ci/go/mutacao-go.txt`: no PR, só nos que o PR mudou; toda segunda, em todos. Falha quando um pacote fica abaixo do piso dele.
-- **Um job por grupo (#673):** o grupo é a área do pacote (`internal/<area>/<assunto>`), e cada um roda em paralelo, com 30 min de limite. Pacote novo entra no grupo da área sozinho. Um grupo passou dos 30 min? Dê ao pacote mais lento dele um grupo próprio, com o nome na terceira coluna de `mutacao-go.txt` (como o `carteira`).
+**Teste novo prova que falha:** estrague o **código** (não o teste) de propósito (troque `RoundBank` por `Round`, tire um filtro, inverta uma comparação, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360 (12 mutações, todas pegas): pelo menos uma por regra de cálculo (*inferido: a quantidade*). Teste que nenhuma mutação derruba é refeito; em geral, os dados dele não exercitam o caso. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta, e muda junto quando ela for decidida.
+
+**Teste de mutação (#373, #456):** o workflow "Teste de mutação (Go)" roda o [gremlins](https://github.com/go-gremlins/gremlins) v0.6.0 (`go run …@v0.6.0`, fora do `go.mod`, numa cópia do módulo) nos pacotes de `scripts/ci/go/mutacao-go.txt`: no PR, só nos que o PR mudou (código, teste ou `testdata/` deles, comparando com a base como o `testes-afetados.py`); toda segunda e à mão, em todos. Falha quando um pacote fica abaixo do piso dele.
+- **Como mede:** todos os operadores ligados, 4 workers e folga de 30× no tempo de cada teste (no padrão de 5×, a compilação em paralelo estourava). Eficácia = mortas / (mortas + vivas), com piso por pacote que só sobe. Se o PR só muda a própria mutação (script, listas, workflow), mede o `internal/plataforma/tipos`, para provar que ela ainda roda. *Julgamento:* medir também quem importa o pacote mudado pegaria mais, mas multiplicaria o tempo (~1 min por pacote).
+- **Nenhum pacote fica de fora sem ninguém perceber:** todo pacote de `internal/` com código fora de teste está em `mutacao-go.txt` ou em `scripts/ci/go/mutacao-go-fora.txt`, com o motivo (código gerado, só montagem de rotas, apoio a teste). O script confere antes de medir e falha com o pacote que não está em nenhum dos dois.
+- **Um job por grupo (#673):** o grupo é a área do pacote (`internal/<area>/<assunto>`; sem área, "raiz"), e cada um roda em paralelo, com 30 min de limite (a lista inteira num job só passou dos 60 min). Um job escolhe os grupos (`mutacao-go.py --grupos`) e a matriz mede cada um (`--grupo`); no PR, só os grupos dos pacotes mudados. Pacote novo entra no grupo da área sozinho. Um grupo passou dos 30 min? Dê ao pacote mais lento dele um grupo próprio, com o nome na terceira coluna de `mutacao-go.txt` (como o `carteira`). *Julgamento:* grupo pela área, e não por tempo medido, que ficaria velho; o custo é compilar o gremlins e o módulo de novo em cada grupo (~1 min).
 - **Assunto novo com regra de negócio ou dinheiro:** entra nessa lista no PR dele, com o piso da primeira medição: `python3 scripts/ci/go/mutacao-go.py internal/<area>/<assunto>`, uns 2 min.
-- **Mutação viva:** vira teste. Se ela não muda o resultado (é equivalente), vai para `scripts/ci/go/mutacao-go-equivalentes.txt` com o porquê.
-- **Ponto cego:** o gremlins não testa mutação dentro de `case`. Ali, a mutação à mão no PR continua valendo.
+- **Mutação viva:** vira teste. Se ela não muda o resultado (é equivalente, como `100 * time.Nanosecond` por `100 / time.Nanosecond`), vai para `scripts/ci/go/mutacao-go-equivalentes.txt`, pelo texto da linha, com o porquê. Só entra o que foi conferido à mão.
+- **Ponto cego:** a cobertura do Go conta comandos, e a condição de um `case` não é comando: a mutação ali sai como "NOT COVERED" e o gremlins nunca a testa. No nosso estilo (`switch { case …: }`), isso cobre boa parte das regras, e a mutação à mão no PR é o que vale.
 
 **Proibido em teste:**
-- `time.Now()`: use o `relogio.Fixo`;
-- `time.Sleep` para esperar algo: espere um sinal (canal, `sync.WaitGroup`) ou use o `testing/synctest` em código com temporizador. Um teto (`time.After` num `select`) pode;
-- rede de verdade: respostas gravadas. O próprio teste ouvindo em `127.0.0.1` pode;
-- dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão;
-- biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão.
+- `time.Now()`, no código testado ou para montar dado: use o `relogio.Fixo` (o código de regra recebe um `relogio.Relogio`). Exceção: medir o próprio tempo real, quando ele é o assunto (o ajudante de WAL, `internal/plataforma/banco/wal_test.go`), escrita em `regras-go-excecoes.txt`;
+- `time.Sleep` para esperar algo: espere um sinal (canal, `sync.WaitGroup`, a linha `{"porta":N}` lida da saída, como em `cmd/financas/main_test.go`) ou use o [`testing/synctest`](https://pkg.go.dev/testing/synctest) em código com temporizador (relógio falso que adianta quando todos estão parados; [blog do Go](https://go.dev/blog/testing-time)). Um teto (`time.After` num `select`, ou um contexto com prazo) pode;
+- rede de verdade: o `testeapoio.ServicoDeFora` com as respostas de `testdata/`. O próprio teste ouvindo em `127.0.0.1` pode;
+- dado real: o repositório é compartilhado. Resposta gravada de API externa entra com os valores trocados à mão (nunca token, conta, documento ou saldo de verdade). Exceção: os testes manuais que leem uma **cópia** do banco (`FINANCAS_COPIA_BANCO`): só leem, não mostram valores, pulam sozinhos sem a variável e nada deles vai para o repositório;
+- biblioteca de asserção ou de mock (`testify`, `gomock`, `go-sqlmock`): só a biblioteca padrão, com `if obtido != esperado { t.Errorf(...) }` e um *fake* pequeno escrito à mão onde há interface.
 
-**A CI confere as regras de ouro (#457):** `python3 ../../scripts/ci/go/verificar-regras-go.py`, rodado em `src/backend` (o mesmo do job "Go"), falha em `float64` (e `Float64()`, `ParseFloat`), em `time.Now` fora do `internal/plataforma/relogio` e em `time.Sleep` de teste fora do `synctest.Test`, e a mensagem diz o que usar no lugar.
-- **Exceção:** uma linha em `scripts/ci/go/regras-go-excecoes.txt`, com o motivo, pelo texto da linha do código (como o `mutacao-go-equivalentes.txt`). Exceção que não casa mais com nenhuma linha também falha.
-- **O que pode ser exceção:** `float64` só para o que o C# também calcula em double e que não é dinheiro; `time.Now` só para hora de sistema (duração, validade de certificado); `time.Sleep` só quando o tempo é o que se testa.
+**A CI confere as regras de ouro (#457):** `python3 ../../scripts/ci/go/verificar-regras-go.py`, rodado em `src/backend` (o mesmo do job "Go", antes do `go test`), falha em `float64` e `float32` (e `Float64()`, `ParseFloat`, `FormatFloat`) em qualquer `.go`, em `time.Now` (com ou sem parênteses) fora do `internal/plataforma/relogio` e em `time.Sleep` de `_test.go`; dentro de um `synctest.Test`, onde o relógio é de mentira, `time.Now` e `time.Sleep` passam. A mensagem diz o que usar no lugar (o `relogio`, o `tipos.Decimal` ou o sinal).
+- **Só o código conta:** comentário e texto entre aspas não entram. A conferência é por texto: um `import t "time"` escapa, e `time.Since`/`time.Until` não são conferidos.
+- **Exceção:** uma linha em `scripts/ci/go/regras-go-excecoes.txt` (regra, arquivo, texto da linha do código e o motivo), como o `mutacao-go-equivalentes.txt`: vale pelo texto, não pelo número da linha. Exceção que não casa mais com nenhuma linha também falha. Só entra o que foi conferido à mão.
+- **O que pode ser exceção:** `float64` só para o que o C# também calcula em double e que não é dinheiro (na primeira conferência, 1/11/2026, nenhum era: o `[Range(0.01d, ...)]` das validações, o fator da Selic, a pontuação das sugestões de categoria); `time.Now` só para hora de sistema (processo, duração, validade de certificado, limite por IP); `time.Sleep` só quando o tempo é o que se testa (o ajudante de WAL segura a trava do banco por 5 ms para quem grava junto encontrar o banco ocupado).
+- **O teste do script** (`scripts/ci/go/test_verificar_regras_go.py`, só `unittest`) roda antes dele no mesmo job.
 
 **`t.Parallel()`:**
-- **use** nos testes de banco e de HTTP que têm o próprio banco no próprio `t.TempDir()`;
-- **não use** com `t.Setenv` ou `t.Chdir` (o Go recusa), variável de pacote, banco dividido, tempo real ou processo filho, nem no contrato (casos em ordem, no mesmo banco).
+- **use** nos testes de banco e de HTTP que têm o próprio banco no próprio `t.TempDir()`: é onde está o tempo. Chame no começo do teste e de cada subteste da tabela. O teste paralelo espera os não paralelos do pacote terminarem ([`T.Parallel`](https://pkg.go.dev/testing#T.Parallel)), e desde o Go 1.22 cada volta do `for` tem a própria variável ([blog do Go](https://go.dev/blog/loopvar-preview));
+- **não use** com `t.Setenv` ou `t.Chdir` (afetam o processo inteiro, e o Go recusa), variável de pacote, banco dividido, tempo real ou processo filho (o teste de WAL), nem no contrato (casos em ordem, no mesmo banco, um usando o que o anterior capturou);
+- **unitário puro em tabela:** pode, mas não precisa; ele leva microssegundos (*julgamento*);
+- o `go test ./...` já roda pacotes diferentes ao mesmo tempo, em processos separados (`-p`): por isso **nenhum teste usa um caminho de banco fixo**, sempre o `t.TempDir()`. E o `-race` só acha a corrida que acontece de fato: teste paralelo sobre código com goroutine ajuda a corrida a aparecer (*julgamento*).
 
 **Como escrever:**
-- mensagem com a função, o obtido e o esperado (`Hoje = 2026-10-16, esperado 2026-10-15`);
-- nome do caso em português, dizendo a regra;
-- `t.Error` para continuar, `t.Fatal` só na preparação;
-- `t.Helper()` nos ajudantes e `t.Context()` no lugar de `context.Background()`.
+- mensagem com a função, a entrada, o obtido e o esperado, nessa ordem (`Hoje = 2026-10-16, esperado 2026-10-15`; [Got before want](https://go.dev/wiki/TestComments#got-before-want));
+- nome do caso em português, uma frase que diz a regra ("meia-noite em Brasília", "virada do ano");
+- `t.Error` para continuar, `t.Fatal` só quando o resto não faz sentido, como uma preparação que falhou;
+- `t.Helper()` nos ajudantes e `t.Context()` (cancelado antes dos `t.Cleanup`) no lugar de `context.Background()`;
+- teste que precisa de algo de fora (uma cópia do banco) pula com `t.Skip` e uma mensagem que diz o que definir, e **nunca é o único teste de uma regra**.
 
 **Fuzz** ([Go Fuzzing](https://go.dev/doc/security/fuzz/), #372), nos tipos que todo assunto usa: `internal/plataforma/tipos` e `internal/plataforma/relogio`.
 - **O que confere:** o Go gera as entradas, e o alvo confere o que vale para qualquer uma: ida e volta pelo banco e pelo JSON, a escala do decimal, o formato do EF Core e o dia de Brasília.
 - **Sementes:** os valores do gabarito do EF Core.
-- **Achado:** a entrada que achou bug fica em `testdata/fuzz/<alvo>/` e roda em todo `go test`, como regressão. Comite o arquivo junto com a correção.
+- **Achado:** a entrada que achou bug fica em `testdata/fuzz/<alvo>/` e roda em todo `go test`, como regressão. Comite o arquivo junto com a correção. A primeira rodada achou 2 bugs: o começo do dia no horário de verão (que também lança exceção no C#, #393) e o GUID com hífen fora do lugar.
+- **Onde roda:** o `-fuzz` não roda no PR, só no workflow "Fuzz do Go", toda segunda e à mão. *Julgamento:* o achado do fuzz quase nunca é culpa do PR aberto, e travá-lo por isso atrasaria um trabalho sem relação.
 - **Rodar:**
 
   ```bash
@@ -268,7 +287,15 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
   Um alvo por vez: o `-fuzz` não aceita mais de um.
 - **Tipo novo** em `internal/plataforma/tipos` ganha um alvo `FuzzXxx`, com as sementes do gabarito.
 
-**Gabarito** (*golden file*) fica em `testdata/`. Os que vieram do .NET ou do EF Core (pelas sondas, que saíram na #86) não são mais regravados: são a regressão. Os outros são regravados só por opção explícita (`-atualizar`), olhando a diferença no PR.
+**Gabarito** (*golden file*) fica em `testdata/`, que o `go` ignora. **Ele vem da referência, nunca do código que ele testa**, senão o teste só confirma o próprio Go. Os que vieram do .NET ou do EF Core (pelas sondas, que saíram na #86) não são mais regravados: são a regressão. Os outros são regravados só por opção explícita (`-atualizar`, como o `-update` da biblioteca padrão), revisados linha a linha no PR que os grava.
+
+**Teste de arquitetura (#476, só local):** quem pode importar quem fica em `internal/arquitetura/arquitetura_test.go`, no estilo do ArchUnit, com só a biblioteca padrão (o grafo vem do `go list -json ./...`; `arch-go`, `go-arch-lint` e `depguard` seriam dependência nova). A build tag `arquitetura` o tira do `go test ./...` e da CI (decisão de 29/10/2026): rode `go test -tags arquitetura ./internal/arquitetura/` antes de subir um PR que mexe em import ou pacote novo. As regras, cada uma com o motivo e as exceções:
+1. só o `internal/plataforma/banco` (e o contrato) importam o driver do SQLite;
+2. o `testeapoio` só entra em `_test.go`;
+3. pacote de regra (a lista `regraSemHTTP`) não chega a `net/http`, ao `respostas` nem ao `servidor`, nem por outro pacote;
+4. todo pacote está num grupo (base, transversal, montador ou assunto), e um assunto só importa outro se o par estiver na tabela `dependencias` (a semente do mapa de contextos, #474).
+
+Exceção que deixou de acontecer, pacote que sumiu e pacote novo sem grupo também fazem o teste falhar, com o que fazer. O teste se testa: um grafo de mentira com um import proibido faz cada regra falhar.
 
 **Antes de subir:** em `src/backend`, `gofmt -l .`, `go vet ./...` e `go test -race ./...` (o resto está no [README do Go](src/backend/README.md#antes-de-subir-push)). A CI confere também a trava de tempo (acima, em "Testes rápidos") e a cobertura com piso por pacote (abaixo). A mutação automática roda no PR, nos pacotes que ele mudou (#373, #456; tabela em "O que a CI roda").
 
@@ -278,7 +305,9 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
   - pacote novo precisa de 80%;
   - descer um piso falha, comparando com o arquivo do `develop`;
   - subiu a cobertura 1 ponto ou mais: a CI avisa para subir o piso no mesmo PR.
-- **"fora"**, com o motivo na linha, é só para código gerado.
+- **Como mede:** `go test -race -coverpkg=./internal/...`, em que cada pacote conta as linhas que qualquer teste roda. Os pisos começaram no valor de 24/10/2026, medido na CI; os 80% de pacote novo são *julgamento* (o que a maioria dos pacotes escritos com teste desde o começo já tinha).
+- **"fora"**, com o motivo na linha, é só para código gerado (sqlc, gerador do `go generate`).
+- **Subir o piso é de quem subiu a cobertura**, no mesmo PR: ela cai sozinha quando entra código sem teste num pacote antigo, mas não sobe sozinha.
 - **Ver localmente:** em `src/backend`,
 
   ```bash
@@ -288,6 +317,8 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 
   O `go tool cover -func=c.out` dá a lista por função.
 - **Atenção:** cobertura mede linha executada, não regra conferida. Ela não substitui a tabela regra → teste nem as mutações.
+
+**Benchmark** só para código quente, antes de otimizar (skill `go-no-projeto`, "Desempenho").
 
 ## Checklist do pull request
 
