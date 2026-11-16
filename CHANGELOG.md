@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.9] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Pacote novo do Go não derruba mais a CI da mutação** (#716; item 5 da #689). Antes, um pacote de `src/backend/internal` que ainda não estava em `mutacao-go.txt` nem em `mutacao-go-fora.txt` falhava o PR, e quem o criava tinha de disparar o workflow à mão para medir. Agora ele é medido como os da lista, sem piso, e um aviso dá a linha a pôr na lista, com a eficácia medida. A mutação continua em todo PR que mexe em Go. O script ganhou um teste (`test_mutacao_go.py`), que roda no workflow.
+
 ## [3.15.8] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
