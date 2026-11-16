@@ -54,7 +54,11 @@ const APRESENTACAO: Record<string, string> = {
   'paginas/movimentacao/transacoes-transferencia.component.ts': 'janela "Transferência entre contas"',
   'paginas/movimentacao/transacoes-barra-edicao.component.ts': 'barra "Editando categorias"',
   'paginas/movimentacao/transacoes-barra-lote.component.ts': 'ações nas transações selecionadas',
-  'paginas/movimentacao/transacoes-sugestoes.component.ts': 'janela "Sugestões de categoria"'
+  'paginas/movimentacao/transacoes-sugestoes.component.ts': 'janela "Sugestões de categoria"',
+  'paginas/planejamento/metas-assistente.component.ts': 'bloco "Quanto guardar este mês"',
+  'paginas/planejamento/metas-cartao.component.ts': 'o cartão de uma meta (a sanfona)',
+  'paginas/planejamento/metas-formulario.component.ts': 'janela "Nova meta" / "Editar meta"',
+  'paginas/planejamento/metas-aporte.component.ts': 'janela "Aporte"'
 };
 const PROIBIDOS_NA_APRESENTACAO = [/^core\/api\.service$/, /^@angular\/router$/];
 

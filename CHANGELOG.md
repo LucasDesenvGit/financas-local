@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.15.2] — 2026-11-16 · desenvolvimento
+## [3.15.3] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
 - **Skills do Claude Code mais curtas, e sai a `migrar-para-go`** (#727, grupo 7 da #690 e item 3c da #689). Nada muda para quem usa. A migração para o Go terminou na #86, e a skill dela sai: como um assunto era no C# fica na tag `v-ultimo-dotnet`. As pegadinhas que ainda valem para o Go de hoje (arredondar com `tipos.Arredondar`, as contas do `tipos`, texto com acento, `enum` como número, validação, cascata) passam para o estilo da `go-no-projeto`, e a regra da issue feita em partes, para o roteiro dela. Nas outras skills, o que só repetia o `docs/UI-UX.md`, as ADRs ou o `CONTRIBUINDO.md` vira o caminho e o link; a `testar-no-navegador` passa a dizer que a CSP vem do Go, e não do `Seguranca.cs`.
+
+## [3.15.2] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **A tela de Metas dividida em tela, componentes de apresentação e funções puras** (#732; ADR 0059). O `metas.component.ts` caiu de 992 para 333 linhas e fica só com o estado (as metas, o plano, o que está aberto, a simulação na URL) e as chamadas da API. O bloco "Quanto guardar este mês", o cartão de cada meta e as janelas "Nova meta / Editar meta" e "Aporte" viraram `metas-assistente`, `metas-cartao`, `metas-formulario` e `metas-aporte`, que recebem por `input()` e avisam por `output()`; as janelas editam uma cópia, e fechar sem salvar não muda nada. A regra (a simulação na URL, as sanfonas, o limite do valor por mês, a data alvo pelo valor por mês, "concluída" ao aumentar o alvo, a ordem de prioridade e o gráfico "Como está indo") foi para funções puras em `metas.ts`, com 24 casos em 0,5 s no Jest, sem abrir a tela. Os links para outras telas continuam na tela e entram nos componentes por projeção de conteúdo, porque o componente de apresentação não importa o roteador (regra 8 do teste de arquitetura). Saíram junto o `mesmoMes` e o `rotuloMes`, que nada chamava, e uma regra de CSS sem uso. Os testes do navegador não mudaram; os do Jest que mexiam no formulário pelos campos da tela passaram a usar a cópia que a janela edita. Os prints saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
 
 ## [3.15.1] — 2026-11-16 · desenvolvimento
 
