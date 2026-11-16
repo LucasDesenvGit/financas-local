@@ -2,6 +2,7 @@ package leitor
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"strings"
@@ -48,10 +49,10 @@ type resultado struct {
 }
 
 // comPrazo roda a leitura numa goroutine, uma por vez (a vaga), e desiste de esperar por ela depois do prazo (mais um
-// segundo de folga). A leitura confere o prazo sozinha; a folga só pega o que ela não alcança (um laço da biblioteca ao
-// abrir o PDF): aí a goroutine continua presa, com a vaga, e as próximas leituras recebem ErrOcupado até o site
-// reiniciar. Sem a vaga na espera do prazo, também ErrOcupado.
-func comPrazo(vaga chan struct{}, prazo time.Duration, ler func(limite time.Time) ([][]Linha, error)) ([][]Linha, error) {
+// segundo de folga). A leitura confere o prazo sozinha, pelo contexto; a folga só pega o que ela não alcança (um laço
+// da biblioteca ao abrir o PDF): aí a goroutine continua presa, com a vaga, e as próximas leituras recebem ErrOcupado
+// até o site reiniciar. Sem a vaga na espera do prazo, também ErrOcupado.
+func comPrazo(vaga chan struct{}, prazo time.Duration, ler func(ctx context.Context) ([][]Linha, error)) ([][]Linha, error) {
 	espera := time.NewTimer(prazo)
 	defer espera.Stop()
 	select {
@@ -60,10 +61,11 @@ func comPrazo(vaga chan struct{}, prazo time.Duration, ler func(limite time.Time
 		return nil, ErrOcupado
 	}
 	feito := make(chan resultado, 1)
-	limite := time.Now().Add(prazo)
+	ctx, cancelar := context.WithTimeout(context.Background(), prazo)
 	go func() {
 		defer func() { <-vaga }()
-		p, err := ler(limite)
+		defer cancelar()
+		p, err := ler(ctx)
 		feito <- resultado{p, err}
 	}()
 	desiste := time.NewTimer(prazo + time.Second)
@@ -78,7 +80,7 @@ func comPrazo(vaga chan struct{}, prazo time.Duration, ler func(limite time.Time
 
 // lerComLimites abre o PDF e tira as letras de cada página, até o limite. Pânico da biblioteca (PDF malformado) vira
 // ErrIlegivel, sem o detalhe: ele pode ter texto do PDF (#228, nada do holerite no log).
-func lerComLimites(dados []byte, senha string, limite time.Time) (paginas [][]Linha, err error) {
+func lerComLimites(ctx context.Context, dados []byte, senha string) (paginas [][]Linha, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			paginas, err = nil, ErrIlegivel
@@ -110,7 +112,7 @@ func lerComLimites(dados []byte, senha string, limite time.Time) (paginas [][]Li
 	}
 	algumTexto := false
 	for _, folha := range folhas {
-		letras := letrasDa(folha, limite)
+		letras := letrasDa(ctx, folha)
 		for _, l := range letras {
 			algumTexto = algumTexto || strings.TrimSpace(l.s) != ""
 		}
@@ -217,12 +219,15 @@ func destinoMaximo(cmap []byte) int {
 
 // estado é o estado gráfico do texto (PDF 32000-1, §9.3), só o que a posição das letras usa, como no Content().
 type estado struct {
-	tc, th, tl, tfs, trise float64
+	tc, th, tl, tfs, trise Pontos
 	tf                     *pdf.Font
 	tm, tlm, ctm           matriz
 }
 
-type matriz [3][3]float64
+type matriz [3][3]Pontos
+
+// pontos é o operando como número: posição, tamanho ou escala na página (geometria, não dinheiro).
+func pontos(v pdf.Value) Pontos { return v.Float64() }
 
 var identidade = matriz{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}
 
@@ -256,7 +261,7 @@ func exigir(args []pdf.Value, n int) {
 
 // letrasDa tira as letras da página com a posição de cada uma, pela mesma conta do Content() da biblioteca (que não
 // aplica o espaço entre palavras, Tw, e não lê o texto dos XObjects), com os limites de tamanho, de letras e de tempo.
-func letrasDa(pagina pdf.Value, limite time.Time) []letra {
+func letrasDa(ctx context.Context, pagina pdf.Value) []letra {
 	conteudo := pagina.Key("Contents")
 	if pagina.IsNull() || conteudo.Kind() == pdf.Null {
 		return nil
@@ -302,7 +307,7 @@ func letrasDa(pagina pdf.Value, limite time.Time) []letra {
 		}
 		n := 0
 		for _, ch := range enc.Decode(s) {
-			var w0 float64
+			var w0 Pontos
 			if n < len(s) && g.tf != nil {
 				w0 = g.tf.Width(int(s[n]))
 			}
@@ -317,13 +322,13 @@ func letrasDa(pagina pdf.Value, limite time.Time) []letra {
 		exigir(args, 6)
 		var m matriz
 		for i := range 6 {
-			m[i/2][i%2] = args[i].Float64()
+			m[i/2][i%2] = pontos(args[i])
 		}
 		m[2][2] = 1
 		return m
 	}
 	pdf.Interpret(conteudo, func(stk *pdf.Stack, op string) {
-		if time.Now().After(limite) {
+		if ctx.Err() != nil {
 			falhar(ErrDemorou)
 		}
 		args := argumentos(stk)
@@ -344,23 +349,23 @@ func letrasDa(pagina pdf.Value, limite time.Time) []letra {
 			g.tm = g.tlm
 		case "Tc":
 			exigir(args, 1)
-			g.tc = args[0].Float64()
+			g.tc = pontos(args[0])
 		case "TD", "Td":
 			exigir(args, 2)
 			if op == "TD" {
-				g.tl = -args[1].Float64()
+				g.tl = -pontos(args[1])
 			}
-			g.tlm = matriz{{1, 0, 0}, {0, 1, 0}, {args[0].Float64(), args[1].Float64(), 1}}.vezes(g.tlm)
+			g.tlm = matriz{{1, 0, 0}, {0, 1, 0}, {pontos(args[0]), pontos(args[1]), 1}}.vezes(g.tlm)
 			g.tm = g.tlm
 		case "Tf":
 			exigir(args, 2)
 			f := acharFonte(args[0].Name())
 			g.tf, enc, destino = f.f, f.enc, f.destino
-			g.tfs = args[1].Float64()
+			g.tfs = pontos(args[1])
 		case "\"", "'", "Tj":
 			if op == "\"" { // o espaço entre palavras não entra na conta (como na biblioteca), o entre letras sim
 				exigir(args, 3)
-				g.tc = args[1].Float64()
+				g.tc = pontos(args[1])
 				args = args[2:]
 			}
 			exigir(args, 1)
@@ -379,7 +384,7 @@ func letrasDa(pagina pdf.Value, limite time.Time) []letra {
 				if x.Kind() == pdf.String {
 					mostrar(x.RawString())
 				} else {
-					tx := -x.Float64() / 1000 * g.tfs * g.th
+					tx := -pontos(x) / 1000 * g.tfs * g.th
 					g.tm = matriz{{1, 0, 0}, {0, 1, 0}, {tx, 0, 1}}.vezes(g.tm)
 				}
 			}
@@ -388,16 +393,16 @@ func letrasDa(pagina pdf.Value, limite time.Time) []letra {
 			exigir(args, 1)
 		case "TL":
 			exigir(args, 1)
-			g.tl = args[0].Float64()
+			g.tl = pontos(args[0])
 		case "Tm":
 			g.tm = matrizDe(args)
 			g.tlm = g.tm
 		case "Ts":
 			exigir(args, 1)
-			g.trise = args[0].Float64()
+			g.trise = pontos(args[0])
 		case "Tz":
 			exigir(args, 1)
-			g.th = args[0].Float64() / 100
+			g.th = pontos(args[0]) / 100
 		}
 	})
 	return letras

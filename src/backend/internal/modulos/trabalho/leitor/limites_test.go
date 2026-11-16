@@ -3,6 +3,7 @@ package leitor
 import (
 	"bytes"
 	"compress/zlib"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -44,7 +45,7 @@ func pagina(fonte, conteudo string, extras ...string) []byte {
 
 func lerJa(t *testing.T, dados []byte) ([][]Linha, error) {
 	t.Helper()
-	return lerComLimites(dados, "", time.Now().Add(time.Minute))
+	return lerComLimites(t.Context(), dados, "")
 }
 
 // A árvore de páginas: o ciclo, a fila de filhos e a profundidade não travam; os limites valem no número exato.
@@ -230,12 +231,14 @@ func TestDestinoMaximo(t *testing.T) {
 // A leitura confere o prazo a cada operador; e o comPrazo desiste da leitura presa, que fica com a vaga.
 func TestPrazo(t *testing.T) {
 	t.Parallel()
-	if _, err := lerComLimites(pagina(courier, fluxo("BT ET", false)), "", time.Now().Add(-time.Second)); !errors.Is(err, ErrDemorou) {
+	vencido, cancelar := context.WithCancel(t.Context())
+	cancelar()
+	if _, err := lerComLimites(vencido, pagina(courier, fluxo("BT ET", false)), ""); !errors.Is(err, ErrDemorou) {
 		t.Errorf("depois do prazo: %v", err)
 	}
 	minha := make(chan struct{}, 1)
 	solta := make(chan struct{})
-	presa := func(time.Time) ([][]Linha, error) { <-solta; return nil, nil }
+	presa := func(context.Context) ([][]Linha, error) { <-solta; return nil, nil }
 	inicio := time.Now()
 	if _, err := comPrazo(minha, 50*time.Millisecond, presa); !errors.Is(err, ErrDemorou) {
 		t.Errorf("presa: %v", err)
@@ -247,7 +250,7 @@ func TestPrazo(t *testing.T) {
 		t.Errorf("com a vaga ocupada: %v", err)
 	}
 	close(solta)
-	pronta := func(time.Time) ([][]Linha, error) { return [][]Linha{{}}, nil }
+	pronta := func(context.Context) ([][]Linha, error) { return [][]Linha{{}}, nil }
 	if p, err := comPrazo(minha, time.Second, pronta); err != nil || len(p) != 1 {
 		t.Errorf("solta, a vaga volta: %v %v", p, err)
 	}
@@ -287,7 +290,7 @@ func TestMesmaContaDaBiblioteca(t *testing.T) {
 			t.Fatal(err)
 		}
 		esperado := r.Page(1).Content().Text
-		obtido := letrasDa(r.Page(1).V, time.Now().Add(time.Minute))
+		obtido := letrasDa(t.Context(), r.Page(1).V)
 		if len(obtido) != len(esperado) || len(esperado) == 0 {
 			t.Fatalf("%q: %d letras, a biblioteca %d", c, len(obtido), len(esperado))
 		}
