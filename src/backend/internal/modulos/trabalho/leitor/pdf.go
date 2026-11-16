@@ -8,11 +8,11 @@ package leitor
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"math"
 	"sort"
 	"strings"
-	"time"
 	"unicode"
 )
 
@@ -76,7 +76,7 @@ func LerPDF(dados []byte, senha string) ([][]Linha, error) {
 	if !bytes.HasPrefix(dados, []byte("%PDF-")) { // pelo conteúdo, não pela extensão
 		return nil, ErrNaoEPDF
 	}
-	return comPrazo(vaga, prazo, func(limite time.Time) ([][]Linha, error) { return lerComLimites(dados, senha, limite) })
+	return comPrazo(vaga, prazo, func(ctx context.Context) ([][]Linha, error) { return lerComLimites(ctx, dados, senha) })
 }
 
 // Agrupar junta as letras em linhas (a mesma altura, com folga de 2 pontos) e as linhas em células: um vão de mais
