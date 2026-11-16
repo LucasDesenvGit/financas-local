@@ -54,7 +54,16 @@ const APRESENTACAO: Record<string, string> = {
   'paginas/movimentacao/transacoes-transferencia.component.ts': 'janela "Transferência entre contas"',
   'paginas/movimentacao/transacoes-barra-edicao.component.ts': 'barra "Editando categorias"',
   'paginas/movimentacao/transacoes-barra-lote.component.ts': 'ações nas transações selecionadas',
-  'paginas/movimentacao/transacoes-sugestoes.component.ts': 'janela "Sugestões de categoria"'
+  'paginas/movimentacao/transacoes-sugestoes.component.ts': 'janela "Sugestões de categoria"',
+  'paginas/patrimonio/investimentos-indicadores.component.ts': 'avisos e cards do topo de Investimentos',
+  'paginas/patrimonio/investimentos-evolucao.component.ts': 'gráfico "Seu dinheiro na renda variável x na Selic"',
+  'paginas/patrimonio/investimentos-analises.component.ts': 'distribuição e rentabilidade em "Mais análises"',
+  'paginas/patrimonio/investimentos-posicoes.component.ts': 'aba "Renda variável" (posições)',
+  'paginas/patrimonio/investimentos-open-finance.component.ts': 'aba "Open Finance" (grade dos investimentos)',
+  'paginas/patrimonio/investimentos-reservas.component.ts': 'aba "Reservas"',
+  'paginas/patrimonio/investimentos-operacoes.component.ts': 'janela "Operações · ATIVO"',
+  'paginas/patrimonio/investimentos-ativo.component.ts': 'janela "Ativo · TICKER"',
+  'paginas/patrimonio/investimentos-importacao.component.ts': 'janela "Importar compras e vendas do extrato"'
 };
 const PROIBIDOS_NA_APRESENTACAO = [/^core\/api\.service$/, /^@angular\/router$/];
 

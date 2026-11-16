@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.3] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **A tela de Investimentos dividida em tela, apresentação e funções puras** (#731, item 8 da #689; ADR 0059). O componente da tela caiu de 1.516 para 545 linhas (e o template foi para `investimentos.component.html`): ela guarda o estado e fala com a API. Os avisos e cards do topo, os gráficos do Resumo, as abas Renda variável, Open Finance e Reservas e as janelas de operações, ativo e importação pelo extrato viraram componentes de apresentação (`investimentos-*.component.ts`), e a regra (aba na URL, posições, frases-resumo, gráficos, formulários, importação e avisos) foi para `investimentos.ts`, testada no Jest sem `TestBed` (`investimentos-logica.spec.ts` e `investimentos-formularios.spec.ts`). O formulário da operação, a conferência do saldo, o nome do investimento e a fonte das cotações ficaram na tela, que edita o estado deles direto. Nada muda para quem usa. Manual: não se aplica.
+
 ## [3.15.1] — 2026-11-16 · desenvolvimento
 
 ### Correções
