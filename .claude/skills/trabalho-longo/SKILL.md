@@ -37,8 +37,8 @@ quando tudo estiver [x].
 <o que a pessoa pediu, com as palavras dela quando importar>
 
 ## Regras de trabalho (não pular)
-- <as do CLAUDE.md que mais pesam aqui: branch pela issue, Conventional Commits, versão no Directory.Build.props,
-  Manual e CHANGELOG no mesmo PR, ADR quando couber, um PR por vez quando mexem nos mesmos arquivos>
+- <as do CLAUDE.md que mais pesam aqui: branch pela issue, Conventional Commits, título no tipo certo (a versão é calculada, ADR 0070),
+  Manual e o arquivo de changelog.d/ no mesmo PR, ADR quando couber, um PR por vez quando mexem nos mesmos arquivos>
 - <as que a pessoa pediu: ex. "espere meu ok antes de cada merge", "não compile no meu PC enquanto eu jogo">
 - <o que espera a pessoa: UAC, publicação, decisões que contrariam uma ADR Aceita>
 
@@ -81,7 +81,7 @@ Quando todos os itens estiverem [x]:
 1. Cancele o agendamento (`CronDelete <id>`; `CronList` mostra os que existem).
 2. Avise a pessoa com o resumo:
    - o que entrou, com os números dos PRs;
-   - a versão, de qual para qual;
+   - a versão que cada PR ganhou (`go run ./cmd/versao`, em `src/backend`, no commit do merge);
    - o que ficou de fora e por quê;
    - o que ela precisa fazer (ex.: publicar, conferir algo no app do banco).
 3. Marque no plano que terminou. Se gravou memória, atualize-a ("plano concluído em AAAA-MM-DD") ou apague.

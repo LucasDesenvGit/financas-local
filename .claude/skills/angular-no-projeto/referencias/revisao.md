@@ -4,7 +4,7 @@ Use ao avaliar uma tela, ao revisar um PR com front-end e no fim do seu próprio
 
 ## O que a CI já pega (não gaste a revisão nisso)
 
-`npm run test:tipos`, Jest, tempo dos testes, build, telas do menu sem erro de console, exceção ou bloqueio de CSP (computador e celular), versão subiu, CHANGELOG, aviso do Manual (job "manual do site"), seção do Manual por tela (`manual.spec.ts`), contraste das cores do tema (`contraste-tema.spec.ts`), CodeQL. Se um destes falhou, a revisão aponta o job; não reexplica a regra.
+`npm run test:tipos`, Jest, tempo dos testes, build, telas do menu sem erro de console, exceção ou bloqueio de CSP (computador e celular), o arquivo de `changelog.d/` em `feat` e `fix`, aviso do Manual (job "manual do site e changelog.d"), seção do Manual por tela (`manual.spec.ts`), contraste das cores do tema (`contraste-tema.spec.ts`), CodeQL. Se um destes falhou, a revisão aponta o job; não reexplica a regra.
 
 ## Avaliar uma tela (UI/UX)
 

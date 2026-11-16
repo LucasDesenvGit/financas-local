@@ -1,6 +1,6 @@
 # 0029. Instalador .msi para Windows, com WiX, gerado e testado pela CI
 
-- **Status:** Aceita (em parte substituída pela [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md): a versão sobe a cada PR, não na hora de publicar)
+- **Status:** Aceita (em parte substituída pela [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md), que a [0070](0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md) substituiu: a versão não é escolhida na hora de publicar, é calculada no build a cada merge)
 - **Data:** 2026-10-17 (issue #119)
 - **Relacionadas:** substitui em parte a [0012](0012-instalador-do-windows-em-powershell.md) (instalador em PowerShell); [0003](0003-esquema-por-scripts-sql-idempotentes.md) (a API aplica o esquema); [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) (gerenciador); [0005](0005-segredos-criptografados-com-data-protection.md) (chaves); [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o `.msi` só no merge)
 
@@ -24,7 +24,7 @@ A issue #119 pediu um `.msi` de "Avançar, Avançar, Concluir" e um gerenciador.
 O `.msi` é gerado por `instalador/gerar-msi.ps1` a partir de `instalador/FinancasLocal.wxs` (WiX 5.0.2), pela CI.
 
 - **Tudo na mesma pasta, sem nada instalado antes:** o site e o gerenciador vão prontos para `win-x64`; o computador não precisa de .NET, Node, Git, bash nem `sqlite3`. A API cria e atualiza o banco ao iniciar (ADR 0003). Desde a #277, o gerenciador é o em Go (ADR 0052).
-- **A CI gera, testa e publica:** o workflow "Versão (instalador .msi)" testa o que o usuário vai fazer (instalar do zero, atualizar, desinstalar mantendo os dados, migrar uma instalação feita pelos scripts) e, na tag `vX.Y.Z`, publica o `.msi` e o `SHA256SUMS.txt` no Release. A versão vem do `Directory.Build.props`, e a tag tem de ser igual. Desde a [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md), ele roda no merge para o `develop`, não no PR.
+- **A CI gera, testa e publica:** o workflow "Versão (instalador .msi)" testa o que o usuário vai fazer (instalar do zero, atualizar, desinstalar mantendo os dados, migrar uma instalação feita pelos scripts) e, na tag `vX.Y.Z`, publica o `.msi` e o `SHA256SUMS.txt` no Release. A versão é calculada no build (ADR 0070), e a tag tem de ser igual à do commit da release. Desde a [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md), ele roda no merge para o `develop`, não no PR.
 - **Programa em `%ProgramFiles%\FinancasLocal`; dados em `%ProgramData%\FinancasLocal\dados`**, só para SYSTEM e Administradores. Atualizar e desinstalar não mexem nos dados.
 - **Serviço `FinancasLocal`, conta LocalSystem**, como na instalação pelos scripts: as chaves dos segredos usam o DPAPI da conta do serviço, e com outra conta (ex.: `NT SERVICE\FinancasLocal`) a migração perderia o Client Secret da Pluggy.
 - **Ação personalizada** (`instalador/configurar.ps1`, como SYSTEM): protege a pasta de dados, **migra a instalação pelos scripts** (sem apagar a pasta antiga) e gera ou reaproveita o certificado HTTPS, posto nas Autoridades Raiz da máquina, como na 0012. Na desinstalação de verdade, tira o certificado; os dados só saem com `APAGARDADOS=1`.

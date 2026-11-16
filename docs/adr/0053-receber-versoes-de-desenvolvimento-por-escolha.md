@@ -44,3 +44,10 @@ O gerenciador em Go tem, em **Mais opções**, o interruptor **"Receber versões
 - **Na prática:**
   - `src/gerenciador-go/versao_nova.go` decide o tipo pela preferência (`preferencias.ReceberDesenvolvimento`), com o tipo da versão que roda como padrão;
   - nenhum domínio de saída novo: `api.github.com` e `github.com`, como na 0028.
+
+## Atualização de 2026-11-16: o número de cada merge é calculado (ADR 0070, #721)
+
+- **O que muda:** cada merge no `develop` continua tendo uma versão `X.Y.Z` própria, o que o gerenciador compara (a nova tem de ser maior que a que roda). Só deixa de ser um número gravado pelo PR no `Directory.Build.props`: o `go run ./cmd/versao` o calcula da base e dos merges, e o `versao.yml` o dá ao `gerar-msi.ps1`, que o grava no site e no gerenciador como antes (`X.Y.Z-dev.<execução>` fora da tag).
+- **O que não muda:** o formato do rótulo, as notas por versão de desenvolvimento (`### X.Y.Z — `, que o `notas.go` separa) e a regra "só vale se for maior".
+- **Instalação pelos scripts:** a versão vem do mesmo cálculo, no clone. Numa cópia `.zip` (sem o histórico do git), sai a base com o sufixo `-sem-git` (`3.24.0-sem-git`), e o gerenciador a lê pelo `X.Y.Z`.
+- **"Atualizar para a última do develop" (0040):** o "O que mudou" deixa de ler o `Directory.Build.props` e passa a pedir o número e as seções do que ainda não foi publicado ao próprio clone (`go run ./cmd/versao`), com a versão de antes vinda do site instalado.

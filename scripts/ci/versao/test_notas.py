@@ -3,7 +3,8 @@
 Rodar: python3 -B scripts/ci/versao/test_notas.py
 --versao: cada teste grava um CHANGELOG.md numa pasta temporária e roda o script nela, sem o GitHub.
 --desenvolvimento: monta um repositório git temporário com um CHANGELOG.md e roda o script nele, sem o GitHub
-(NOTAS_ANTERIORES vazio e um commit sem merge de PR: o script não chama o gh).
+(NOTAS_ANTERIORES vazio e um commit sem merge de PR: o script não chama o gh) e sem o Go (CHANGELOG_NAO_PUBLICADO é um
+arquivo com o que o `go run ./cmd/versao -changelog` imprimiria, ADR 0070).
 """
 import os
 import re
@@ -121,18 +122,20 @@ def changelog_desenvolvimento(quantas, linhas):
 
 
 class NotasDesenvolvimento(unittest.TestCase):
-    def gerar(self, conteudo, limite=None):
+    def gerar(self, conteudo, limite=None, nao_publicado=""):
         with tempfile.TemporaryDirectory() as pasta:
             git = ["git", "-C", pasta, "-c", "core.autocrlf=false", "-c", "user.name=teste", "-c", "user.email=teste@exemplo"]
             subprocess.run(["git", "init", "-q", pasta], check=True)
             Path(pasta, "CHANGELOG.md").write_text(conteudo, encoding="utf-8", newline="\n")
             Path(pasta, "anteriores.md").write_text("", encoding="utf-8")
+            Path(pasta, "nao-publicado.md").write_text(nao_publicado, encoding="utf-8", newline="\n")
             subprocess.run(git + ["add", "CHANGELOG.md"], check=True)
             subprocess.run(git + ["commit", "-q", "-m", "primeiro"], check=True)
             subprocess.run(git + ["commit", "-q", "--allow-empty", "-m", "segundo"], check=True)
             sha = subprocess.run(git + ["rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
             env = dict(os.environ, ROTULO="2.9.0-dev.1", GITHUB_SHA=sha, GITHUB_REPOSITORY="dono/repo",
-                       NOTAS_ANTERIORES=str(Path(pasta, "anteriores.md")))
+                       NOTAS_ANTERIORES=str(Path(pasta, "anteriores.md")),
+                       CHANGELOG_NAO_PUBLICADO=str(Path(pasta, "nao-publicado.md")))
             if limite is not None:
                 env["LIMITE_NOTAS"] = str(limite)
             r = subprocess.run([shutil.which("bash") or "bash", str(SCRIPT), "--desenvolvimento"], cwd=pasta, env=env,
@@ -160,6 +163,29 @@ class NotasDesenvolvimento(unittest.TestCase):
         antes_do_link = notas.split("\n\n_" + LINK, 1)[0]
         ultima = antes_do_link.rstrip("\n").splitlines()[-1]
         self.assertTrue(ultima.startswith("- Mudança 19 da "), ultima)  # a última versão que entrou está inteira
+
+    def test_o_que_ainda_nao_foi_publicado_vem_na_frente_das_secoes_do_changelog(self):
+        # ADR 0070: o `-changelog` do cmd/versao dá uma seção por versão de desenvolvimento, a mais nova primeiro, e as
+        # que o CHANGELOG.md ainda tem de antes (as versões de desenvolvimento da 0039) vêm depois, até a publicada.
+        novas = (secao_desenvolvimento("2.12.0", 1) + secao_desenvolvimento("2.11.3", 1)).replace("2026-11-02", "2026-11-03")
+        notas = self.gerar(changelog_desenvolvimento(2, 1), nao_publicado=novas)
+        resto = notas.split("## Tudo desde a última versão publicada\n\n", 1)[1]
+        titulos = re.findall(r"(?m)^### (\S+) — (\S+) · desenvolvimento$", resto)
+        self.assertEqual(titulos, [("2.12.0", "2026-11-03"), ("2.11.3", "2026-11-03"), ("2.2.0", "2026-11-02"), ("2.1.0", "2026-11-02")])
+        self.assertNotIn("Publicada.", resto)  # a 2.0.0, publicada, fica de fora
+
+    def test_sem_nada_nao_publicado_e_com_o_topo_publicado_nao_ha_o_que_listar(self):
+        conteudo = "# Changelog\n\n## [2.0.0] — 2026-10-16\n\n### Funcionalidades\n\n- Publicada.\n"
+        notas = self.gerar(conteudo)
+        self.assertEqual(notas.split("## Tudo desde a última versão publicada\n\n", 1)[1].strip(), "")
+
+    def test_so_o_que_ainda_nao_foi_publicado_sem_secoes_antigas_no_changelog(self):
+        # O dia em que o CHANGELOG.md só tem versões publicadas: as notas vêm só do changelog.d/.
+        conteudo = "# Changelog\n\n## [2.0.0] — 2026-10-16\n\n### Funcionalidades\n\n- Publicada.\n"
+        notas = self.gerar(conteudo, nao_publicado=secao_desenvolvimento("2.1.0", 2))
+        resto = notas.split("## Tudo desde a última versão publicada\n\n", 1)[1]
+        self.assertTrue(resto.startswith("### 2.1.0 — 2026-11-02 · desenvolvimento\n"), resto[:60])
+        self.assertNotIn("Publicada.", resto)
 
     def test_limite_menor_que_o_cabecalho_deixa_so_o_link(self):
         notas = self.gerar(changelog_desenvolvimento(3, 2), limite=10)

@@ -1,27 +1,112 @@
 #!/usr/bin/env python3
 """
-#294: o CHANGELOG.md tem uma seção por versão e, dentro dela, um título de cada tipo.
-- Cada PR sobe a versão (ADR 0039), e a entrada dele vai na seção da versão dele: "## [X.Y.Z] — AAAA-MM-DD ·
-  desenvolvimento" (criada no topo, se ainda não existe), DENTRO do "### Funcionalidades", "### Correções"… que já
-  existe nela. Publicar a versão é tirar o "· desenvolvimento" do título.
-- Esta conferência falha com: título de tipo repetido na mesma versão; versão repetida; versões fora de ordem (a mais
-  nova em cima); versão acima da do Directory.Build.props.
-- Antes, cada PR abria a própria "### Correções" no topo de um "Não publicado" que juntava tudo, e a seção da 2.17.0
-  publicada nem voltou para o develop; as notas e a janela "O que mudou" do gerenciador ficavam repetidas e longas.
+Confere o que vira CHANGELOG (ADR 0070, #294):
 
-Uso na CI:   python3 scripts/ci/versao/verificar-changelog.py             (falha com título repetido na mesma versão)
-Corrigir:    python3 scripts/ci/versao/verificar-changelog.py --corrigir  (junta as repetidas, na ordem em que cada uma
-                                                                      apareceu primeiro, e mantém as entradas)
+1. changelog.d/: um arquivo por PR, "changelog.d/<nome-da-branch>.md" (a "/" da branch vira "-"). Cada arquivo começa por
+   um título de tipo ("### Funcionalidades", "### Correções" ou "### Publicação e documentação"), sem tipo repetido, e
+   cada tipo tem pelo menos uma entrada ("- ..."). Sem "## [X.Y.Z]": a versão é calculada pelo merge (go run
+   ./cmd/versao), e quem escreve a entrada não sabe qual vai ser. O LEIA-ME.md da pasta não é entrada.
+2. No PR (com TITULO_PR e BASE): título feat ou fix traz um arquivo novo em changelog.d/. As outras (CI, testes,
+   documentação interna, Dependabot) podem não ter; as notas as listam pelo título.
+3. CHANGELOG.md (o histórico e as seções que o lancar-versao.sh junta): sem título de tipo repetido na mesma versão,
+   sem versão repetida e as versões em ordem (a mais nova em cima).
+
+As notas dos Releases e a janela "O que mudou" do gerenciador saem destes arquivos: entrada fora do formato vira nota errada
+para quem atualiza.
+
+Uso na CI:   BASE=develop TITULO_PR="fix(api): ..." python3 scripts/ci/versao/verificar-changelog.py
+Local:       python3 scripts/ci/versao/verificar-changelog.py            (sem BASE e TITULO_PR, só os itens 1 e 3)
+Corrigir:    python3 scripts/ci/versao/verificar-changelog.py --corrigir  (junta os tipos repetidos do CHANGELOG.md, na
+                                                                      ordem em que cada um apareceu primeiro)
 """
 import io
 import os
 import re
+import subprocess
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-from comum import RAIZ, PROPS, ler_versao
+RAIZ = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
+PASTA = 'changelog.d'
+LEIA_ME = 'LEIA-ME.md'
+TIPOS = ('### Funcionalidades', '### Correções', '### Publicação e documentação')
+# Os tipos de PR que mudam algo para quem usa: o arquivo é obrigatório.
+TIPOS_COM_ENTRADA = ('feat', 'fix')
 
-ARQUIVO = os.path.join(RAIZ, 'CHANGELOG.md')
+
+def ler(caminho):
+    with io.open(caminho, encoding='utf-8') as f:
+        return f.read().replace('\r\n', '\n')
+
+
+def entradas(raiz=RAIZ):
+    """[(caminho relativo, texto)] dos arquivos de changelog.d/, e os problemas de lugar (subpasta, não é .md)."""
+    pasta = os.path.join(raiz, PASTA)
+    achadas, problemas = [], []
+    if not os.path.isdir(pasta):
+        return achadas, [f'a pasta {PASTA}/ não existe']
+    for nome in sorted(os.listdir(pasta)):
+        caminho = os.path.join(pasta, nome)
+        if nome == LEIA_ME:
+            continue
+        if os.path.isdir(caminho):
+            problemas.append(f'{PASTA}/{nome}/: subpasta (os arquivos ficam direto em {PASTA}/; a "/" da branch vira "-")')
+        elif not nome.endswith('.md'):
+            problemas.append(f'{PASTA}/{nome}: só arquivos .md (o que não é .md não entra no CHANGELOG)')
+        else:
+            achadas.append((f'{PASTA}/{nome}', ler(caminho)))
+    return achadas, problemas
+
+
+def problemas_da_entrada(caminho, texto):
+    """O que está fora do formato num arquivo de changelog.d/."""
+    linhas = [l.rstrip() for l in texto.split('\n')]
+    if not any(linhas):
+        return [f'{caminho}: vazio']
+    achados = []
+    primeira = next(l for l in linhas if l)
+    if not primeira.startswith('### '):
+        achados.append(f'{caminho}: começa por "{primeira[:40]}"; a primeira linha é o título do tipo ({", ".join(TIPOS)})')
+    titulos, bullets = [], {}
+    for linha in linhas:
+        if linha.startswith('## '):
+            achados.append(f'{caminho}: tem "{linha[:40]}"; sem o título de versão, o número é calculado no merge')
+        elif linha.startswith('### '):
+            if linha in titulos:
+                achados.append(f'{caminho}: o tipo "{linha}" está repetido (junte as entradas num título só)')
+            titulos.append(linha)
+            bullets.setdefault(linha, 0)
+        elif titulos and linha.startswith('- '):
+            bullets[titulos[-1]] += 1
+    for titulo in dict.fromkeys(titulos):
+        if titulo not in TIPOS:
+            achados.append(f'{caminho}: o tipo "{titulo}" não existe (use {", ".join(TIPOS)})')
+        if not bullets[titulo]:
+            achados.append(f'{caminho}: o tipo "{titulo}" não tem entrada ("- ...")')
+    return achados
+
+
+def tipo_do_titulo(titulo):
+    achado = re.match(r'\s*(\w+)', titulo or '')
+    return achado.group(1) if achado else ''
+
+
+def arquivos_novos(base, raiz=RAIZ):
+    """Arquivos de changelog.d/ que o PR acrescentou em relação à base (o que o merge leva)."""
+    saida = subprocess.run(['git', 'diff', '--name-only', '--diff-filter=A', f'{base}...HEAD', '--', f'{PASTA}/'], cwd=raiz,
+                           check=True, capture_output=True, text=True).stdout
+    return [a for a in saida.splitlines() if a.endswith('.md') and os.path.basename(a) != LEIA_ME]
+
+
+def problemas_do_pr(titulo, novos):
+    """Título feat ou fix sem arquivo novo em changelog.d/."""
+    tipo = tipo_do_titulo(titulo)
+    if tipo in TIPOS_COM_ENTRADA and not novos:
+        return [f'PR "{tipo}": falta o arquivo changelog.d/<nome-da-branch>.md com a entrada (modelo no '
+                f'{PASTA}/{LEIA_ME}). Só PR feat e fix precisa; CI, testes e documentação interna não.']
+    return []
+
+
+# ---- CHANGELOG.md -----------------------------------------------------------------------------------------------
 
 
 def partes(texto):
@@ -79,8 +164,7 @@ def juntar(versoes):
 
 
 def problemas_de_versao(versoes):
-    """Versão repetida, fora de ordem (a mais nova em cima) ou acima da do Directory.Build.props."""
-    atual = ler_versao(io.open(os.path.join(RAIZ, PROPS), encoding='utf-8').read())
+    """Versão repetida ou fora de ordem (a mais nova em cima)."""
     numeros = []
     for cabecalho, _, _ in versoes:
         m = re.match(r'## \[(\d+)\.(\d+)\.(\d+)\]', cabecalho or '')
@@ -93,35 +177,38 @@ def problemas_de_versao(versoes):
         vistos.add(numero)
         if seguinte >= numero:
             achados.append(f'fora de ordem (a mais nova vai em cima): {cabecalho}')
-        if atual and numero > atual:
-            achados.append(f'acima da versão do Directory.Build.props ({".".join(map(str, atual))}): {cabecalho}')
     return achados
 
 
 def main():
-    texto = io.open(ARQUIVO, encoding='utf-8').read().replace('\r\n', '\n')
-    versoes = partes(texto)
+    arquivo = os.path.join(RAIZ, 'CHANGELOG.md')
+    versoes = partes(ler(arquivo))
     achadas = repetidas(versoes)
-    erros_versao = problemas_de_versao(versoes)
-    if erros_versao and '--corrigir' not in sys.argv:
-        print('CHANGELOG.md com seções de versão erradas:')
-        for e in erros_versao:
-            print(f'  - {e}')
-        return 1
     if '--corrigir' in sys.argv:
         if achadas:
-            io.open(ARQUIVO, 'w', encoding='utf-8', newline='\n').write(juntar(versoes))
+            io.open(arquivo, 'w', encoding='utf-8', newline='\n').write(juntar(versoes))
             print(f'CHANGELOG.md: {len(achadas)} seção(ões) repetida(s) juntada(s).')
         else:
             print('CHANGELOG.md: nada a juntar.')
         return 0
-    if achadas:
-        print('CHANGELOG.md tem título repetido na mesma versão (a entrada nova vai DENTRO da seção que já existe):')
-        for cabecalho, titulo in achadas:
-            print(f'  - {cabecalho}: "{titulo}"')
-        print('Para juntar: python3 scripts/ci/versao/verificar-changelog.py --corrigir')
+
+    erros = []
+    arquivos, erros_de_lugar = entradas()
+    erros += erros_de_lugar
+    for caminho, conteudo in arquivos:
+        erros += problemas_da_entrada(caminho, conteudo)
+    base, titulo = os.environ.get('BASE'), os.environ.get('TITULO_PR')
+    if base and titulo is not None:
+        erros += problemas_do_pr(titulo, arquivos_novos(f'origin/{base}'))
+    erros += [f'CHANGELOG.md: {e}' for e in problemas_de_versao(versoes)]
+    erros += [f'CHANGELOG.md: título repetido na mesma versão ({c}: "{t}"); a entrada vai DENTRO da seção que já existe '
+              f'(python3 scripts/ci/versao/verificar-changelog.py --corrigir)' for c, t in achadas]
+    if erros:
+        print('CHANGELOG fora do formato:')
+        for e in erros:
+            print(f'  - {e}')
         return 1
-    print('OK: CHANGELOG.md sem título repetido na mesma versão.')
+    print(f'OK: {len(arquivos)} arquivo(s) em {PASTA}/ e o CHANGELOG.md em ordem.')
     return 0
 
 

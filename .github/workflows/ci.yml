@@ -21,8 +21,10 @@ concurrency:
 # .NET; o contrato e o teste de inicialização sobem o Go.
 jobs:
   # #177: aviso (não bloqueia) quando o PR muda telas ou endpoints sem atualizar o Manual do site.
+  # ADR 0070: a versão é calculada no build (não há mais o check "versão subiu"), e o CHANGELOG é um arquivo por PR em
+  # changelog.d/: aqui se confere o formato deles e, em PR feat e fix, que o arquivo existe.
   manual:
-    name: manual do site
+    name: manual do site e changelog.d
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -35,32 +37,13 @@ jobs:
           BASE: ${{ github.base_ref }}
           CORPO_PR: ${{ github.event.pull_request.body }}
         run: python3 scripts/ci/front/verificar-manual.py
-
-  # ADR 0039: todo PR para o develop sobe a versão no Directory.Build.props, pelo tipo do título.
-  versao:
-    name: versão subiu
-    # Pelo autor do PR, e não por quem disparou: o "@dependabot rebase" pedido por uma pessoa dispara em nome dela (#587).
-    # A main de volta ao develop, depois de publicar uma versão, não sobe a versão: ela é a mesma (#641, CONTRIBUINDO.md).
-    if: >-
-      github.event_name == 'pull_request' && github.base_ref == 'develop' && github.head_ref != 'main'
-      && github.event.pull_request.user.login != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Versão no Directory.Build.props
+      - name: changelog.d/ no formato (e o arquivo, em PR feat e fix)
         env:
           BASE: ${{ github.base_ref }}
           TITULO_PR: ${{ github.event.pull_request.title }}
-        run: python3 scripts/ci/versao/verificar-versao.py
-      # #294: uma seção de cada tipo por versão no CHANGELOG (entrada nova vai dentro da seção que já existe).
-      - name: CHANGELOG sem seção repetida
         run: python3 scripts/ci/versao/verificar-changelog.py
-      # #587: o scripts/dev/atualizar-pr.sh resolve o conflito de versão e de CHANGELOG pela mesma regra.
-      - name: Teste do atualizar-pr
-        run: python3 -B scripts/dev/test_atualizar_versao_do_pr.py
+      - name: Teste do verificar-changelog
+        run: python3 -B scripts/ci/versao/test_verificar_changelog.py
       # #600 e #641: as notas dos Releases (da versão e de desenvolvimento) cabem no limite do GitHub (125 mil caracteres).
       - name: Teste das notas dos Releases
         run: python3 -B scripts/ci/versao/test_notas.py

@@ -66,7 +66,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0026](0026-manual-do-site-como-dados-no-front-end.md) | Manual do site como dados no front-end, com testes que o mantêm em dia | Aceita |
 | [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) | Conferência de investimentos: correções sugeridas pelo extrato, aplicadas só com confirmação | Aceita (em parte substituída pela 0044) |
 | [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) | Gerenciador do Windows, com atualização pelo GitHub Releases | Substituída por 0052 (#86) |
-| [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita (em parte substituída pela 0039) |
+| [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) | Instalador .msi para Windows, com WiX, gerado e testado pela CI | Aceita (em parte substituída pela 0039, que a 0070 substituiu: a versão é calculada no build) |
 | [0030](0030-regras-de-descricao-em-tabela-propria.md) | Regras de descrição em tabela própria, com o nome do banco sempre guardado | Aceita |
 | [0031](0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md) | Transferência só fica fora dos relatórios quando é entre contas suas | Aceita |
 | [0032](0032-controles-padrao-interruptor-e-campo-de-valor.md) | Controles padrão: interruptor, caixa de marcar, campo de valor, campo de data e lista suspensa | Aceita |
@@ -76,7 +76,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0036](0036-receita-e-despesa-pelo-tipo-estorno-abate-gasto.md) | Receita e despesa pelo tipo, não pelo sinal; estorno no cartão abate o gasto | Aceita |
 | [0037](0037-reservas-pelo-valor-do-open-finance.md) | Reservas pelo valor que o Open Finance informa; a estimativa pelo extrato fica para o resto | Aceita |
 | [0038](0038-meli-dolar-como-reserva-em-dolar.md) | Méli Dólar como reserva em dólar, estimada pelo extrato e convertida pela PTAX | Aceita |
-| [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) | A versão sobe a cada pull request, pelo tipo do commit | Aceita |
+| [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) | A versão sobe a cada pull request, pelo tipo do commit | Substituída por 0070 |
 | [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) | Atualizar pelo develop, pelo gerenciador, só na instalação de desenvolvimento | Aceita (em parte substituída pela 0053) |
 | [0041](0041-testes-no-navegador-com-playwright.md) | Testes no navegador com Playwright, com a CSP da API e uma API falsa | Aceita |
 | [0042](0042-contas-fora-do-saldo-continuam-nos-relatorios.md) | Contas fora do saldo e arquivadas continuam nos relatórios | Aceita |
@@ -90,7 +90,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) | O .msi é gerado no merge para o develop (e na tag), e não no PR | Aceita |
 | [0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md) | Testes do back-end em Go: cada regra com teste unitário, além do contrato; SQLite real, `httptest` e só a biblioteca padrão; teste de mutação com o gremlins, no PR (só os pacotes mudados, #456) e toda semana (#373); regras de ouro (float64, time.Now, time.Sleep) conferidas na CI (#457); sem o .NET, os esperados do contrato viram a regressão do Go (#86) | Aceita |
 | [0052](0052-gerenciador-em-go-com-bandeja-e-pagina-local.md) | Gerenciador em Go: ícone na bandeja e janela própria com o Wails (#276) | Aceita |
-| [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) | Receber versões de desenvolvimento por escolha, no gerenciador em Go | Aceita |
+| [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) | Receber versões de desenvolvimento por escolha, no gerenciador em Go | Aceita (o número de cada merge passa a ser calculado, 0070) |
 | [0054](0054-analise-de-seguranca-do-codigo-com-o-codeql.md) | Análise de segurança do código com o CodeQL, por workflow próprio, nas 5 linguagens (#451) | Aceita |
 | [0055](0055-documentacao-de-arquitetura-em-diagramas-mermaid.md) | Documentação de arquitetura em diagramas Mermaid, do HLD ao LLD (#462) | Aceita |
 | [0056](0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) | Arquitetura do código Go: camadas dentro de cada assunto, regra sem HTTP, DDD estratégico (mapa de contextos no teste de arquitetura) e o que não se adota (#474) | Aceita |
@@ -102,4 +102,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0062](0062-qr-code-do-acesso-pelo-celular-desenhado-no-site.md) | QR code do acesso pelo celular desenhado no site (SVG, sem innerHTML), com o `qrcode-generator` só para a matriz (#677) | Aceita |
 | [0063](0063-gasto-pago-direto-de-um-cofrinho.md) | Gasto pago direto de um cofrinho: um lançamento do app na conta do Open Finance, marcado com a reserva (#691) | Proposta |
 | [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md) | Módulos compilados no executável, ligados e desligados no banco (micro-kernel): contrato em Go, rotas e tarefas guardadas pelo núcleo (#191) | Proposta |
-| [0070](0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md) | Versão calculada no build pelos merges do develop, sem subir número em todo PR, e o CHANGELOG com um arquivo por PR em `changelog.d/` (#721) | Proposta (substituirá a 0039 e ajustará a 0053) |
+| [0070](0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md) | Versão calculada no build pelos merges do develop, sem subir número em todo PR, e o CHANGELOG com um arquivo por PR em `changelog.d/` (#721) | Aceita (substitui a 0039 e ajusta a 0053) |

@@ -90,13 +90,9 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 Conventional Commits em português (fluxo de branches, comandos e Project em [CONTRIBUINDO.md](CONTRIBUINDO.md)). Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos`, `relatorios`. Branch `main` é protegida (só recebe merge de `develop`/`hotfix/*`); trabalho novo parte de `develop` em `feature/<assunto>` ou `fix/<assunto>`.
 
-**Versão: só no `Directory.Build.props`** (API e gerenciador); a tag `vX.Y.Z` tem de ser igual. **Todo PR para o `develop` sobe esse número, pelo tipo do título** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md); o check "versão subiu" da CI confere):
-- `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) → o número do meio (2.2.0 → 2.3.0);
-- `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` → o último (2.2.0 → 2.2.1);
-- quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) → o primeiro (3.0.0); pergunte ao usuário antes.
-- Outro PR subiu antes? `scripts/dev/atualizar-pr.sh <PR>` traz o `develop` e resolve a versão e o CHANGELOG (#587); conflito em outro arquivo, `git merge origin/develop` à mão. Diga ao usuário, no fim, de qual para qual versão foi.
+**Versão: ninguém a sobe no PR** ([ADR 0070](docs/adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md)): o número é calculado no build (`go run ./cmd/versao`, em `src/backend`) a partir do `<VersaoBase>` do `Directory.Build.props` e dos merges do `develop` (`feat` sobe o do meio, o resto o último), então o **título do PR no tipo certo** decide o número. Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior): pergunte ao usuário e troque a `<VersaoBase>` para `X+1.0.0` no PR.
 
-**`CHANGELOG.md`: uma seção por versão** (#294). A entrada de um PR vai na seção da versão dele: `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se não existir, **dentro** do `### Funcionalidades`/`### Correções`/`### Publicação e documentação` que já existe nela (nunca outro título de mesmo tipo). Ao trazer o `develop` e subir a versão de novo, **mova a entrada para a seção da versão nova**. Antes do push, rode `python3 scripts/ci/versao/verificar-changelog.py` (`--corrigir` junta tipos repetidos). As notas das versões e a janela "O que mudou" do gerenciador saem dele: seção errada vira nota errada para quem atualiza.
+**CHANGELOG: um arquivo por PR em `changelog.d/<nome-da-branch>.md`** (formato em `changelog.d/LEIA-ME.md`), obrigatório em `feat` e `fix`; não mexa no `CHANGELOG.md` (a publicação o monta: `scripts/dev/lancar-versao.sh`). A CI confere o formato (`python3 scripts/ci/versao/verificar-changelog.py`).
 
 **Issues** (o branch padrão é o `develop`, #142):
 - Todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge.
