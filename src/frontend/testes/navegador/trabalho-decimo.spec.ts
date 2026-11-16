@@ -7,7 +7,9 @@ const trabalho = { id: 'trabalho', nome: 'Trabalho', descricao: 'd', acessaInter
 const emprego = { id: 1, empregador: 'Empresa Fictícia Ltda', cnpj: null, admissao: '2024-03-11', saida: null, regime: 1,
   jornadaMensalHoras: 220, dependentes: 0, contaId: null, contaNome: null, salarios: [{ id: 1, inicio: '2024-03-01', salarioBruto: 6000 }] };
 const decimo = { ano: 2026, avos: 12, salarioBase: 6000, mediaVariaveis: 0, total: 6000, liquido: 4973.39, saida: null,
-  primeira: { valor: 3000, data: '2026-11-30', informada: false }, segunda: { valor: 1973.39, data: '2026-12-20', informada: false },
+  excedente: 0, mesesComHolerite: 12,
+  primeira: { valor: 3000, data: '2026-11-30', informada: false, valorInformado: false },
+  segunda: { valor: 1973.39, data: '2026-12-20', informada: false, valorInformado: false },
   inss: { base: 6000, valor: 641.51, noTeto: false, parcelas: [], fonte: '' },
   irrf: { rendimento: 6000, deducoesLegais: 641.51, simplificado: 0, deducaoUsada: 'legal', base: 5358.49, aliquota: 0.275,
     parcelaADeduzir: 908.73, impostoDaTabela: 564.85, reducaoLei15270: 179.75, valor: 385.10, fonte: '' } };
@@ -20,8 +22,8 @@ test('Trabalho › 13º salário: as parcelas e a 1ª que veio nas férias', asy
   await page.route('**/api/trabalho/empregos/1/decimo-terceiro/*', (r) => {
     pedidos.push(`${r.request().method()} ${new URL(r.request().url()).pathname} ${r.request().postData() ?? ''}`.trim());
     if (r.request().method() === 'PUT') {
-      return r.fulfill(json({ ...decimo, primeira: { valor: 2800, data: '2026-07-10', informada: true },
-        segunda: { valor: 2173.39, data: '2026-12-20', informada: false } }));
+      return r.fulfill(json({ ...decimo, primeira: { valor: 2800, data: '2026-07-10', informada: true, valorInformado: true },
+        segunda: { valor: 2173.39, data: '2026-12-20', informada: false, valorInformado: false } }));
     }
     return r.fulfill(json(decimo));
   });
@@ -52,4 +54,19 @@ test('Trabalho › 13º salário: as parcelas e a 1ª que veio nas férias', asy
   await page.getByRole('button', { name: 'Ano anterior' }).click();
   await expect(page).toHaveURL(/ano=2025/);
   expect(pedidos.at(-1)).toBe('GET /api/trabalho/empregos/1/decimo-terceiro/2025');
+});
+
+// Revisão do #700: os meses sem holerite e a 1ª parcela maior que o líquido aparecem como aviso; a 1ª informada só
+// pela data não preenche o valor com a metade calculada.
+test('Trabalho › 13º salário: avisos da média e da 1ª parcela', async ({ page }) => {
+  const json = (corpo: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(corpo) });
+  await page.route('**/api/modulos', (r) => r.fulfill(json([trabalho])));
+  await page.route('**/api/trabalho/empregos', (r) => r.fulfill(json([emprego])));
+  await page.route('**/api/trabalho/empregos/1/decimo-terceiro/*', (r) => r.fulfill(json({ ...decimo, mesesComHolerite: 1,
+    excedente: 100.69, primeira: { valor: 3000, data: '2026-07-10', informada: true, valorInformado: false } })));
+  await page.goto('/trabalho/decimo-terceiro?ano=2026');
+  await expect(page.getByText('A média das horas extras conta 1 mês com holerite de 12')).toBeVisible();
+  await expect(page.getByText('A 1ª parcela informada passa do 13º líquido em R$ 100,69')).toBeVisible();
+  const form = page.locator('section', { has: page.getByRole('heading', { name: 'A 1ª parcela que veio' }) });
+  await expect(form.getByLabel('Valor recebido')).toHaveValue('');
 });

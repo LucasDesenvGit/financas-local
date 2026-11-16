@@ -1342,14 +1342,15 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber quanto vem de 13º, em quais datas, e quanto já veio adiantado.',
         passos: [
           'Abra Trabalho › 13º salário e escolha o ano em ‹ ›.',
-          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano.',
+          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano. As horas de cada mês valem pelo salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor. O mês sem holerite entra como zero, e a tela avisa quantos meses têm.',
           'A 1ª parcela, até 30/11, é metade do 13º, sem desconto. A 2ª, até 20/12, é o 13º menos o INSS, o IRRF e a 1ª parcela.',
           'O IR do 13º é separado do salário: só as deduções da lei (INSS e dependentes), e a redução da Lei 15.270/2025 também vale para ele.',
-          'Se a 1ª parcela veio antes (com as férias) ou num valor diferente, informe em “A 1ª parcela que veio”: a 2ª é recalculada. “Voltar ao padrão” desfaz.',
+          'Se a 1ª parcela veio antes (com as férias) ou num valor diferente, informe em “A 1ª parcela que veio”: a 2ª é recalculada. Só a data, sem o valor, mantém a metade calculada. “Voltar ao padrão” desfaz.',
           '“Como calculei” mostra cada passo da conta.'
         ],
         dicas: ['Se você saiu no ano, o 13º proporcional vem na rescisão, e a tela avisa.'],
-        erros: ['“Estágio e PJ não têm 13º salário pela CLT”: o emprego cadastrado não é CLT.'],
+        erros: ['“Estágio e PJ não têm 13º salário pela CLT”: o emprego cadastrado não é CLT.',
+          '“A 1ª parcela informada passa do 13º líquido”: a 2ª fica zero, e a diferença a empresa desconta. Confira o valor informado; ele não pode passar do 13º do ano inteiro.'],
         abrir: [{ rotulo: 'Abrir o 13º salário', rota: '/trabalho/decimo-terceiro' }]
       }
     ]

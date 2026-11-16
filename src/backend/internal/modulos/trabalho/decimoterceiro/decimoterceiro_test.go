@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"testing"
+
+	"github.com/shopspring/decimal"
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
@@ -79,6 +81,11 @@ func TestCalcularDecimo(t *testing.T) {
 			PrimeiraEm: data(2026, 7, 10)}, "6000.00", "2800.00", "641.51", "385.10", "2173.39", "4973.39"},
 		{"sem avos", Entrada{Ano: 2026, Avos: 0, SalarioBase: v("6000.00"), SomaVariaveis: v("100")},
 			"0.00", "0.00", "0.00", "0.00", "0.00", "0.00"},
+		// Revisão do #700: a 1ª informada maior que o líquido (2299,31) não deixa a 2ª negativa; o excedente aparece.
+		{"1ª parcela maior que o líquido", Entrada{Ano: 2026, Avos: 10, SalarioBase: v("3000.00"), PrimeiraValor: &[]tipos.Decimal{v("2400")}[0]},
+			"2500.00", "2400.00", "200.69", "0.00", "0.00", "2299.31"},
+		{"1ª parcela igual ao líquido", Entrada{Ano: 2026, Avos: 10, SalarioBase: v("3000.00"), PrimeiraValor: &[]tipos.Decimal{v("2299.31")}[0]},
+			"2500.00", "2299.31", "200.69", "0.00", "0.00", "2299.31"},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -103,8 +110,13 @@ func TestCalcularDecimo(t *testing.T) {
 	}
 	// Só a data informada também marca a parcela como informada (o valor fica o da metade).
 	r = Calcular(Entrada{Ano: 2026, Avos: 12, SalarioBase: v("6000.00"), PrimeiraEm: data(2026, 6, 1), Inss: ti, Irrf: tr})
-	if !r.Primeira.Informada || r.Primeira.Valor.String() != "3000.00" {
+	if !r.Primeira.Informada || r.Primeira.ValorInformado || r.Primeira.Valor.String() != "3000.00" || !r.Excedente.Decimal().IsZero() {
 		t.Fatalf("1ª = %+v", r.Primeira)
+	}
+	r = Calcular(Entrada{Ano: 2026, Avos: 10, SalarioBase: v("3000.00"), PrimeiraValor: &[]tipos.Decimal{v("2400")}[0], MesesComHolerite: 4,
+		Inss: ti, Irrf: tr})
+	if r.Excedente.String() != "100.69" || !r.Primeira.ValorInformado || r.MesesComHolerite != 4 {
+		t.Fatalf("excedente = %s, 1ª = %+v, meses = %d", r.Excedente, r.Primeira, r.MesesComHolerite)
 	}
 }
 
@@ -145,7 +157,8 @@ func TestDecimoPelaApi(t *testing.T) {
 	id := criar(`{"empregador":"E","admissao":"2024-03-11","salarioBruto":5000}`)
 	chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/salarios", id), `{"inicio":"2026-12-01","salarioBruto":6000}`).ConferirStatus(t, 200)
 	// Um holerite de outubro com 10 h extras a 50% (5000/220 x 1,5 x 10 = 340,91) e o DSR (340,91 / 27 x 4 = 50,50):
-	// 391,41 de variáveis no ano, média 391,41 / 12 = 32,62.
+	// 391,41 de variáveis no ano. Pela Súmula 347 do TST, as horas valem pelo salário de agora (6000 em dezembro):
+	// 391,41 x 6000 / 5000 = 469,69, média 469,69 / 12 = 39,14.
 	r := chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", id), `{"mes":"2026-10"}`)
 	var h holerite.Holerite
 	_ = json.Unmarshal(r.Corpo, &h)
@@ -154,14 +167,23 @@ func TestDecimoPelaApi(t *testing.T) {
 
 	caminho := fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/2026", id)
 	c := ler(chamar("GET", caminho, ""))
-	// O salário base é o de dezembro (6000), mais a média: 6032,62.
-	if c.Avos != 12 || c.SalarioBase.String() != "6000.00" || c.MediaVariaveis.String() != "32.62" || c.Total.String() != "6032.62" || c.Saida != nil {
+	// O salário base é o de dezembro (6000), mais a média: 6039,14. Só outubro tem holerite: a tela avisa.
+	if c.Avos != 12 || c.SalarioBase.String() != "6000.00" || c.MediaVariaveis.String() != "39.14" || c.Total.String() != "6039.14" ||
+		c.Saida != nil || c.MesesComHolerite != 1 {
 		t.Fatalf("13º de 2026 = %+v", c.Calculo)
 	}
 	// A 1ª parcela informada: volta no cálculo; nulos voltam ao padrão.
 	c = ler(chamar("PUT", caminho, `{"primeiraParcelaEm":"2026-07-10","primeiraParcelaValor":2800}`))
 	if !c.Primeira.Informada || c.Primeira.Valor.String() != "2800.00" || c.Primeira.Data.String() != "2026-07-10" {
 		t.Fatalf("1ª = %+v", c.Primeira)
+	}
+	if !c.Primeira.ValorInformado {
+		t.Fatalf("1ª com o valor = %+v", c.Primeira)
+	}
+	// Só a data (revisão do #700): o valor continua a metade calculada, e a resposta diz que ele não foi informado.
+	c = ler(chamar("PUT", caminho, `{"primeiraParcelaEm":"2026-07-10","primeiraParcelaValor":null}`))
+	if !c.Primeira.Informada || c.Primeira.ValorInformado || c.Primeira.Valor.String() != "3019.57" {
+		t.Fatalf("1ª só com a data = %+v", c.Primeira)
 	}
 	c = ler(chamar("PUT", caminho, `{"primeiraParcelaEm":null,"primeiraParcelaValor":null}`))
 	if c.Primeira.Informada {
@@ -187,6 +209,7 @@ func TestDecimoPelaApi(t *testing.T) {
 		{"valor negativo", "PUT", caminho, `{"primeiraParcelaValor":-1}`, 400, "O valor da 1ª parcela vai de R$ 0,00 a R$ 10.000.000,00."},
 		{"valor absurdo", "PUT", caminho, `{"primeiraParcelaValor":10000000.01}`, 400, "O valor da 1ª parcela vai de R$ 0,00 a R$ 10.000.000,00."},
 		{"data em outro ano", "PUT", caminho, `{"primeiraParcelaEm":"2025-12-01"}`, 400, "A 1ª parcela do 13º de 2026 é paga em 2026."},
+		{"1ª maior que o 13º", "PUT", caminho, `{"primeiraParcelaValor":6039.15}`, 400, "A 1ª parcela não passa do 13º do ano inteiro (R$ 6.039,14)."},
 		{"JSON quebrado", "PUT", caminho, `{"primeira`, 400, MensagemJSONInvalido},
 		{"PUT no PJ", "PUT", fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/2026", pj), `{"primeiraParcelaValor":1}`, 400, MensagemSemDecimo},
 	}
@@ -211,4 +234,12 @@ func TestDecimoPelaApi(t *testing.T) {
 	chamar("GET", fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/2200", id), "").ConferirStatus(t, http.StatusOK)
 	chamar("GET", fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/1900", id), "").ConferirStatus(t, http.StatusBadRequest)
 	chamar("PUT", fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/2026", id), `{"primeiraParcelaValor":0}`).ConferirStatus(t, http.StatusOK)
+}
+
+func TestReais(t *testing.T) {
+	for v, quer := range map[string]string{"600": "R$ 600,00", "6039.14": "R$ 6.039,14", "0.5": "R$ 0,50", "1234567.8": "R$ 1.234.567,80"} {
+		if got := reais(decimal.RequireFromString(v)); got != quer {
+			t.Errorf("reais(%s) = %q; quer %q", v, got, quer)
+		}
+	}
 }

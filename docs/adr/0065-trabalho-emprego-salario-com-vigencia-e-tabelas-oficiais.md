@@ -66,6 +66,8 @@ Como ficou na #211:
 
 - Calculado, sem guardar o resultado: (salário de dezembro, ou o do mês da saída, + a média das horas extras, do adicional noturno e do DSR dos holerites do ano) × avos ÷ 12. Os avos contam o mês com 15 dias ou mais de calendário.
 - *Inferido:* a média divide a soma das variáveis do ano pelos avos (e não por 11 ou 12 fixos); bônus e comissão não entram (só o que é hora).
+- **Súmula 347 do TST** (revisão do #700): as horas extras entram pelas horas, com o salário-hora de agora. O valor de cada mês vai corrigido por salário de agora ÷ salário daquele mês, o que dá o mesmo que refazer as horas e vale também para o holerite lido do PDF, que não guarda as horas. O mês sem holerite entra como zero, e a tela diz quantos meses têm holerite.
+- A 2ª parcela nunca fica negativa: a 1ª informada maior que o 13º líquido vira aviso ("a empresa desconta a diferença"), e a 1ª não pode passar do 13º do ano inteiro.
 - 1ª parcela: metade, sem desconto, até 30/11. A tabela `DecimoTerceiro` guarda só o que a pessoa informa (quando e quanto veio, como na 1ª adiantada nas férias).
 - 2ª parcela: o total menos o INSS (sobre o total), o IRRF exclusivo na fonte e a 1ª. *Inferido:* o IR do 13º usa só as deduções da lei (INSS e dependentes), sem o desconto simplificado; a redução da Lei 15.270/2025 vale para ele (art. 3º-A, § 3º).
 - Quem saiu no ano recebe o proporcional na rescisão (#215): a tela avisa.

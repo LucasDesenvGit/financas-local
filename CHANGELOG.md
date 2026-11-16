@@ -6,9 +6,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ### Funcionalidades
 - **Trabalho › 13º salário** (#214). O 13º do ano, estimado:
-  - proporcional aos meses com 15 dias ou mais de trabalho (os avos), pelo salário de dezembro (ou o da saída) mais a média das horas extras dos holerites do ano;
+  - proporcional aos meses com 15 dias ou mais de trabalho (os avos), pelo salário de dezembro (ou o da saída) mais a média das horas extras dos holerites do ano, com as horas pelo salário de agora (Súmula 347 do TST) e o aviso dos meses sem holerite;
   - a 1ª parcela (metade, sem desconto, até 30/11) e a 2ª (até 20/12), com o INSS e o IRRF sobre o total e a redução da Lei 15.270/2025;
-  - "A 1ª parcela que veio": quando e quanto veio (adiantada nas férias, por exemplo), e a 2ª é recalculada;
+  - "A 1ª parcela que veio": quando e quanto veio (adiantada nas férias, por exemplo), e a 2ª é recalculada, nunca abaixo de zero (a 1ª maior que o líquido vira aviso);
   - "Como calculei" com cada passo; quem saiu no ano é avisado de que o proporcional vem na rescisão.
   - Banco: a tabela `DecimoTerceiro`, criada sozinha ao iniciar. Não é receita.
 

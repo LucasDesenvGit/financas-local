@@ -942,10 +942,15 @@ export interface ResumoHolerite {
 }
 
 /** #214: o 13º salário do ano (estimativa). */
-export interface ParcelaDecimo { valor: number; data: string; informada: boolean; }
+/** valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). */
+export interface ParcelaDecimo { valor: number; data: string; informada: boolean; valorInformado: boolean; }
 export interface DecimoTerceiro {
   ano: number; avos: number; salarioBase: number; mediaVariaveis: number; total: number;
   primeira: ParcelaDecimo; inss: CalculoInss; irrf: CalculoIrrf; segunda: ParcelaDecimo; liquido: number;
+  /** A 1ª informada passou do 13º líquido: a 2ª fica zero e a empresa desconta isto. */
+  excedente: number;
+  /** Os meses do ano com holerite calculado: os outros entram como zero na média das horas extras. */
+  mesesComHolerite: number;
   /** Saiu no ano: o 13º proporcional entra na rescisão. */
   saida: string | null;
 }

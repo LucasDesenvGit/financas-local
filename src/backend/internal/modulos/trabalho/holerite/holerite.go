@@ -479,7 +479,11 @@ func (s *Servico) Excluir(ctx context.Context, id int64) error {
 // VariaveisDoAno soma as horas extras, o adicional noturno e o DSR dos holerites do ano (abertos e fechados) e diz em
 // quantos meses havia holerite. É a base da média do 13º e das férias (#213, #214). Holerite sem cálculo (sem tabela
 // do mês) não entra.
-func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int) (soma tipos.Decimal, meses int, err error) {
+//
+// Súmula 347 do TST (revisão do #700): as horas extras entram na média pelas horas, com o salário-hora de agora, e
+// não pelo valor em reais da época. O valor de cada mês vai corrigido pela razão salarioAtual ÷ o salário daquele mês:
+// é o mesmo que refazer as horas com a hora de agora, e vale também para o holerite lido do PDF, que não guarda as horas.
+func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int, salarioAtual tipos.Decimal) (soma tipos.Decimal, meses int, err error) {
 	inicio, fim := tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1)
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id" FROM "Holerite" WHERE "EmpregoId" = ? AND "Mes" >= ? AND "Mes" < ?
 		ORDER BY "Mes"`, empregoId, inicio, fim)
@@ -495,7 +499,9 @@ func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int) 
 		}
 		ids = append(ids, id)
 	}
-	linhas.Close()
+	if err := linhas.Close(); err != nil {
+		return tipos.Decimal{}, 0, err
+	}
 	total := decimal.Zero
 	for _, id := range ids {
 		h, err := s.Obter(ctx, id)
@@ -506,11 +512,16 @@ func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int) 
 			continue
 		}
 		meses++
+		doMes := decimal.Zero
 		for _, l := range h.Calculo.Proventos {
 			if l.Tipo == HoraExtra || l.Tipo == AdicionalNoturno || l.Tipo == TipoDSR {
-				total = total.Add(l.Valor.Decimal())
+				doMes = doMes.Add(l.Valor.Decimal())
 			}
 		}
+		if salarioDoMes := h.Calculo.SalarioContratual.Decimal(); salarioDoMes.IsPositive() {
+			doMes = doMes.Mul(salarioAtual.Decimal()).Div(salarioDoMes)
+		}
+		total = total.Add(doMes)
 	}
 	return centavos(total), meses, nil
 }

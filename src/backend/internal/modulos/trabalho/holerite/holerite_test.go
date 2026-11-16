@@ -8,8 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 type mux struct{ *http.ServeMux }
@@ -277,11 +280,16 @@ func TestVariaveisDoAno(t *testing.T) {
 	a.criar(empregoId, "2026-11")              // só o salário: conta o mês, sem variáveis
 	a.criar(empregoId, "2025-12")              // outro ano
 	semTabela := a.criar(empregoId, "2025-03") // sem tabela do IRRF: não conta
-	soma, meses, err := a.s.VariaveisDoAno(t.Context(), empregoId, 2026)
+	cinco500 := tipos.DeDecimal(decimal.NewFromInt(5500))
+	soma, meses, err := a.s.VariaveisDoAno(t.Context(), empregoId, 2026, cinco500)
 	if err != nil || soma.String() != "545.37" || meses != 2 {
 		t.Fatalf("2026: soma %s em %d meses (%v); quer 545.37 em 2", soma, meses, err)
 	}
-	if soma, meses, _ := a.s.VariaveisDoAno(t.Context(), empregoId, 2025); soma.String() != "0.00" || meses != 1 || semTabela.Calculo != nil {
+	// Súmula 347 (revisão do #700): com o salário de agora 20% maior, as mesmas horas valem 20% mais.
+	if soma, _, _ := a.s.VariaveisDoAno(t.Context(), empregoId, 2026, tipos.DeDecimal(decimal.NewFromInt(6600))); soma.String() != "654.44" {
+		t.Fatalf("2026 com o salário de 6600: soma %s; quer 654.44 (545,37 × 1,2)", soma)
+	}
+	if soma, meses, _ := a.s.VariaveisDoAno(t.Context(), empregoId, 2025, cinco500); soma.String() != "0.00" || meses != 1 || semTabela.Calculo != nil {
 		t.Fatalf("2025: soma %s em %d meses", soma, meses)
 	}
 }
