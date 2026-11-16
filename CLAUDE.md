@@ -25,7 +25,7 @@ scripts/geral/3-publicar-atualizar.sh                         # compila, publica
 scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows, repassa para scripts/windows/instalar-windows.ps1; sem bash: instalar-windows.cmd, ADR 0012)
 ```
 
-O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Desenvolvimento, migrar do SQL Server e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
+O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Desenvolvimento e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
 
 **O `.msi` não é gerado no PR, só no merge para o develop** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador-go/`, `src/backend/cmd/financas/` ou `src/backend/internal/plataforma/banco/esquema_banco.go`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou. Mudança só de CI vai num PR `ci:` ou `ci(escopo):` (ADR 0039), sem produto junto.
 
@@ -82,7 +82,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 ## Skills e agentes do projeto (`.claude/`)
 
-- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão). A `migrar-para-go` era a da migração do épico #70, que terminou na #86: serve só para consultar como um assunto foi portado do C# (que está na tag `v-ultimo-dotnet`). O agente `dev-go` carrega a `go-no-projeto`; serve para analisar, criar ou revisar assuntos em paralelo (#560).
+- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão). Como um assunto era no C#: a tag `v-ultimo-dotnet` (o épico #70 terminou na #86). O agente `dev-go` carrega a `go-no-projeto`; serve para analisar, criar ou revisar assuntos em paralelo (#560).
 - **Angular:** a skill `angular-no-projeto` é o roteiro de todo trabalho no front-end (tela nova, mudança, avaliação de UI/UX, revisão); a `testar-no-navegador` confere a tela pronta. O agente `dev-angular` carrega as duas, para avaliar telas em paralelo (um agente por tela), implementar ou revisar (#559).
 - **Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` em uma frase quando o pedido cita mais de uma issue ou PR, ou um épico; quando é a 2ª issue ou PR na mesma conversa, ou a conversa já foi resumida; ou quando a pessoa fala em "deixar rodando" ou "continuar depois". Não repita se já houver agendamento (`CronList`) ou se a pessoa recusou. O hook `lembrar-trabalho-longo.sh` lembra sozinho em parte desses casos (#280).
 
