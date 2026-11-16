@@ -4,6 +4,8 @@
 - **Data:** 2026-10-18
 - **Relacionadas:** [0018](0018-estado-da-tela-na-url-e-detalhe-por-navegacao.md) (estado na URL), [0021](0021-componentes-padrao-para-graficos-e-telas-densas.md) (componentes padrão)
 
+**Como usar cada controle** (marcação, parâmetros, teclado, testes): [docs/UI-UX.md, "Controles padrão: como usar"](../UI-UX.md#controles-padrão-como-usar-adr-0032). Esta ADR guarda a decisão, as alternativas e o custo.
+
 ## Contexto
 
 Dois tipos de controle apareciam de jeitos diferentes em cada tela:
@@ -21,9 +23,8 @@ Dois tipos de controle apareciam de jeitos diferentes em cada tela:
 
 Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo com **`role="switch"`**, só onde o efeito é **imediato**. O que depende de "Salvar" continua caixa de marcar (`label.checkbox`).
 
-- Rótulo curto, palavra-chave primeiro, que **não muda** com o estado ("Mostrar arquivadas", nunca "Esconder arquivadas"; WAI-ARIA APG, *Switch*).
-- Trilho de 40×24 px e rótulo clicável (alvo ≥ 24 px, WCAG 2.5.8); foco visível; animação curta da bolinha, desligada com `prefers-reduced-motion`.
-- "Mostrar arquivadas" guarda o estado na URL (`?arquivadas=1`, com `replaceUrl`, ADR 0018), e cada conta ou cartão arquivado mostra o selo **"Arquivada"** em texto, além do visual apagado (WCAG 1.4.1).
+- Rótulo curto, palavra-chave primeiro, que **não muda** com o estado (WAI-ARIA APG, *Switch*); alvo ≥ 24 px (WCAG 2.5.8).
+- "Mostrar arquivadas" guarda o estado na URL (ADR 0018), e cada item arquivado mostra o selo **"Arquivada"** em texto, além do visual apagado (WCAG 1.4.1).
 - **Filtros de Transações** ("somente emergências", "descrição pouco informativa") **continuam caixa de marcar**: ficam na barra de filtros, ao lado de campos de data, busca e listas, e mudar só esses dois para interruptor quebraria a consistência visual da barra (Nielsen 4). *Julgamento próprio*: na barra de filtros todo controle já tem efeito imediato, então a caixa de marcar não engana ali como enganava sozinha no cabeçalho de Contas.
 
 ## Consequências (interruptor)
@@ -32,15 +33,11 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
 - **Negativas:**
   - `appearance: none` desenha o controle à mão: o visual depende do CSS do site e precisa ser conferido nos dois temas a cada mudança de tokens de cor;
   - fica a cargo de quem cria uma tela escolher certo entre interruptor e caixa de marcar: um interruptor num formulário com "Salvar" engana.
-- **Na prática:** efeito imediato → `<label class="interruptor"><input type="checkbox" role="switch" …> Rótulo</label>`; formulário com "Salvar" → `label.checkbox`. Teste em `testes/jest/usabilidade/interruptor.spec.ts`.
 
 ## Caixa de marcar e seleção em tabelas (#133)
 
-- **Decisão:** a caixa de marcar ganha visual próprio **em todo o site**, em tabelas e formulários, com CSS sobre o mesmo `<input type="checkbox">` nativo (`appearance: none`). São 18 px, borda em `--texto-suave` (≥ 3:1, WCAG 1.4.11), marcada em `--primaria` com o visto e parcial (`indeterminate`) com um traço. O interruptor (`role="switch"`) fica de fora. A #133 previa manter as caixas de formulário com o visual do navegador; a decisão de aplicar em todo o site foi **do usuário**, por consistência (Nielsen 4).
-- **Seleção em tabelas:**
-  - a célula inteira é o alvo (`label.celula-marcar`, ≥ 24 px) e a linha marcada fica destacada (`tr.selecionada`);
-  - o nome da caixa diz a linha ("Selecionar: descrição, data, valor", respeitando "ocultar valores");
-  - em Transações também há Shift+clique (intervalo), "todas desta página" com estado parcial, Esc para limpar, contagem com "M em outras páginas" (aria-live) e barra de ações que abre animando e fica fixa no topo.
+- **Decisão:** a caixa de marcar ganha visual próprio **em todo o site**, em tabelas e formulários, com CSS sobre o mesmo `<input type="checkbox">` nativo (`appearance: none`), com contraste de borda ≥ 3:1 (WCAG 1.4.11). O interruptor fica de fora. A #133 previa manter as caixas de formulário com o visual do navegador; a decisão de aplicar em todo o site foi **do usuário**, por consistência (Nielsen 4).
+- **Seleção em tabelas:** a célula inteira é o alvo, a linha marcada fica destacada, e o nome da caixa diz a linha. Em Transações, há também seleção por intervalo, "todas desta página" e barra de ações.
 - **Seleção ao trocar de página × filtro** (*julgamento próprio*, como a issue sugeria): trocar de página **mantém** a seleção; trocar o filtro **limpa**, com aviso, para nenhuma ação em lote pegar transação fora do filtro.
 - **Negativas:**
   - o visto e o traço são desenhados com `::after`, e o visual depende do CSS do site nos dois temas;
@@ -48,27 +45,17 @@ Usamos o estilo **`label.interruptor`** em `styles.css` sobre o checkbox nativo 
 
 ## Campo de data, lista suspensa e seletor de mês (pedido do usuário durante a revisão do PR)
 
-- **Campo de data:** `app-campo-data` (`compartilhado/ui/campo-data.component.ts`) no lugar de todo `<input type="date">`.
+- **Campo de data:** `app-campo-data` no lugar de todo `<input type="date">`, com calendário próprio no padrão *Date Picker Dialog* do WAI-ARIA APG.
   - **Por que:** o campo nativo aceitava ano de 6 dígitos ("13/02/275760"), e o calendário era o do navegador, fora do visual do site.
-  - **Como funciona:** digita-se dd/mm/aaaa, com as barras entrando sozinhas e o ano sempre com 4 dígitos. Colar `AAAA-MM-DD` também funciona.
-  - **Calendário próprio:** segue o padrão *Date Picker Dialog* do WAI-ARIA APG (setas, Home/End, PageUp/PageDown, Shift para o ano, Esc), com « ‹ › », "Hoje" e "Limpar".
-  - **Meses e anos pelo título (#264):** o título do mês ("outubro de 2026") é um botão que troca a grade de dias pela de meses do ano; o título do ano ("2026") leva a uma página de 12 anos ("2020–2031", páginas a partir de 1900). Escolher desce um nível (ano → meses → dias), ‹ › trocam o ano ou a página, e Esc sobe um nível antes de fechar. Meses e anos fora dos limites ficam desabilitados; o escolhido e o de hoje, destacados, como os dias. Teclado nas grades: ← → um, ↑ ↓ uma linha, Home/End, PageUp/PageDown. Alvos de 44 px de altura (WCAG 2.5.8).
-    - **Por que:** ir a uma data distante (nascimento, compra antiga, o fim de um financiamento) pedia dezenas de cliques nas setas (Nielsen 7). As setas continuam para quem anda mês a mês.
-    - *Julgamento próprio:* o modelo dias → meses → anos ao clicar no título é o mais comum em seletores de data; ainda não validado com uso real aqui. Testes em `testes/jest/regressao/calendario-meses-anos.spec.ts` e `testes/navegador/calendario.spec.ts`.
-  - **Limites:** 1900–2099 por padrão, ou os da tela (`[maximo]="hoje"`).
-  - **Valor:** entrega o mesmo `'AAAA-MM-DD'` ao `ngModel` (`''` quando vazio). `(alterado)` faz o papel do `(change)` nativo.
+  - **Meses e anos pelo título (#264):** o título sobe de nível (dias → meses → anos). **Por que:** ir a uma data distante pedia dezenas de cliques nas setas (Nielsen 7). *Julgamento próprio:* o modelo é o mais comum em seletores de data; ainda não validado com uso real aqui.
   - **Alternativas descartadas:** só limitar o campo nativo com `max` (resolvia o ano, mas não o visual) e uma biblioteca de calendário (dependência externa).
-- **Lista suspensa:** a `ListaSuspensaDirective` (`compartilhado/ui/lista-suspensa.directive.ts`) mostra, no computador, a lista aberta do site por cima do `<select>` nativo, que continua dono do valor (`ngModel`, `[ngValue]`, `(change)`). No toque fica a lista do sistema. O campo fechado tem a seta desenhada no CSS.
+- **Lista suspensa:** a `ListaSuspensaDirective` mostra, no computador, a lista aberta do site por cima do `<select>` nativo, que continua dono do valor. No toque fica a lista do sistema.
   - **Descartado:** `appearance: base-select`, porque no Edge 155 o texto escolhido passava por baixo da seta.
 - **Seletor de mês:** o nome do mês abre um quadro com o ano e os 12 meses, para pular vários meses de uma vez.
 - **Negativas:**
-  - mais código próprio de controle (teclado, posição, foco) para manter, coberto por testes em `testes/jest/usabilidade/calendario.spec.ts`, `lista-suspensa-aberta.spec.ts` e `seletor-mes.spec.ts`;
+  - mais código próprio de controle (teclado, posição, foco) para manter, coberto por testes;
   - o calendário e a lista têm de ser conferidos nos dois temas a cada mudança de cor;
   - no celular, a lista suspensa continua a do sistema (escolha, *julgamento próprio*).
-- **Na prática:**
-  - campo de data novo → `<app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio />`;
-  - tela nova com `<select>` → importar a `ListaSuspensaDirective`;
-  - dois testes falham se uma tela usar `type="date"` ou um `<select>` sem a diretiva.
 
 ## Contexto (campo de valor, #132)
 
@@ -82,12 +69,11 @@ Os campos de dinheiro eram `<input type="number">` puros, cada tela com seu `min
 
 ## Decisão (campo de valor)
 
-Todo campo de **dinheiro** usa o **`app-campo-valor`** (`compartilhado/ui/campo-valor.component.ts`), um `ControlValueAccessor` + `Validator` que entrega ao `ngModel` um `number` (ou `null`), como antes — **a API não muda**.
+Todo campo de **dinheiro** usa o **`app-campo-valor`**, um `ControlValueAccessor` + `Validator` que entrega ao `ngModel` um `number` (ou `null`), como antes — **a API não muda**.
 
 - Lê "1234,56", "1.234,56", "R$ 1.234,56" e "1234.56". Regra do ponto sozinho (*julgamento próprio*): um ponto seguido de exatamente 3 dígitos é milhar ("1.500" = 1500); com outra quantidade é decimal.
-- **Formata enquanto se digita:** os pontos de milhar entram a cada tecla ("124214" vira "124.214"), sem tirar o cursor do lugar (a posição é contada pelos dígitos). Um ponto digitado vira a vírgula decimal, e letras são ignoradas. Backspace/Delete sobre um ponto de milhar apaga o dígito ao lado. **Colar** (ou trocar o texto todo de uma vez) usa a leitura completa. Ao **sair**, completa as casas ("124.214,00").
-- Parâmetros: `moeda` (símbolo dentro do campo, decorativo; o nome acessível diz "em reais"/"em dólares"), `casas` (máximo de casas, mínimo 2; cotação usa 4), `minimo`, `obrigatorio`, `negativo` (saldo inicial, aporte), `compacto` e `rotulo` (célula de tabela), `confirmado` + `enterConfirma` (valor salvo na própria linha, como no orçamento).
-- Erro em texto perto do campo, com `aria-invalid` e `aria-describedby`, só depois de sair do campo (WCAG 3.3.1). O rótulo visível continua (WCAG 3.3.2); o "(R$)" sai do rótulo porque passa para dentro do campo.
+- **Formata enquanto se digita** (os pontos de milhar entram a cada tecla, sem tirar o cursor do lugar); **colar** usa a leitura completa; ao **sair**, completa as casas.
+- Erro em texto perto do campo, só depois de sair dele (WCAG 3.3.1). O rótulo visível continua (WCAG 3.3.2); o "(R$)" sai do rótulo porque passa para dentro do campo.
 - **Ficam como estão:** quantidade de cotas, câmbio, parâmetros da Parametrização (nem todos são dinheiro), dias e o campo da Sugestão de orçamentos (que esconde o valor com "ocultar valores"). "Ocultar valores" não vale nos campos de edição: quem edita precisa ver o número (*julgamento próprio*).
 
 ## Consequências (campo de valor)
@@ -98,4 +84,3 @@ Todo campo de **dinheiro** usa o **`app-campo-valor`** (`compartilhado/ui/campo-
   - a conta dentro do campo ("120+35,50"), opcional na issue, ficou de fora;
   - o componente desenha a "caixa" do campo (fundo, borda, foco) por fora do `<input>`: mudança no visual dos campos precisa olhar os dois;
   - formatar ao digitar exige controlar o cursor à mão (`formatarDigitando`): um caso de edição não previsto pode deixar o cursor num lugar estranho; os testes cobrem digitar no fim e no meio, apagar o ponto de milhar e colar.
-- **Na prática:** campo de dinheiro novo → `<label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>`. Testes em `testes/jest/regressao/campo-valor.spec.ts` (inclui uma trava que falha se um campo de dinheiro voltar a ser `type="number"`) e `testes/jest/usabilidade/campo-valor.spec.ts`.

@@ -28,7 +28,7 @@ O Trabalho é o primeiro módulo do site (ADR 0064): mora em `internal/modulos/t
 ### Emprego e salário
 
 - `Emprego`: empregador, CNPJ (opcional), admissão e saída, regime (CLT; estágio e PJ ficam "sem cálculo de encargos"), jornada mensal (padrão 220 h), dependentes para o IR e a conta onde o salário cai.
-- `SalarioVigencia`: o salário bruto a partir de um mês (sempre o dia 1). "Aumento a partir de…" cria uma linha nova; o salário de um mês é o da última vigência que começou até ele. O emprego nasce com a primeira vigência, no mês da admissão.
+- `SalarioVigencia`: o salário bruto a partir de um mês (sempre o dia 1). "Aumento a partir de…" (um seletor de mês) cria uma linha nova; o salário de um mês é o da última vigência que começou até ele, **sem proporção pelos dias** no mês do aumento (o holerite da empresa pode pagar proporcional; aqui é estimativa). O emprego nasce com a primeira vigência, no mês da admissão, e ela não sai: corrigir a admissão para antes leva o começo dela junto, e a saída não pode ficar antes de uma vigência (revisão do #698).
 
 ### Tabelas oficiais, por vigência
 
@@ -56,7 +56,9 @@ Como ficou na #211:
 - `Holerite` (um por emprego e mês, `Situacao` aberto ou fechado) e `HoleriteLancamento` (horas extras, adicional noturno, outros proventos, vale-transporte, VR/VA, plano de saúde, pensão e outros descontos).
 - Fechado, a coluna `Calculo` guarda o resultado inteiro em JSON (as linhas, os totais, o INSS, o IRRF e o FGTS do mês); aberto, ela fica nula e o cálculo é refeito a cada leitura. *Inferido:* JSON em vez de uma tabela por número, porque o holerite fechado só é lido inteiro, nunca filtrado nem somado no SQL.
 - Reabrir grava `HoleriteReaberto (AAAA-MM)` na auditoria.
-- O salário do mês é proporcional na admissão e na saída, pelo mês comercial de 30 dias; o DSR das horas extras e do adicional noturno é o total ÷ dias úteis × domingos e feriados (o padrão vem do calendário, segunda a sábado; a pessoa acerta os feriados).
+- O salário do mês é proporcional na admissão e na saída, pelo **mês comercial de 30 dias**: a admissão no dia D conta 30 − D + 1 dias, também em fevereiro (quem entra em 15/02 recebe 16/30), e a saída no último dia do mês conta o mês inteiro. *Julgamento* (revisão do #699): há empresas que pagam fevereiro pelos dias do calendário; o comercial é o mais comum na folha.
+- O DSR das horas extras e do adicional noturno é o total ÷ dias úteis × domingos e feriados. O padrão vem do calendário: segunda a sábado são úteis; os domingos e os **feriados nacionais de data fixa** (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12) são descanso. A pessoa acerta os outros feriados e, no mês da admissão ou da saída, os dias do período.
+- **Fica de fora** (*julgamento*, dito no Manual): a hora extra noturna com o adicional noturno na base (OJ 97 da SDI-1 do TST) e a hora noturna reduzida (52'30"). A pessoa lança a hora extra noturna com o percentual somado (1,2 × 1,5 = 80%) e as horas já convertidas.
 - Outro provento (bônus, PLR, comissão) diz se tem INSS e IRRF; a pensão alimentícia e o "outro desconto" marcado deduzem do IR; o vale-transporte desconta o custo do mês até 6% do salário.
 - O lançamento marcado "repetir" passa para o holerite do mês seguinte, quando ele é aberto.
 
@@ -64,6 +66,8 @@ Como ficou na #211:
 
 - Calculado, sem guardar o resultado: (salário de dezembro, ou o do mês da saída, + a média das horas extras, do adicional noturno e do DSR dos holerites do ano) × avos ÷ 12. Os avos contam o mês com 15 dias ou mais de calendário.
 - *Inferido:* a média divide a soma das variáveis do ano pelos avos (e não por 11 ou 12 fixos); bônus e comissão não entram (só o que é hora).
+- **Súmula 347 do TST** (revisão do #700): as horas extras entram pelas horas, com o salário-hora de agora. O valor de cada mês vai corrigido por salário de agora ÷ salário daquele mês, o que dá o mesmo que refazer as horas e vale também para o holerite lido do PDF, que não guarda as horas. O mês sem holerite entra como zero, e a tela diz quantos meses têm holerite.
+- A 2ª parcela nunca fica negativa: a 1ª informada maior que o 13º líquido vira aviso ("a empresa desconta a diferença"), e a 1ª não pode passar do 13º do ano inteiro.
 - 1ª parcela: metade, sem desconto, até 30/11. A tabela `DecimoTerceiro` guarda só o que a pessoa informa (quando e quanto veio, como na 1ª adiantada nas férias).
 - 2ª parcela: o total menos o INSS (sobre o total), o IRRF exclusivo na fonte e a 1ª. *Inferido:* o IR do 13º usa só as deduções da lei (INSS e dependentes), sem o desconto simplificado; a redução da Lei 15.270/2025 vale para ele (art. 3º-A, § 3º).
 - Quem saiu no ano recebe o proporcional na rescisão (#215): a tela avisa.
@@ -71,8 +75,10 @@ Como ficou na #211:
 ### Férias (#213)
 
 - Os períodos aquisitivos saem da admissão (de 12 em 12 meses) e não são guardados; o concessivo são os 12 meses seguintes. Guardados: as faltas sem justificativa de cada período (`FeriasFaltas`, que dão os dias de direito do art. 130 da CLT) e as frações agendadas (`FeriasAgendamento`).
-- Regras conferidas ao agendar: as férias de um período começam depois que ele termina; até 3 frações, uma de 14 dias ou mais e as outras de 5 ou mais (art. 134, § 1º); venda de até 1/3 (art. 143); o total até o direito. *Ficou de fora:* não começar nos 2 dias antes de feriado ou do descanso (art. 134, § 3º), que pede o calendário de feriados.
-- A conta: a remuneração é o salário do mês do início mais a média das horas extras dos 12 meses antes (*inferido:* soma ÷ 12); férias + 1/3 com INSS e IRRF (pelas regras do salário, com o desconto simplificado e a redução da Lei 15.270/2025, *inferido*); o abono pecuniário + 1/3 sem INSS nem IR; pagamento até 2 dias antes (art. 145); a 1ª parcela do 13º junto, se pedida (metade da remuneração).
+- Os períodos contam da admissão pelo calendário: quem entrou em 29/02 faz aniversário em 01/03 nos anos comuns (revisão do #701).
+- Regras conferidas ao agendar: as férias de um período começam depois que ele termina; até 3 frações, uma de 14 dias ou mais e as outras de 5 ou mais (art. 134, § 1º), regra que só vale com fracionamento (o direito de 12 dias vai num bloco só); venda de até 1/3 (art. 143); o total até o direito; a fração não cruza com outra; nada depois da saída; a 1ª parcela do 13º junto uma vez por ano e não em dezembro (ela vence em 30/11); e as faltas novas não deixam o direito menor que o já agendado.
+- **Em dobro:** os dias da fração depois do fim do concessivo são pagos duas vezes (art. 137; Súmula 81 do TST: só os dias de depois). *Ficou de fora:* não começar nos 2 dias antes de feriado ou do descanso (art. 134, § 3º), que pede o calendário de feriados.
+- A conta: a remuneração é o salário do mês do início mais a média das horas extras dos 12 meses antes (*inferido:* soma ÷ 12); férias + 1/3 com INSS e IRRF (pelas regras do salário, com o desconto simplificado e a redução da Lei 15.270/2025, *inferido*; as tabelas são as do mês do início para a fração inteira, mesmo a que entra no mês seguinte, e o INSS das férias é calculado à parte do salário do mês, *inferido*: a folha costuma somar os dois na base do mês); o abono pecuniário + 1/3 sem INSS nem IR; pagamento até 2 dias antes (art. 145); a 1ª parcela do 13º junto, se pedida (metade da remuneração).
 - Vencida (o concessivo passou com saldo) e vencendo (faltam 60 dias ou menos) aparecem na tela.
 
 ## Consequências

@@ -82,3 +82,55 @@ test('Contas a pagar: nome, conta e forma de cobrança alinhados depois do selo'
   // A conta fica embaixo do nome, sem encostar nele.
   expect(conta.y).toBeGreaterThanOrEqual(nome.y + nome.height - 0.5);
 });
+
+/**
+ * #691 (ADR 0063): a conta paga com o cofrinho diz de onde sai o dinheiro e a última baixa que o app deu, com "ajustar
+ * valor" e "desfazer"; o formulário mostra o "Pago com" só em conta do Open Finance, fora do cartão.
+ */
+test('Contas a pagar: pago com o cofrinho (#691)', async ({ page, api, problemas }) => {
+  await page.goto('/contas-a-pagar');
+  const condominio = page.locator('tbody tr').filter({ hasText: 'Condomínio' });
+  await expect(condominio.getByText('cofrinho Emergência (Conta Exemplo)')).toBeVisible();
+  await expect(page.getByText(/paga pelo cofrinho Emergência em \d\d\/\d\d \(automático\)/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pagar Condomínio' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Ajustar o valor pago de Condomínio' }).click();
+  const ajuste = page.getByRole('dialog');
+  await ajuste.getByRole('button', { name: 'Salvar' }).click();
+  await expect.poll(() => api.chamadas.includes('PUT /api/contas-agendadas/4/pagamento-cofrinho')).toBe(true);
+
+  await page.getByRole('button', { name: '+ Nova conta' }).click();
+  const dialogo = page.getByRole('dialog');
+  await expect(dialogo.getByLabel('Pago com o cofrinho')).toHaveCount(0);
+  await dialogo.getByLabel('Conta de pagamento (opcional)').selectOption({ label: 'Conta Exemplo' });
+  // #719: a opção é só o nome do cofrinho; o rótulo já diz que é um cofrinho.
+  await expect(dialogo.getByLabel('Pago com o cofrinho').locator('option'))
+    .toHaveText(['Nenhum (sai do saldo da conta)', 'Emergência', 'Outro…']);
+  await dialogo.getByLabel('Pago com o cofrinho').selectOption({ label: 'Emergência' });
+  await expect(dialogo).toContainText('o “Pagar” lança a despesa e baixa o cofrinho');
+  await dialogo.getByLabel('Pago com o cofrinho').selectOption({ label: 'Outro…' });
+  await expect(dialogo.getByLabel('Nome do cofrinho')).toBeVisible();
+  await dialogo.getByLabel('Como é cobrada').selectOption({ label: 'no cartão de crédito' });
+  await expect(dialogo.getByLabel('Pago com o cofrinho')).toHaveCount(0);
+  expect(problemas.lista).toEqual([]);
+});
+
+/**
+ * #691, parte 2: o aviso "não veio" pergunta se foi paga com um cofrinho e abre o "Pagar" com ele escolhido; o
+ * pagamento sem despesa oferece "lançar pelo cofrinho".
+ */
+test('Contas a pagar: foi paga com um cofrinho e o pagamento sem despesa (#691)', async ({ page, api, problemas }) => {
+  await page.goto('/contas-a-pagar');
+  await page.getByRole('button', { name: 'Foi paga com um cofrinho: Luz' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Pagar · Luz' });
+  await expect(dialogo.getByLabel('Qual cofrinho')).toHaveValue(/Emergência/);
+  await expect(dialogo.getByLabel('Usar este cofrinho nas próximas (o app lança no vencimento)')).toBeChecked();
+  await dialogo.getByRole('button', { name: 'Confirmar pagamento' }).click();
+  await expect.poll(() => api.chamadas.includes('POST /api/contas-agendadas/2/pagar')).toBe(true);
+
+  await expect(page.getByText(/o pagamento de \d\d\/\d\d está sem a despesa/)).toBeVisible();
+  await page.getByRole('button', { name: 'Lançar pelo cofrinho a despesa de Internet' }).click();
+  await page.getByRole('alertdialog', { name: 'Lançar pelo cofrinho' }).getByRole('button', { name: 'Lançar', exact: true }).click();
+  await expect.poll(() => api.chamadas.includes('POST /api/reservas/saida')).toBe(true);
+  expect(problemas.lista).toEqual([]);
+});

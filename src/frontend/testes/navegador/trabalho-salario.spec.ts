@@ -82,10 +82,15 @@ test('Trabalho › Salário: o mês, como calculei e o aumento', async ({ page }
     await page.screenshot({ path: join(pasta, `trabalho-salario-${test.info().project.name}.png`), fullPage: true });
   }
 
-  await historico.getByLabel('Aumento a partir de (o mês)').fill('01/12/2026');
+  // O aumento é por mês (revisão do #698): o seletor começa no mês de hoje; um "Próximo mês" leva ao seguinte.
+  const seguinte = new Date();
+  seguinte.setDate(1);
+  seguinte.setMonth(seguinte.getMonth() + 1);
+  const inicio = `${seguinte.getFullYear()}-${String(seguinte.getMonth() + 1).padStart(2, '0')}-01`;
+  await historico.locator('.aumento-mes').getByRole('button', { name: 'Próximo mês' }).click();
   await historico.getByLabel('Salário bruto novo').fill('6500');
   await historico.getByRole('button', { name: 'Gravar aumento' }).click();
   await expect(page.getByText('Salário gravado a partir de dezembro de 2026.')).toBeVisible();
   await expect(historico.locator('tbody tr')).toHaveCount(3);
-  expect(pedidos).toEqual(['POST /api/trabalho/empregos/1/salarios {"inicio":"2026-12-01","salarioBruto":6500}']);
+  expect(pedidos).toEqual([`POST /api/trabalho/empregos/1/salarios {"inicio":"${inicio}","salarioBruto":6500}`]);
 });

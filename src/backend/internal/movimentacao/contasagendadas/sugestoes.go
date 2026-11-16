@@ -689,7 +689,8 @@ func (s *Servico) lerLancamentos(ctx context.Context, desde, hoje tipos.Data) ([
 		INNER JOIN "Conta" AS co ON t."ContaId" = co."Id"
 		LEFT JOIN "Categoria" AS c ON t."CategoriaId" = c."Id"
 		WHERE t."Data" >= ? AND t."Data" <= ? AND t."Tipo" = ? AND t."TransferenciaGrupo" IS NULL
-			AND NOT t."IgnorarRelatorios" AND t."ParcelaTotal" IS NULL AND co."Tipo" <> ? AND NOT co."Arquivada"
+			AND NOT t."IgnorarRelatorios" AND t."ParcelaTotal" IS NULL AND t."ReservaNome" IS NULL AND co."Tipo" <> ?
+			AND NOT co."Arquivada"
 		ORDER BY t."Data" DESC`, desde, hoje, tipoDespesa, tipoContaInvestimento)
 	if err != nil {
 		return nil, fmt.Errorf("ler os lançamentos das sugestões: %w", err)

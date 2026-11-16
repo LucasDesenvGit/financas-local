@@ -95,11 +95,28 @@ func (c *Catalogo) definirHTTP(w http.ResponseWriter, r *http.Request) {
 // antes se o módulo está ligado: desligado, não roda (nem sai nada para a internet). Quem para é o ctx; quem espera é o
 // emAndamento de quem chamou.
 func (c *Catalogo) IniciarTarefas(ctx context.Context, emAndamento *sync.WaitGroup) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	for _, m := range c.modulos {
 		id := m.Info().ID
 		for _, t := range m.Tarefas() {
 			ciclo := c.cicloSeLigado(id, t.Ciclo)
-			emAndamento.Go(func() { tarefas.Periodica(ctx, c.log, t.Nome, t.Atraso, t.Intervalo, ciclo) })
+			sinal := make(chan struct{}, 1)
+			c.sinais[id] = append(c.sinais[id], sinal)
+			emAndamento.Go(func() { tarefas.PeriodicaOuAoSinal(ctx, c.log, t.Nome, t.Atraso, t.Intervalo, sinal, ciclo) })
+		}
+	}
+}
+
+// acordar avisa as tarefas do módulo que ele acabou de ser ligado: elas rodam na hora, sem esperar o próximo ciclo
+// (até 45 minutos nas Notícias). Não espera ninguém: o sinal que já está no canal vale pelos dois.
+func (c *Catalogo) acordar(id string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, s := range c.sinais[id] {
+		select {
+		case s <- struct{}{}:
+		default:
 		}
 	}
 }

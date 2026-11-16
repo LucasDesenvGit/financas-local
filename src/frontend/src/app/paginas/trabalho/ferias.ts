@@ -23,6 +23,19 @@ export function primeiroDiaPossivel(p: PeriodoFerias): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** O "tirar tudo × vender 1/3" pelo direito do período (revisão do #701): 24 de direito dá 24 × 16 e vender 8. */
+export function opcoesDaVenda(direito: number): { tirar: number; vendendo: number; vender: number } {
+  const vender = Math.floor(direito / 3);
+  return { tirar: direito, vendendo: direito - vender, vender };
+}
+
+/** As faltas digitadas: um número inteiro de 0 a 366, ou null (campo vazio ou errado não grava zero). */
+export function faltasDigitadas(valor: number | string | null): number | null {
+  if (valor === null || valor === '') return null;
+  const n = Number(valor);
+  return Number.isInteger(n) && n >= 0 && n <= 366 ? n : null;
+}
+
 /** Quanto a venda muda o que cai na conta: positivo, vender dá mais dinheiro agora. */
 export function diferencaDaVenda(trinta: number, vendendo: number): number {
   return Math.round((vendendo - trinta) * 100) / 100;
