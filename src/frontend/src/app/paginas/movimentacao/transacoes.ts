@@ -211,6 +211,14 @@ export function lerFiltroDaUrl(params: ParametrosUrl, base: FiltroTransacoes, ca
   };
 }
 
+/**
+ * #688 (ADR 0018): a navegação que terminou mudou a URL por fora da tela aberta, e a tela relê o filtro dela. Não é a
+ * navegação que abriu a tela (o ngOnInit já leu) nem a URL que a própria tela gravou por último.
+ */
+export function urlVeioDeFora(navegacao: number, url: string, abriuATela: number | undefined, gravadaPelaTela: string | null): boolean {
+  return navegacao !== abriuATela && url !== gravadaPelaTela;
+}
+
 /** O que vai para a URL além do filtro. */
 export interface ExtrasDaUrl {
   categorias: string[];

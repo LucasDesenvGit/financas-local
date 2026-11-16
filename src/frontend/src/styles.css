@@ -1023,6 +1023,12 @@ a.categoria-com-icone:hover { text-decoration: underline; }
   font: inherit; font-weight: 650; background: none; border: 0; cursor: pointer; color: var(--primaria-forte);
   padding: 0 4px; min-height: 24px; text-decoration: underline; text-underline-offset: 2px;
 }
+/* #688: no celular, a ação ("Ver em Transações") vai para a linha de baixo do texto, para ele não ficar espremido numa
+   coluna estreita; o × fica na primeira linha. */
+@media (max-width: 760px) {
+  .aviso:has(.aviso-acao) { display: grid; grid-template-columns: auto 1fr auto; }
+  .aviso:has(.aviso-acao) .aviso-acao { grid-column: 2; grid-row: 2; justify-self: start; margin-left: -4px; }
+}
 
 /* ---------------------------------------------------------------- Entrada */
 .tela-entrada {

@@ -43,12 +43,16 @@ type Entrada struct {
 	Ano           int
 	Avos          int
 	SalarioBase   tipos.Decimal // o de dezembro, ou o do mês da saída
-	SomaVariaveis tipos.Decimal // horas extras, adicional noturno e DSR dos holerites do ano
-	Dependentes   int64
-	PrimeiraEm    *tipos.Data    // informada: quando veio a 1ª parcela
-	PrimeiraValor *tipos.Decimal // informada: quanto veio
-	Inss          encargos.TabelaInss
-	Irrf          encargos.TabelaIrrf
+	SomaVariaveis tipos.Decimal // horas extras, adicional noturno e DSR dos holerites do ano, pelo salário-hora de agora
+	// MesesComHolerite: quantos meses do ano têm holerite calculado; os outros entram como zero na média.
+	MesesComHolerite int
+	Dependentes      int64
+	PrimeiraEm       *tipos.Data    // informada: quando veio a 1ª parcela
+	PrimeiraValor    *tipos.Decimal // informada: quanto veio
+	// PrimeiraComFerias: a 1ª veio com as férias do ano (a data é a do pagamento delas).
+	PrimeiraComFerias bool
+	Inss              encargos.TabelaInss
+	Irrf              encargos.TabelaIrrf
 }
 
 // Parcela é uma parcela do 13º.
@@ -56,6 +60,10 @@ type Parcela struct {
 	Valor     tipos.Decimal `json:"valor"`
 	Data      tipos.Data    `json:"data"`
 	Informada bool          `json:"informada"` // a pessoa disse quanto e quando veio
+	// ValorInformado: o valor veio da pessoa (e não da metade calculada); a tela não grava o calculado como informado.
+	ValorInformado bool `json:"valorInformado"`
+	// ComFerias: a 1ª veio com as férias (a data é a do pagamento delas, e o valor, a metade calculada).
+	ComFerias bool `json:"comFerias"`
 }
 
 // Calculo é o 13º do ano.
@@ -68,8 +76,12 @@ type Calculo struct {
 	Primeira       Parcela       `json:"primeira"`
 	Inss           encargos.Inss `json:"inss"`
 	Irrf           encargos.Irrf `json:"irrf"`
-	Segunda        Parcela       `json:"segunda"` // o líquido da 2ª
-	Liquido        tipos.Decimal `json:"liquido"` // 1ª + 2ª
+	Segunda        Parcela       `json:"segunda"` // o líquido da 2ª, nunca negativo
+	// Excedente: a 1ª parcela informada passou do 13º líquido; a 2ª fica zero e a empresa desconta a diferença.
+	Excedente tipos.Decimal `json:"excedente"`
+	Liquido   tipos.Decimal `json:"liquido"` // o 13º líquido: total − INSS − IRRF
+	// MesesComHolerite: os meses do ano com holerite calculado; menos que os avos, a média das horas extras sai menor.
+	MesesComHolerite int `json:"mesesComHolerite"`
 }
 
 var doze = decimal.NewFromInt(12)
@@ -84,14 +96,15 @@ func Calcular(e Entrada) Calculo {
 		media = e.SomaVariaveis.Decimal().Div(avos).Round(2)
 	}
 	total := e.SalarioBase.Decimal().Add(media).Mul(avos).Div(doze).Round(2)
-	c := Calculo{Ano: e.Ano, Avos: e.Avos, SalarioBase: e.SalarioBase, MediaVariaveis: tipos.DeDecimal(media), Total: tipos.DeDecimal(total)}
+	c := Calculo{Ano: e.Ano, Avos: e.Avos, SalarioBase: e.SalarioBase, MediaVariaveis: tipos.DeDecimal(media), Total: tipos.DeDecimal(total),
+		MesesComHolerite: e.MesesComHolerite}
 
 	c.Primeira = Parcela{Valor: centavos(total.Div(decimal.NewFromInt(2))), Data: tipos.NovaData(e.Ano, 11, 30)}
 	if e.PrimeiraValor != nil {
-		c.Primeira.Valor, c.Primeira.Informada = centavos(e.PrimeiraValor.Decimal()), true
+		c.Primeira.Valor, c.Primeira.Informada, c.Primeira.ValorInformado = centavos(e.PrimeiraValor.Decimal()), true, true
 	}
 	if e.PrimeiraEm != nil {
-		c.Primeira.Data, c.Primeira.Informada = *e.PrimeiraEm, true
+		c.Primeira.Data, c.Primeira.Informada, c.Primeira.ComFerias = *e.PrimeiraEm, true, e.PrimeiraComFerias
 	}
 
 	// O IR do 13º é exclusivo na fonte, separado do salário de dezembro: base = total - INSS - dependentes, sem o
@@ -100,8 +113,10 @@ func Calcular(e Entrada) Calculo {
 	semSimplificado.DescontoSimplificado = tipos.DeDecimal(decimal.Zero)
 	c.Inss = encargos.CalcularInss(e.Inss, c.Total)
 	c.Irrf = encargos.CalcularIrrf(semSimplificado, c.Total, c.Inss.Valor, int(e.Dependentes), tipos.DeDecimal(decimal.Zero))
-	segunda := total.Sub(c.Inss.Valor.Decimal()).Sub(c.Irrf.Valor.Decimal()).Sub(c.Primeira.Valor.Decimal())
-	c.Segunda = Parcela{Valor: centavos(segunda), Data: tipos.NovaData(e.Ano, 12, 20)}
-	c.Liquido = centavos(c.Primeira.Valor.Decimal().Add(segunda))
+	liquido := total.Sub(c.Inss.Valor.Decimal()).Sub(c.Irrf.Valor.Decimal())
+	segunda := liquido.Sub(c.Primeira.Valor.Decimal())
+	c.Segunda = Parcela{Valor: centavos(decimal.Max(segunda, decimal.Zero)), Data: tipos.NovaData(e.Ano, 12, 20)}
+	c.Excedente = centavos(decimal.Max(segunda.Neg(), decimal.Zero))
+	c.Liquido = centavos(liquido)
 	return c
 }

@@ -15,7 +15,7 @@ Tudo roda em `src/frontend`, com o build de produção e a API falsa (nenhum dad
 NAVEGADOR=chromium npx playwright test testes/navegador/<tela>.spec.ts --project=celular
 ```
 
-Teste novo da tela: `--repeat-each=5`, nos dois projetos (regra do `CLAUDE.md`). O que só vale no celular usa `test.skip(({ isMobile }) => !isMobile, 'só no projeto de celular')`, como o `celular.spec.ts`.
+Teste novo da tela: `--repeat-each=5`, nos dois projetos (`CONTRIBUINDO.md`, "Testes rápidos"). O que só vale no celular usa `test.skip(({ isMobile }) => !isMobile, 'só no projeto de celular')`, como o `celular.spec.ts`.
 
 ## 2. Prints na largura do celular
 
@@ -25,17 +25,17 @@ Olhe cada print. **Não diga que conferiu sem olhar.**
 
 ## 3. O que conferir, item por item
 
-Cada item diz de onde vem. Escreva no fim quais conferiu e como.
+Cada item diz de onde vem; o critério das fontes de WCAG e Nielsen está em `docs/UI-UX.md`. Escreva no fim quais conferiu e como.
 
 | O que | Como conferir | Fonte |
 |---|---|---|
-| **Sem rolagem para o lado** | `document.documentElement.scrollWidth - window.innerWidth <= 1` na tela mudada; texto comprido sem espaço (URL, IP, impressão digital, nome de fundo) com `overflow-wrap: anywhere` | WCAG 2.2, 1.4.10 *Reflow* |
-| **Alvo de toque ≥ 24 px** | `boundingBox()` de cada botão, link e caixa novos: altura e largura `toBeGreaterThanOrEqual(23.5)` (a folga de 0,5 da CI) | WCAG 2.2, 2.5.8 *Target Size (Minimum)* |
-| **Nada só no hover** | Dica, menu ou botão que só aparece ao passar o mouse precisa de um toque ou de foco que mostre o mesmo; `title=` não serve | WCAG 2.2, 1.4.13 *Content on Hover or Focus* |
+| **Sem rolagem para o lado** | `document.documentElement.scrollWidth - window.innerWidth <= 1` na tela mudada; texto comprido sem espaço (URL, IP, impressão digital, nome de fundo) quebra com `overflow-wrap: anywhere` | WCAG 2.2, 1.4.10 *Reflow* |
+| **Alvo de toque ≥ 24 px** | `boundingBox()` de cada botão, link e caixa novos, com a folga de 0,5 px do `CONTRIBUINDO.md` | WCAG 2.2, 2.5.8 *Target Size (Minimum)* |
+| **Nada só no hover** | Dica, menu ou botão que só aparece ao passar o mouse precisa de um toque ou de foco que mostre o mesmo | WCAG 2.2, 1.4.13 *Content on Hover or Focus* |
 | **Teclado certo** | Valor em dinheiro com o `<app-campo-valor>` (`inputmode="decimal"`), data com o `<app-campo-data>`, e-mail com `type="email"`, senha com o `autocomplete` certo | Nielsen 5 (prevenção de erro) e 7 (eficiência) |
 | **Campo visível com o teclado aberto** | Na janela ou formulário que abre embaixo, o campo focado não fica atrás do teclado (a janela rola, ou o campo sobe); no Playwright, `focus()` e conferir que o campo está dentro da `viewportSize()` menos ~40% da altura | *julgamento* (o teclado do emulador não aparece no Playwright) |
 | **Fonte do campo ≥ 16 px** | Abaixo disso o Safari do iPhone dá zoom ao focar | *julgamento*, comportamento conhecido do iOS, não validado aqui |
-| **O toque rola a página** | Componente que fecha ao rolar aguenta a rolagem do próprio toque (o calendário fechava antes de aparecer, #264) | `CLAUDE.md` |
+| **O toque rola a página** | Componente que fecha ao rolar aguenta a rolagem do próprio toque (o calendário fechava antes de aparecer, #264) | `CONTRIBUINDO.md`, "Testes rápidos" |
 | **Nada fixo cobrindo conteúdo** | Cabeçalho ou barra fixa não esconde o fim de uma janela nem o botão de salvar | Nielsen 8 |
 
 ## 4. Num celular de verdade (quando der)

@@ -1,6 +1,17 @@
-import { LancamentoFgts, MesFgts, MotivoSaqueFgts as M, TipoLancamentoFgts as T } from '../../core/modelos';
+import { Emprego, LancamentoFgts, MesFgts, MotivoSaqueFgts as M, RegimeEmprego, TipoLancamentoFgts as T } from '../../core/modelos';
+import { empregoAtual } from './salario';
 
 /** #216 (ADR 0066): as regras da tela Trabalho › FGTS, sem Angular (ADR 0059). A estimativa é da API. */
+
+/** Os empregos com FGTS (CLT), os atuais primeiro (revisão do #702: o FGTS de um CLT antigo continua à mão). */
+export function empregosComFgts(lista: Emprego[]): Emprego[] {
+  return lista.filter((e) => e.regime === RegimeEmprego.Clt);
+}
+
+/** O emprego que a tela abre: o atual com FGTS; sem nenhum CLT, o atual (a API diz que ele não tem FGTS). */
+export function empregoDoFgts(lista: Emprego[]): Emprego | null {
+  return empregoAtual(empregosComFgts(lista)) ?? empregoAtual(lista);
+}
 
 export const TIPOS: { valor: T; rotulo: string }[] = [
   { valor: T.Conferencia, rotulo: 'Saldo que vi no app do FGTS' },

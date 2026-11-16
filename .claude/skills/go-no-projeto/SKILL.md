@@ -6,7 +6,7 @@ model: sonnet
 
 # Go no Finanças Local
 
-Você escreve e revisa o Go do projeto, que é o back-end inteiro desde a #86 (o .NET saiu e está na tag `v-ultimo-dotnet`). O que vale **sempre** está aqui. A skill `migrar-para-go` é a da migração, que terminou: serve só para consultar como um assunto veio do C#.
+Você escreve e revisa o Go do projeto, que é o back-end inteiro desde a #86 (o .NET saiu e está na tag `v-ultimo-dotnet`). O que vale **sempre** está aqui. Como um assunto era no C# (e a skill da migração, que saiu na #727): a tag `v-ultimo-dotnet`.
 
 **Cada regra mora num lugar só.** Esta skill diz o caminho e aponta a fonte; não copie a regra para cá. Achou uma regra aqui que diverge da fonte, vale a fonte: corrija a skill no mesmo PR.
 
@@ -25,7 +25,7 @@ Você escreve e revisa o Go do projeto, que é o back-end inteiro desde a #86 (o
 
 | Arquivo | Quando ler |
 |---|---|
-| [`referencias/estilo.md`](referencias/estilo.md) | antes de escrever código Go, e sempre que um guia de fora (Effective Go, Google, Uber) parecer dizer outra coisa |
+| [`referencias/estilo.md`](referencias/estilo.md) | antes de escrever código Go (inclusive conta com dinheiro, texto com acento e enum), e sempre que um guia de fora (Effective Go, Google, Uber) parecer dizer outra coisa |
 | [`referencias/exemplos.md`](referencias/exemplos.md) | antes de criar pacote, rota, consulta, cliente externo ou tarefa: copie a forma de um pacote que já existe |
 | [`referencias/revisao.md`](referencias/revisao.md) | ao revisar um PR com Go, e no fim do seu próprio trabalho |
 | [`referencias/links.md`](referencias/links.md) | ao escrever a "🎓 Aula rápida" ou citar o Go como fato: só links daqui ou conferidos na hora |
@@ -34,12 +34,12 @@ Você escreve e revisa o Go do projeto, que é o back-end inteiro desde a #86 (o
 
 Todo o back-end é Go: assunto novo ganha um pacote, e mudança num assunto fica no pacote dele.
 
-1. **Issue e branch** como em todo PR (`CLAUDE.md`, "Git / commits").
+1. **Issue e branch** como em todo PR (`CLAUDE.md`, "Git / commits"). **Issue feita em partes:** branch com `git switch -c`, sem `gh issue develop`: a branch criada pela issue fica ligada a ela, e o merge da parte 1 a fecha mesmo sem `Closes` (#583). Só a última parte fecha a issue.
 2. **ADR antes do código** quando a funcionalidade trouxer dependência, saída de rede, tabela além da rotina ou padrão novo (`CLAUDE.md`, "Decisões de arquitetura").
 3. **Banco:** tabela nova em `banco/01-estrutura.sql` (o Go só cria tabela por esses scripts, no `-aplicar-esquema`), `go generate ./...` e `docs/BANCO-DE-DADOS.md`. Consulta pelo `sqlc` (`internal/plataforma/banco/consultas/sql`, depois `go generate ./...`) ou com `?`.
 4. **Pacote `internal/<area>/<assunto>`** com HTTP → regra → banco dentro (ADR 0056), a linha do assunto em `dependencias` do teste de arquitetura, com o motivo, o pacote na tabela de `docs/arquitetura/componentes.md` (o mesmo teste confere) e o termo novo em `docs/arquitetura/dominio.md`.
 5. **Rotas** pelo `Registrar(mux, ...)` do pacote e uma linha em `internal/api/api.go` (README do Go, "Rota nova"), com os casos de contrato num número livre de `20` a `89`.
-6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote novo nasce com 80% de cobertura (`verificar-cobertura-go.py`) e entra em `scripts/ci/go/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/go/mutacao-go-fora.txt`, com o motivo: a CI falha com pacote que não está em nenhum dos dois (#456).
+6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote novo nasce com 80% de cobertura (`verificar-cobertura-go.py`) e entra em `scripts/ci/go/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/go/mutacao-go-fora.txt`, com o motivo. Fora dos dois, o PR o mede sem piso e o aviso da CI dá a linha a pôr na lista, com a eficácia medida (#716).
 7. **Front-end, Manual, diagramas** (ADR 0055) e `docs/DADOS-PESSOAIS.md` se houver dado pessoal novo: no mesmo PR, como manda o `CLAUDE.md`.
 
 ## Mudança em Go que já existe
@@ -67,4 +67,4 @@ python3 ../../scripts/ci/go/mutacao-go.py internal/<area>/<assunto>   # pacote c
 
 ## Como entregar
 
-Separe o que conferiu no código (com `arquivo:linha`) do que é julgamento seu, diga o que rodou e o resultado (inclusive o que falhou ou não rodou), e o que ficou de fora, com o motivo. PR: o checklist do `CONTRIBUINDO.md` e do modelo de PR; merge só com o "pode" de quem pediu, para aquele PR.
+Separe o que conferiu no código (com `arquivo:linha`) do que é julgamento seu, diga o que rodou e o resultado (inclusive o que falhou ou não rodou), e o que ficou de fora, com o motivo. PR: o checklist do `CONTRIBUINDO.md` e do modelo de PR; merge só com o "pode" de quem pediu, dado naquele momento e para aquele PR (OK antigo ou de outro PR não vale). Quem quiser a trava também no Claude Code põe `"permissions": {"ask": ["Bash(gh pr merge *)"]}` no próprio `~/.claude/settings.json`.

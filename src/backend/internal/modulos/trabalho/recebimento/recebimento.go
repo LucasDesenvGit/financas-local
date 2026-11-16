@@ -50,6 +50,8 @@ type Transacao struct {
 	Valor     tipos.Decimal `json:"valor"`
 	Livre     tipos.Decimal `json:"livre"` // o que ainda não está ligado a outro holerite
 	Salario   bool          `json:"-"`     // o tipo de lançamento é salário (ADR 0025)
+	// Transferencia: a transferência entre contas suas (ADR 0031) não é salário e nunca vira sugestão.
+	Transferencia bool `json:"-"`
 }
 
 // Sugestao é um crédito com os motivos e a pontuação.
@@ -59,15 +61,24 @@ type Sugestao struct {
 	Pontos  int      `json:"-"`
 }
 
-// Pontuar diz o quanto o crédito parece o salário do holerite e por quê. Pontos 2 ou mais viram sugestão.
+// ParteMinima: o crédito menor que o líquido só é "a parte" (o adiantamento ou o saldo) a partir de 20% dele; um PIX
+// de R$ 50 não é (revisão do #703).
+var ParteMinima = decimal.RequireFromString("0.20")
+
+// Pontuar diz o quanto o crédito parece o salário do holerite e por quê. Vira sugestão com 2 pontos ou mais e pelo
+// menos um motivo forte (o valor, o banco marcou como salário, cita o empregador): a parte e a conta do salário, sozinhas,
+// não bastam (revisão do #703). A transferência entre contas suas nunca vira sugestão.
 func Pontuar(t Transacao, liquido *tipos.Decimal, empregador string, contaDoSalario *int64) (int, []string) {
 	pontos, motivos := 0, []string{}
+	if t.Transferencia {
+		return 0, motivos
+	}
 	livre := t.Livre.Decimal()
 	if liquido != nil && liquido.Decimal().IsPositive() {
 		l := liquido.Decimal()
 		if livre.Sub(l).Abs().LessThanOrEqual(l.Mul(Folga)) {
 			pontos, motivos = pontos+3, append(motivos, MotivoValor)
-		} else if livre.LessThan(l) {
+		} else if livre.LessThan(l) && !livre.LessThan(l.Mul(ParteMinima)) {
 			pontos, motivos = pontos+1, append(motivos, MotivoParte)
 		}
 	}
@@ -81,6 +92,19 @@ func Pontuar(t Transacao, liquido *tipos.Decimal, empregador string, contaDoSala
 		pontos, motivos = pontos+1, append(motivos, MotivoContaSalario)
 	}
 	return pontos, motivos
+}
+
+// Sugerir diz se a pontuação vira sugestão: 2 pontos ou mais com um motivo forte.
+func Sugerir(pontos int, motivos []string) bool {
+	if pontos < 2 {
+		return false
+	}
+	for _, m := range motivos {
+		if m == MotivoValor || m == MotivoSalario || m == MotivoEmpregador {
+			return true
+		}
+	}
+	return false
 }
 
 // citaEmpregador: alguma palavra do empregador com 4 letras ou mais (sem "Ltda" e "Eireli") aparece inteira na
@@ -100,6 +124,11 @@ type Recebimento struct {
 	Id int64 `json:"id"`
 	Transacao
 	ValorLigado tipos.Decimal `json:"valorLigado"`
+	// Sumiu: a sincronização trocou a transação e o site ainda não achou a nova (a conta, o valor e a data são os de
+	// quando ligou). Conta como recebido; se não voltar, desligue.
+	Sumiu bool `json:"sumiu"`
+	// Debito: a transação virou débito; não conta como recebido, e dá para desligar.
+	Debito bool `json:"debito"`
 }
 
 // Resposta é o recebimento do holerite: o líquido, o que já foi ligado, a diferença e as sugestões.
@@ -136,6 +165,11 @@ const selecaoTransacao = `SELECT t."Id", t."Data", t."Descricao", t."DescricaoOr
 
 // lerTransacoes lê os créditos (valor positivo, filtrado em Go) da consulta, com o que está livre (fora do holerite dado).
 func (s *Servico) lerTransacoes(ctx context.Context, holeriteId int64, filtro string, args ...any) ([]Transacao, error) {
+	return s.lerTransacoesComDebitos(ctx, holeriteId, false, filtro, args...)
+}
+
+// lerTransacoesComDebitos: com debitos, os débitos vêm também (a transação ligada que virou débito).
+func (s *Servico) lerTransacoesComDebitos(ctx context.Context, holeriteId int64, debitos bool, filtro string, args ...any) ([]Transacao, error) {
 	linhas, err := s.db.QueryContext(ctx, selecaoTransacao+` WHERE `+filtro+` ORDER BY t."Data", t."Id"`,
 		append([]any{holeriteId}, args...)...)
 	if err != nil {
@@ -154,9 +188,10 @@ func (s *Servico) lerTransacoes(ctx context.Context, holeriteId int64, filtro st
 			&t.Conta, &ligados); err != nil {
 			return nil, err
 		}
-		if !t.Valor.Decimal().IsPositive() {
+		if !debitos && !t.Valor.Decimal().IsPositive() {
 			continue // só crédito paga o salário (dinheiro se compara em Go, nunca no SQL)
 		}
+		t.Transferencia = doSistema
 		t.Valor = tipos.DeDecimal(t.Valor.Decimal().Round(2))
 		livre := t.Valor.Decimal()
 		for _, parte := range strings.Split(ligados, ";") {
@@ -187,37 +222,30 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 	if h.Calculo != nil {
 		r.Liquido = &h.Calculo.Liquido
 	}
-	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "TransacaoId", "Valor" FROM "HoleriteRecebimento" WHERE "HoleriteId" = ? ORDER BY "Id"`, holeriteId)
+	if err := s.religar(ctx, holeriteId); err != nil {
+		return Resposta{}, err
+	}
+	ligacoes, err := s.ligacoes(ctx, holeriteId)
 	if err != nil {
-		return Resposta{}, fmt.Errorf("ler os recebimentos: %w", err)
+		return Resposta{}, err
 	}
-	type ligacao struct {
-		id, transacao int64
-		valor         tipos.Decimal
-	}
-	var ligacoes []ligacao
-	for linhas.Next() {
-		var l ligacao
-		if err := linhas.Scan(&l.id, &l.transacao, &l.valor); err != nil {
-			linhas.Close()
-			return Resposta{}, err
-		}
-		ligacoes = append(ligacoes, l)
-	}
-	linhas.Close()
 	recebido := decimal.Zero
 	ligadas := map[int64]bool{}
 	for _, l := range ligacoes {
-		ts, err := s.lerTransacoes(ctx, holeriteId, `t."Id" = ?`, l.transacao)
-		if err != nil {
-			return Resposta{}, err
+		rec := Recebimento{Id: l.id, ValorLigado: tipos.DeDecimal(l.valor.Decimal().Round(2)), Sumiu: l.transacao == nil,
+			Transacao: Transacao{Data: l.data, Descricao: l.descricao, ContaId: l.contaId, Valor: l.valorTransacao}}
+		if l.transacao != nil {
+			ts, err := s.lerTransacoesComDebitos(ctx, holeriteId, true, `t."Id" = ?`, *l.transacao)
+			if err != nil {
+				return Resposta{}, err
+			}
+			rec.Transacao, rec.Debito = ts[0], !ts[0].Valor.Decimal().IsPositive()
+			ligadas[*l.transacao] = true
 		}
-		if len(ts) == 0 {
-			continue // a transação virou débito: a ligação fica sem efeito
+		if !rec.Debito {
+			recebido = recebido.Add(l.valor.Decimal())
 		}
-		r.Recebimentos = append(r.Recebimentos, Recebimento{Id: l.id, Transacao: ts[0], ValorLigado: tipos.DeDecimal(l.valor.Decimal().Round(2))})
-		recebido = recebido.Add(l.valor.Decimal())
-		ligadas[l.transacao] = true
+		r.Recebimentos = append(r.Recebimentos, rec)
 	}
 	r.Recebido = tipos.DeDecimal(recebido.Round(2))
 	if r.Liquido != nil {
@@ -236,7 +264,7 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 			continue
 		}
 		pontos, motivos := Pontuar(t, r.Liquido, e.Empregador, e.ContaId)
-		if pontos >= 2 {
+		if Sugerir(pontos, motivos) {
 			r.Sugestoes = append(r.Sugestoes, Sugestao{Transacao: t, Motivos: motivos, Pontos: pontos})
 		} else {
 			r.Outros = append(r.Outros, t)
@@ -265,37 +293,142 @@ func (s *Servico) Ligar(ctx context.Context, holeriteId, transacaoId int64, valo
 			return Resposta{}, erroDeValidacao("Este crédito já está ligado ao holerite.")
 		}
 	}
-	livre := ts[0].Livre.Decimal()
-	parte := livre
-	if valor != nil {
-		parte = valor.Decimal()
-	} else if atual.Liquido != nil {
-		falta := atual.Liquido.Decimal().Sub(atual.Recebido.Decimal())
-		if falta.IsPositive() && falta.LessThan(parte) {
+	t := ts[0]
+	falta := decimal.Zero
+	if atual.Liquido != nil {
+		falta = atual.Liquido.Decimal().Sub(atual.Recebido.Decimal())
+	}
+	// A conferência do que sobra do crédito e a gravação vão na mesma transação: dois pedidos juntos não ligam o crédito
+	// acima do valor dele (revisão do #703). A parte é arredondada antes de conferir.
+	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+		var ligados string
+		if err := tx.QueryRowContext(ctx, `SELECT COALESCE(GROUP_CONCAT("Valor", ';'), '') FROM "HoleriteRecebimento" WHERE "TransacaoId" = ?`,
+			transacaoId).Scan(&ligados); err != nil {
+			return fmt.Errorf("ler o que já está ligado: %w", err)
+		}
+		livre := t.Valor.Decimal()
+		for _, p := range strings.Split(ligados, ";") {
+			if v, err := decimal.NewFromString(p); err == nil {
+				livre = livre.Sub(v)
+			}
+		}
+		parte := livre
+		if valor != nil {
+			parte = valor.Decimal()
+		} else if falta.IsPositive() && falta.LessThan(parte) {
 			parte = falta
 		}
-	}
-	if !parte.IsPositive() || parte.GreaterThan(livre) {
-		return Resposta{}, erroDeValidacao(fmt.Sprintf("A parte ligada vai de R$ 0,01 até o que sobra do crédito (%s).",
-			strings.ReplaceAll(livre.StringFixed(2), ".", ",")))
-	}
-	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
-		if _, err := tx.ExecContext(ctx, `INSERT INTO "HoleriteRecebimento" ("HoleriteId", "TransacaoId", "Valor", "CriadoEm")
-			VALUES (?, ?, ?, ?)`, holeriteId, transacaoId, tipos.DeDecimal(parte.Round(2)), tipos.NovaDataHora(s.relogio.Agora())); err != nil {
+		parte = parte.Round(2)
+		if !parte.IsPositive() || parte.GreaterThan(livre) {
+			return erroDeValidacao(fmt.Sprintf("A parte ligada vai de R$ 0,01 até o que sobra do crédito (%s).",
+				strings.ReplaceAll(decimal.Max(livre, decimal.Zero).StringFixed(2), ".", ",")))
+		}
+		if _, err := tx.ExecContext(ctx, `INSERT INTO "HoleriteRecebimento" ("HoleriteId", "TransacaoId", "Valor", "ContaId", "TransacaoData",
+			"TransacaoValor", "TransacaoDescricao", "CriadoEm") VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, holeriteId, transacaoId, tipos.DeDecimal(parte),
+			t.ContaId, t.Data, t.Valor, t.Descricao, tipos.NovaDataHora(s.relogio.Agora())); err != nil {
 			return fmt.Errorf("ligar o crédito: %w", err)
 		}
-		_, err := tx.ExecContext(ctx, `UPDATE "Transacao" SET "CategoriaId" = (SELECT "Id" FROM "Categoria" WHERE "Nome" = 'Salário'
-			AND "Tipo" = 2 ORDER BY "Id" LIMIT 1), "CategoriaManual" = 1 WHERE "Id" = ? AND "CategoriaId" IS NULL
-			AND EXISTS (SELECT 1 FROM "Categoria" WHERE "Nome" = 'Salário' AND "Tipo" = 2)`, transacaoId)
-		if err != nil {
-			return fmt.Errorf("pôr a categoria: %w", err)
-		}
-		return nil
+		return categoriaSalario(ctx, tx, transacaoId)
 	})
 	if err != nil {
 		return Resposta{}, err
 	}
 	return s.Obter(ctx, holeriteId)
+}
+
+// categoriaSalario põe a transação sem categoria em "Salário", como escolha manual (as regras não mexem mais).
+func categoriaSalario(ctx context.Context, tx *sql.Tx, transacaoId int64) error {
+	_, err := tx.ExecContext(ctx, `UPDATE "Transacao" SET "CategoriaId" = (SELECT "Id" FROM "Categoria" WHERE "Nome" = 'Salário'
+		AND "Tipo" = 2 ORDER BY "Id" LIMIT 1), "CategoriaManual" = 1 WHERE "Id" = ? AND "CategoriaId" IS NULL
+		AND EXISTS (SELECT 1 FROM "Categoria" WHERE "Nome" = 'Salário' AND "Tipo" = 2)`, transacaoId)
+	if err != nil {
+		return fmt.Errorf("pôr a categoria: %w", err)
+	}
+	return nil
+}
+
+// ligacao é uma linha da HoleriteRecebimento, com a transação como estava ao ligar.
+type ligacao struct {
+	id             int64
+	transacao      *int64 // nil: a sincronização trocou a transação
+	valor          tipos.Decimal
+	contaId        int64
+	data           tipos.Data
+	valorTransacao tipos.Decimal
+	descricao      string
+}
+
+func (s *Servico) ligacoes(ctx context.Context, holeriteId int64) ([]ligacao, error) {
+	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "TransacaoId", "Valor", "ContaId", "TransacaoData", "TransacaoValor", "TransacaoDescricao"
+		FROM "HoleriteRecebimento" WHERE "HoleriteId" = ? ORDER BY "Id"`, holeriteId)
+	if err != nil {
+		return nil, fmt.Errorf("ler os recebimentos: %w", err)
+	}
+	defer linhas.Close()
+	var lista []ligacao
+	for linhas.Next() {
+		var l ligacao
+		if err := linhas.Scan(&l.id, &l.transacao, &l.valor, &l.contaId, &l.data, &l.valorTransacao, &l.descricao); err != nil {
+			return nil, err
+		}
+		lista = append(lista, l)
+	}
+	return lista, linhas.Err()
+}
+
+// DiasParaReligar: a transação nova (a pendente que o banco efetivou com outro código) pode ter outra data, até 5 dias.
+const DiasParaReligar = 5
+
+// religar acha a transação nova das ligações que perderam a delas na sincronização: na mesma conta, com o mesmo valor,
+// até 5 dias de diferença na data, com o que sobra dela cobrindo a parte ligada; a mais perto na data (revisão do #703).
+func (s *Servico) religar(ctx context.Context, holeriteId int64) error {
+	ligacoes, err := s.ligacoes(ctx, holeriteId)
+	if err != nil {
+		return err
+	}
+	for _, l := range ligacoes {
+		if l.transacao != nil {
+			continue
+		}
+		ts, err := s.lerTransacoes(ctx, holeriteId, `t."ContaId" = ? AND t."Data" >= ? AND t."Data" <= ?`, l.contaId,
+			l.data.SomarDias(-DiasParaReligar), l.data.SomarDias(DiasParaReligar))
+		if err != nil {
+			return err
+		}
+		var achada *Transacao
+		for i, t := range ts {
+			if t.Valor.Decimal().Equal(l.valorTransacao.Decimal()) && !t.Livre.Decimal().LessThan(l.valor.Decimal()) &&
+				(achada == nil || distancia(t.Data, l.data) < distancia(achada.Data, l.data)) {
+				achada = &ts[i]
+			}
+		}
+		if achada == nil {
+			continue
+		}
+		err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+			if _, err := tx.ExecContext(ctx, `UPDATE "HoleriteRecebimento" SET "TransacaoId" = ?, "TransacaoData" = ?, "TransacaoDescricao" = ?
+				WHERE "Id" = ? AND "TransacaoId" IS NULL`, achada.Id, achada.Data, achada.Descricao, l.id); err != nil {
+				return fmt.Errorf("religar o crédito: %w", err)
+			}
+			return categoriaSalario(ctx, tx, achada.Id)
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// distancia é quantos dias separam as datas.
+func distancia(a, b tipos.Data) int {
+	n := 0
+	for a.Antes(b) {
+		a, n = a.SomarDias(1), n+1
+	}
+	for b.Antes(a) {
+		b, n = b.SomarDias(1), n+1
+	}
+	return n
 }
 
 // Desligar apaga a ligação (a transação e a categoria dela ficam como estão).

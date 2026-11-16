@@ -190,3 +190,22 @@ test('Trabalho › Holerites: ler o holerite em PDF', async ({ page, problemas }
   await expect(page.getByText('Desfeito: o holerite de setembro de 2026 voltou ao que era antes do PDF.')).toBeVisible();
   expect(pedidos).toEqual(['ler ', 'ler 12345678900', expect.stringMatching(/^confirmar /), 'desfazer']);
 });
+
+// Revisão do #703: o crédito ligado que sumiu na sincronização ou virou débito aparece com o aviso, e dá para desligar.
+test('Trabalho › Holerites: crédito que sumiu ou virou débito', async ({ page }) => {
+  const responder = (corpo: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(corpo) });
+  await page.route('**/api/modulos', (r) => r.fulfill(responder([trabalho])));
+  await page.route('**/api/trabalho/empregos', (r) => r.fulfill(responder([emprego])));
+  await page.route('**/api/trabalho/empregos/1/holerites', (r) => r.fulfill(responder([])));
+  await page.route('**/api/trabalho/holerites/5', (r) => r.fulfill(responder(holerite)));
+  const base = { contaId: 1, conta: 'Conta salário', livre: 0 };
+  await page.route('**/api/trabalho/holerites/5/recebimentos', (r) => r.fulfill(responder({ liquido: 5053.13, recebido: 3000, diferenca: -2053.13,
+    sugestoes: [], outros: [], recebimentos: [
+      { ...base, id: 1, data: '2026-11-05', descricao: 'CREDITO', valor: 3000, valorLigado: 3000, sumiu: true, debito: false },
+      { ...base, id: 2, data: '2026-10-20', descricao: 'ESTORNO', valor: -2000, valorLigado: 2000, sumiu: false, debito: true }] })));
+  await page.goto('/trabalho/holerites?holerite=5');
+  const recebido = page.locator('section.recebimento');
+  await expect(recebido).toContainText('A transação sumiu na sincronização');
+  await expect(recebido).toContainText('Virou débito: não conta como recebido.');
+  await expect(recebido.getByRole('button', { name: /^Desligar/ })).toHaveCount(2);
+});

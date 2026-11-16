@@ -94,7 +94,7 @@ func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, sai
 	mes := emprego.InicioDoMes(saida)
 	entrada := Entrada{Tipo: tipo, Aviso: aviso, Admissao: e.Admissao, Saida: saida, SalarioMes: salario.SalarioBruto,
 		Dependentes: e.Dependentes, PrimeiraParcela13: tipos.DeDecimal(decimal.Zero)}
-	if entrada.SomaVariaveis, _, err = s.holerites.VariaveisEntre(ctx, empregoId, mes.SomarMeses(-12), mes); err != nil {
+	if entrada.SomaVariaveis, _, err = s.holerites.VariaveisEntre(ctx, empregoId, mes.SomarMeses(-12), mes, salario.SalarioBruto); err != nil {
 		return Calculo{}, err
 	}
 	inss, err := encargos.LerTabelasInss(ctx, s.db)
@@ -113,21 +113,37 @@ func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, sai
 	}
 
 	_, projetada := AvisoPago(tipo, aviso, e.Admissao, saida)
-	entrada.Avos13 = decimoterceiro.Avos(saida.Ano(), e.Admissao, &projetada)
+	fimDoAno := tipos.NovaData(saida.Ano(), 12, 31)
+	if projetada.Depois(fimDoAno) {
+		// O aviso projeta a saída para o ano seguinte: os avos dele também entram (revisão do #704).
+		entrada.Avos13, entrada.Avos13Seguinte = decimoterceiro.Avos(saida.Ano(), e.Admissao, &fimDoAno), decimoterceiro.Avos(projetada.Ano(), e.Admissao, &projetada)
+	} else {
+		entrada.Avos13 = decimoterceiro.Avos(saida.Ano(), e.Admissao, &projetada)
+	}
 	if err := s.feriasNaSaida(ctx, &entrada, e, saida, projetada); err != nil {
 		return Calculo{}, err
 	}
-	// A 1ª parcela do 13º que já veio: a informada (ou a de 30/11, saindo em dezembro), se veio até a saída.
-	if d, err := s.decimo.Obter(ctx, empregoId, saida.Ano()); err == nil {
-		if !d.Primeira.Data.Depois(saida) {
-			entrada.PrimeiraParcela13 = d.Primeira.Valor
+	if saida.Depois(tipos.NovaData(saida.Ano(), 12, 20)) {
+		// Saiu depois de 20/12: o 13º do ano já veio inteiro, as duas parcelas (revisão do #704).
+		entrada.Avos13 = 0
+	} else {
+		// A 1ª parcela do 13º que já veio: a informada (ou a de 30/11, saindo em dezembro), se veio até a saída. Sem o 13º
+		// do ano (sem tabela, fora do ano), nenhuma; outra falha volta (revisão do #704).
+		d, err := s.decimo.Obter(ctx, empregoId, saida.Ano())
+		switch {
+		case err == nil:
+			if !d.Primeira.Data.Depois(saida) {
+				entrada.PrimeiraParcela13 = d.Primeira.Valor
+			}
+		case !decimoterceiro.SemDecimo(err):
+			return Calculo{}, err
 		}
 	}
-	g, err := s.fgts.Obter(ctx, empregoId, saida)
+	g, err := s.fgts.ParaRescisao(ctx, empregoId, saida)
 	if err != nil {
 		return Calculo{}, err
 	}
-	entrada.SaldoFgts = g.Saldo
+	entrada.SaldoFgts, entrada.BaseMultaFgts, entrada.SaqueAniversario = g.Saldo, g.BaseDaMulta, g.SaqueAniversario
 	return Calcular(entrada), nil
 }
 
@@ -198,11 +214,16 @@ func (s *Servico) Registrar(ctx context.Context, empregoId, tipo, aviso int64, s
 		return Calculo{}, err
 	}
 	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+		// A saída que o emprego já tinha fica guardada, para o desfazer devolver (revisão do #704).
+		var anterior *tipos.Data
+		if err := tx.QueryRowContext(ctx, `SELECT "Saida" FROM "Emprego" WHERE "Id" = ?`, empregoId).Scan(&anterior); err != nil {
+			return fmt.Errorf("ler a saída: %w", err)
+		}
 		if _, err := tx.ExecContext(ctx, `UPDATE "Emprego" SET "Saida" = ? WHERE "Id" = ?`, saida, empregoId); err != nil {
 			return fmt.Errorf("fechar o emprego: %w", err)
 		}
-		_, err := tx.ExecContext(ctx, `INSERT INTO "Rescisao" ("EmpregoId", "Data", "Tipo", "Aviso", "Calculo", "CriadoEm")
-			VALUES (?, ?, ?, ?, ?, ?)`, empregoId, saida, tipo, c.Aviso, string(dados), tipos.NovaDataHora(s.relogio.Agora()))
+		_, err := tx.ExecContext(ctx, `INSERT INTO "Rescisao" ("EmpregoId", "Data", "Tipo", "Aviso", "Calculo", "SaidaAnterior", "CriadoEm")
+			VALUES (?, ?, ?, ?, ?, ?, ?)`, empregoId, saida, tipo, c.Aviso, string(dados), anterior, tipos.NovaDataHora(s.relogio.Agora()))
 		if err != nil {
 			return fmt.Errorf("guardar a rescisão: %w", err)
 		}
@@ -227,17 +248,21 @@ func (s *Servico) Registrada(ctx context.Context, empregoId int64) (Calculo, err
 	return c, nil
 }
 
-// Desfazer apaga o registro e reabre o emprego (tira a data de saída).
+// Desfazer apaga o registro e devolve ao emprego a saída que ele tinha antes (nenhuma: reabre).
 func (s *Servico) Desfazer(ctx context.Context, empregoId int64) error {
 	return banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
-		r, err := tx.ExecContext(ctx, `DELETE FROM "Rescisao" WHERE "EmpregoId" = ?`, empregoId)
-		if err != nil {
-			return fmt.Errorf("desfazer a rescisão: %w", err)
-		}
-		if n, _ := r.RowsAffected(); n == 0 {
+		var anterior *tipos.Data
+		err := tx.QueryRowContext(ctx, `SELECT "SaidaAnterior" FROM "Rescisao" WHERE "EmpregoId" = ?`, empregoId).Scan(&anterior)
+		if errors.Is(err, sql.ErrNoRows) {
 			return emprego.ErrNaoEncontrado
 		}
-		if _, err := tx.ExecContext(ctx, `UPDATE "Emprego" SET "Saida" = NULL WHERE "Id" = ?`, empregoId); err != nil {
+		if err != nil {
+			return fmt.Errorf("ler a rescisão: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM "Rescisao" WHERE "EmpregoId" = ?`, empregoId); err != nil {
+			return fmt.Errorf("desfazer a rescisão: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE "Emprego" SET "Saida" = ? WHERE "Id" = ?`, anterior, empregoId); err != nil {
 			return fmt.Errorf("reabrir o emprego: %w", err)
 		}
 		return nil

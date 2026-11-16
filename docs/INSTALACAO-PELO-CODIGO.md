@@ -40,7 +40,7 @@ Ele compila o gerenciador em Go (#430) em `publicado\gerenciador`, um `.exe` só
 scripts/linux/instalar-gerenciador.sh
 ```
 
-- **Qual gerenciador** (#277, ADR 0052): o em Go, compilado no seu computador em `publicado/gerenciador-go`. Ele precisa de um compilador de C e dos pacotes de desenvolvimento do GTK 4 e do WebKitGTK 6.0 (no Debian e no Ubuntu: `sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`; no Fedora: `sudo dnf install gcc pkgconf-pkg-config gtk4-devel webkitgtk6.0-devel`; no Arch: `sudo pacman -S --needed gcc pkgconf gtk4 webkitgtk-6.0`). Sem eles, o script diz o comando da sua distribuição e para; o site segue funcionando sem o gerenciador. Quem tinha o gerenciador em C# (até a 3.0) tem o atalho e o **Iniciar com o sistema** trocados para o em Go.
+- **Qual gerenciador** (#277, ADR 0052): o em Go, compilado no seu computador em `publicado/gerenciador-go`. Ele precisa de um compilador de C e dos pacotes de desenvolvimento do GTK 4 e do WebKitGTK 6.0 (no Debian e no Ubuntu: `sudo apt install gcc pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`; no Fedora: `sudo dnf install gcc pkgconf-pkg-config gtk4-devel webkitgtk6.0-devel`; no Arch: `sudo pacman -S --needed gcc pkgconf gtk4 webkitgtk-6.0`). Sem eles, o script diz o comando da sua distribuição e para; o site segue funcionando sem o gerenciador.
 - **Onde fica:** o atalho **Gerenciador do Finanças Local** no menu de aplicativos (`br.financaslocal.Gerenciador.desktop`) e na área de trabalho (`--sem-atalho-na-area-de-trabalho` para não criar este último).
 - **O que faz:** mostra se o site está no ar, liga, desliga e reinicia o serviço (sem senha: ele é do seu usuário), copia o banco e mostra o registro do serviço (**Ver o registro do serviço**, quando o site não sobe).
 - **Versão nova:** mostra o comando para atualizar, pronto para copiar. Ele não acessa a internet, a não ser na instalação de desenvolvimento (clone na branch `develop`), em que o botão **Atualizar para a última do develop** traz o código do GitHub ([abaixo](#atualizar)).
@@ -66,16 +66,9 @@ git pull
 scripts/geral/instalar.sh     # no Windows, num Git Bash como Administrador, repassa para o instalar-windows.ps1; no Linux, atualiza também o gerenciador
 ```
 
-Use o `instalar.sh`, e não só o `3-publicar-atualizar.sh`: quando o `src/backend/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). No Windows, rode o `instalar-windows.cmd` (ou o `instalar.sh` num Git Bash como Administrador, que repassa para o mesmo `.ps1`) de novo, depois do `git pull`. Ele atualiza e, se a versão nova não subir, volta para a anterior sozinho. Em qualquer caso, a publicação para o serviço por alguns segundos, copia os arquivos novos e inicia o serviço de novo. Nenhuma atualização apaga dados.
+Use o `instalar.sh` (no Windows, também o `instalar-windows.cmd`), e não só o `3-publicar-atualizar.sh`: quando o `src/backend/go.mod` pede um Go mais novo, só a etapa 1 o baixa, e a publicação sozinha falha (ela compila com o Go de `ferramentas/go`, com `GOTOOLCHAIN=local`). O site fica fora do ar por alguns segundos, e nenhuma atualização apaga dados. Se não subir, veja [Atualização que falhou](OPERACAO.md#atualização-que-falhou).
 
 **Instalação de desenvolvimento (clone na branch `develop`), pelo gerenciador** ([ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): o botão **Atualizar para a última do develop** faz o mesmo que `scripts/geral/atualizar.sh` (Linux) ou `scripts/windows/atualizar-windows.ps1` (Windows, num PowerShell como Administrador): confere que a pasta está no `develop` e sem alterações locais, traz o `develop` (só avança, nunca descarta nada) e reinstala. Com alteração local, outra branch ou commits locais que não estão no GitHub, recusa e diz o motivo. Fora do `develop` (numa tag, por exemplo), o botão não aparece.
-
-### Sem o .NET (#86)
-
-O serviço é o Go sozinho desde a 3.0.0 (#85), e a instalação pelos scripts não usa mais o .NET para nada: não baixa o SDK, não compila a API em C# e não tem mais a opção `--backend` (no Windows, `-Backend`). Quem atualiza vindo da 3.0 não precisa fazer nada: depois de o site responder, a atualização apaga o que só o .NET usava (`ferramentas/dotnet`, `dotnet-home`, `nuget-pacotes` e a API antiga em `publicado/api`).
-
-- **Vindo da 2.x (o .NET na frente):** todos são deslogados, e o Client Secret da Pluggy (Open Finance) e o token da brapi (Investimentos) precisam ser informados de novo, uma vez. O Go não lê os segredos gravados pelo .NET, e a tela do Open Finance mostra o Client Secret como não configurado até ele ser informado.
-- **Se o site não subir:** o script mostra onde ver o registro do serviço e não apaga nada do .NET. Para voltar à última versão com o .NET, `git checkout v-ultimo-dotnet` e rode o `instalar.sh` (no Windows sem bash, o `instalar-windows.cmd`). O banco é o mesmo nas duas.
 
 ### Instalado pelos scripts e quer passar para o instalador
 
@@ -83,7 +76,7 @@ No Windows, dá para passar desta instalação (feita com o `instalar-windows.cm
 
 ## Parar e desinstalar
 
-O sistema instalado é **um processo**: o back-end em Go (`financas-go`), rodando como serviço do sistema ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O front-end (Angular) é publicado junto, em `wwwroot`, e roda no navegador, e o banco (SQLite) é só o arquivo `dados/sql/FinancasLocal.db`, sem serviço nem porta.
+O sistema instalado é um processo só, o `financas-go`, rodando como serviço do sistema; o banco é o arquivo `dados/sql/FinancasLocal.db` ([Arquitetura](ARQUITETURA.md)).
 
 - **Parar no Windows:** dê dois cliques em `parar-windows.cmd`, na raiz (pede permissão de Administrador; não precisa de bash).
 - **Parar no Linux/macOS:** `scripts/geral/parar.sh`.
@@ -93,11 +86,7 @@ Os dois param o serviço, o site rodando fora dele (`financas-go`) e o front de 
 **Desinstalar:** pare com `parar-windows.cmd -Desativar` (Windows) ou `scripts/geral/parar.sh --desativar` (Linux) e apague a pasta do projeto. Os dados ficam em `dados/` e as cópias em `backups/`, dentro dela.
 
 - **Windows:** remova também o serviço, num terminal aberto como Administrador: `sc.exe delete FinancasLocal`. O certificado do site fica nos confiáveis: nos do computador (`Cert:\LocalMachine\Root`, com o nome amigável `FinancasLocal`), que se apagam em `certlm.msc` › **Autoridades de Certificação Raiz Confiáveis**.
-- **Linux:** apague a unidade do serviço, `~/.config/systemd/user/financaslocal.service`, e rode `systemctl --user daemon-reload`. Se ligou **Manter o site no ar sem login**, desligue com `loginctl disable-linger`. Com o gerenciador, apague também `~/.local/share/applications/br.financaslocal.Gerenciador.desktop` (o em C#: `financaslocal-gerenciador.desktop`), `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho. O certificado que você pôs nos confiáveis (tabela em [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado)) sai com o comando de remoção da sua distribuição.
-
-## Migrar de uma instalação com SQL Server
-
-A ferramenta que trazia os dados de uma instalação antiga com IIS e SQL Server Express para o SQLite (`Financas.MigrarSqlite`) era em .NET e saiu na #86. Ela continua na tag `v-ultimo-dotnet`: quem ainda tem uma instalação dessas pode migrar com ela (`git checkout v-ultimo-dotnet` e o passo a passo deste guia naquela versão) e depois voltar ao `develop` e rodar o `instalar.sh`.
+- **Linux:** apague a unidade do serviço, `~/.config/systemd/user/financaslocal.service`, e rode `systemctl --user daemon-reload`. Se ligou **Manter o site no ar sem login**, desligue com `loginctl disable-linger`. Com o gerenciador, apague também `~/.local/share/applications/br.financaslocal.Gerenciador.desktop`, `~/.config/autostart/financaslocal-gerenciador.desktop` e o atalho da área de trabalho. O certificado que você pôs nos confiáveis (tabela em [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado)) sai com o comando de remoção da sua distribuição.
 
 ## Desenvolvimento
 
@@ -149,12 +138,12 @@ financas-local/
 |---|---|
 | Windows: `Python was not found`, `sqlite3: command not found` ou `unzip: command not found` | Versão antiga dos scripts. Atualize o repositório e use o `instalar-windows.cmd`, que não depende de bash nem de Python |
 | Windows: o `instalar-windows.cmd` falhou | Veja a linha `ERRO` na janela e o log completo em `instaladores/instalacao-windows.log` |
-| Windows: `npm error EPERM ... esbuild.exe` | Um `npm start` aberto está usando o arquivo. Os scripts atuais encerram o que roda de dentro de `src/frontend/node_modules` antes do `npm ci`; numa versão antiga, feche o `npm start` e rode de novo |
+| Windows: `npm error EPERM ... esbuild.exe` | Um `npm start` aberto está usando o arquivo: feche-o e rode de novo |
 | Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
 | Windows: o serviço não é registrado/iniciado | Rode o `instalar-windows.cmd` (ele pede Administrador); pelo Git Bash, abra-o como Administrador |
 | Navegador alerta sobre o certificado | Veja [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado), abaixo |
 | O site não sobe e a instalação diz que a porta 5443 está em uso | Outro programa está na porta: a instalação diz qual e o PID. Feche esse programa (ou pare o serviço dele) e rode de novo. No Windows pelo PowerShell, a instalação para antes de trocar a versão, sem mudar nada |
-| O secret da Pluggy não abre mais (depois de migrar com o `Financas.MigrarSqlite`, trocar de máquina/SO ou apagar `dados\chaves`) | As chaves de proteção de dados são específicas da instalação: informe o Client Secret de novo em Configurações |
+| O Client Secret da Pluggy não abre mais (depois de trocar de computador ou apagar `dados\chaves`) | Veja [Chaves perdidas](OPERACAO.md#chaves-perdidas) |
 
 ### O navegador alerta sobre o certificado
 

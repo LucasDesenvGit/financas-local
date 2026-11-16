@@ -7,6 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { StatusSincronizacaoService } from '../../core/status-sincronizacao.service';
+import { avisarSincronizacao, textoDaConexaoAdicionada } from '../../compartilhado/aviso-sincronizacao';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../../core/modelos';
 import { AvisosService } from '../../core/avisos.service';
@@ -382,7 +383,7 @@ export class ConfiguracoesComponent implements OnInit {
       next: (r) => {
         this.ocupado.set(false);
         this.novoItemId = '';
-        if (r.sucesso) this.avisos.sucesso(`Conexão adicionada: ${r.transacoesNovas} transação(ões) importada(s).`);
+        if (r.sucesso) avisarSincronizacao(this.avisos, this.router, r, textoDaConexaoAdicionada(r));
         else this.avisos.erro(r.mensagem ?? 'Conexão adicionada, mas a sincronização falhou.');
         this.carregarConexoes();
       },
@@ -440,7 +441,7 @@ export class ConfiguracoesComponent implements OnInit {
     this.api.sincronizar(conexaoId).subscribe({
       next: (r) => {
         this.ocupado.set(false);
-        if (r.sucesso) this.avisos.sucesso(`Sincronizado: ${r.transacoesNovas} nova(s), ${r.transacoesAtualizadas} atualizada(s).`);
+        if (r.sucesso) avisarSincronizacao(this.avisos, this.router, r);
         else this.avisos.erro(r.mensagem ?? 'Falha na sincronização.');
         this.carregarConexoes();
       },

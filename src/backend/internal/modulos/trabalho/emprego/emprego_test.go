@@ -198,12 +198,18 @@ func TestExcluirSalario(t *testing.T) {
 
 	a.chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/salarios", id), `{"inicio":"2026-01-01","salarioBruto":5500}`).
 		ConferirStatus(t, http.StatusOK)
-	a.chamar("DELETE", fmt.Sprintf("/api/trabalho/empregos/%d/salarios/%d", id, primeiro), "").ConferirStatus(t, http.StatusOK)
+	// O mais antigo, o da admissão, também não sai: os meses do começo ficariam sem salário (revisão do #698).
+	r = a.chamar("DELETE", fmt.Sprintf("/api/trabalho/empregos/%d/salarios/%d", id, primeiro), "")
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, MensagemPrimeiro))
 	e, _ = a.s.Obter(t.Context(), id)
-	if len(e.Salarios) != 1 || e.Salarios[0].SalarioBruto.String() != "5500.00" {
+	aumento := e.Salarios[0].Id // a lista vem do mais novo para o mais antigo
+	a.chamar("DELETE", fmt.Sprintf("/api/trabalho/empregos/%d/salarios/%d", id, aumento), "").ConferirStatus(t, http.StatusOK)
+	e, _ = a.s.Obter(t.Context(), id)
+	if len(e.Salarios) != 1 || e.Salarios[0].SalarioBruto.String() != "5000.00" {
 		t.Fatalf("salários = %+v", e.Salarios)
 	}
-	a.chamar("DELETE", fmt.Sprintf("/api/trabalho/empregos/%d/salarios/%d", id, primeiro), "").ConferirStatus(t, http.StatusNotFound)
+	a.chamar("DELETE", fmt.Sprintf("/api/trabalho/empregos/%d/salarios/%d", id, aumento), "").ConferirStatus(t, http.StatusNotFound)
 	a.chamar("DELETE", fmt.Sprintf("/api/trabalho/empregos/%d/salarios/x", id), "").ConferirStatus(t, http.StatusNotFound)
 	a.chamar("DELETE", fmt.Sprintf("/api/trabalho/empregos/%d/salarios/0", id), "").ConferirStatus(t, http.StatusNotFound)
 	a.chamar("DELETE", "/api/trabalho/empregos/0", "").ConferirStatus(t, http.StatusNotFound)
@@ -229,6 +235,35 @@ func TestAtualizarEmprego(t *testing.T) {
 	}
 	a.chamar("PUT", "/api/trabalho/empregos/99", `{"empregador":"E","admissao":"2024-03-01"}`).ConferirStatus(t, http.StatusNotFound)
 	a.chamar("PUT", caminho, `{"empregador":"","admissao":"2024-03-01"}`).ConferirStatus(t, http.StatusBadRequest)
+}
+
+// Revisão do #698: a admissão corrigida para antes leva junto o primeiro salário (os meses do começo não ficam sem
+// salário), e a saída não pode deixar um salário que começa depois dela.
+func TestAtualizarAdmissaoESaidaComOsSalarios(t *testing.T) {
+	t.Parallel()
+	a := novo(t)
+	id := a.criar(empregoValido) // admissão em 11/03/2024, salário desde março de 2024
+	caminho := fmt.Sprintf("/api/trabalho/empregos/%d", id)
+	a.chamar("POST", caminho+"/salarios", `{"inicio":"2025-06-01","salarioBruto":5500}`).ConferirStatus(t, http.StatusOK)
+	a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-01-15"}`).ConferirStatus(t, http.StatusOK)
+	e, _ := a.s.Obter(t.Context(), id)
+	if len(e.Salarios) != 2 || e.Salarios[1].Inicio.String() != "2024-01-01" || e.Salarios[0].Inicio.String() != "2025-06-01" {
+		t.Fatalf("salários = %+v", e.Salarios)
+	}
+	if sal, ok := SalarioDoMes(e.Salarios, tipos.NovaData(2024, 2, 1)); !ok || sal.SalarioBruto.String() != "5000.00" {
+		t.Fatalf("fevereiro de 2024: %+v %v", sal, ok)
+	}
+	// A admissão no mesmo mês do primeiro salário não mexe nele.
+	a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-01-31"}`).ConferirStatus(t, http.StatusOK)
+	e, _ = a.s.Obter(t.Context(), id)
+	if e.Salarios[1].Inicio.String() != "2024-01-01" {
+		t.Fatalf("salários = %+v", e.Salarios)
+	}
+
+	r := a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-01-31","saida":"2025-05-31"}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"Há salário a partir de junho de 2025, depois dessa saída. Apague esse salário ou escolha uma saída a partir de junho de 2025."}`)
+	a.chamar("PUT", caminho, `{"empregador":"E","admissao":"2024-01-31","saida":"2025-06-01"}`).ConferirStatus(t, http.StatusOK)
 }
 
 func TestExcluirEmpregoLevaOsSalarios(t *testing.T) {

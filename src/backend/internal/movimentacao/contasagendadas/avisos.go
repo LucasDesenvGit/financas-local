@@ -8,6 +8,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/analises/relatorios"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/cobrancas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -34,6 +35,9 @@ type AvisoDto struct {
 	ContaNovaId     *int64         `json:"contaNovaId"`
 	ContaNovaNome   *string        `json:"contaNovaNome"`
 	Data            *tipos.Data    `json:"data"`
+	// PodeSerCofrinho (#691): no "não veio", a conta é do Open Finance, ainda sem "Pago com", e a conexão já
+	// sincronizou depois do vencimento: o pagamento pode ter saído direto de um cofrinho, que não chega pelo extrato.
+	PodeSerCofrinho bool `json:"podeSerCofrinho"`
 }
 
 // recorrente é a conta a pagar como os avisos a leem.
@@ -47,6 +51,11 @@ type recorrente struct {
 	contaId           *int64
 	contaNome         *string
 	contaArquivada    bool
+	contaOpenFinance  bool
+	reservaNome       *string
+	ultimaSync        *tipos.DataHora // a da conexão da conta (UTC)
+	syncComErro       bool            // a última sincronização terminou com erro da instituição (UltimoErro)
+	dadosDoBancoEm    *tipos.DataHora // até quando os dados da instituição estão em dia (UltimaAtualizacaoInstituicao, UTC)
 }
 
 // cobranca é uma saída do extrato, com o texto já normalizado e o valor positivo.
@@ -99,9 +108,14 @@ func (s *Servico) Avisos(ctx context.Context, hoje tipos.Data) ([]AvisoDto, erro
 
 		if c.formaCobranca != cobrancas.FormaAMao && c.proximoVencimento.SomarDias(diasNaoVeio).Antes(hoje) {
 			vencimento := c.proximoVencimento
-			avisos = append(avisos, AvisoDto{ContaAgendadaId: c.id, Descricao: c.descricao, Tipo: "nao-veio",
+			aviso := AvisoDto{ContaAgendadaId: c.id, Descricao: c.descricao, Tipo: "nao-veio",
 				Texto: fmt.Sprintf("A cobrança de %s esperada em %s não apareceu. Cancelada? Cartão recusado?", c.descricao, diaMes(vencimento)),
-				Data:  &vencimento})
+				Data:  &vencimento, PodeSerCofrinho: podeSerCofrinho(c)}
+			if aviso.PodeSerCofrinho {
+				aviso.Texto = fmt.Sprintf("A cobrança de %s esperada em %s não chegou pelo extrato, e a conta já sincronizou "+
+					"depois. Foi paga com um cofrinho?", c.descricao, diaMes(vencimento))
+			}
+			avisos = append(avisos, aviso)
 		}
 		if len(minhas) == 0 {
 			continue
@@ -146,6 +160,18 @@ func aumento(c recorrente, minhas []cobranca, ultima cobranca) (AvisoDto, bool) 
 		ValorAnterior: &anterior, ValorNovo: &novo, Data: &data}, true
 }
 
+// podeSerCofrinho é o "foi paga com um cofrinho?" do "não veio" (#691): débito automático numa conta do Open
+// Finance, sem "Pago com", e o que o banco mandou já cobre o dia do vencimento, e a cobrança não estava: a última
+// sincronização terminou sem erro da instituição, e ela e os dados da instituição são de depois do dia do vencimento.
+// Uma sincronização recente com os dados do banco ainda de antes não diz que a cobrança faltou: ela pode só não ter
+// chegado, e o cofrinho lançado agora viraria despesa em dobro.
+func podeSerCofrinho(c recorrente) bool {
+	depois := relogio.InicioDoDiaUtc(c.proximoVencimento.SomarDias(1))
+	emDia := func(d *tipos.DataHora) bool { return d != nil && !d.Tempo().Before(depois) }
+	return c.formaCobranca == cobrancas.FormaDebitoAutomatico && c.contaOpenFinance && c.reservaNome == nil &&
+		!c.syncComErro && emDia(c.ultimaSync) && emDia(c.dadosDoBancoEm)
+}
+
 func valorOuVazio(t *string) string {
 	if t == nil {
 		return ""
@@ -155,9 +181,11 @@ func valorOuVazio(t *string) string {
 
 func (s *Servico) lerRecorrentes(ctx context.Context) ([]recorrente, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT c."Id", c."Descricao", c."Valor", c."ProximoVencimento", c."FormaCobranca",
-		c."TextoCobranca", c."ContaId", co."Nome", COALESCE(co."Arquivada", 0)
+		c."TextoCobranca", c."ContaId", co."Nome", COALESCE(co."Arquivada", 0), COALESCE(co."Origem", 0) = ?, c."ReservaNome",
+		b."UltimaSincronizacaoEm", b."UltimoErro" IS NOT NULL, b."UltimaAtualizacaoInstituicao"
 		FROM "ContaAgendada" AS c LEFT JOIN "Conta" AS co ON c."ContaId" = co."Id"
-		WHERE c."Ativa" AND c."Recorrencia" <> ? ORDER BY c."Id"`, relatorios.RecorrenciaUnica)
+		LEFT JOIN "ConexaoBancaria" AS b ON b."Id" = co."ConexaoBancariaId"
+		WHERE c."Ativa" AND c."Recorrencia" <> ? ORDER BY c."Id"`, origemOpenFinance, relatorios.RecorrenciaUnica)
 	if err != nil {
 		return nil, fmt.Errorf("ler as contas a pagar recorrentes: %w", err)
 	}
@@ -166,7 +194,8 @@ func (s *Servico) lerRecorrentes(ctx context.Context) ([]recorrente, error) {
 	for linhas.Next() {
 		var c recorrente
 		if err := linhas.Scan(&c.id, &c.descricao, &c.valor, &c.proximoVencimento, &c.formaCobranca, &c.textoCobranca,
-			&c.contaId, &c.contaNome, &c.contaArquivada); err != nil {
+			&c.contaId, &c.contaNome, &c.contaArquivada, &c.contaOpenFinance, &c.reservaNome, &c.ultimaSync,
+			&c.syncComErro, &c.dadosDoBancoEm); err != nil {
 			return nil, fmt.Errorf("ler conta a pagar recorrente: %w", err)
 		}
 		lista = append(lista, c)
@@ -174,13 +203,14 @@ func (s *Servico) lerRecorrentes(ctx context.Context) ([]recorrente, error) {
 	return lista, linhas.Err()
 }
 
-// lerCobrancas são as saídas de desde a hoje, com o texto que a cobrança procura (cobrancas.TextoDaCobranca). O valor
+// lerCobrancas são as saídas de desde a hoje, com o texto que a cobrança procura (cobrancas.TextoDaCobranca), sem as
+// pagas pelo cofrinho no app (#691: não são cobrança do banco). O valor
 // é texto no banco: o "menor que zero" é conferido em Go.
 func (s *Servico) lerCobrancas(ctx context.Context, desde, hoje tipos.Data, regrasPorValor map[int64]bool) ([]cobranca, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT t."Data", t."Valor", t."ContaId", co."Nome", t."Descricao",
 		t."DescricaoOriginal", t."RegraDescricaoId"
 		FROM "Transacao" AS t INNER JOIN "Conta" AS co ON t."ContaId" = co."Id"
-		WHERE t."Data" >= ? AND t."Data" <= ? ORDER BY t."Id"`, desde, hoje)
+		WHERE t."Data" >= ? AND t."Data" <= ? AND t."ReservaNome" IS NULL ORDER BY t."Id"`, desde, hoje)
 	if err != nil {
 		return nil, fmt.Errorf("ler as cobranças dos avisos: %w", err)
 	}

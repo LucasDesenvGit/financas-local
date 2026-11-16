@@ -132,8 +132,8 @@
         "totalProventos": 6000.00,
         "valorHora": 27.27
       },
-      "diasDescanso": 4,
-      "diasUteis": 27,
+      "diasDescanso": 5,
+      "diasUteis": 26,
       "empregoId": 1,
       "fechadoEm": null,
       "id": 1,
@@ -148,8 +148,8 @@
           {
             "Calculo": null,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "DiasDescanso": 4,
-            "DiasUteis": 27,
+            "DiasDescanso": 5,
+            "DiasUteis": 26,
             "EmpregoId": 1,
             "FechadoEm": null,
             "Id": 1,
@@ -382,6 +382,25 @@
       "situacao": 1
     },
     "banco": {
+      "Holerite": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "DiasDescanso": {
+                "antes": 5,
+                "depois": 4
+              },
+              "DiasUteis": {
+                "antes": 26,
+                "depois": 27
+              }
+            }
+          }
+        ]
+      },
       "HoleriteLancamento": {
         "inseridas": [
           {
@@ -813,8 +832,8 @@
         "totalProventos": 6000.00,
         "valorHora": 27.27
       },
-      "diasDescanso": 5,
-      "diasUteis": 25,
+      "diasDescanso": 7,
+      "diasUteis": 23,
       "empregoId": 1,
       "fechadoEm": null,
       "id": 2,
@@ -842,8 +861,8 @@
           {
             "Calculo": null,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "DiasDescanso": 5,
-            "DiasUteis": 25,
+            "DiasDescanso": 7,
+            "DiasUteis": 23,
             "EmpregoId": 1,
             "FechadoEm": null,
             "Id": 2,
