@@ -1328,7 +1328,9 @@ export const MANUAL: CapituloManual[] = [
           '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes.',
           'A lista à esquerda mostra cada mês, aberto ou fechado, com o líquido. O holerite aberto fica no endereço da página, então o voltar do navegador funciona.',
           '“Recebido na conta”: ligue ao holerite o crédito do salário que caiu na conta. Em “Parece o salário”, o site sugere os créditos do dia 15 do mês ao dia 15 do seguinte, dizendo por quê (valor perto do líquido, o banco marcou como salário, cita o empregador, na conta do salário); “Outros créditos do período” deixa ligar qualquer outro. Um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite (o site liga só o que falta do líquido).',
-          'A tela mostra quanto foi recebido e a diferença para o líquido estimado. A transação ligada que estava sem categoria passa para “Salário”, como escolha sua. “Desligar” desfaz.'
+          'A tela mostra quanto foi recebido e a diferença para o líquido estimado. A transação ligada que estava sem categoria passa para “Salário”, como escolha sua. “Desligar” desfaz.',
+          'O site só sugere um crédito com um motivo forte: o valor perto do líquido, o banco marcou como salário ou cita o empregador. Um crédito pequeno (abaixo de 20% do líquido) não conta como “parte”, e a transferência entre contas suas nunca é sugerida; os dois ficam em “Outros créditos do período”.',
+          'Se o banco trocar o código do crédito ligado (a transação pendente que vira efetivada), a ligação fica e o site religa sozinho na transação nova (mesma conta, mesmo valor, até 5 dias de diferença). Enquanto isso, o crédito aparece com o aviso “sumiu na sincronização”. O crédito ligado que virou débito também aparece com o aviso, não conta, e dá para desligar.'
         ],
         dicas: [
           'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',

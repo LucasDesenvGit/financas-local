@@ -870,16 +870,23 @@ CREATE INDEX IF NOT EXISTS IX_FgtsLancamento_Emprego_Data ON FgtsLancamento (Emp
 /* ------------------------------------------------------------------ */
 /* Liga o crédito na conta (a transação, que é a receita dos relatórios) ao holerite que ele paga, sem contar duas
    vezes: o holerite só explica. Valor é a parte da transação que é deste holerite (um crédito pode pagar mais de um
-   holerite, e um holerite pode vir em vários créditos, como adiantamento e saldo). */
+   holerite, e um holerite pode vir em vários créditos, como adiantamento e saldo). A conta, a data, o valor e a
+   descrição são os da transação ao ligar: quando a sincronização troca o crédito por outro (a pendente que o banco
+   efetiva com outro código), a ligação fica sem a transação (SET NULL) e o site religa sozinho pela conta, pelo valor e
+   pela data. */
 CREATE TABLE IF NOT EXISTS HoleriteRecebimento
 (
-    Id          INTEGER NOT NULL CONSTRAINT PK_HoleriteRecebimento PRIMARY KEY AUTOINCREMENT,
-    HoleriteId  INTEGER NOT NULL,
-    TransacaoId INTEGER NOT NULL,
-    Valor       TEXT    NOT NULL,
-    CriadoEm    TEXT    NOT NULL,
+    Id                 INTEGER NOT NULL CONSTRAINT PK_HoleriteRecebimento PRIMARY KEY AUTOINCREMENT,
+    HoleriteId         INTEGER NOT NULL,
+    TransacaoId        INTEGER NULL,
+    Valor              TEXT    NOT NULL,
+    ContaId            INTEGER NOT NULL,
+    TransacaoData      TEXT    NOT NULL,
+    TransacaoValor     TEXT    NOT NULL,
+    TransacaoDescricao TEXT    NOT NULL,
+    CriadoEm           TEXT    NOT NULL,
     CONSTRAINT FK_HoleriteRecebimento_Holerite FOREIGN KEY (HoleriteId) REFERENCES Holerite (Id) ON DELETE CASCADE,
-    CONSTRAINT FK_HoleriteRecebimento_Transacao FOREIGN KEY (TransacaoId) REFERENCES Transacao (Id) ON DELETE CASCADE
+    CONSTRAINT FK_HoleriteRecebimento_Transacao FOREIGN KEY (TransacaoId) REFERENCES Transacao (Id) ON DELETE SET NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS UX_HoleriteRecebimento_Holerite_Transacao ON HoleriteRecebimento (HoleriteId, TransacaoId);
 CREATE INDEX IF NOT EXISTS IX_HoleriteRecebimento_Transacao ON HoleriteRecebimento (TransacaoId);

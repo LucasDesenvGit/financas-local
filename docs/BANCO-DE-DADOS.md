@@ -273,7 +273,7 @@ erDiagram
     Emprego ||--o{ FeriasAgendamento : "EmpregoId: CASCADE"
     Emprego ||--o{ FgtsLancamento : "EmpregoId: CASCADE"
     Holerite ||--o{ HoleriteRecebimento : "HoleriteId: CASCADE"
-    Transacao ||--o{ HoleriteRecebimento : "TransacaoId: CASCADE"
+    Transacao |o--o{ HoleriteRecebimento : "TransacaoId: SET NULL"
 ```
 
 <!-- diagramas-do-banco: fim -->

@@ -983,7 +983,9 @@ export interface Fgts { saldo: number; ate: string; meses: MesFgts[]; conferenci
 
 /** #212: o crédito do salário ligado ao holerite (não conta duas vezes: a receita é a transação). */
 export interface CreditoSalario { id: number; data: string; descricao: string; contaId: number; conta: string; valor: number; livre: number; }
-export interface RecebimentoHolerite extends CreditoSalario { valorLigado: number; }
+/** sumiu: a sincronização trocou a transação e o site ainda não achou a nova (conta como recebida); debito: virou
+ * débito (não conta). */
+export interface RecebimentoHolerite extends CreditoSalario { valorLigado: number; sumiu: boolean; debito: boolean; }
 export interface SugestaoRecebimento extends CreditoSalario { motivos: string[]; }
 export interface RecebimentosHolerite {
   liquido: number | null; recebido: number; diferenca: number | null;

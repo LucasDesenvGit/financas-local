@@ -280,11 +280,15 @@ type HoleriteLancamento struct {
 }
 
 type HoleriteRecebimento struct {
-	Id          int64
-	HoleriteId  int64
-	TransacaoId int64
-	Valor       string
-	CriadoEm    string
+	Id                 int64
+	HoleriteId         int64
+	TransacaoId        *int64
+	Valor              string
+	ContaId            int64
+	TransacaoData      string
+	TransacaoValor     string
+	TransacaoDescricao string
+	CriadoEm           string
 }
 
 type IndiceMensal struct {

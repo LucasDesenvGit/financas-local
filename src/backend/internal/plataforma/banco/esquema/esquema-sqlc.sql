@@ -512,7 +512,11 @@ CREATE TABLE "FgtsLancamento" (
 CREATE TABLE "HoleriteRecebimento" (
     "Id" INTEGER NOT NULL,
     "HoleriteId" INTEGER NOT NULL,
-    "TransacaoId" INTEGER NOT NULL,
+    "TransacaoId" INTEGER,
     "Valor" TEXT NOT NULL,
+    "ContaId" INTEGER NOT NULL,
+    "TransacaoData" TEXT NOT NULL,
+    "TransacaoValor" TEXT NOT NULL,
+    "TransacaoDescricao" TEXT NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );
