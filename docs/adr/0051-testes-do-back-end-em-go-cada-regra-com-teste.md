@@ -38,7 +38,7 @@ Em 23/10/2026 os pacotes com lógica já tinham teste (78,6% de cobertura em `in
 - **O gabarito vem da referência, nunca do código que ele testa** (o .NET, ou o EF Core pela sonda), e só é regravado por opção explícita, olhando a diferença.
 - **Uma etapa do #70 só está pronta** com a lista "pronto quando" do guia: a tabela regra → teste no PR, os riscos de equivalência, o contrato (inclusive de erro), o SQLite real nas consultas, os casos-limite e o teste novo que provou que falha, estragando o código de propósito, com as mutações no PR.
 - **Bug corrigido ganha teste de regressão**, que falha antes da correção. **Bug do C# achado no porte não é corrigido em silêncio:** o teste fixa o comportamento de hoje e aponta a issue aberta.
-- **O que a CI confere** (as histórias do épico #374): cobertura com piso por pacote que só sobe (#370), trava de tempo (#371), fuzz nos tipos de dinheiro e data, fora do PR (#372), teste de mutação automático com piso por pacote (#373, #456, #673) e as regras de ouro, `float64`, `time.Now` e `time.Sleep` de teste (#457).
+- **O que a CI confere** (as histórias do épico #374): cobertura com piso por pacote que só sobe (#370), trava de tempo (#371), fuzz nos tipos de dinheiro e data, fora do PR (#372), teste de mutação automático com piso por pacote em todo PR que mexe em Go (#373, #456, #673; pacote novo é medido sem piso e não derruba a CI, #716) e as regras de ouro, `float64`, `time.Now` e `time.Sleep` de teste (#457).
 - **Teste de arquitetura** (#476), no estilo do ArchUnit, com só a biblioteca padrão: **só local** (decisão de 29/10/2026), fora da CI.
 - **Proibido em teste:** `time.Now()`, `time.Sleep` para esperar, rede de verdade, dado real e biblioteca de asserção ou de mock, cada um com a exceção aceita escrita no guia.
 - Benchmark só para código quente, antes de otimizar (skill `go-no-projeto`, "Desempenho").
@@ -54,6 +54,7 @@ Em 23/10/2026 os pacotes com lógica já tinham teste (78,6% de cobertura em `in
   - **mais tempo por etapa:** tabela de casos, testes de integração e mutações à mão;
   - **a regra depende de revisão:** a CI não sabe se "cada regra tem teste". A cobertura e a mutação automática são só indicadores;
   - **a mutação automática não vê `case` nem remove comandos** (limites do gremlins). No PR, ela só mede os pacotes mudados: o teste fraco num pacote que o PR não tocou aparece só na rodada da semana;
+  - **pacote novo entra sem piso** (#716): fica assim até alguém pôr a linha dele em `mutacao-go.txt`. A rodada semanal continua medindo, e o aviso volta a cada medição. *Decisão do aval da #689 (15/11/2026): a mutação continua em todo PR, e não vira semanal;*
   - **as regras de ouro são conferidas por texto:** um `import t "time"` escapa, e `time.Since`/`time.Until` não são conferidos;
   - **teste mais verboso** sem asserção pronta, e **sobreposição** entre unitário e contrato, que pede julgamento a cada PR;
   - **o gabarito precisa de disciplina:** regravar sem olhar a diferença esconde uma regressão;

@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.15.9] — 2026-11-16 · desenvolvimento
+## [3.15.10] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
 - **ADR 0070 (proposta): versão calculada no build e o CHANGELOG com um arquivo por PR** (#721, item 1 da #689). Compara manter a regra de hoje, um job que grava a versão no `develop` e a versão calculada a partir de uma base e do tipo de cada merge; e, para o CHANGELOG, a seção "Não lançado" (que ainda conflita no GitHub) contra um arquivo por PR em `changelog.d/`. Propõe a versão calculada e o `changelog.d/`, com os passos depois do aval e as perguntas para a equipe. Só a ADR: nada muda nos scripts, nos workflows nem na regra de versão até ela ser aceita. Nada muda para quem usa.
+
+## [3.15.9] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Pacote novo do Go não derruba mais a CI da mutação** (#716; item 5 da #689). Antes, um pacote de `src/backend/internal` que ainda não estava em `mutacao-go.txt` nem em `mutacao-go-fora.txt` falhava o PR, e quem o criava tinha de disparar o workflow à mão para medir. Agora ele é medido como os da lista, sem piso, e um aviso dá a linha a pôr na lista, com a eficácia medida. A mutação continua em todo PR que mexe em Go. O script ganhou um teste (`test_mutacao_go.py`), que roda no workflow.
 
 ## [3.15.8] — 2026-11-16 · desenvolvimento
 
