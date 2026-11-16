@@ -2,10 +2,15 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.15.1] — 2026-11-16 · desenvolvimento
+## [3.15.2] — 2026-11-16 · desenvolvimento
 
 ### Publicação e documentação
 - **ADRs grandes mais curtas** (#728, parte do #690): as ADRs 0051 (testes do Go), 0052 (gerenciador), 0029 (`.msi`), 0032 (controles padrão) e 0012 (instalador em PowerShell) ficam com a decisão, as alternativas e as consequências, em até ~1,6 mil palavras cada. O passo a passo e o histórico foram para o guia de cada assunto, com link: `CONTRIBUINDO.md` ("Testes do back-end (Go)"), `src/gerenciador-go/README.md`, `instalador/README.md`, `scripts/README.md` e `docs/UI-UX.md`. Nenhuma decisão mudou.
+
+## [3.15.1] — 2026-11-16 · desenvolvimento
+
+### Correções
+- **Contas a pagar: o "Pago com" sem a palavra "Cofrinho" repetida** (#719). A lista punha "Cofrinho" antes de cada nome, e o nome quase sempre já tem a palavra ("Cofrinho Cofrinho da Virada"). Agora o campo se chama "Pago com o cofrinho" e a lista mostra só o nome, como no app do banco; a opção sem cofrinho virou "Nenhum (sai do saldo da conta)". O "Qual cofrinho" do "Pagar" também mostra só o nome.
 
 ## [3.15.0] — 2026-11-16 · desenvolvimento
 
