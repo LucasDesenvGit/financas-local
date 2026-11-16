@@ -56,7 +56,9 @@ Como ficou na #211:
 - `Holerite` (um por emprego e mês, `Situacao` aberto ou fechado) e `HoleriteLancamento` (horas extras, adicional noturno, outros proventos, vale-transporte, VR/VA, plano de saúde, pensão e outros descontos).
 - Fechado, a coluna `Calculo` guarda o resultado inteiro em JSON (as linhas, os totais, o INSS, o IRRF e o FGTS do mês); aberto, ela fica nula e o cálculo é refeito a cada leitura. *Inferido:* JSON em vez de uma tabela por número, porque o holerite fechado só é lido inteiro, nunca filtrado nem somado no SQL.
 - Reabrir grava `HoleriteReaberto (AAAA-MM)` na auditoria.
-- O salário do mês é proporcional na admissão e na saída, pelo mês comercial de 30 dias; o DSR das horas extras e do adicional noturno é o total ÷ dias úteis × domingos e feriados (o padrão vem do calendário, segunda a sábado; a pessoa acerta os feriados).
+- O salário do mês é proporcional na admissão e na saída, pelo **mês comercial de 30 dias**: a admissão no dia D conta 30 − D + 1 dias, também em fevereiro (quem entra em 15/02 recebe 16/30), e a saída no último dia do mês conta o mês inteiro. *Julgamento* (revisão do #699): há empresas que pagam fevereiro pelos dias do calendário; o comercial é o mais comum na folha.
+- O DSR das horas extras e do adicional noturno é o total ÷ dias úteis × domingos e feriados. O padrão vem do calendário: segunda a sábado são úteis; os domingos e os **feriados nacionais de data fixa** (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12) são descanso. A pessoa acerta os outros feriados e, no mês da admissão ou da saída, os dias do período.
+- **Fica de fora** (*julgamento*, dito no Manual): a hora extra noturna com o adicional noturno na base (OJ 97 da SDI-1 do TST) e a hora noturna reduzida (52'30"). A pessoa lança a hora extra noturna com o percentual somado (1,2 × 1,5 = 80%) e as horas já convertidas.
 - Outro provento (bônus, PLR, comissão) diz se tem INSS e IRRF; a pensão alimentícia e o "outro desconto" marcado deduzem do IR; o vale-transporte desconta o custo do mês até 6% do salário.
 - O lançamento marcado "repetir" passa para o holerite do mês seguinte, quando ele é aberto.
 

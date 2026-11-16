@@ -6,11 +6,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
 
 ### Funcionalidades
 - **Trabalho › Holerites: o holerite de cada mês** (#211). Pelo salário bruto do Trabalho › Salário:
-  - horas extras (horas e percentual), adicional noturno, o DSR sobre eles, e outros proventos (bônus, PLR, comissão), dizendo se têm INSS e IRRF;
+  - horas extras (horas e percentual), adicional noturno, o DSR sobre eles (os dias de descanso já contam os domingos e os feriados nacionais de data fixa), e outros proventos (bônus, PLR, comissão), dizendo se têm INSS e IRRF;
   - descontos: vale-transporte (até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outros;
   - o cálculo linha a linha, com o INSS, o IRRF, o líquido e o FGTS do mês; salário proporcional no mês da admissão e no da saída;
   - "Fechar o mês" congela os números (um aumento ou uma tabela nova depois não mudam o mês); "Reabrir" fica nos acessos recentes;
-  - os lançamentos marcados "repetir" (plano de saúde, pensão) passam para o mês seguinte.
+  - os lançamentos marcados "repetir" (plano de saúde, pensão) passam para o mês seguinte;
+  - o mês sem salário ou fora do emprego fica com o aviso e sem o cálculo, sem derrubar a lista dos holerites.
   - Banco: as tabelas `Holerite` e `HoleriteLancamento`, criadas sozinhas ao iniciar. Não é receita: nada entra nos relatórios.
 
 ## [3.17.0] — 2026-11-16 · desenvolvimento
