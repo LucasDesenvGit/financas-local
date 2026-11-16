@@ -1,7 +1,7 @@
 import { APP, codigo } from '../apoio/codigo';
 import { join } from 'path';
 import { Reserva } from '../../../src/app/core/modelos';
-import { InvestimentosComponent } from '../../../src/app/paginas/patrimonio/investimentos.component';
+import { InvestimentosReservasComponent } from '../../../src/app/paginas/patrimonio/investimentos-reservas.component';
 import { podeConferirReserva } from '../../../src/app/paginas/patrimonio/reserva-conferencia';
 
 /**
@@ -33,11 +33,11 @@ describe('Regressão: "conferir saldo" nas reservas que o banco não detalha (#2
   });
 
   it('a tela decide o botão pela mesma regra, não mais só por "informado pelo banco"', () => {
-    const fonte = codigo(join(APP, 'paginas/patrimonio/investimentos.component.ts'));
+    const fonte = codigo(join(APP, 'paginas/patrimonio/investimentos-reservas.component.ts'));
     expect(fonte).toContain('@if (podeConferir(r))');
     expect(fonte).not.toContain('@if (!r.informadoPeloBanco)');
-    const tela = {} as InvestimentosComponent;
-    expect(InvestimentosComponent.prototype.podeConferir.call(tela, reserva())).toBe(true);
-    expect(InvestimentosComponent.prototype.podeConferir.call(tela, reserva({ informadoPeloBanco: true }))).toBe(false);
+    const tela = {} as InvestimentosReservasComponent;
+    expect(InvestimentosReservasComponent.prototype.podeConferir.call(tela, reserva())).toBe(true);
+    expect(InvestimentosReservasComponent.prototype.podeConferir.call(tela, reserva({ informadoPeloBanco: true }))).toBe(false);
   });
 });

@@ -82,7 +82,7 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 ## Skills e agentes do projeto (`.claude/`)
 
-- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão). A `migrar-para-go` era a da migração do épico #70, que terminou na #86: serve só para consultar como um assunto foi portado do C# (que está na tag `v-ultimo-dotnet`). O agente `dev-go` carrega a `go-no-projeto`; serve para analisar, criar ou revisar assuntos em paralelo (#560).
+- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão). Como um assunto era no C#: a tag `v-ultimo-dotnet` (o épico #70 terminou na #86). O agente `dev-go` carrega a `go-no-projeto`; serve para analisar, criar ou revisar assuntos em paralelo (#560).
 - **Angular:** a skill `angular-no-projeto` é o roteiro de todo trabalho no front-end (tela nova, mudança, avaliação de UI/UX, revisão); a `testar-no-navegador` confere a tela pronta. O agente `dev-angular` carrega as duas, para avaliar telas em paralelo (um agente por tela), implementar ou revisar (#559).
 - **Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` em uma frase quando o pedido cita mais de uma issue ou PR, ou um épico; quando é a 2ª issue ou PR na mesma conversa, ou a conversa já foi resumida; ou quando a pessoa fala em "deixar rodando" ou "continuar depois". Não repita se já houver agendamento (`CronList`) ou se a pessoa recusou. O hook `lembrar-trabalho-longo.sh` lembra sozinho em parte desses casos (#280).
 
