@@ -32,8 +32,9 @@ type Modulo struct {
 func Novo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Modulo {
 	empregos := emprego.NovoServico(db, r, log)
 	holerites := holerite.NovoServico(db, empregos, r, log)
-	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimoterceiro.NovoServico(db, empregos, holerites, r, log),
-		ferias: ferias.NovoServico(db, empregos, holerites, r, log)}
+	asFerias := ferias.NovoServico(db, empregos, holerites, r, log)
+	return &Modulo{emprego: empregos, holerite: holerites, decimo: decimoterceiro.NovoServico(db, empregos, holerites, r, log).ComFerias(asFerias),
+		ferias: asFerias}
 }
 
 // Info é o que Configurações › Módulos mostra.

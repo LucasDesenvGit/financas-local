@@ -42,12 +42,25 @@ type Servico struct {
 	db        *sql.DB
 	empregos  *emprego.Servico
 	holerites *holerite.Servico
+	ferias    Ferias
 	relogio   relogio.Relogio
 	log       *slog.Logger
 }
 
+// Ferias é de onde vem a 1ª parcela que veio com as férias (o ferias.Servico, ligado no trabalho.go; revisão do #701:
+// o 13º pede às férias, e não lê a tabela delas).
+type Ferias interface {
+	AdiantamentoDoAno(ctx context.Context, empregoId int64, ano int) (pagamento *tipos.Data, valor *tipos.Decimal, err error)
+}
+
 func NovoServico(db *sql.DB, empregos *emprego.Servico, holerites *holerite.Servico, r relogio.Relogio, log *slog.Logger) *Servico {
 	return &Servico{db: db, empregos: empregos, holerites: holerites, relogio: r, log: log}
+}
+
+// ComFerias liga as férias: sem elas, a 1ª parcela é a informada ou a metade até 30/11.
+func (s *Servico) ComFerias(f Ferias) *Servico {
+	s.ferias = f
+	return s
 }
 
 // Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
@@ -114,18 +127,15 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return Resposta{}, fmt.Errorf("ler a 1ª parcela: %w", err)
 	}
-	// Sem a 1ª informada, a que veio com as férias do ano (#213, revisão do #701): paga até 2 dias antes do início.
-	if entrada.PrimeiraEm == nil && entrada.PrimeiraValor == nil {
-		var inicio tipos.Data
-		err := s.db.QueryRowContext(ctx, `SELECT "Inicio" FROM "FeriasAgendamento" WHERE "EmpregoId" = ? AND "AdiantarDecimo" = 1
-			AND "Inicio" >= ? AND "Inicio" < ? ORDER BY "Inicio" LIMIT 1`, empregoId, tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1)).
-			Scan(&inicio)
-		switch {
-		case err == nil:
-			pagamento := inicio.SomarDias(-2)
-			entrada.PrimeiraEm, entrada.PrimeiraComFerias = &pagamento, true
-		case !errors.Is(err, sql.ErrNoRows):
-			return Resposta{}, fmt.Errorf("ler as férias com o 13º: %w", err)
+	// Sem a 1ª informada, a que veio com as férias do ano (#213, revisão do #701): paga até 2 dias antes do início, no
+	// valor que as férias pagaram (a metade da remuneração do mês delas, e não a do 13º).
+	if s.ferias != nil && entrada.PrimeiraEm == nil && entrada.PrimeiraValor == nil {
+		pagamento, valor, err := s.ferias.AdiantamentoDoAno(ctx, empregoId, ano)
+		if err != nil {
+			return Resposta{}, err
+		}
+		if pagamento != nil {
+			entrada.PrimeiraEm, entrada.ValorDasFerias, entrada.PrimeiraComFerias = pagamento, valor, true
 		}
 	}
 	return Resposta{Calculo: Calcular(entrada), Saida: saida}, nil
