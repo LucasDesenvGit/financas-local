@@ -93,7 +93,9 @@ func ValidarFracoes(existentes []int, vendidosAntes, direito, dias, vendidos int
 		return "Com mais de 32 faltas no período, não há férias (CLT, art. 130)."
 	case dias < 5 || len(existentes) >= 3:
 		return MensagemFracoes
-	case vendidos < 0 || vendidosAntes+vendidos > direito/3:
+	case dias > direito: // antes de somar: um número enorme estourava a soma e passava (revisão do #701)
+		return "Os dias passam do que sobra de férias neste período."
+	case vendidos < 0 || vendidos > direito || vendidosAntes+vendidos > direito/3:
 		return "Dá para vender até 1/3 dos dias de direito."
 	case total+dias+vendidosAntes+vendidos > direito:
 		return "Os dias passam do que sobra de férias neste período."
@@ -149,7 +151,9 @@ var (
 )
 
 // Calcular faz a conta de uma fração: férias + 1/3 com INSS e IRRF (separados do salário do mês); o abono pecuniário +
-// 1/3 sem INSS nem IR (CLT, art. 144); e, se pedido, a 1ª parcela do 13º (metade da remuneração, sem desconto).
+// 1/3 sem INSS nem IR (CLT, art. 144); e, se pedido, a 1ª parcela do 13º (metade da remuneração, sem desconto). A dobra
+// do art. 137 (e o 1/3 dela) não entra na base do INSS (Lei 8.212/1991, art. 28, § 9º, "d"; revisão do #701); no IRRF,
+// entra (inferido, ADR 0065).
 func Calcular(e Entrada) Calculo {
 	media := e.SomaVariaveis.Decimal().Div(doze).Round(2)
 	remuneracao := e.SalarioBase.Decimal().Add(media)
@@ -158,13 +162,15 @@ func Calcular(e Entrada) Calculo {
 	abono := remuneracao.Mul(decimal.NewFromInt(int64(e.DiasVendidos))).Div(trinta).Round(2)
 	tercoAbono := abono.Div(tres).Round(2)
 	tributavel := tipos.DeDecimal(ferias.Add(terco))
+	dobra := remuneracao.Mul(decimal.NewFromInt(int64(e.DiasEmDobro))).Div(trinta).Round(2)
+	baseInss := tipos.DeDecimal(tributavel.Decimal().Sub(dobra).Sub(dobra.Div(tres).Round(2)))
 	c := Calculo{
 		Inicio: e.Inicio, Retorno: e.Inicio.SomarDias(e.Dias), Pagamento: e.Inicio.SomarDias(-2), Dias: e.Dias, DiasEmDobro: e.DiasEmDobro,
 		DiasVendidos: e.DiasVendidos, Remuneracao: tipos.DeDecimal(remuneracao.Round(2)), MediaVariaveis: tipos.DeDecimal(media),
 		Ferias: tipos.DeDecimal(ferias), TercoFerias: tipos.DeDecimal(terco), Abono: tipos.DeDecimal(abono),
 		TercoAbono: tipos.DeDecimal(tercoAbono), AdiantamentoDecimo: tipos.DeDecimal(decimal.Zero.Round(2)),
 	}
-	c.Inss = encargos.CalcularInss(e.Inss, tributavel)
+	c.Inss = encargos.CalcularInss(e.Inss, baseInss)
 	c.Irrf = encargos.CalcularIrrf(e.Irrf, tributavel, c.Inss.Valor, int(e.Dependentes), tipos.DeDecimal(decimal.Zero))
 	liquido := ferias.Add(terco).Add(abono).Add(tercoAbono).Sub(c.Inss.Valor.Decimal()).Sub(c.Irrf.Valor.Decimal())
 	if e.AdiantarDecimo {

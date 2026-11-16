@@ -124,8 +124,16 @@ func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, sai
 		return Calculo{}, err
 	}
 	if saida.Depois(tipos.NovaData(saida.Ano(), 12, 20)) {
-		// Saiu depois de 20/12: o 13º do ano já veio inteiro, as duas parcelas (revisão do #704).
+		// Saiu depois de 20/12: o 13º do ano já veio inteiro, as duas parcelas (revisão do #704); o FGTS dele ainda não
+		// (vence em 20/01) e vem no depósito da rescisão (2ª revisão).
 		entrada.Avos13 = 0
+		d, err := s.decimo.Obter(ctx, empregoId, saida.Ano())
+		switch {
+		case err == nil:
+			entrada.Decimo13Pago = d.Total
+		case !decimoterceiro.SemDecimo(err):
+			return Calculo{}, err
+		}
 	} else {
 		// A 1ª parcela do 13º que já veio: a informada (ou a de 30/11, saindo em dezembro), se veio até a saída. Sem o 13º
 		// do ano (sem tabela, fora do ano), nenhuma; outra falha volta (revisão do #704).

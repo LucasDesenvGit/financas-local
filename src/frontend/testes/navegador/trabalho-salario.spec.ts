@@ -75,6 +75,9 @@ test('Trabalho › Salário: o mês, como calculei e o aumento', async ({ page }
   const historico = page.locator('section', { has: page.getByRole('heading', { name: 'Histórico de salários' }) });
   await expect(historico.locator('tbody tr')).toHaveCount(2);
   await expect(historico).toContainText('+20,0%');
+  // O primeiro salário, o da admissão, não tem "Apagar" (revisão do #698): só o aumento.
+  await expect(historico.getByRole('button', { name: /^Apagar/ })).toHaveCount(1);
+  await expect(historico.locator('tbody tr').filter({ hasText: 'primeiro' }).getByRole('button')).toHaveCount(0);
 
   const pasta = process.env['FOTOS_PASTA'];
   if (pasta) {

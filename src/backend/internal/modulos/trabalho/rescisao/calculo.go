@@ -94,15 +94,18 @@ type FeriasVencidas struct {
 
 // Entrada é o que o cálculo precisa (o serviço junta).
 type Entrada struct {
-	Tipo, Aviso       int64
-	Admissao, Saida   tipos.Data
-	SalarioMes        tipos.Decimal // o salário da vigência do mês da saída
-	SomaVariaveis     tipos.Decimal // horas extras, adicional noturno e DSR dos 12 meses antes
-	Dependentes       int64
-	Vencidas          []FeriasVencidas
-	AvosFerias        int           // do período em curso, até a data projetada
-	Avos13            int           // do ano da saída, até a data projetada (zero se o 13º do ano já foi pago inteiro)
-	Avos13Seguinte    int           // do ano seguinte, quando o aviso projeta a saída para ele (revisão do #704)
+	Tipo, Aviso     int64
+	Admissao, Saida tipos.Data
+	SalarioMes      tipos.Decimal // o salário da vigência do mês da saída
+	SomaVariaveis   tipos.Decimal // horas extras, adicional noturno e DSR dos 12 meses antes
+	Dependentes     int64
+	Vencidas        []FeriasVencidas
+	AvosFerias      int // do período em curso, até a data projetada
+	Avos13          int // do ano da saída, até a data projetada (zero se o 13º do ano já foi pago inteiro)
+	Avos13Seguinte  int // do ano seguinte, quando o aviso projeta a saída para ele (revisão do #704)
+	// Decimo13Pago: o 13º do ano que já veio inteiro (saída depois de 20/12); os 8% dele vencem em 20/01 e entram no
+	// depósito da rescisão (2ª revisão do #704).
+	Decimo13Pago      tipos.Decimal
 	PrimeiraParcela13 tipos.Decimal // a 1ª parcela do 13º que já veio
 	SaldoFgts         tipos.Decimal // até o mês antes da saída
 	BaseMultaFgts     tipos.Decimal // os depósitos corrigidos até o mês antes da saída, sem descontar os saques
@@ -241,7 +244,7 @@ func Calcular(e Entrada) Calculo {
 
 	// O FGTS: o depósito da rescisão (o mês da saída, o aviso e o 13º do ano, que o saldo de antes não tem), a multa
 	// sobre todos os depósitos (sem descontar os saques) e o saque.
-	deposito := saldo.Add(aviso).Add(decimo).Mul(oito).Round(2)
+	deposito := saldo.Add(aviso).Add(decimo).Add(e.Decimo13Pago.Decimal()).Mul(oito).Round(2)
 	base := e.BaseMultaFgts.Decimal().Add(deposito)
 	multa, saque := 0, 0
 	switch e.Tipo {

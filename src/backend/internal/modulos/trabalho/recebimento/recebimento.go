@@ -222,8 +222,9 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 	if h.Calculo != nil {
 		r.Liquido = &h.Calculo.Liquido
 	}
+	// Religar é conserto: se falhar, a ligação continua "sumida" e a tela abre do mesmo jeito (revisão do #703).
 	if err := s.religar(ctx, holeriteId); err != nil {
-		return Resposta{}, err
+		s.log.ErrorContext(ctx, "trabalho: religar o recebimento", "erro", err)
 	}
 	ligacoes, err := s.ligacoes(ctx, holeriteId)
 	if err != nil {
@@ -381,10 +382,17 @@ const DiasParaReligar = 5
 
 // religar acha a transação nova das ligações que perderam a delas na sincronização: na mesma conta, com o mesmo valor,
 // até 5 dias de diferença na data, com o que sobra dela cobrindo a parte ligada; a mais perto na data (revisão do #703).
+// A transação que este holerite já liga não serve (2ª revisão: o índice único derrubava o GET), nem a religada agora.
 func (s *Servico) religar(ctx context.Context, holeriteId int64) error {
 	ligacoes, err := s.ligacoes(ctx, holeriteId)
 	if err != nil {
 		return err
+	}
+	jaLigadas := map[int64]bool{}
+	for _, l := range ligacoes {
+		if l.transacao != nil {
+			jaLigadas[*l.transacao] = true
+		}
 	}
 	for _, l := range ligacoes {
 		if l.transacao != nil {
@@ -397,7 +405,7 @@ func (s *Servico) religar(ctx context.Context, holeriteId int64) error {
 		}
 		var achada *Transacao
 		for i, t := range ts {
-			if t.Valor.Decimal().Equal(l.valorTransacao.Decimal()) && !t.Livre.Decimal().LessThan(l.valor.Decimal()) &&
+			if !jaLigadas[t.Id] && t.Valor.Decimal().Equal(l.valorTransacao.Decimal()) && !t.Livre.Decimal().LessThan(l.valor.Decimal()) &&
 				(achada == nil || distancia(t.Data, l.data) < distancia(achada.Data, l.data)) {
 				achada = &ts[i]
 			}
@@ -415,6 +423,7 @@ func (s *Servico) religar(ctx context.Context, holeriteId int64) error {
 		if err != nil {
 			return err
 		}
+		jaLigadas[achada.Id] = true
 	}
 	return nil
 }

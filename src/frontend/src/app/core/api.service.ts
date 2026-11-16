@@ -423,9 +423,10 @@ export class ApiService {
   definirFaltas(empregoId: number, periodoInicio: string, faltas: number): Observable<PeriodoFerias[]> {
     return this.http.put<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias/faltas`, { periodoInicio, faltas });
   }
-  simularFerias(empregoId: number, inicio: string, dias: number, vendidos: number, adiantar: boolean): Observable<CalculoFerias> {
+  /** Com o período, os dias depois do concessivo dele saem em dobro, como no agendado. */
+  simularFerias(empregoId: number, periodo: string | null, inicio: string, dias: number, vendidos: number, adiantar: boolean): Observable<CalculoFerias> {
     return this.http.get<CalculoFerias>(`${this.base}/trabalho/empregos/${empregoId}/ferias/simular`,
-      { params: this.params({ inicio, dias, vendidos, adiantar }) });
+      { params: this.params({ periodo, inicio, dias, vendidos, adiantar }) });
   }
   /** #216: o FGTS. */
   fgts(empregoId: number): Observable<Fgts> { return this.http.get<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts`); }
