@@ -204,13 +204,19 @@ func (s *Servico) ParaRescisao(ctx context.Context, empregoId int64, saida tipos
 	saldo := Estimar(inicio, ate, depositos, lancamentos).Saldo.Decimal()
 	base := saldo
 	r := NaSaida{}
+	mesDaSaida := emprego.InicioDoMes(saida)
 	for _, l := range lancamentos {
-		if l.Tipo == TipoSaque && !l.Data.Depois(saida) {
-			base = base.Add(l.Valor.Decimal())
-			r.SaqueAniversario = r.SaqueAniversario || (l.Motivo != nil && *l.Motivo == MotivoSaqueAniversario)
+		if l.Tipo != TipoSaque || l.Data.Depois(saida) {
+			continue
+		}
+		r.SaqueAniversario = r.SaqueAniversario || (l.Motivo != nil && *l.Motivo == MotivoSaqueAniversario)
+		if l.Data.Antes(mesDaSaida) {
+			base = base.Add(l.Valor.Decimal()) // já saiu do saldo: volta para a base da multa
+		} else {
+			saldo = saldo.Sub(l.Valor.Decimal()) // no mês da saída: o Estimar, até o mês antes, não tirou (revisão do #704)
 		}
 	}
-	r.Saldo, r.BaseDaMulta = centavos(saldo), centavos(base)
+	r.Saldo, r.BaseDaMulta = centavos(decimal.Max(saldo, decimal.Zero)), centavos(base)
 	return r, nil
 }
 

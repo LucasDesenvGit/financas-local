@@ -213,6 +213,11 @@ func TestRescisaoPelaApi(t *testing.T) {
 	if fimDeAno.Verbas[2].Descricao != "13º proporcional" || fimDeAno.Verbas[2].Referencia != "0/12 do ano da saída e 1/12 do seguinte" {
 		t.Fatalf("saída em 28/12 = %+v", fimDeAno.Verbas)
 	}
+	// O FGTS do 13º pago até 20/12 vence em 20/01: entra no depósito da rescisão (2ª revisão do #704). 8% de 5600 (o saldo de
+	// salário) + 7200 (o aviso) + 500 (o 13º do ano seguinte) = 1064, mais 8% de 6000 (o 13º do ano) = 1544.
+	if fimDeAno.Fgts.DepositoRescisao.String() != "1544.00" {
+		t.Fatalf("depósito da rescisão em 28/12 = %+v", fimDeAno.Fgts)
+	}
 	for _, d := range fimDeAno.Descontos {
 		if strings.HasPrefix(d.Descricao, "1ª parcela") {
 			t.Fatalf("1ª parcela descontada depois do 13º inteiro: %+v", fimDeAno.Descontos)

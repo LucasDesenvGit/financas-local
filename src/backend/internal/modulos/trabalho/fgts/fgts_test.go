@@ -267,3 +267,59 @@ func TestFgtsPelaApi(t *testing.T) {
 	chamar("DELETE", base+"/lancamentos/999", "").ConferirStatus(t, http.StatusNotFound)
 	_ = tipos.Data{}
 }
+
+// Revisão do #704 (2ª): o FGTS na rescisão vai até o mês antes da saída. O saque de antes desse mês já saiu do saldo e
+// volta para a base da multa; o do mês da saída sai do saldo (o Estimar não chega nele) e não muda a base; o de depois
+// da saída não conta. O saldo nunca fica negativo.
+func TestParaRescisaoComSaques(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
+	s := NovoServico(db, empregos, holerites, decimo, ferias.NovoServico(db, empregos, holerites, rel, log), rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	Registrar(m, s)
+	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
+		return testeapoio.Chamar(t, m, metodo, caminho, corpo)
+	}
+	var e emprego.Emprego
+	_ = json.Unmarshal(chamar("POST", "/api/trabalho/empregos", `{"empregador":"E","admissao":"2024-03-11","salarioBruto":6000}`).Corpo, &e)
+	lancar := func(corpo string) {
+		t.Helper()
+		chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/fgts/lancamentos", e.Id), corpo).ConferirStatus(t, http.StatusOK)
+	}
+	saida := testeapoio.Dia(2026, 10, 15)
+	naSaida := func() NaSaida {
+		t.Helper()
+		r, err := s.ParaRescisao(t.Context(), e.Id, saida)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return r
+	}
+	// A distribuição de resultados, antes dos saques, não é saque: a conta segue para os de depois dela.
+	lancar(`{"data":"2026-08-10","tipo":3,"valor":50}`)
+	lancar(`{"data":"2026-09-10","tipo":2,"valor":1000,"motivo":4}`)
+	antes := naSaida()
+	if !antes.BaseDaMulta.Decimal().Equal(antes.Saldo.Decimal().Add(v("1000").Decimal())) || antes.SaqueAniversario {
+		t.Fatalf("saque antes do mês da saída = %+v", antes)
+	}
+	lancar(`{"data":"2026-10-05","tipo":2,"valor":5000,"motivo":2}`)
+	noMes := naSaida()
+	if !noMes.Saldo.Decimal().Equal(antes.Saldo.Decimal().Sub(v("5000").Decimal())) || !noMes.BaseDaMulta.Decimal().Equal(antes.BaseDaMulta.Decimal()) ||
+		!noMes.SaqueAniversario {
+		t.Fatalf("saque no mês da saída = %+v (antes %+v)", noMes, antes)
+	}
+	lancar(`{"data":"2026-10-20","tipo":2,"valor":700,"motivo":4}`)
+	if depois := naSaida(); !depois.Saldo.Decimal().Equal(noMes.Saldo.Decimal()) || !depois.BaseDaMulta.Decimal().Equal(noMes.BaseDaMulta.Decimal()) {
+		t.Fatalf("saque depois da saída contou: %+v", depois)
+	}
+	lancar(`{"data":"2026-10-06","tipo":2,"valor":99999999,"motivo":4}`)
+	if zerado := naSaida(); !zerado.Saldo.Decimal().IsZero() || !zerado.BaseDaMulta.Decimal().Equal(antes.BaseDaMulta.Decimal()) {
+		t.Fatalf("saldo negativo: %+v", zerado)
+	}
+}
