@@ -12,6 +12,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e
   - a rubrica que o site não conhece se escolhe uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida;
   - nada é gravado sem "Confirmar e gravar"; o holerite lido entra fechado e marcado "Lido do PDF" (o 13º, as férias, o FGTS e a rescisão usam esses números), com "Desfazer" no aviso, e "Reabrir" volta para a estimativa.
   - Tudo lido no computador, sem serviço de fora, e o PDF não fica guardado. Biblioteca nova no Go: `github.com/ledongthuc/pdf` (BSD-3). Banco: a tabela `HoleriteRubricaEscolha` e a coluna `Holerite.Origem`.
+  - A leitura tem limites (revisão): um PDF por vez, com prazo, e o PDF malformado (árvore de páginas em ciclo, conteúdo que abre para dezenas de MB) para com uma mensagem, sem travar o site; a rubrica desconhecida vem sem tipo até você escolher, e o rodapé do PDF é conferido.
 
 ## [3.23.0] — 2026-11-16 · desenvolvimento
 

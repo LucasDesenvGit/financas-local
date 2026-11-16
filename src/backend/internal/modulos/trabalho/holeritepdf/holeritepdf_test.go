@@ -1,6 +1,8 @@
 package holeritepdf
 
 import (
+	"bytes"
+	"compress/zlib"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -79,7 +81,7 @@ func (a ambiente) ler(empregoId int64, pdf []byte, senha string) testeapoio.Resp
 
 func (a ambiente) previa(empregoId int64, paginas ...[]ficticios.Texto) Previa {
 	a.t.Helper()
-	r := a.ler(empregoId, ficticios.GerarPDF(paginas, ""), "")
+	r := a.ler(empregoId, ficticios.GerarPDF(paginas), "")
 	r.ConferirStatus(a.t, http.StatusOK)
 	return decodificar[Previa](a.t, r)
 }
@@ -188,7 +190,12 @@ func TestLerConfirmarEDesfazer(t *testing.T) {
 	r.ConferirStatus(t, http.StatusConflict)
 	conferirMensagem(t, r, MensagemFechado)
 
-	// Desfazer: o holerite era novo, então some. A chave vale uma vez só.
+	// Desfazer: o holerite era novo, então some. A chave vale uma vez só. Pedida com outro emprego, não desfaz e não gasta
+	// a chave (revisão do #706).
+	outro := a.emprego("5000", "")
+	r = a.desfazer(outro, g.Desfazer)
+	r.ConferirStatus(t, http.StatusNotFound)
+	conferirMensagem(t, r, "Não dá mais para desfazer: o prazo passou ou já foi desfeito.")
 	a.desfazer(id, g.Desfazer).ConferirStatus(t, http.StatusNoContent)
 	a.chamar("GET", fmt.Sprintf("/api/trabalho/holerites/%d", h.Id), "").ConferirStatus(t, http.StatusNotFound)
 	r = a.desfazer(id, g.Desfazer)
@@ -341,7 +348,7 @@ func TestPDFRecusado(t *testing.T) {
 	t.Parallel()
 	a := novo(t)
 	id := a.emprego("5000", "")
-	comSenha := ficticios.GerarPDF([][]ficticios.Texto{ficticios.ViaClassica()}, "12345678900")
+	comSenha := ficticios.ComSenha()
 	casos := []struct {
 		nome     string
 		pdf      []byte
@@ -351,12 +358,13 @@ func TestPDFRecusado(t *testing.T) {
 	}{
 		{"com senha", comSenha, "", MensagemSenha, MotivoSenha},
 		{"senha errada", comSenha, "000", MensagemSenhaErrada, MotivoSenha},
-		{"escaneado", ficticios.GerarPDF([][]ficticios.Texto{{}}, ""), "", MensagemSemTexto, MotivoSemTexto},
-		{"sem a tabela", ficticios.GerarPDF([][]ficticios.Texto{ficticios.Pagina(ficticios.Linha(0, 30, "Informe de rendimentos"))}, ""),
+		{"escaneado", ficticios.GerarPDF([][]ficticios.Texto{{}}), "", MensagemSemTexto, MotivoSemTexto},
+		{"sem a tabela", ficticios.GerarPDF([][]ficticios.Texto{ficticios.Pagina(ficticios.Linha(0, 30, "Informe de rendimentos"))}),
 			"", MensagemSemTabela, MotivoSemTexto},
 		{"não é PDF", []byte("planilha"), "", MensagemNaoEPDF, ""},
 		{"grande", append([]byte("%PDF-1.4\n"), make([]byte, 700<<10)...), "", MensagemGrande, ""},
 		{"corrompido", []byte("%PDF-1.4\nquebrado"), "", MensagemIlegivel, ""},
+		{"bomba de descompressão", bomba(), "", MensagemPesado, ""},
 	}
 	for _, c := range casos {
 		r := a.ler(id, c.pdf, c.senha)
@@ -366,7 +374,7 @@ func TestPDFRecusado(t *testing.T) {
 			t.Errorf("%s: %v", c.nome, corpo)
 		}
 	}
-	if r := a.ler(id, comSenha, "12345678900"); r.Status != http.StatusOK {
+	if r := a.ler(id, comSenha, ficticios.SenhaFicticia); r.Status != http.StatusOK {
 		t.Errorf("com a senha certa: %d %s", r.Status, r.Corpo)
 	}
 	lista := decodificar[[]holerite.Resumo](t, a.chamar("GET", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", id), ""))
@@ -386,6 +394,10 @@ func TestConfirmarRecusa(t *testing.T) {
 	linha := func(campos string) string {
 		return `{"mes":"2026-10-01","rubricas":[{"descricao":"Salário","valor":100,"tipo":0` + campos + `}]}`
 	}
+	// rodape é o confirmar com os valores do rodapé do PDF (revisão do #706: vinham sem conferência).
+	rodape := func(mes, campos string) string {
+		return `{"mes":"` + mes + `","rubricas":[{"descricao":"Salário","valor":100,"tipo":0}],` + campos + `}`
+	}
 	casos := []struct {
 		nome, corpo, mensagem string
 	}{
@@ -402,6 +414,10 @@ func TestConfirmarRecusa(t *testing.T) {
 		{"mês antes da admissão", `{"mes":"2020-01-01","rubricas":[{"descricao":"Salário","valor":100,"tipo":0}]}`,
 			"O mês do holerite é de antes da admissão ou depois da saída deste emprego."},
 		{"JSON quebrado", `{"mes":`, MensagemJSONInvalido},
+		{"FGTS do mês negativo", rodape("2026-10-01", `"fgtsDoMes":-5000`), MensagemRodape},
+		{"salário base grande", rodape("2026-10-01", `"salarioBase":10000000`), MensagemRodape},
+		{"base do INSS com meio centavo", rodape("2026-10-01", `"baseInss":1.005`), MensagemRodape},
+		{"base do FGTS negativa", rodape("2026-10-01", `"baseFgts":-0.01`), MensagemRodape},
 	}
 	for _, c := range casos {
 		r := a.confirmar(id, c.corpo)
@@ -418,7 +434,10 @@ func TestConfirmarRecusa(t *testing.T) {
 	a.confirmar(999, linha("")).ConferirStatus(t, http.StatusNotFound)
 	a.chamar("POST", "/api/trabalho/empregos/x/holerites/pdf/confirmar", linha("")).ConferirStatus(t, http.StatusNotFound)
 	a.chamar("POST", "/api/trabalho/empregos/x/holerites/pdf/desfazer/abc", "").ConferirStatus(t, http.StatusNotFound)
-	// Com o limite certinho, grava.
+	// Com o limite certinho, grava; o rodapé vai de zero ao limite.
+	a.confirmar(id, rodape("2026-08-01", `"salarioBase":0,"baseInss":9999999.99,"baseFgts":0,"fgtsDoMes":0`)).ConferirStatus(t, http.StatusCreated)
+	a.confirmar(id, rodape("2026-07-01", `"salarioBase":9999999.99,"baseInss":0,"baseFgts":9999999.99,"fgtsDoMes":9999999.99`)).
+		ConferirStatus(t, http.StatusCreated)
 	a.confirmar(id, `{"mes":"2026-10-01","rubricas":[{"descricao":"`+strings.Repeat("a", 100)+`","referencia":"`+
 		strings.Repeat("1", 30)+`","codigo":"`+strings.Repeat("1", 20)+`","valor":9999999.99,"tipo":0}]}`).ConferirStatus(t, http.StatusCreated)
 }
@@ -477,4 +496,15 @@ func TestEmReaisECnpj(t *testing.T) {
 	if got := cnpjFormatado("12345678000195"); got != "12.345.678/0001-95" {
 		t.Errorf("cnpj: %s", got)
 	}
+}
+
+// bomba é um PDF pequeno cujo conteúdo abre para 8 MB (revisão do #706: o leitor para no limite).
+func bomba() []byte {
+	var b bytes.Buffer
+	z := zlib.NewWriter(&b)
+	_, _ = z.Write(append([]byte("BT /F1 9 Tf ("), bytes.Repeat([]byte("A"), 8<<20)...))
+	_ = z.Close()
+	return ficticios.Montar([]string{"<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+		"<< /Type /Page /Parent 2 0 R /Contents 4 0 R >>",
+		fmt.Sprintf("<< /Length %d /Filter /FlateDecode >>\nstream\n%s\nendstream", b.Len(), b.String())})
 }

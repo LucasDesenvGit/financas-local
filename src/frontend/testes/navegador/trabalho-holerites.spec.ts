@@ -173,6 +173,9 @@ test('Trabalho › Holerites: ler o holerite em PDF', async ({ page, problemas }
   await linhas.nth(2).getByLabel('Deixar de fora').check();
   await expect(provas).toContainText('Total de descontos: R$ 501,51 somado, R$ 514,01 no PDF: R$ 12,50 a menos que o impresso.');
   await linhas.nth(2).getByLabel('Deixar de fora').uncheck();
+  // A desconhecida começa sem tipo: o "Confirmar" espera a escolha (revisão do #706).
+  await expect(bloco).toContainText('Escolha o tipo de cada linha marcada “escolha o tipo”, ou deixe a linha de fora.');
+  await expect(bloco.getByRole('button', { name: 'Confirmar e gravar' })).toBeDisabled();
   await linhas.nth(2).getByLabel('Tipo de Seguro de Vida').selectOption({ label: 'Plano de saúde' });
   await expect(linhas.nth(2)).toContainText('você escolheu: o site lembra no próximo mês');
 

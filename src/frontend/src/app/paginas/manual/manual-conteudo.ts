@@ -1338,7 +1338,7 @@ export const MANUAL: CapituloManual[] = [
           'Nada é gravado até “Confirmar e gravar”. O holerite lido entra fechado e marcado “Lido do PDF”: vale o que a empresa pagou, e o 13º, as férias, o FGTS e a rescisão passam a usar esses números. O aviso traz “Desfazer” por alguns segundos; depois, “Reabrir” volta para a estimativa do site.'
         ],
         dicas: [
-          'Rubrica que o site não conhece (“escolha o tipo”): escolha uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida. Vale também para a que você corrigiu.',
+          'Rubrica que o site não conhece (“escolha o tipo”): ela vem sem tipo, e o “Confirmar e gravar” espera você escolher (ou deixar a linha de fora). Escolha uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida. Vale também para a que você corrigiu.',
           'O PDF é lido no seu computador, sem nenhum serviço de fora, e não fica guardado: só os valores do holerite.',
           'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
           'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',

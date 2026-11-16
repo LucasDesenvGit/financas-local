@@ -40,8 +40,12 @@ const (
 	MensagemSenhaErrada  = "A senha não abriu o PDF. Confira e tente de novo."
 	MensagemSemTexto     = "Este PDF é uma imagem, e por enquanto o leitor só lê PDF com texto. Dá para digitar o holerite."
 	MensagemIlegivel     = "O PDF não abriu: ele pode estar corrompido. Tente baixar de novo."
+	MensagemPesado       = "O conteúdo do PDF passa do limite do leitor: ele não parece um holerite. Dá para digitar o holerite."
+	MensagemDemorou      = "O PDF demorou demais para ler, e a leitura parou: ele pode estar corrompido. Tente baixar de novo."
+	MensagemOcupado      = "O leitor ainda está lendo outro PDF. Espere uns segundos e tente de novo; se continuar, reinicie o Finanças Local pelo gerenciador."
 	MensagemSemTabela    = "Não achei a tabela do holerite (as colunas de vencimentos e de descontos) neste PDF. Dá para digitar o holerite."
 	MensagemFechado      = "O holerite do mês está fechado: reabra antes de gravar o lido."
+	MensagemRodape       = "O salário base, as bases do INSS e do FGTS e o FGTS do mês vão de R$ 0,00 a R$ 9.999.999,99, em centavos."
 )
 
 func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
@@ -103,6 +107,12 @@ func (s *Servico) lerHTTP(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemGrande)
 	case errors.Is(err, leitor.ErrIlegivel):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemIlegivel)
+	case errors.Is(err, leitor.ErrPesado):
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemPesado)
+	case errors.Is(err, leitor.ErrDemorou):
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemDemorou)
+	case errors.Is(err, leitor.ErrOcupado): // uma leitura por vez (revisão do #706)
+		respostas.Mensagem(w, http.StatusServiceUnavailable, MensagemOcupado)
 	default:
 		s.log.ErrorContext(r.Context(), "trabalho: ler o holerite em PDF", "erro", err)
 		respostas.SemCorpo(w, http.StatusInternalServerError)

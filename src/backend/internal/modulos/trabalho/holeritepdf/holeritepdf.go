@@ -309,8 +309,8 @@ func (s *Servico) Confirmar(ctx context.Context, empregoId int64, c Confirmacao)
 // Desfazer volta o holerite ao que era antes da confirmação. False se a chave venceu, já foi usada ou é de outro
 // emprego. As escolhas das rubricas ficam: são o que a pessoa ensinou.
 func (s *Servico) Desfazer(ctx context.Context, empregoId int64, chave string) (bool, error) {
-	a, ok := s.memoria.Tirar(chave)
-	if !ok || a.empregoId != empregoId {
+	a, ok := s.memoria.TirarSe(chave, func(a antes) bool { return a.empregoId == empregoId })
+	if !ok {
 		return false, nil
 	}
 	err := s.holerites.DesfazerLido(ctx, a.holeriteId, a.existia)
@@ -330,6 +330,11 @@ var (
 func montar(e emprego.Emprego, c Confirmacao) (holerite.Calculo, error) {
 	if len(c.Rubricas) == 0 || len(c.Rubricas) > 100 {
 		return holerite.Calculo{}, invalido("O holerite precisa de pelo menos uma linha (e vai até 100).")
+	}
+	for _, v := range []*tipos.Decimal{c.SalarioBase, c.BaseInss, c.BaseFgts, c.FgtsDoMes} {
+		if v != nil && (v.Decimal().IsNegative() || v.Decimal().GreaterThanOrEqual(limiteDoValor) || !v.Decimal().Equal(v.Decimal().Round(2))) {
+			return holerite.Calculo{}, invalido(MensagemRodape)
+		}
 	}
 	mes := emprego.InicioDoMes(c.Mes)
 	calc := holerite.Calculo{Mes: mes, Proventos: []holerite.Linha{}, Descontos: []holerite.Linha{},

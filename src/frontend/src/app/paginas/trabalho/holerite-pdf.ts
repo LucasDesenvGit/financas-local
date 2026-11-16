@@ -31,32 +31,34 @@ export function tipoEhProvento(t: T): boolean {
   return t < 10;
 }
 
-/** Uma linha da prévia como a pessoa deixou: o tipo e o valor que dá para corrigir, e se ela fica de fora. */
+/** Uma linha da prévia como a pessoa deixou: o tipo e o valor que dá para corrigir, e se ela fica de fora. O tipo é
+ * null na rubrica que o site não conhece, até a pessoa escolher (revisão do #706: o "Outro" sugerido não vira escolha
+ * lembrada sem ela escolher). */
 export interface LinhaPrevia {
   rubrica: RubricaLida;
-  tipo: T;
+  tipo: T | null;
   valor: number | null;
   ignorar: boolean;
 }
 
 export function linhasDaPrevia(p: PreviaHoleritePdf): LinhaPrevia[] {
-  return p.rubricas.map((r) => ({ rubrica: r, tipo: r.tipo, valor: r.valor, ignorar: false }));
+  return p.rubricas.map((r) => ({ rubrica: r, tipo: r.como === 'desconhecida' ? null : r.tipo, valor: r.valor, ignorar: false }));
 }
 
 /** A situação da linha em texto, não só cor (Nielsen 1). A pessoa mudou o tipo: "você escolheu", e o site lembra. */
 export function situacaoDaLinha(l: LinhaPrevia): string {
   if (l.ignorar) return 'fica de fora';
-  if (l.tipo !== l.rubrica.tipo) return 'você escolheu: o site lembra no próximo mês';
-  const textos: Record<ComoRubrica, string> = {
+  if (l.tipo === null) return 'escolha o tipo';
+  if (l.rubrica.como === 'desconhecida' || l.tipo !== l.rubrica.tipo) return 'você escolheu: o site lembra no próximo mês';
+  const textos: Record<Exclude<ComoRubrica, 'desconhecida'>, string> = {
     dicionario: 'reconhecido',
-    escolha: 'reconhecido pelo que você escolheu antes',
-    desconhecida: 'escolha o tipo'
+    escolha: 'reconhecido pelo que você escolheu antes'
   };
   return textos[l.rubrica.como];
 }
 
 export function precisaEscolher(l: LinhaPrevia): boolean {
-  return !l.ignorar && l.rubrica.como === 'desconhecida' && l.tipo === l.rubrica.tipo;
+  return !l.ignorar && l.tipo === null;
 }
 
 const centavos = (v: number): number => Math.round(v * 100);
@@ -69,7 +71,8 @@ export function provasAtuais(p: PreviaHoleritePdf, linhas: LinhaPrevia[]): Prova
   let descontos = 0;
   for (const l of linhas) {
     if (l.ignorar || l.valor === null) continue;
-    if (tipoEhProvento(l.tipo)) proventos += centavos(l.valor);
+    // Sem o tipo ainda, a linha conta do lado em que estava no PDF.
+    if (l.tipo === null ? l.rubrica.provento : tipoEhProvento(l.tipo)) proventos += centavos(l.valor);
     else descontos += centavos(l.valor);
   }
   const provas: ProvaAtual[] = [];
@@ -96,6 +99,7 @@ export function faltaParaConfirmar(linhas: LinhaPrevia[], mes: string | null): s
   if (!mes) return 'Escolha o mês do holerite.';
   const valendo = linhas.filter((l) => !l.ignorar);
   if (!valendo.length) return 'Deixe pelo menos uma linha no holerite.';
+  if (valendo.some((l) => l.tipo === null)) return 'Escolha o tipo de cada linha marcada “escolha o tipo”, ou deixe a linha de fora.';
   if (valendo.some((l) => l.valor === null || l.valor <= 0)) return 'Cada linha precisa de um valor.';
   return null;
 }

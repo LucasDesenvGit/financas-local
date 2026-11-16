@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS Transacao
     Emergencia          INTEGER NOT NULL CONSTRAINT DF_Transacao_Emergencia DEFAULT 0,
     -- #9: o usuário já olhou a descrição pouco informativa ("PIX ENVIADO") e ela sai do filtro.
     DescricaoRevisada   INTEGER NOT NULL CONSTRAINT DF_Transacao_DescricaoRevisada DEFAULT 0,
-    -- #111 (ADR 0030): tipo de operação informado pelo banco no Open Finance (operationType/paymentMethod da Pluggy).
+    -- #111 (ADR 0025): tipo de operação informado pelo banco no Open Finance (operationType/paymentMethod da Pluggy).
     MeioPagamento       TEXT    NULL,
     -- #111: quem pagou e quem recebeu têm o mesmo documento (transferência entre contas suas). Só o sim/não é
     -- guardado, nunca o CPF/CNPJ nem o nome. NULL = o banco não informou.

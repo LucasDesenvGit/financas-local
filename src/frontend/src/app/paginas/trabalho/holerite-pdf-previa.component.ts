@@ -50,6 +50,7 @@ import {
                 <td>
                   <select [attr.aria-label]="'Tipo de ' + l.rubrica.descricao" [ngModel]="l.tipo" [ngModelOptions]="{ standalone: true }"
                     [disabled]="l.ignorar" (ngModelChange)="mudar(i, { tipo: +$event })">
+                    @if (l.tipo === null) { <option [ngValue]="null" disabled>Escolha o tipo</option> }
                     <optgroup label="Proventos">@for (t of tiposProvento; track t.valor) { <option [ngValue]="t.valor">{{ t.rotulo }}</option> }</optgroup>
                     <optgroup label="Descontos">@for (t of tiposDesconto; track t.valor) { <option [ngValue]="t.valor">{{ t.rotulo }}</option> }</optgroup>
                   </select>

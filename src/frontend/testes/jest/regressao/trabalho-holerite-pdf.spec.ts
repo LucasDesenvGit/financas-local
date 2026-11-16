@@ -19,10 +19,15 @@ describe('Trabalho › Holerite em PDF (#228)', () => {
   const p = previa([rubrica('SALARIO', 5000.1, true, T.Salario), rubrica('INSS', 500.1, false, T.Inss),
     rubrica('Seguro de vida', 100.1, false, T.OutroDesconto, 'desconhecida'), rubrica('ASSIST', 0.1, false, T.PlanoDeSaude, 'escolha')]);
 
+  /** As linhas com a desconhecida já escolhida (o tipo que o site sugeria). */
+  const escolhidas = (): LinhaPrevia[] => linhasDaPrevia(p).map((l) => (l.tipo === null ? { ...l, tipo: T.OutroDesconto } : l));
+
   it('a prova real, refeita com o que a pessoa corrigiu, em centavos', () => {
     const linhas = linhasDaPrevia(p);
+    // A desconhecida, ainda sem tipo, conta do lado do PDF (o desconto): a prova bate.
     expect(provasAtuais(p, linhas).map((x) => [x.descricao, x.bateu, x.diferenca])).toEqual([
       ['Total de vencimentos', true, 0], ['Total de descontos', true, 0], ['Líquido', true, 0]]);
+    expect(provasAtuais(p, escolhidas())).toEqual(provasAtuais(p, linhas));
     // Deixar uma linha de fora e trocar outra de lado: a prova mostra qual total e por quanto.
     const mudadas: LinhaPrevia[] = linhas.map((l, i) => (i === 2 ? { ...l, ignorar: true } : i === 3 ? { ...l, tipo: T.OutroProvento } : l));
     expect(provasAtuais(p, mudadas).map((x) => [x.descricao, x.encontrado, x.diferenca, x.bateu])).toEqual([
@@ -46,6 +51,10 @@ describe('Trabalho › Holerite em PDF (#228)', () => {
     expect(situacaoDaLinha(assist)).toBe('reconhecido pelo que você escolheu antes');
     expect(situacaoDaLinha(seguro)).toBe('escolha o tipo');
     expect(situacaoDaLinha({ ...seguro, tipo: T.PlanoDeSaude })).toBe('você escolheu: o site lembra no próximo mês');
+    // Revisão do #706: a desconhecida começa sem tipo; escolher o mesmo que o site sugeria também é escolha.
+    expect(seguro.tipo).toBeNull();
+    expect(situacaoDaLinha({ ...seguro, tipo: T.OutroDesconto })).toBe('você escolheu: o site lembra no próximo mês');
+    expect(precisaEscolher({ ...seguro, tipo: T.OutroDesconto })).toBe(false);
     expect(situacaoDaLinha({ ...salario, ignorar: true })).toBe('fica de fora');
     expect(precisaEscolher(seguro)).toBe(true);
     expect(precisaEscolher({ ...seguro, tipo: T.PlanoDeSaude })).toBe(false);
@@ -53,8 +62,12 @@ describe('Trabalho › Holerite em PDF (#228)', () => {
     expect(precisaEscolher(salario)).toBe(false);
   });
 
-  it('confirmar pede o mês, uma linha e o valor de cada uma', () => {
-    const linhas = linhasDaPrevia(p);
+  it('confirmar pede o mês, uma linha, o tipo da desconhecida e o valor de cada uma', () => {
+    const semEscolha = linhasDaPrevia(p);
+    expect(faltaParaConfirmar(semEscolha, '2026-10-01')).toBe('Escolha o tipo de cada linha marcada “escolha o tipo”, ou deixe a linha de fora.');
+    expect(faltaParaConfirmar(semEscolha.map((l, i) => (i === 2 ? { ...l, ignorar: true } : l)), '2026-10-01')).toBeNull();
+    const linhas = escolhidas();
+    expect(faltaParaConfirmar(linhas, '2026-10-01')).toBeNull();
     expect(faltaParaConfirmar(linhas, null)).toBe('Escolha o mês do holerite.');
     expect(faltaParaConfirmar(linhas.map((l) => ({ ...l, ignorar: true })), '2026-10-01')).toBe('Deixe pelo menos uma linha no holerite.');
     expect(faltaParaConfirmar(linhas.map((l, i) => (i === 1 ? { ...l, valor: null } : l)), '2026-10-01')).toBe('Cada linha precisa de um valor.');

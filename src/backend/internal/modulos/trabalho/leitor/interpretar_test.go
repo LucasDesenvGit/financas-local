@@ -14,7 +14,7 @@ import (
 // ler gera o PDF, lê e interpreta, como o site faz.
 func ler(t *testing.T, paginas [][]ficticios.Texto) Lido {
 	t.Helper()
-	linhas, err := LerPDF(ficticios.GerarPDF(paginas, ""), "")
+	linhas, err := LerPDF(ficticios.GerarPDF(paginas), "")
 	if err != nil {
 		t.Fatalf("LerPDF: %v", err)
 	}
@@ -128,7 +128,7 @@ func TestProvaMostraQualTotalNaoBateu(t *testing.T) {
 }
 
 func TestInterpretarSemTabela(t *testing.T) {
-	linhas, err := LerPDF(ficticios.GerarPDF([][]ficticios.Texto{ficticios.Pagina(ficticios.Linha(0, 30, "Informe de rendimentos 2026", 300, "Vencimentos"))}, ""), "")
+	linhas, err := LerPDF(ficticios.GerarPDF([][]ficticios.Texto{ficticios.Pagina(ficticios.Linha(0, 30, "Informe de rendimentos 2026", 300, "Vencimentos"))}), "")
 	if err != nil {
 		t.Fatal(err)
 	}
