@@ -2,12 +2,96 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.13.0] — 2026-11-13 · desenvolvimento
+## [3.16.0] — 2026-11-16 · desenvolvimento
 
 ### Funcionalidades
 - **Módulos: partes do site que se ligam e desligam** (#191, épico #190). Em Configurações › Módulos, um interruptor por módulo mostra o que ele faz e se acessa a internet (e para onde). Desligado, o módulo some do menu, não roda nada em segundo plano e não acessa a internet; ligar e desligar vale na hora, sem recarregar a página, e fica nos acessos recentes. Desligar não apaga os dados.
   - Esta versão traz só a base: o primeiro módulo, o Trabalho (#209), chega na próxima.
   - Por dentro (ADR 0064, Proposta): o módulo é compilado no site e implementa um contrato do núcleo (`internal/plataforma/modulos`); as rotas dele respondem 409 com ele desligado, as tarefas só rodam com ele ligado e a escolha fica na tabela `Configuracao`. Novas rotas `GET /api/modulos` e `PUT /api/modulos/{id}`.
+
+## [3.15.11] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Teste "Campo de número (#283)" sem falso alarme fora da CI** (#747). O teste do navegador comparava dois prints byte a byte e falhava em parte das máquinas: ao redesenhar depois do estilo injetado, o Chromium suaviza a borda arredondada com 1 ponto de diferença em alguns pixels dos cantos. Agora conta só os pixels que mudam mais de 2 pontos; a setinha de verdade muda 330.
+
+## [3.15.10] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0070 (proposta): versão calculada no build e o CHANGELOG com um arquivo por PR** (#721, item 1 da #689). Compara manter a regra de hoje, um job que grava a versão no `develop` e a versão calculada a partir de uma base e do tipo de cada merge; e, para o CHANGELOG, a seção "Não lançado" (que ainda conflita no GitHub) contra um arquivo por PR em `changelog.d/`. Propõe a versão calculada e o `changelog.d/`, com os passos depois do aval e as perguntas para a equipe. Só a ADR: nada muda nos scripts, nos workflows nem na regra de versão até ela ser aceita. Nada muda para quem usa.
+
+## [3.15.9] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Pacote novo do Go não derruba mais a CI da mutação** (#716; item 5 da #689). Antes, um pacote de `src/backend/internal` que ainda não estava em `mutacao-go.txt` nem em `mutacao-go-fora.txt` falhava o PR, e quem o criava tinha de disparar o workflow à mão para medir. Agora ele é medido como os da lista, sem piso, e um aviso dá a linha a pôr na lista, com a eficácia medida. A mutação continua em todo PR que mexe em Go. O script ganhou um teste (`test_mutacao_go.py`), que roda no workflow.
+
+## [3.15.8] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Guias de instalação, operação e requisitos sem as notas da troca para o Go** (#714). O guia de instalação pelos scripts perde as seções "Sem o .NET" e "Migrar de uma instalação com SQL Server" (o que fazer ao vir da 2.x está na 3.0.0, abaixo). A volta à última versão com o .NET e a ferramenta que migrava do SQL Server ficam num lugar só, no [guia de operação](docs/OPERACAO.md#voltar-à-última-versão-com-o-net). Os requisitos não funcionais mostravam a memória (225 MB) e o tamanho da instalação (157 MB) de antes do Go: agora mostram a medição da #86 (28,3 MB e 19,2 MB).
+
+## [3.15.7] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **ADRs substituídas mais curtas e a 0037 sem o código C#** (#712). A 0010, a 0028 e a 0033 ficam com o contexto, a decisão e o link para a ADR que as substituiu, sem o passo a passo do que saiu na #86 (de 4.117 para 2.556 palavras nas cinco). A 0010 continua com as regras da estimativa das reservas, que ainda valem nos bancos que não informam o reservado. A 0037 e a 0005 apontam para os pacotes do Go no lugar do `ReservaService.cs` e do `internal/segredos`.
+
+## [3.15.6] — 2026-11-16 · desenvolvimento
+
+### Correções
+- **Dependências: SQLite 1.62.0, `x/sys` 0.50.0, `x/text` 0.44.0, Angular 22.2.6 e Lucide 1.72.0** (#744, Dependabot #737 a #743, juntos num PR só porque mexem nos mesmos `go.mod`, `go.sum` e `package-lock.json`). No site e no gerenciador, o `modernc.org/sqlite` vai de 1.61.1 a 1.62.0 e o `golang.org/x/sys` de 0.49.0 a 0.50.0; no site, o `golang.org/x/text` de 0.43.0 a 0.44.0. No front-end, o Angular (`common`, `compiler`, `core`, `forms`, `platform-browser`, `router` e `compiler-cli`) sobe uma correção, 22.2.5 → 22.2.6, o `@angular/build` e o `@angular/cli`, só de desenvolvimento, 22.2.6 → 22.2.7, e os ícones do `@lucide/angular` vão de 1.69.0 a 1.72.0. Os commits são os do Dependabot, trazidos por *cherry-pick*. Manual: não se aplica.
+
+## [3.15.5] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **A tela de Investimentos dividida em tela, apresentação e funções puras** (#731, item 8 da #689; ADR 0059). O componente da tela caiu de 1.516 para 545 linhas (e o template foi para `investimentos.component.html`): ela guarda o estado e fala com a API. Os avisos e cards do topo, os gráficos do Resumo, as abas Renda variável, Open Finance e Reservas e as janelas de operações, ativo e importação pelo extrato viraram componentes de apresentação (`investimentos-*.component.ts`), e a regra (aba na URL, posições, frases-resumo, gráficos, formulários, importação e avisos) foi para `investimentos.ts`, testada no Jest sem `TestBed` (`investimentos-logica.spec.ts` e `investimentos-formularios.spec.ts`). O formulário da operação, a conferência do saldo, o nome do investimento e a fonte das cotações ficaram na tela, que edita o estado deles direto. Nada muda para quem usa. Manual: não se aplica.
+
+## [3.15.4] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **ADRs grandes mais curtas** (#728, parte do #690): as ADRs 0051 (testes do Go), 0052 (gerenciador), 0029 (`.msi`), 0032 (controles padrão) e 0012 (instalador em PowerShell) ficam com a decisão, as alternativas e as consequências, em até ~1,6 mil palavras cada. O passo a passo e o histórico foram para o guia de cada assunto, com link: `CONTRIBUINDO.md` ("Testes do back-end (Go)"), `src/gerenciador-go/README.md`, `instalador/README.md`, `scripts/README.md` e `docs/UI-UX.md`. Nenhuma decisão mudou.
+
+## [3.15.3] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **Skills do Claude Code mais curtas, e sai a `migrar-para-go`** (#727, grupo 7 da #690 e item 3c da #689). Nada muda para quem usa. A migração para o Go terminou na #86, e a skill dela sai: como um assunto era no C# fica na tag `v-ultimo-dotnet`. As pegadinhas que ainda valem para o Go de hoje (arredondar com `tipos.Arredondar`, as contas do `tipos`, texto com acento, `enum` como número, validação, cascata) passam para o estilo da `go-no-projeto`, e a regra da issue feita em partes, para o roteiro dela. Nas outras skills, o que só repetia o `docs/UI-UX.md`, as ADRs ou o `CONTRIBUINDO.md` vira o caminho e o link; a `testar-no-navegador` passa a dizer que a CSP vem do Go, e não do `Seguranca.cs`.
+
+## [3.15.2] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **A tela de Metas dividida em tela, componentes de apresentação e funções puras** (#732; ADR 0059). O `metas.component.ts` caiu de 992 para 333 linhas e fica só com o estado (as metas, o plano, o que está aberto, a simulação na URL) e as chamadas da API. O bloco "Quanto guardar este mês", o cartão de cada meta e as janelas "Nova meta / Editar meta" e "Aporte" viraram `metas-assistente`, `metas-cartao`, `metas-formulario` e `metas-aporte`, que recebem por `input()` e avisam por `output()`; as janelas editam uma cópia, e fechar sem salvar não muda nada. A regra (a simulação na URL, as sanfonas, o limite do valor por mês, a data alvo pelo valor por mês, "concluída" ao aumentar o alvo, a ordem de prioridade e o gráfico "Como está indo") foi para funções puras em `metas.ts`, com 24 casos em 0,5 s no Jest, sem abrir a tela. Os links para outras telas continuam na tela e entram nos componentes por projeção de conteúdo, porque o componente de apresentação não importa o roteador (regra 8 do teste de arquitetura). Saíram junto o `mesmoMes` e o `rotuloMes`, que nada chamava, e uma regra de CSS sem uso. Os testes do navegador não mudaram; os do Jest que mexiam no formulário pelos campos da tela passaram a usar a cópia que a janela edita. Os prints saíram iguais aos de antes, nos dois temas, no computador e no celular. Nada muda para quem usa.
+
+## [3.15.1] — 2026-11-16 · desenvolvimento
+
+### Correções
+- **Contas a pagar: o "Pago com" sem a palavra "Cofrinho" repetida** (#719). A lista punha "Cofrinho" antes de cada nome, e o nome quase sempre já tem a palavra ("Cofrinho Cofrinho da Virada"). Agora o campo se chama "Pago com o cofrinho" e a lista mostra só o nome, como no app do banco; a opção sem cofrinho virou "Nenhum (sai do saldo da conta)". O "Qual cofrinho" do "Pagar" também mostra só o nome.
+
+## [3.15.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Sincronização: "Ver em Transações" no aviso do resultado** (#688). O aviso "Sincronizado: 3 nova(s), 2 atualizada(s)." ganha a ação "Ver em Transações", que abre as Transações só com esses lançamentos, no período deles, com o filtro "Novas e atualizadas na sincronização" em "Filtrando:". Vale para o botão da barra de cima, o "Sincronizar" de Configurações e o "Adicionar" conexão.
+  - Sem nada novo nem atualizado, o aviso fica sem a ação; com mais de 200, a ação abre o período inteiro, e o aviso diz por quê.
+  - A resposta de `POST /api/open-finance/sincronizar` (e de `POST /api/open-finance/conexoes`) ganha `lancamentos`: os ids (até 200) e o período das transações novas e atualizadas, ou `null`.
+  - Com Transações já aberta, a tela segue a URL que muda por fora (a ação do aviso, o voltar do navegador), e pergunta antes se há trocas de categoria não salvas. No celular, a ação dos avisos vai para a linha de baixo do texto.
+
+## [3.14.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Cofrinho: registrar saída, a diferença da conferência e "foi paga com um cofrinho?"** (#691, parte 2).
+  - Investimentos › Reservas: "registrar saída" lança um gasto pago direto do cofrinho (uma compra, por exemplo), que entra nos relatórios e baixa a estimativa. Na conferência com a data de hoje, com o saldo abaixo da estimativa, "Registrar a diferença como gasto do cofrinho" lança a diferença em vez de ela sumir.
+  - Contas a pagar: o aviso "não veio" de um débito automático do Open Finance, depois de sincronizar, pergunta "Foi paga com um cofrinho?" e abre o "Pagar" com o cofrinho e a data do vencimento, podendo guardá-lo como "Pago com". A conta com "Pago com" cujo último pagamento ficou sem a despesa oferece "lançar pelo cofrinho".
+
+## [3.13.0] — 2026-11-11 · desenvolvimento
+
+### Funcionalidades
+- **Contas a pagar: "Pago com" um cofrinho** (#691, parte 1). No Mercado Pago, o débito automático pago com o dinheiro de um cofrinho sai direto da reserva e não chega pelo Open Finance: a despesa sumia do mês e o cofrinho ficava acima do real. Agora, numa conta a pagar de conta do Open Finance, o campo "Pago com" escolhe o saldo da conta ou um cofrinho dela (ou outro, pelo nome).
+  - Com "débito automático", o site lança a despesa sozinho no vencimento, com o valor e a categoria, e o vencimento avança; com "paga à mão", o "Pagar" lança a mesma despesa. Ela entra no mês, na categoria, nos orçamentos e nos relatórios; o cofrinho baixa e o saldo da conta não muda.
+  - O lançamento sozinho só pega os vencimentos a partir do dia em que o "Pago com" foi marcado: cadastrar a conta com o vencimento meses atrás não põe despesa em meses já fechados. Conta do banco arquivada não recebe baixa.
+  - A lista mostra "paga pelo cofrinho … em … (automático)", com "ajustar valor" e "desfazer". Se a cobrança chegar pelo extrato mesmo assim, vale a do banco e a do site sai sozinha. O "desfazer" não reativa uma conta a pagar que você encerrou depois.
+  - Banco: colunas `ContaAgendada.ReservaNome`, `ContaAgendada.ReservaDesde` e `Transacao.ReservaNome` e a tabela `PagamentoCofrinho` (ADR 0063, proposta). O site aplica sozinho ao iniciar.
+
+## [3.12.2] — 2026-11-11 · desenvolvimento
+
+### Correções
+- **Go 1.27.4 no site e no gerenciador** (#694). O 1.27.3 tem uma falha de segurança no `net/http` da biblioteca padrão (GO-2026-6859), que o `govulncheck` da CI passou a apontar e que travava todo PR com Go. Quem instala pelos scripts recebe a versão nova sozinho (a mais nova da linha 1.27).
 
 ## [3.12.1] — 2026-11-10 · desenvolvimento
 

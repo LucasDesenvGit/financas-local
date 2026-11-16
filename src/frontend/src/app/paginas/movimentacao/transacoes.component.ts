@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
-import { Component, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, Injector, OnInit, afterNextRender, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
 import { FormsModule } from '@angular/forms';
 import { PrivacidadeService } from '../../core/privacidade.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import {
@@ -34,7 +35,7 @@ import {
   COLUNAS_ORDENAVEIS, ChipFiltro, ParametrosUrl, EscolhaCategoria, FormTransacao, FormTransferencia, LinhaSugestao, SugestaoRegra,
   ajusteDoForm, alternarPagina, ariaSortDe, camposDeCategorias, categoriasRotuladas, categoriasDoFiltro, chipsDoFiltro, comEscolha, direcaoAoClicar,
   direcaoDe, filtroInicial, foraDosGastos, formDaTransacao, formNovo, itensDoLote, lerFiltroDaUrl, linhasDeSugestao,
-  marcarIntervalo, nomeSelecao, opcoesCategoria, ordemDe, paginaDaUrl, parametrosDoFiltro, regrasSugeridas,
+  marcarIntervalo, nomeSelecao, urlVeioDeFora, opcoesCategoria, ordemDe, paginaDaUrl, parametrosDoFiltro, regrasSugeridas,
   rotuloCategoria, rotuloCategoriaPorId, rotuloPeriodo, semOChip, setaDe, somandoNosTotais, tamanhoPaginaValido, textoSelecao,
   comMudanca, conflitoRegra, conflitosPorLinha, MudancaSugestao, transacaoDoForm, trocouFiltro, ultimaPagina, valorCategoria
 } from './transacoes';
@@ -60,6 +61,11 @@ export class TransacoesComponent implements OnInit {
   private readonly privacidade = inject(PrivacidadeService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  /** A navegação que abriu a tela: o ngOnInit já leu a URL dela. */
+  private readonly navegacaoQueAbriu = this.router.currentNavigation()?.id;
+  /** #688: a última URL que a própria tela gravou (`gravarFiltroNaUrl`); outra URL veio de fora. */
+  private urlGravada: string | null = null;
   private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
 
@@ -188,6 +194,29 @@ export class TransacoesComponent implements OnInit {
       this.aplicarParametrosDaUrl(params);
       this.buscar(paginaDaUrl(params));
     }
+    // #688 (ADR 0018, a tela segue a URL): com a tela aberta, a URL pode mudar por fora: o "Ver em Transações" de um
+    // aviso (o botão Sincronizar da barra de cima também está aqui), o voltar do navegador, um link para /transacoes.
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef)).subscribe((e) => {
+      if (urlVeioDeFora(e.id, e.urlAfterRedirects, this.navegacaoQueAbriu, this.urlGravada)) void this.relerFiltroDaUrl();
+    });
+  }
+
+  /**
+   * A URL mudou por fora, com a tela aberta: o filtro volta ao padrão e segue a URL, como ao abrir a tela. Com trocas
+   * de categoria não salvas, pergunta antes; se a pessoa desiste, a URL volta a ser a da lista na tela.
+   */
+  private async relerFiltroDaUrl(): Promise<void> {
+    if (this.pendentes().size && !(await this.confirmarDescarte())) {
+      this.gravarFiltroNaUrl();
+      return;
+    }
+    const params = this.rota.snapshot.queryParamMap;
+    this.filtro = this.filtroInicial();
+    this.filtroCategorias = [];
+    this.origemIds.set(null);
+    this.transacaoDestacada.set(null);
+    this.aplicarParametrosDaUrl(params);
+    this.executarBusca(paginaDaUrl(params));
   }
 
   /** UX-1 e UX-5: o filtro, o modo edição, a origem dos ids e o destaque que vêm na URL (`lerFiltroDaUrl`). */
@@ -221,18 +250,23 @@ export class TransacoesComponent implements OnInit {
     // #87: trocar de página ou de filtro perde as trocas não salvas; pergunta antes (Nielsen 5). Sem pendência, a busca
     // continua na hora (síncrona), como antes do #631.
     if (this.pendentes().size) {
-      void this.confirmacao.confirmar({ titulo: 'Descartar alterações', mensagem: `Descartar ${this.pendentes().size} alteração(ões) de categoria não salva(s)?`, confirmar: 'Descartar', perigo: true })
-        .then((ok) => {
-          if (!ok) {
-            this.voltarAoFiltroAplicado();
-            return;
-          }
-          this.pendentes.set(new Map());
-          this.executarBusca(pagina);
-        });
+      void this.confirmarDescarte().then((ok) => {
+        if (!ok) {
+          this.voltarAoFiltroAplicado();
+          return;
+        }
+        this.executarBusca(pagina);
+      });
       return;
     }
     this.executarBusca(pagina);
+  }
+
+  /** Pergunta se descarta as trocas de categoria não salvas; descartando, elas saem. */
+  private async confirmarDescarte(): Promise<boolean> {
+    const ok = await this.confirmacao.confirmar({ titulo: 'Descartar alterações', mensagem: `Descartar ${this.pendentes().size} alteração(ões) de categoria não salva(s)?`, confirmar: 'Descartar', perigo: true });
+    if (ok) this.pendentes.set(new Map());
+    return ok;
   }
 
   private executarBusca(pagina: number): void {
@@ -276,7 +310,8 @@ export class TransacoesComponent implements OnInit {
       categorias: this.filtroCategorias, transacaoDestacada: this.transacaoDestacada(), origemIds: this.origemIds(),
       modoEdicao: this.modoEdicao()
     });
-    this.router.navigate([], { relativeTo: this.rota, queryParams: params, replaceUrl: true });
+    this.urlGravada = this.router.serializeUrl(this.router.createUrlTree([], { relativeTo: this.rota, queryParams: params }));
+    void this.router.navigate([], { relativeTo: this.rota, queryParams: params, replaceUrl: true });
   }
 
   /* ------------------------------ #244: ordenar pelo cabeçalho ------------------------------ */

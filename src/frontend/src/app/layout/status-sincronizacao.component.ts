@@ -1,11 +1,13 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AvisosService } from '../core/avisos.service';
 import { StatusSincronizacaoService } from '../core/status-sincronizacao.service';
 import { DicaDirective } from '../compartilhado/ui/dica.directive';
 import { IconeComponent } from '../compartilhado/ui/icone.component';
 import { Icones } from '../compartilhado/ui/icones';
 import { tempoRelativo } from '../compartilhado/utilidades';
+import { avisarSincronizacao } from '../compartilhado/aviso-sincronizacao';
 
 /**
  * UX-8: status da sincronização na barra superior, que também é o botão de sincronizar.
@@ -27,7 +29,7 @@ import { tempoRelativo } from '../compartilhado/utilidades';
         <span class="rotulo-barra">{{ a }}</span>
       </a>
     }
-    <button type="button" class="botao-barra botao-sincronizar" (click)="servico.sincronizar()"
+    <button type="button" class="botao-barra botao-sincronizar" (click)="sincronizar()"
       [disabled]="servico.sincronizando()" [attr.aria-label]="'Sincronizar bancos. ' + descricao()"
       [appDica]="dica()" dicaLado="abaixo">
       <app-icone [icone]="Icones.sincronizar" [tamanho]="18" [class.girando]="servico.sincronizando()" />
@@ -38,6 +40,8 @@ import { tempoRelativo } from '../compartilhado/utilidades';
 })
 export class StatusSincronizacaoComponent implements OnInit, OnDestroy {
   readonly servico = inject(StatusSincronizacaoService);
+  private readonly avisos = inject(AvisosService);
+  private readonly router = inject(Router);
   private readonly datas = new DatePipe('pt-BR');
   readonly Icones = Icones;
   readonly anuncio = signal('');
@@ -89,6 +93,11 @@ export class StatusSincronizacaoComponent implements OnInit, OnDestroy {
       }
       anterior = atual;
     });
+  }
+
+  /** #688: o aviso do resultado leva às Transações novas e atualizadas. */
+  sincronizar(): void {
+    this.servico.sincronizar((r) => avisarSincronizacao(this.avisos, this.router, r));
   }
 
   ngOnInit(): void {

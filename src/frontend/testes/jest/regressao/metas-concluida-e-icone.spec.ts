@@ -34,22 +34,22 @@ describe('Regressão: Metas, "concluída" com 1% e ícone (#316)', () => {
   it('aumentar o alvo de uma meta concluída para acima do que já foi guardado reabre a meta e diz por quê', async () => {
     const chegou = meta({ id: 3, nome: 'Notebook', valorAlvo: 200, valorAtual: 200, valorInicial: 200, percentual: 100,
       concluida: true, contaId: null, contaNome: null, reservaNome: null, saldoReserva: null });
-    const { tela, raiz, atualizar } = abrirMetas([chegou]);
+    const { tela, raiz, atualizar, formulario } = abrirMetas([chegou]);
     tela.editar(chegou);
     await atualizar();
-    tela.mudarAlvo(tela.form!, 30000);
+    formulario().mudarAlvo(formulario().edicao()!, 30000);
     await atualizar();
-    expect(tela.form!.concluida).toBe(false);
+    expect(formulario().edicao()!.dados.concluida).toBe(false);
     expect(raiz.textContent).toContain('A meta voltou para o plano: o alvo novo é maior que o que já foi guardado.');
   });
 
   it('diminuir o alvo não mexe em "Concluída"; marcada sem chegar ao alvo, avisa quanto falta', async () => {
-    const { tela, raiz, atualizar } = abrirMetas([RESERVA]);
+    const { tela, raiz, atualizar, formulario } = abrirMetas([RESERVA]);
     tela.editar(RESERVA);
     await atualizar();
-    tela.mudarAlvo(tela.form!, 20000);
+    formulario().mudarAlvo(formulario().edicao()!, 20000);
     await atualizar();
-    expect(tela.form!.concluida).toBe(true);
+    expect(formulario().edicao()!.dados.concluida).toBe(true);
     expect(raiz.textContent!.replace(/\s+/g, ' ')).toContain('Faltam R$ 19.800,00 para o alvo.');
   });
 
@@ -75,7 +75,7 @@ describe('Regressão: Metas, "concluída" com 1% e ícone (#316)', () => {
 
   it('no formulário: o ícone escolhido fica marcado (aria-pressed) e as cores têm nome', async () => {
     const viagem = meta({ icone: 'viagem', cor: '#92c8f0' });
-    const { tela, raiz, atualizar } = abrirMetas([viagem]);
+    const { tela, raiz, atualizar, formulario } = abrirMetas([viagem]);
     tela.editar(viagem);
     await atualizar();
     const marcados = [...raiz.querySelectorAll('.opcao-icone[aria-pressed="true"]')].map((b) => b.getAttribute('aria-label'));
@@ -84,6 +84,6 @@ describe('Regressão: Metas, "concluída" com 1% e ícone (#316)', () => {
     expect(cor.getAttribute('aria-label')).toBe('Cor azul');
     (raiz.querySelector<HTMLButtonElement>('.opcao-icone[aria-label="Ícone Casa"]')!).click();
     await atualizar();
-    expect(tela.form!.icone).toBe('casa');
+    expect(formulario().edicao()!.dados.icone).toBe('casa');
   });
 });

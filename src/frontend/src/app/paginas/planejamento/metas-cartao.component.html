@@ -1,0 +1,205 @@
+@let m = meta();
+<!-- #335: cada meta é uma sanfona, como os grupos de "Assinaturas e recorrentes" (ADR 0046): o título é o botão
+     (aria-expanded), fechada ainda mostra o percentual e os valores, várias abertas ao mesmo tempo, todas abertas no
+     começo, as fechadas lembradas neste navegador (ADR 0017). Aberta, o resumo fica à esquerda e o plano à direita. -->
+<h2 class="meta-titulo">
+  <button type="button" class="meta-alternar" [id]="'meta-' + m.id" [attr.aria-expanded]="aberta()"
+    [attr.aria-controls]="'meta-' + m.id + '-conteudo'" (click)="alternar.emit()">
+    <!-- #316: o ícone escolhido, na cor da meta (decorativo: o nome está ao lado). -->
+    <span class="icone-meta" [style.--cor]="m.cor" aria-hidden="true">
+      <app-icone [icone]="iconeDaMeta(m.icone).icone" [tamanho]="18" />
+    </span>
+    <strong class="meta-nome">{{ m.nome }}</strong>
+    <!-- #316: concluída sem chegar ao alvo foi marcada pela pessoa: dizer isso, sem contradizer o percentual. -->
+    @if (m.concluida) {
+      <span class="etiqueta etiqueta-sucesso">{{ m.percentual < 100 ? 'Concluída por você' : 'Concluída' }}</span>
+    }
+    <span class="texto-suave meta-resumo-curto">{{ m.percentual | number: '1.0-0' }}% · {{ m.valorAtual | currency }}
+      de {{ m.valorAlvo | currency }}@if (plano(); as pm) { · guarde {{ pm.recomendado | currency }} este mês}</span>
+    <app-icone class="meta-seta" [icone]="setaGrupo" [tamanho]="16" />
+  </button>
+</h2>
+<!-- Fechada: fora do Tab e do leitor de tela (inert + visibility), sem sair do DOM, para animar a altura. -->
+<div class="meta-conteudo" [id]="'meta-' + m.id + '-conteudo'" [class.fechado]="!aberta()"
+  [attr.inert]="aberta() ? null : ''">
+<div class="meta-dentro">
+<div class="meta-corpo">
+<div class="meta-resumo">
+<div class="anel" [style.--pct]="m.percentual" [style.--cor]="m.cor">
+  <!-- #359: o ícone da meta, translúcido, no centro do anel, atrás do percentual (decorativo). -->
+  <span class="anel-icone" aria-hidden="true"><app-icone [icone]="iconeDaMeta(m.icone).icone" [tamanho]="60" /></span>
+  <span class="anel-percentual">{{ m.percentual | number: '1.0-0' }}%</span>
+</div>
+<!-- O espaço vai dentro do texto: entre duas tags o Angular o tira ("R$ 200,00de"). -->
+<p><strong>{{ m.valorAtual | currency }}</strong><span class="texto-suave"> de {{ m.valorAlvo | currency }}</span></p>
+<!-- #335: sem data alvo, diz isso (e as metas lado a lado não desalinham). -->
+<p class="texto-suave">@if (m.dataAlvo) {até {{ m.dataAlvo | date: 'MMM/yyyy' }}} @else {sem data definida}</p>
+@if (!m.concluida && posicao() > 0) {
+  <div class="linha-prioridade">
+    <span class="etiqueta etiqueta-suave">{{ posicao() }}ª prioridade</span>
+    <button type="button" class="botao-icone" (click)="mover.emit(-1)" [disabled]="posicao() === 1"
+      [attr.aria-label]="'Subir a prioridade de ' + m.nome">↑</button>
+    <button type="button" class="botao-icone" (click)="mover.emit(1)" [disabled]="posicao() === totalAtivas()"
+      [attr.aria-label]="'Descer a prioridade de ' + m.nome">↓</button>
+  </div>
+}
+</div>
+<div class="meta-detalhe">
+<!-- #359: concluída, o lado do plano diz isso numa caixa verde (no lugar do fundo verde do cartão inteiro). -->
+@if (m.concluida) {
+  <p class="aviso-concluida" role="status"><span class="icone-aviso" aria-hidden="true">✓</span>
+    @if (m.percentual < 100) {
+      <span><strong>Concluída por você</strong> com <strong>{{ m.valorAtual | currency }}</strong> de
+        {{ m.valorAlvo | currency }} guardados.</span>
+    } @else {
+      <span><strong>Meta alcançada!</strong> Você guardou <strong>{{ m.valorAtual | currency }}</strong> de
+        {{ m.valorAlvo | currency }}.</span>
+    }</p>
+}
+@if (plano(); as pm) {
+  <!-- #149 (D): o usuário diz quanto consegue; o resto do plano é refeito na hora. Simulação até registrar o aporte.
+       #335: o botão fica na mesma linha de "Este mês: guarde", à esquerda, junto do valor que ele muda. -->
+  <p class="recomendado"><span>Este mês: guarde <strong>{{ pm.recomendado | currency }}</strong>@if (pm.ajustado) {<span
+    class="texto-suave"> (o valor que você escolheu)</span>}</span>
+    @if (!pm.ajustado) {
+      <button type="button" class="link botao-ajuste" [attr.aria-expanded]="ajusteAberto()"
+        [attr.aria-controls]="'ajuste-meta-' + m.id" (click)="alternarAjuste.emit()">Consigo guardar outro valor</button>
+    }</p>
+  <div [id]="'ajuste-meta-' + m.id">
+    @if (ajusteAberto() || pm.ajustado) {
+      <div class="ajuste-mes">
+        <label>Quanto consigo guardar este mês
+          <app-campo-valor [name]="'ajuste-' + m.id" [ngModel]="ajuste()" (ngModelChange)="ajustar.emit($event)" />
+        </label>
+        @if (pm.ajustado) {
+          <button type="button" class="link" (click)="limparAjuste.emit()">Voltar à recomendação</button>
+        }
+      </div>
+    }
+  </div>
+  <!-- #359: o valor por mês que a pessoa escolheu manda; a sobra para as metas é o limite. Quando o valor passa
+       dela, o aviso é amarelo, como o do prazo (Nielsen 1). -->
+  @if (pm.porMes) {
+    @if (pm.porMesCortado; as c) {
+      <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+        <span><strong>{{ pm.porMes | currency }} por mês</strong> não cabem: em
+        <strong>{{ nomeMesCurto(c.mes.mes) }}/{{ c.mes.ano % 100 }}</strong> a sobra só dá
+        <strong>{{ c.valor | currency }}</strong>; o resto fica para depois.</span></p>
+    } @else if (acimaDaSobra(pm); as limite) {
+      <p class="aviso-prazo nota-por-mes-plano" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+        <span><strong>{{ pm.porMes | currency }} por mês</strong> passa da sobra para as metas este mês
+        (<strong>{{ limite | currency }}</strong>); o plano guarda só o que cabe.</span></p>
+    } @else {
+      <p class="texto-suave nota-por-mes-plano">Você escolheu guardar {{ pm.porMes | currency }} por mês nesta meta.</p>
+    }
+  }
+  @if (m.aporteMensalSugerido && !pm.porMes) {
+    <p class="texto-suave">Divisão igual seria {{ m.aporteMensalSugerido | currency }}/mês · faltam {{ pm.falta | currency }}</p>
+  }
+  @if (pm.noPrazo === false && vencido()) {
+    <p class="aviso-prazo" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+      <span>O prazo (<strong>{{ m.dataAlvo | date: 'MMM/yyyy' }}</strong>) já passou. Nesse ritmo você chega em
+      <strong>{{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}</strong>; se quiser, edite a
+      data da meta.</span></p>
+  } @else if (pm.noPrazo === false) {
+    <p class="aviso-prazo" role="status"><span class="icone-aviso" aria-hidden="true">⚠</span>
+      <span>Nesse ritmo você chega em <strong>{{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}</strong>
+      (meta: <strong>{{ m.dataAlvo | date: 'MMM/yyyy' }}</strong>).
+      @if (pm.paraManterPrazo) { Para manter o prazo, os próximos meses precisam de <strong>{{ pm.paraManterPrazo | currency }}</strong>. }
+      <span class="saidas-prazo">
+        <button type="button" class="link" (click)="editar.emit()">Mudar o prazo ou o valor</button>
+        <span class="separador" aria-hidden="true">|</span>
+        <ng-content select="[link-anual]" />
+        <span class="separador" aria-hidden="true">|</span>
+        <ng-content select="[link-orcamentos]" />
+      </span></span></p>
+  } @else if (pm.noPrazo === null) {
+    <p class="texto-suave">Nesse ritmo você chega em {{ pm.dataProvavel ? (pm.dataProvavel | date: 'MMM/yyyy') : 'mais de 10 anos' }}.</p>
+  }
+  @if (pm.dependeDaFatura; as dep) {
+    <p class="nota-plano texto-suave">Este plano conta com as faturas caindo para ~{{ dep.depois | currency }} a partir de
+      {{ nomeMesCurto(dep.aPartir.mes) }}/{{ dep.aPartir.ano % 100 }} (hoje ~{{ dep.antes | currency }}). Se entrar
+      parcelamento novo, ele atrasa; o assistente refaz a conta todo mês.</p>
+  }
+  <!-- #335: o plano mês a mês já vem aberto (no lugar da lista "Depois:"), com 5 meses e "Mostrar mais". -->
+  <button type="button" class="link botao-plano" [attr.aria-expanded]="planoAberto()"
+    [attr.aria-controls]="'plano-meta-' + m.id" (click)="alternarPlano()">
+    <span aria-hidden="true">{{ planoAberto() ? '▾' : '▸' }}</span> Plano mês a mês</button>
+  <div [id]="'plano-meta-' + m.id">
+    @if (planoAberto()) {
+      <table class="tabela tabela-plano">
+        <thead><tr><th>Mês</th><th class="direita">Sobra</th><th class="direita">Faturas</th><th class="direita">Guardar</th></tr></thead>
+        <tbody>
+          @for (x of pm.meses.slice(0, mesesNoPlano()); track x.ano * 100 + x.mes) {
+            <tr><td>{{ nomeMesCurto(x.mes) }}/{{ x.ano % 100 }}</td><td class="direita">{{ x.sobra | currency }}</td>
+              <td class="direita">{{ x.faturas | currency }}</td><td class="direita"><strong>{{ x.guardar | currency }}</strong></td></tr>
+          }
+        </tbody>
+      </table>
+      <div class="mais-meses">
+        @if (pm.meses.length > mesesNoPlano()) {
+          <button type="button" class="link" (click)="mostrarMaisMeses(pm.meses.length)">Mostrar mais {{
+            quantosMais(pm.meses.length) }} meses</button>
+        }
+        @if (mesesNoPlano() > passoMeses) {
+          <button type="button" class="link" (click)="mostrarMenosMeses()">Mostrar menos</button>
+        }
+      </div>
+    }
+  </div>
+} @else if (m.aporteMensalSugerido) {
+  <p class="recomendado texto-suave">Guardar <strong>{{ m.aporteMensalSugerido | currency }}</strong>/mês para chegar lá</p>
+}
+@if (m.reservaNome) {
+  @if (m.reservaNaoEncontrada) {
+    <p class="aviso-cofrinho" role="status">Cofrinho "{{ m.reservaNome }}" não encontrado no extrato de {{ m.contaNome }}.
+      <button type="button" class="link" (click)="editar.emit()">Editar a meta</button></p>
+  } @else {
+    <p class="texto-suave">{{ m.valorInicial | currency }} guardados + <strong>{{ m.saldoReserva | currency }}</strong>
+      no cofrinho {{ m.reservaNome }} ({{ m.contaNome }})</p>
+    @if (m.reservaConferir) {
+      <p class="texto-suave">saldo estimado, <ng-content select="[link-reservas]" /></p>
+    }
+  }
+} @else if (m.contaNome) {
+  <p class="texto-suave">{{ m.valorInicial | currency }} guardados + {{ m.saldoConta | currency }} em {{ m.contaNome }}</p>
+}
+<!-- #318: como a meta está indo, até o alvo; muda a cada aporte. Disclosure, como o "Plano mês a mês". -->
+<button type="button" class="link botao-evolucao" [attr.aria-expanded]="evolucaoAberta()"
+  [attr.aria-controls]="'evolucao-meta-' + m.id" (click)="alternarEvolucao.emit()">
+  <span aria-hidden="true">{{ evolucaoAberta() ? '▾' : '▸' }}</span> Como está indo</button>
+<div [id]="'evolucao-meta-' + m.id">
+  @if (evolucaoAberta()) {
+    @if (evolucao(); as ev) {
+      <!-- #359: a escala acompanha os aportes (mês, dia ou hora), e o "como ler" diz qual é. -->
+      <app-grafico-explicado [resumo]="resumoEvolucao()" [comoLer]="comoLerEvolucao(ev.escala)">
+        <app-grafico [configuracao]="grafico()!" [altura]="200" />
+      </app-grafico-explicado>
+      @if (ev.aportes.length) {
+        <h3 class="titulo-aportes">Últimos aportes</h3>
+        <ul class="lista-aportes">
+          @for (a of ev.aportes.slice(0, 5); track $index) {
+            <li><span class="texto-suave">{{ a.data | date: 'dd/MM/yyyy' }}@if (a.hora) { às {{ a.hora }}}</span>
+              <strong>{{ a.valor > 0 ? '+' : '' }}{{ a.valor | currency }}</strong></li>
+          }
+        </ul>
+      }
+    } @else {
+      <p class="texto-suave" role="status">Carregando os aportes…</p>
+    }
+  }
+</div>
+</div>
+<!-- #335: as ações na largura toda, embaixo das duas colunas. -->
+<footer>
+  @if (!m.concluida) {
+    <button type="button" class="link" (click)="aporte.emit()" [attr.aria-label]="'Aporte na meta ' + m.nome">+ Aporte</button>
+  }
+  <span class="cresce"></span>
+  <button type="button" class="link" (click)="editar.emit()" [attr.aria-label]="'Editar a meta ' + m.nome">Editar</button>
+  <!-- #631: excluir sem abrir a edição; pede confirmação no modal do site (Nielsen 5). -->
+  <button type="button" class="link perigo" (click)="excluir.emit()" [attr.aria-label]="'Excluir a meta ' + m.nome">Excluir</button>
+</footer>
+</div>
+</div>
+</div>
