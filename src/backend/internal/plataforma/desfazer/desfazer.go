@@ -56,13 +56,24 @@ func (m *Memoria[T]) Guardar(estado T) string {
 
 // Tirar devolve o estado da chave e o apaga (vale uma vez só). False se a chave não existe ou venceu.
 func (m *Memoria[T]) Tirar(chave string) (T, bool) {
+	return m.TirarSe(chave, func(T) bool { return true })
+}
+
+// TirarSe é o Tirar que só gasta a chave quando o estado passa na conferência (o emprego do pedido é o do estado, por
+// exemplo): a chamada que não confere devolve false e deixa a chave valendo, e não estraga o "Desfazer" certo (revisão
+// do #706). A chave vencida sai da memória de qualquer jeito.
+func (m *Memoria[T]) TirarSe(chave string, confere func(T) bool) (T, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	var zero T
 	item, ok := m.itens[chave]
-	delete(m.itens, chave)
 	if !ok || !m.relogio.Agora().Before(item.vence) {
-		var zero T
+		delete(m.itens, chave)
 		return zero, false
 	}
+	if !confere(item.estado) {
+		return zero, false
+	}
+	delete(m.itens, chave)
 	return item.estado, true
 }

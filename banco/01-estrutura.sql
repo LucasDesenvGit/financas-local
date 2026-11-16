@@ -681,6 +681,255 @@ CREATE TABLE IF NOT EXISTS PagamentoCofrinho
 );
 CREATE INDEX IF NOT EXISTS IX_PagamentoCofrinho_ContaAgendada ON PagamentoCofrinho (ContaAgendadaId, Id);
 CREATE INDEX IF NOT EXISTS IX_PagamentoCofrinho_Transacao ON PagamentoCofrinho (TransacaoId);
+/* Trabalho: emprego e salário com vigência (#210, ADR 0065)           */
+/* ------------------------------------------------------------------ */
+/* Módulo Trabalho (ADR 0064). Nada daqui entra nos relatórios: a receita continua vindo só das transações.
+   Regime: 1 CLT, 2 estágio, 3 PJ (estágio e PJ ficam sem cálculo de encargos). */
+CREATE TABLE IF NOT EXISTS Emprego
+(
+    Id                 INTEGER NOT NULL CONSTRAINT PK_Emprego PRIMARY KEY AUTOINCREMENT,
+    Empregador         TEXT    NOT NULL,
+    Cnpj               TEXT    NULL,
+    Admissao           TEXT    NOT NULL,
+    Saida              TEXT    NULL,
+    Regime             INTEGER NOT NULL DEFAULT 1,
+    JornadaMensalHoras INTEGER NOT NULL DEFAULT 220,
+    Dependentes        INTEGER NOT NULL DEFAULT 0,
+    ContaId            INTEGER NULL,
+    -- Preenchido pela API; sem DEFAULT no banco.
+    CriadoEm           TEXT    NOT NULL,
+    CONSTRAINT FK_Emprego_Conta FOREIGN KEY (ContaId) REFERENCES Conta (Id) ON DELETE SET NULL
+);
+
+/* O salário bruto a partir de um mês (Inicio é sempre o dia 1). O salário de um mês é o da última vigência que começou
+   até ele: um aumento é uma linha nova e não muda o passado. */
+CREATE TABLE IF NOT EXISTS SalarioVigencia
+(
+    Id           INTEGER NOT NULL CONSTRAINT PK_SalarioVigencia PRIMARY KEY AUTOINCREMENT,
+    EmpregoId    INTEGER NOT NULL,
+    Inicio       TEXT    NOT NULL,
+    SalarioBruto TEXT    NOT NULL,
+    CriadoEm     TEXT    NOT NULL,
+    CONSTRAINT FK_SalarioVigencia_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_SalarioVigencia_Emprego_Inicio ON SalarioVigencia (EmpregoId, Inicio);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: tabelas do INSS e do IRRF por vigência (#210, ADR 0065)   */
+/* ------------------------------------------------------------------ */
+/* A tabela de um mês é a da última vigência que começou até ele. Os valores oficiais vêm no 02-dados-iniciais.sql, com
+   a fonte. Faixa: "Ate" é o limite de cima (a última faixa do INSS é o teto; a do IRRF fica sem limite, NULL). */
+CREATE TABLE IF NOT EXISTS InssVigencia
+(
+    Inicio TEXT NOT NULL CONSTRAINT PK_InssVigencia PRIMARY KEY,
+    Fonte  TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS InssFaixa
+(
+    Inicio   TEXT    NOT NULL,
+    Ordem    INTEGER NOT NULL,
+    Ate      TEXT    NOT NULL,
+    Aliquota TEXT    NOT NULL,
+    CONSTRAINT PK_InssFaixa PRIMARY KEY (Inicio, Ordem),
+    CONSTRAINT FK_InssFaixa_InssVigencia FOREIGN KEY (Inicio) REFERENCES InssVigencia (Inicio) ON DELETE CASCADE
+);
+/* Reducao*: a redução mensal da Lei 15.270/2025 (art. 3º-A da Lei 9.250/1995), NULL antes de 2026. Até ReducaoIsencaoAte
+   o imposto zera (com a redução de até ReducaoMaxima); até ReducaoAte, a redução é ReducaoConstante - ReducaoFator x o
+   rendimento tributável do mês. */
+CREATE TABLE IF NOT EXISTS IrrfVigencia
+(
+    Inicio               TEXT NOT NULL CONSTRAINT PK_IrrfVigencia PRIMARY KEY,
+    DeducaoDependente    TEXT NOT NULL,
+    DescontoSimplificado TEXT NOT NULL,
+    ReducaoIsencaoAte    TEXT NULL,
+    ReducaoMaxima        TEXT NULL,
+    ReducaoAte           TEXT NULL,
+    ReducaoConstante     TEXT NULL,
+    ReducaoFator         TEXT NULL,
+    Fonte                TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS IrrfFaixa
+(
+    Inicio   TEXT    NOT NULL,
+    Ordem    INTEGER NOT NULL,
+    Ate      TEXT    NULL,
+    Aliquota TEXT    NOT NULL,
+    Deducao  TEXT    NOT NULL,
+    CONSTRAINT PK_IrrfFaixa PRIMARY KEY (Inicio, Ordem),
+    CONSTRAINT FK_IrrfFaixa_IrrfVigencia FOREIGN KEY (Inicio) REFERENCES IrrfVigencia (Inicio) ON DELETE CASCADE
+);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: holerite do mês (#211, ADR 0065)                          */
+/* ------------------------------------------------------------------ */
+/* Um holerite por emprego e mês (Mes é o dia 1). Situacao: 1 aberto (calculado na hora, pelo salário e pelas tabelas da
+   vigência), 2 fechado (congelado: Calculo guarda o resultado em JSON, e mudar o salário ou a tabela depois não muda o
+   mês). DiasUteis e DiasDescanso são os do DSR das horas extras. Origem: 1 calculado, 2 lido do PDF (#228: fechado,
+   com o Calculo montado do que o PDF imprime; reabrir volta para o calculado). Não é receita: nada daqui entra nos
+   relatórios. */
+CREATE TABLE IF NOT EXISTS Holerite
+(
+    Id           INTEGER NOT NULL CONSTRAINT PK_Holerite PRIMARY KEY AUTOINCREMENT,
+    EmpregoId    INTEGER NOT NULL,
+    Mes          TEXT    NOT NULL,
+    Situacao     INTEGER NOT NULL DEFAULT 1,
+    Origem       INTEGER NOT NULL DEFAULT 1,
+    DiasUteis    INTEGER NOT NULL,
+    DiasDescanso INTEGER NOT NULL,
+    Calculo      TEXT    NULL,
+    FechadoEm    TEXT    NULL,
+    CriadoEm     TEXT    NOT NULL,
+    CONSTRAINT FK_Holerite_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_Holerite_Emprego_Mes ON Holerite (EmpregoId, Mes);
+
+/* Uma linha do holerite. Tipo: 1 hora extra, 2 adicional noturno, 3 outro provento (bônus, PLR, comissão...), 10 vale-
+   transporte, 11 VR/VA, 12 plano de saúde, 13 pensão alimentícia, 14 outro desconto. Quantidade e Percentual são das
+   horas (hora extra e adicional noturno); Valor, dos outros. IncideInss/IncideIrrf: o provento entra na base; DeduzIrrf:
+   o desconto entra nas deduções do IR. Recorrente: passa para o holerite do mês seguinte. */
+CREATE TABLE IF NOT EXISTS HoleriteLancamento
+(
+    Id          INTEGER NOT NULL CONSTRAINT PK_HoleriteLancamento PRIMARY KEY AUTOINCREMENT,
+    HoleriteId  INTEGER NOT NULL,
+    Tipo        INTEGER NOT NULL,
+    Descricao   TEXT    NOT NULL,
+    Quantidade  TEXT    NULL,
+    Percentual  TEXT    NULL,
+    Valor       TEXT    NULL,
+    IncideInss  INTEGER NOT NULL DEFAULT 1,
+    IncideIrrf  INTEGER NOT NULL DEFAULT 1,
+    DeduzIrrf   INTEGER NOT NULL DEFAULT 0,
+    Recorrente  INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT FK_HoleriteLancamento_Holerite FOREIGN KEY (HoleriteId) REFERENCES Holerite (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_HoleriteLancamento_Holerite ON HoleriteLancamento (HoleriteId);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: 13º salário (#214, ADR 0065)                              */
+/* ------------------------------------------------------------------ */
+/* O 13º é calculado (salário, média das horas extras dos holerites do ano e os avos). Aqui fica só o que a pessoa
+   informa: quando e quanto recebeu da 1ª parcela (até 30/11, ou adiantada nas férias). Sem linha, vale o padrão. */
+CREATE TABLE IF NOT EXISTS DecimoTerceiro
+(
+    EmpregoId            INTEGER NOT NULL,
+    Ano                  INTEGER NOT NULL,
+    PrimeiraParcelaEm    TEXT    NULL,
+    PrimeiraParcelaValor TEXT    NULL,
+    AtualizadoEm         TEXT    NOT NULL,
+    CONSTRAINT PK_DecimoTerceiro PRIMARY KEY (EmpregoId, Ano),
+    CONSTRAINT FK_DecimoTerceiro_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: férias (#213, ADR 0065)                                    */
+/* ------------------------------------------------------------------ */
+/* Os períodos aquisitivos saem da admissão (de 12 em 12 meses) e não são guardados. FeriasFaltas: as faltas sem
+   justificativa de um período (PeriodoInicio é o primeiro dia dele), que reduzem os dias de direito (CLT, art. 130).
+   FeriasAgendamento: uma fração das férias de um período, com os dias vendidos (abono pecuniário) e se a 1ª parcela do
+   13º vem junto. O cálculo é refeito a cada leitura; não é receita. */
+CREATE TABLE IF NOT EXISTS FeriasFaltas
+(
+    EmpregoId     INTEGER NOT NULL,
+    PeriodoInicio TEXT    NOT NULL,
+    Faltas        INTEGER NOT NULL,
+    CONSTRAINT PK_FeriasFaltas PRIMARY KEY (EmpregoId, PeriodoInicio),
+    CONSTRAINT FK_FeriasFaltas_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS FeriasAgendamento
+(
+    Id             INTEGER NOT NULL CONSTRAINT PK_FeriasAgendamento PRIMARY KEY AUTOINCREMENT,
+    EmpregoId      INTEGER NOT NULL,
+    PeriodoInicio  TEXT    NOT NULL,
+    Inicio         TEXT    NOT NULL,
+    Dias           INTEGER NOT NULL,
+    DiasVendidos   INTEGER NOT NULL DEFAULT 0,
+    AdiantarDecimo INTEGER NOT NULL DEFAULT 0,
+    CriadoEm       TEXT    NOT NULL,
+    CONSTRAINT FK_FeriasAgendamento_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_FeriasAgendamento_Emprego ON FeriasAgendamento (EmpregoId, Inicio);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: FGTS (#216, ADR 0066)                                     */
+/* ------------------------------------------------------------------ */
+/* Fora do patrimônio e dos relatórios: o saldo é estimado mês a mês (8% do bruto, corrigido a 3% ao ano) a partir da
+   última conferência. Tipo: 1 saldo conferido no app do FGTS, 2 saque, 3 distribuição de resultados. Motivo (só no
+   saque): 1 rescisão, 2 saque-aniversário, 3 imóvel, 4 outro. */
+CREATE TABLE IF NOT EXISTS FgtsLancamento
+(
+    Id        INTEGER NOT NULL CONSTRAINT PK_FgtsLancamento PRIMARY KEY AUTOINCREMENT,
+    EmpregoId INTEGER NOT NULL,
+    Data      TEXT    NOT NULL,
+    Tipo      INTEGER NOT NULL,
+    Valor     TEXT    NOT NULL,
+    Motivo    INTEGER NULL,
+    CriadoEm  TEXT    NOT NULL,
+    CONSTRAINT FK_FgtsLancamento_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_FgtsLancamento_Emprego_Data ON FgtsLancamento (EmpregoId, Data);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: o recebimento do salário (#212, ADR 0065)                 */
+/* ------------------------------------------------------------------ */
+/* Liga o crédito na conta (a transação, que é a receita dos relatórios) ao holerite que ele paga, sem contar duas
+   vezes: o holerite só explica. Valor é a parte da transação que é deste holerite (um crédito pode pagar mais de um
+   holerite, e um holerite pode vir em vários créditos, como adiantamento e saldo). A conta, a data, o valor e a
+   descrição são os da transação ao ligar: quando a sincronização troca o crédito por outro (a pendente que o banco
+   efetiva com outro código), a ligação fica sem a transação (SET NULL) e o site religa sozinho pela conta, pelo valor e
+   pela data. */
+CREATE TABLE IF NOT EXISTS HoleriteRecebimento
+(
+    Id                 INTEGER NOT NULL CONSTRAINT PK_HoleriteRecebimento PRIMARY KEY AUTOINCREMENT,
+    HoleriteId         INTEGER NOT NULL,
+    TransacaoId        INTEGER NULL,
+    Valor              TEXT    NOT NULL,
+    ContaId            INTEGER NOT NULL,
+    TransacaoData      TEXT    NOT NULL,
+    TransacaoValor     TEXT    NOT NULL,
+    TransacaoDescricao TEXT    NOT NULL,
+    CriadoEm           TEXT    NOT NULL,
+    CONSTRAINT FK_HoleriteRecebimento_Holerite FOREIGN KEY (HoleriteId) REFERENCES Holerite (Id) ON DELETE CASCADE,
+    CONSTRAINT FK_HoleriteRecebimento_Transacao FOREIGN KEY (TransacaoId) REFERENCES Transacao (Id) ON DELETE SET NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_HoleriteRecebimento_Holerite_Transacao ON HoleriteRecebimento (HoleriteId, TransacaoId);
+CREATE INDEX IF NOT EXISTS IX_HoleriteRecebimento_Transacao ON HoleriteRecebimento (TransacaoId);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: a rescisão registrada (#215, ADR 0065)                    */
+/* ------------------------------------------------------------------ */
+/* A simulação não é guardada; a rescisão real, sim: uma por emprego, com o tipo (1 sem justa causa, 2 pedido de
+   demissão, 3 acordo, 4 justa causa, 5 fim do contrato de experiência), o aviso (1 trabalhado, 2 indenizado, 0 sem) e o
+   cálculo em JSON, congelado como o holerite fechado. Registrar põe a data de saída no emprego. */
+CREATE TABLE IF NOT EXISTS Rescisao
+(
+    EmpregoId INTEGER NOT NULL CONSTRAINT PK_Rescisao PRIMARY KEY,
+    Data      TEXT    NOT NULL,
+    Tipo      INTEGER NOT NULL,
+    Aviso     INTEGER NOT NULL,
+    Calculo   TEXT    NOT NULL,
+    -- A saída que o emprego tinha antes de registrar (NULL: nenhuma): o desfazer devolve.
+    SaidaAnterior TEXT NULL,
+    CriadoEm  TEXT    NOT NULL,
+    CONSTRAINT FK_Rescisao_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+
+/* ------------------------------------------------------------------ */
+/* Trabalho: as rubricas do holerite em PDF (#228, ADR 0068)           */
+/* ------------------------------------------------------------------ */
+/* O leitor do holerite em PDF reconhece as rubricas comuns por um dicionário no código. A que ele não conhece, ou que a
+   pessoa corrigiu, fica aqui, por emprego (o empregador): o código e a descrição como estão no PDF (normalizada, ADR
+   0030) e o tipo da linha do holerite. No mês seguinte, ela já vem reconhecida. O PDF não é guardado. */
+CREATE TABLE IF NOT EXISTS HoleriteRubricaEscolha
+(
+    Id        INTEGER NOT NULL CONSTRAINT PK_HoleriteRubricaEscolha PRIMARY KEY AUTOINCREMENT,
+    EmpregoId INTEGER NOT NULL,
+    Codigo    TEXT    NOT NULL,
+    Descricao TEXT    NOT NULL,
+    Tipo      INTEGER NOT NULL,
+    CriadoEm  TEXT    NOT NULL,
+    CONSTRAINT FK_HoleriteRubricaEscolha_Emprego FOREIGN KEY (EmpregoId) REFERENCES Emprego (Id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_HoleriteRubricaEscolha_Emprego_Rubrica ON HoleriteRubricaEscolha (EmpregoId, Codigo, Descricao);
 /* Notícias (#10, ADR 0067)                                            */
 /* ------------------------------------------------------------------ */
 /* Módulo Notícias (ADR 0064), desligado por padrão. A tarefa do módulo busca as fontes a cada 45 minutos e guarda as

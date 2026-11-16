@@ -63,6 +63,17 @@ internal/analises/painel          100
 internal/plataforma/celular         100
 # #191: o núcleo dos módulos (ADR 0064), medido em 13/11/2026.
 internal/plataforma/modulos         100
+# #210: o módulo Trabalho (ADR 0065), medido em 13/11/2026.
+internal/modulos/trabalho/encargos   100
+internal/modulos/trabalho/emprego    100
+internal/modulos/trabalho/holerite   100
+internal/modulos/trabalho/decimoterceiro 100
+internal/modulos/trabalho/ferias       100
+internal/modulos/trabalho/fgts         100
+internal/modulos/trabalho/recebimento  100
+internal/modulos/trabalho/rescisao     100
+internal/modulos/trabalho/leitor       100
+internal/modulos/trabalho/holeritepdf  100
 # #10: o módulo Notícias (ADR 0067), medido em 14/11/2026.
 internal/modulos/noticias              100
 internal/modulos/noticias/fontes       100

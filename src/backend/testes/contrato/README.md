@@ -81,7 +81,14 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 | `16-open-finance` | Open Finance (Pluggy) | #83 | `/api/open-finance` |
 | `17-erros` | erros do sistema | #298 | `/api/erros` |
 | `20-modulos` | módulos que se ligam e desligam | #191 | `/api/modulos` |
-| `21` a `27` | o módulo Trabalho (#209), nos PRs dele | — | `/api/trabalho` |
+| `21-trabalho` | módulo Trabalho: emprego, salário, estimativa e tabelas | #210 | `/api/trabalho` |
+| `22-holerite` | holerite do mês do Trabalho | #211 | `/api/trabalho/holerites` |
+| `23-decimo-terceiro` | 13º salário do Trabalho | #214 | `/api/trabalho/empregos/{id}/decimo-terceiro` |
+| `24-ferias` | férias do Trabalho | #213 | `/api/trabalho/empregos/{id}/ferias` |
+| `25-fgts` | FGTS do Trabalho | #216 | `/api/trabalho/empregos/{id}/fgts` |
+| `26-recebimento` | recebimento do salário (Trabalho) | #212 | `/api/trabalho/holerites/{id}/recebimentos` |
+| `27-rescisao` | rescisão do Trabalho | #215 | `/api/trabalho/empregos/{id}/rescisao` |
+| `28-holerite-pdf` | holerite em PDF do Trabalho | #228 | `/api/trabalho/empregos/{id}/holerites/pdf` |
 | `29-noticias` | módulo Notícias | #10 | `/api/noticias` |
 | `29` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
 | `90-go` | diagnóstico (`/api/go/saude`) | #231, #363 | `/api/go` |

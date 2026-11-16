@@ -24,6 +24,14 @@
     "tipo": "application/json; charset=utf-8",
     "corpo": [
       {
+        "acessaInternet": false,
+        "descricao": "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º, as férias, o FGTS e a rescisão, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+        "destinos": [],
+        "id": "trabalho",
+        "ligado": true,
+        "nome": "Trabalho"
+      },
+      {
         "acessaInternet": true,
         "descricao": "As notícias do dia do G1, da BBC News Brasil e do TabNews: o título, a fonte e o link, que abre no site da notícia. Busca as fontes a cada 45 minutos.",
         "destinos": [
@@ -60,7 +68,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ModuloLigado (noticias)",
-            "Id": 49,
+            "Id": 53,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -102,7 +110,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ModuloDesligado (noticias)",
-            "Id": 50,
+            "Id": 54,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"

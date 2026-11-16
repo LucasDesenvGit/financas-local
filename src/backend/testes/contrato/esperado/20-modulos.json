@@ -6,6 +6,14 @@
     "tipo": "application/json; charset=utf-8",
     "corpo": [
       {
+        "acessaInternet": false,
+        "descricao": "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º, as férias, o FGTS e a rescisão, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+        "destinos": [],
+        "id": "trabalho",
+        "ligado": false,
+        "nome": "Trabalho"
+      },
+      {
         "acessaInternet": true,
         "descricao": "As notícias do dia do G1, da BBC News Brasil e do TabNews: o título, a fonte e o link, que abre no site da notícia. Busca as fontes a cada 45 minutos.",
         "destinos": [

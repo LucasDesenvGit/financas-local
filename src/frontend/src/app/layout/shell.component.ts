@@ -70,6 +70,17 @@ export const MENU: EntradaMenu[] = [
       { rota: '/configuracoes', rotulo: 'Configurações', icone: Icones.configuracoes }
     ]
   },
+  {
+    // #209, #210: o módulo Trabalho (ADR 0064). Só aparece com ele ligado em Configurações › Módulos.
+    id: 'trabalho', rotulo: 'Trabalho', icone: Icones.grupoTrabalho, telas: [
+      { rota: '/trabalho/salario', rotulo: 'Salário', icone: Icones.trabalhoSalario, modulo: 'trabalho' },
+      { rota: '/trabalho/holerites', rotulo: 'Holerites', icone: Icones.trabalhoHolerites, modulo: 'trabalho' },
+      { rota: '/trabalho/decimo-terceiro', rotulo: '13º salário', icone: Icones.trabalhoDecimo, modulo: 'trabalho' },
+      { rota: '/trabalho/ferias', rotulo: 'Férias', icone: Icones.trabalhoFerias, modulo: 'trabalho' },
+      { rota: '/trabalho/fgts', rotulo: 'FGTS', icone: Icones.trabalhoFgts, modulo: 'trabalho' },
+      { rota: '/trabalho/rescisao', rotulo: 'Rescisão', icone: Icones.trabalhoRescisao, modulo: 'trabalho' }
+    ]
+  },
   // #10: o módulo Notícias (ADR 0064), uma tela solta: só aparece com ele ligado em Configurações › Módulos.
   { rota: '/noticias', rotulo: 'Notícias', icone: Icones.noticias, modulo: 'noticias' }
 ];

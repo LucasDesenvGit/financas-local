@@ -23,6 +23,10 @@ ASSUNTOS = {
                       "Emprestimo", "PagamentoEmprestimo", "ReservaConferencia"],
     "Índices e cotações": ["TaxaSelicDiaria", "IndiceMensal", "CotacaoMoeda", "CotacaoCripto"],
     "Sistema": ["ErroSistema"],
+    "Trabalho (módulo)": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa", "Holerite",
+                          "HoleriteLancamento", "DecimoTerceiro",
+                          "FeriasFaltas", "FeriasAgendamento", "FgtsLancamento",
+                          "HoleriteRecebimento", "Rescisao", "HoleriteRubricaEscolha"],
     "Notícias (módulo)": ["Noticia", "NoticiaFonte"],
 }
 
