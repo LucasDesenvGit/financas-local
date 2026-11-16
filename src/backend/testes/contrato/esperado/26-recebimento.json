@@ -120,6 +120,7 @@
       "id": 3,
       "lancamentos": [],
       "mes": "2026-01-01",
+      "origem": 1,
       "situacao": 1
     },
     "banco": {
@@ -134,6 +135,7 @@
             "FechadoEm": null,
             "Id": 3,
             "Mes": "2026-01-01",
+            "Origem": 1,
             "Situacao": 1
           }
         ]
@@ -356,6 +358,7 @@
             "FechadoEm": null,
             "Id": 3,
             "Mes": "2026-01-01",
+            "Origem": 1,
             "Situacao": 1
           }
         ]

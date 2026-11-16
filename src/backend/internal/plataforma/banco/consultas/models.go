@@ -258,6 +258,7 @@ type Holerite struct {
 	EmpregoId    int64
 	Mes          string
 	Situacao     int64
+	Origem       int64
 	DiasUteis    int64
 	DiasDescanso int64
 	Calculo      *string
@@ -289,6 +290,15 @@ type HoleriteRecebimento struct {
 	TransacaoValor     string
 	TransacaoDescricao string
 	CriadoEm           string
+}
+
+type HoleriteRubricaEscolha struct {
+	Id        int64
+	EmpregoId int64
+	Codigo    string
+	Descricao string
+	Tipo      int64
+	CriadoEm  string
 }
 
 type IndiceMensal struct {

@@ -242,6 +242,17 @@ func TestFgtsPelaApi(t *testing.T) {
 	if mes(c, "2025-07-01").Saques.String() != "1000.00" || !mes(c, "2025-07-01").Saldo.Decimal().LessThan(julho.Saldo.Decimal()) {
 		t.Fatalf("saque depois da saída = %+v", mes(c, "2025-07-01"))
 	}
+	// O holerite lido do PDF (#228) já vem com o FGTS dos 27 dias trabalhados de junho (2700 x 8% = 216): fica o que ele
+	// diz, sem tirar de novo os 3 dias de férias (seria 192).
+	trabalhado := v("2700")
+	if _, _, err := holerites.GravarLido(t.Context(), antigo, holerite.Calculo{Mes: tipos.NovaData(2025, 6, 1), DiasTrabalhados: 27,
+		SalarioContratual: v("3000"), Proventos: []holerite.Linha{{Tipo: holerite.TipoSalario, Descricao: "SALARIO", Valor: trabalhado}},
+		Descontos: []holerite.Linha{}, TotalProventos: trabalhado, Liquido: trabalhado, FgtsDoMes: v("216")}); err != nil {
+		t.Fatal(err)
+	}
+	if d := mes(ler(chamar("GET", fmt.Sprintf("/api/trabalho/empregos/%d/fgts", antigo), "")), "2025-06-01").Deposito.String(); d != "216.00" {
+		t.Fatalf("junho lido do PDF = %s", d)
+	}
 
 	// Saiu em 20/12/2026: dezembro tem 20 dias de salário (2000 x 8% = 160) e o 13º fica para a rescisão.
 	dezembro := criar(`{"empregador":"D","admissao":"2026-01-10","saida":"2026-12-20","salarioBruto":3000}`)

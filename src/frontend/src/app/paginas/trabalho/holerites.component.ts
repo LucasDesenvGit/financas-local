@@ -5,7 +5,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AvisosService } from '../../core/avisos.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
-import { Emprego, Holerite, LancamentoHolerite, ResumoHolerite, SituacaoHolerite, TipoLancamentoHolerite } from '../../core/modelos';
+import {
+  Emprego, Holerite, LancamentoHolerite, OrigemHolerite, PreviaHoleritePdf, ResumoHolerite, SituacaoHolerite, TipoLancamentoHolerite
+} from '../../core/modelos';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';
 import { CampoValorComponent } from '../../compartilhado/ui/campo-valor.component';
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
@@ -16,17 +18,21 @@ import {
 } from './holerites';
 import { empregoAtual, mesDaApi, nomeDoMes } from './salario';
 import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
+import { HoleritePdfPreviaComponent } from './holerite-pdf-previa.component';
+import { LinhaPrevia, linhasDaPrevia, mesDoPdf, motivoDaRecusa, paraBase64, paraConfirmar, problemaDoArquivo } from './holerite-pdf';
 
 /**
  * #211 (ADR 0065): Trabalho › Holerites. A lista dos meses (bruto, descontos, líquido) e o holerite escolhido: os
  * lançamentos do mês (horas extras, adicional noturno, bônus, descontos), o cálculo linha a linha e "Fechar o mês", que
  * congela os números (Nielsen 3: "Reabrir" desfaz, e fica nos acessos recentes). O holerite aberto fica na URL
  * (?holerite=), para o voltar do navegador funcionar (ADR 0018). Estimativa, não holerite; não é receita.
+ * #228 (ADR 0068): "Ler holerite em PDF" (um ou vários) mostra a prévia de cada um, e só grava com "Confirmar", com
+ * "Desfazer" no aviso (Nielsen 3). O lido do PDF fica marcado na lista e no holerite (Nielsen 1).
  */
 @Component({
   selector: 'app-trabalho-holerites',
   imports: [FormsModule, DatePipe, RouterLink, MoedaPipe, CampoValorComponent, ListaSuspensaDirective, SeletorMesComponent,
-    RecebimentoHoleriteComponent],
+    RecebimentoHoleriteComponent, HoleritePdfPreviaComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina"><h1>Holerites</h1></header>
@@ -46,6 +52,11 @@ import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
             <app-seletor-mes [valor]="mesNovo()" (mudou)="mesNovo.set($event)" />
             <button type="button" class="botao botao-primario" [disabled]="ocupado()" (click)="criar()">Abrir o holerite do mês</button>
           </div>
+          <div class="ler-pdf">
+            <label class="botao seletor-pdf" [class.desabilitado]="ocupado()">Ler holerite em PDF
+              <input type="file" class="so-leitor" accept="application/pdf,.pdf" multiple [disabled]="ocupado()" (change)="escolherPdfs($event)"></label>
+            <p class="texto-suave">Um ou vários (o ano de uma vez). Lido no seu computador; o PDF não fica guardado.</p>
+          </div>
           @if (lista().length) {
             <ul class="lista-meses">
               @for (r of lista(); track r.id) {
@@ -53,7 +64,7 @@ import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
                   <button type="button" class="item-mes" [class.ativo]="r.id === aberto()?.id" [attr.aria-current]="r.id === aberto()?.id ? 'true' : null"
                     (click)="abrir(r.id)">
                     <span class="mes-nome">{{ nome(r.mes) }}</span>
-                    <span class="etiqueta" [class.etiqueta-suave]="r.situacao === Situacao.Aberto">{{ situacao(r.situacao) }}</span>
+                    <span class="etiqueta" [class.etiqueta-suave]="r.situacao === Situacao.Aberto">{{ situacao(r.situacao) }}@if (r.origem === Origem.LidoDoPdf) { · lido do PDF }</span>
                     <span class="mes-liquido">{{ r.liquido === null ? 'sem cálculo' : (r.liquido | currency) }}</span>
                   </button>
                 </li>
@@ -64,10 +75,29 @@ import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
           }
         </section>
 
-        @if (aberto(); as h) {
+        @if (pedindoSenha()) {
+          <section class="painel-bloco" aria-labelledby="titulo-senha-pdf">
+            <h2 id="titulo-senha-pdf">O PDF tem senha</h2>
+            <form class="senha-pdf" (ngSubmit)="abrirComSenha()" #fs="ngForm">
+              <label>Senha de {{ arquivoAtual() }}
+                <input type="password" name="senhaPdf" autocomplete="off" [(ngModel)]="senhaPdf" required></label>
+              <p class="texto-suave">Costuma ser parte do CPF ou a data de nascimento. Ela só abre o arquivo: não é guardada.</p>
+              <div class="rodape-form">
+                <button type="button" class="botao" [disabled]="ocupado()" (click)="pularPdf()">{{ fila().length ? 'Pular este' : 'Cancelar' }}</button>
+                <span class="cresce"></span>
+                <button class="botao botao-primario" [disabled]="fs.invalid || ocupado()">Abrir</button>
+              </div>
+            </form>
+          </section>
+        } @else if (previa(); as p) {
+          <app-holerite-pdf-previa [previa]="p" [linhas]="linhasPdf()" [mes]="mesPdf()" [arquivo]="arquivoAtual()"
+            [restantes]="fila().length" [ocupado]="ocupado()" (linhasMudaram)="linhasPdf.set($event)" (mesMudou)="mudarMesPdf($event)"
+            (confirmar)="confirmarPdf()" (cancelar)="pularPdf()" />
+        } @else if (aberto(); as h) {
           <section class="painel-bloco" aria-labelledby="titulo-holerite">
             <div class="cabecalho-bloco">
-              <h2 id="titulo-holerite">{{ nome(h.mes) }} <span class="etiqueta" [class.etiqueta-suave]="!fechado()">{{ situacao(h.situacao) }}</span></h2>
+              <h2 id="titulo-holerite">{{ nome(h.mes) }} <span class="etiqueta" [class.etiqueta-suave]="!fechado()">{{ situacao(h.situacao) }}</span>
+                @if (lido()) { <span class="etiqueta etiqueta-sucesso">Lido do PDF</span> }</h2>
             </div>
             @if (h.aviso) { <p class="aviso-inline">{{ h.aviso }}</p> }
 
@@ -116,6 +146,9 @@ import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
                   <button class="botao botao-primario" [disabled]="fh.invalid || ocupado()">Salvar e calcular</button>
                 </div>
               </form>
+            } @else if (lido()) {
+              <p class="texto-suave">Lido do PDF em {{ h.fechadoEm | date: 'dd/MM/yyyy' }}: vale o que a empresa pagou. Reabrir volta para a estimativa
+                do site@if (h.lancamentos.length) { , com os lançamentos que você tinha posto }.</p>
             } @else if (h.lancamentos.length) {
               <p class="texto-suave">Fechado em {{ h.fechadoEm | date: 'dd/MM/yyyy' }}. Para mudar, reabra.</p>
             }
@@ -139,7 +172,7 @@ import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
                   <tfoot>
                     <tr><th scope="row">Totais</th><td class="direita">{{ c.totalProventos | currency }}</td>
                       <td class="direita">{{ c.totalDescontos | currency }}</td></tr>
-                    <tr class="liquido"><th scope="row" colspan="2">Líquido estimado</th><td class="direita">{{ c.liquido | currency }}</td></tr>
+                    <tr class="liquido"><th scope="row" colspan="2">{{ lido() ? 'Líquido' : 'Líquido estimado' }}</th><td class="direita">{{ c.liquido | currency }}</td></tr>
                   </tfoot>
                 </table>
               </div>
@@ -185,6 +218,12 @@ import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
     @media (max-width: 600px) { .holerite th, .holerite td { padding: 8px 6px; } }
     .holerite .liquido td, .holerite .liquido th { border-top: 1px solid var(--linha); }
     .aviso-estimativa { margin-top: 0; }
+    .ler-pdf { margin-bottom: 12px; }
+    .ler-pdf p { margin: 4px 0 0; }
+    .seletor-pdf { position: relative; display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
+    .seletor-pdf:focus-within { outline: 2px solid var(--primaria); outline-offset: 2px; }
+    .seletor-pdf.desabilitado { opacity: 0.6; cursor: default; }
+    .senha-pdf input { max-width: 20em; }
   `]
 })
 export class TrabalhoHoleritesComponent implements OnInit {
@@ -196,6 +235,7 @@ export class TrabalhoHoleritesComponent implements OnInit {
 
   readonly Tipo = TipoLancamentoHolerite;
   readonly Situacao = SituacaoHolerite;
+  readonly Origem = OrigemHolerite;
   readonly tiposProvento = TIPOS_PROVENTO;
   readonly tiposDesconto = TIPOS_DESCONTO;
   readonly porHora = ehPorHora;
@@ -208,6 +248,17 @@ export class TrabalhoHoleritesComponent implements OnInit {
   readonly lista = signal<ResumoHolerite[]>([]);
   readonly aberto = signal<Holerite | null>(null);
   readonly fechado = computed(() => this.aberto()?.situacao === SituacaoHolerite.Fechado);
+  readonly lido = computed(() => this.aberto()?.origem === OrigemHolerite.LidoDoPdf);
+
+  /** #228: o PDF em leitura (a prévia, a senha) e os que esperam na fila. O conteúdo fica só na memória da tela. */
+  readonly previa = signal<PreviaHoleritePdf | null>(null);
+  readonly linhasPdf = signal<LinhaPrevia[]>([]);
+  readonly mesPdf = signal<string | null>(null);
+  readonly pedindoSenha = signal(false);
+  readonly arquivoAtual = signal('');
+  readonly fila = signal<File[]>([]);
+  private conteudoPdf = '';
+  senhaPdf = '';
   readonly lancamentos = signal<LancamentoHolerite[]>([]);
   readonly mesNovo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
   diasUteis = 0;
@@ -320,6 +371,118 @@ export class TrabalhoHoleritesComponent implements OnInit {
         this.router.navigate([], { relativeTo: this.rota, queryParams: { holerite: null }, replaceUrl: true });
         this.recarregarLista();
         this.avisos.sucesso('Holerite excluído.');
+      },
+      error: (err) => this.avisos.erro(mensagemDeErro(err))
+    });
+  }
+
+  /** #228: os PDFs escolhidos entram na fila; cada um vira uma prévia, um de cada vez. */
+  escolherPdfs(evento: Event): void {
+    const campo = evento.target as HTMLInputElement;
+    const arquivos = Array.from(campo.files ?? []);
+    campo.value = '';
+    if (!arquivos.length) return;
+    this.fila.set(arquivos);
+    this.proximoPdf();
+  }
+
+  private proximoPdf(): void {
+    this.previa.set(null);
+    this.pedindoSenha.set(false);
+    this.senhaPdf = '';
+    this.conteudoPdf = '';
+    const [arquivo, ...resto] = this.fila();
+    this.fila.set(resto);
+    this.arquivoAtual.set(arquivo?.name ?? '');
+    if (!arquivo) return;
+    const problema = problemaDoArquivo(arquivo.name, arquivo.size);
+    if (problema) {
+      this.avisos.erro(problema);
+      this.proximoPdf();
+      return;
+    }
+    this.ocupado.set(true);
+    arquivo.arrayBuffer().then(
+      (conteudo) => { this.conteudoPdf = paraBase64(new Uint8Array(conteudo)); this.lerPdf(''); },
+      () => { this.ocupado.set(false); this.avisos.erro(`${arquivo.name}: não deu para abrir o arquivo.`); this.proximoPdf(); }
+    );
+  }
+
+  private lerPdf(senha: string): void {
+    const e = this.emprego();
+    if (!e) return;
+    this.ocupado.set(true);
+    this.api.lerHoleritePdf(e.id, this.conteudoPdf, senha).subscribe({
+      next: (p) => {
+        this.ocupado.set(false);
+        this.pedindoSenha.set(false);
+        this.previa.set(p);
+        this.linhasPdf.set(linhasDaPrevia(p));
+        this.mesPdf.set(mesDoPdf(p));
+      },
+      error: (err) => {
+        this.ocupado.set(false);
+        if (motivoDaRecusa(err) === 'senha') {
+          if (senha) this.avisos.erro(mensagemDeErro(err));
+          this.senhaPdf = '';
+          this.pedindoSenha.set(true);
+          return;
+        }
+        this.avisos.erro(`${this.arquivoAtual()}: ${mensagemDeErro(err)}`);
+        this.proximoPdf();
+      }
+    });
+  }
+
+  abrirComSenha(): void {
+    this.lerPdf(this.senhaPdf);
+  }
+
+  /** "Cancelar" ou "Pular este": nada é gravado, e vem o próximo da fila. */
+  pularPdf(): void {
+    this.proximoPdf();
+  }
+
+  mudarMesPdf(m: MesAno): void {
+    this.mesPdf.set(`${mesDaApi(m)}-01`);
+  }
+
+  confirmarPdf(): void {
+    const e = this.emprego();
+    const p = this.previa();
+    const mes = this.mesPdf();
+    if (!e || !p || !mes) return;
+    this.ocupado.set(true);
+    this.api.confirmarHoleritePdf(e.id, paraConfirmar(p, this.linhasPdf(), mes)).subscribe({
+      next: (g) => {
+        this.ocupado.set(false);
+        const nomeMes = nomeDoMes(g.holerite.mes);
+        this.avisos.sucesso(`Holerite de ${nomeMes} gravado, lido do PDF.`,
+          { rotulo: 'Desfazer', executar: () => this.desfazerPdf(e.id, g.desfazer, nomeMes) });
+        this.recarregarLista();
+        const ultimo = !this.fila().length;
+        this.proximoPdf();
+        if (ultimo) this.mostrar(g.holerite);
+      },
+      error: (err) => { this.ocupado.set(false); this.avisos.erro(mensagemDeErro(err)); }
+    });
+  }
+
+  private desfazerPdf(empregoId: number, chave: string, nomeMes: string): void {
+    this.api.desfazerHoleritePdf(empregoId, chave).subscribe({
+      next: () => {
+        this.avisos.sucesso(`Desfeito: o holerite de ${nomeMes} voltou ao que era antes do PDF.`);
+        this.recarregarLista();
+        const h = this.aberto();
+        if (h) {
+          this.api.holerite(h.id).subscribe({
+            next: (novo) => this.mostrar(novo),
+            error: () => {
+              this.aberto.set(null);
+              this.router.navigate([], { relativeTo: this.rota, queryParams: { holerite: null }, replaceUrl: true });
+            }
+          });
+        }
       },
       error: (err) => this.avisos.erro(mensagemDeErro(err))
     });

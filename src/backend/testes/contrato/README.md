@@ -88,7 +88,8 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 | `25-fgts` | FGTS do Trabalho | #216 | `/api/trabalho/empregos/{id}/fgts` |
 | `26-recebimento` | recebimento do salário (Trabalho) | #212 | `/api/trabalho/holerites/{id}/recebimentos` |
 | `27-rescisao` | rescisão do Trabalho | #215 | `/api/trabalho/empregos/{id}/rescisao` |
-| `28` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
+| `28-holerite-pdf` | holerite em PDF do Trabalho | #228 | `/api/trabalho/empregos/{id}/holerites/pdf` |
+| `29` a `89` | funcionalidade nova, por ordem de chegada | — | os dela |
 | `90-go` | diagnóstico (`/api/go/saude`) | #231, #363 | `/api/go` |
 
 - Um arquivo pode usar o `base.sql`, a sessão `principal` do `00-auth` e o que um arquivo de número menor **já mesclado** deixou no banco; nunca o de um assunto ainda em andamento.

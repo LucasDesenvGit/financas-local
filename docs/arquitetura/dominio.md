@@ -140,6 +140,25 @@ stateDiagram-v2
     instalador --> [*]: abriu, e o gerenciador fecha
 ```
 
+O holerite do mês, no Trabalho (#211; o lido do PDF, #228):
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "Aberto (estimativa)" as aberto
+    state "Fechado (calculado)" as fechado
+    state "Fechado (lido do PDF)" as lido
+    [*] --> aberto: Abrir o holerite do mês
+    [*] --> lido: Confirmar o PDF (mês sem holerite)
+    aberto --> fechado: Fechar o mês
+    aberto --> lido: Confirmar o PDF (guarda os lançamentos)
+    fechado --> aberto: Reabrir (auditoria)
+    lido --> aberto: Reabrir (auditoria), com os lançamentos de antes
+    lido --> aberto: Desfazer, se substituiu a estimativa
+    lido --> [*]: Desfazer, se o mês não tinha holerite
+    aberto --> [*]: Excluir
+```
+
 ## Classes do domínio
 
 Só o centro do domínio: quem pertence a quem e a regra principal de cada um.
@@ -204,6 +223,9 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 | Abono pecuniário | `ferias.Calcular` | A venda de até 1/3 dos dias de férias; o abono e o 1/3 dele não têm INSS nem IR | — |
 | FGTS estimado | `fgts.Estimar` | 8% da base de cada mês (e do 13º e das férias), corrigido a 3% ao ano, recomeçando da última conferência com o app; fora do patrimônio ([ADR 0066](../adr/0066-fgts-fora-do-patrimonio-estimado-no-trabalho.md)) | — |
 | Recebimento do salário | `HoleriteRecebimento`, `recebimento.Pontuar` | A transação que pagou o holerite; só explica a receita, que continua sendo a transação, uma vez só ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)) | — |
+| Holerite lido do PDF | `Holerite.Origem` = 2, `holerite.GravarLido` | Fechado, com o cálculo montado das linhas que a pessoa confirmou: vale o que a empresa pagou, e o 13º, as férias e o FGTS usam esses números. Reabrir volta para a estimativa ([ADR 0068](../adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) | — |
+| Rubrica | `leitor.Rubrica`, `holeritepdf.Classificar`, `HoleriteRubricaEscolha` | Uma linha do holerite da empresa (código, descrição, referência, valor). O tipo vem do dicionário no código ou do que a pessoa escolheu antes para o mesmo emprego | — |
+| Prova real do holerite | `leitor.Prova` | A soma das rubricas de cada coluna contra o total impresso, e proventos menos descontos contra o líquido impresso: se não bate, o leitor errou alguma linha | — |
 | Aviso prévio proporcional | `rescisao.DiasDeAviso`, `rescisao.AvisoPago` | 30 dias mais 3 por ano de casa, até 90 (Lei 12.506/2011); indenizado, conta como tempo de serviço (a data projetada) | — |
 | DSR | `holerite.Calcular`, `DiasDoDsr` | Descanso semanal remunerado sobre as horas extras e o adicional noturno: o total ÷ os dias úteis × os domingos e feriados | — |
 | Fatura do mês | `faturas.DoMes` | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |

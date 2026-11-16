@@ -16,3 +16,4 @@ internal/plataforma/testeapoio             apoio aos testes (banco temporário, 
 internal/plataforma/versao                 só a variável da versão, gravada na compilação
 internal/plataforma/servicosistema  conversa com o sistema operacional, quase todo em _windows.go, que a medição no Linux não compila; sem regra de negócio
 internal/modulos/trabalho                  só monta o módulo (Info e as rotas dos assuntos dele), sem regra; conferido pelo trabalho_test e pelo contrato 21-trabalho
+internal/modulos/trabalho/leitor/ficticios gera os holerites em PDF fictícios dos testes do leitor (#228); só os testes importam, não entra no executável

@@ -35,10 +35,12 @@ const TipoDSR int64 = 4
 // TipoSalario é a linha do salário do mês.
 const TipoSalario int64 = 0
 
-// TipoInss e TipoIrrf são as linhas dos descontos calculados.
+// TipoInss e TipoIrrf são as linhas dos descontos calculados. TipoAdiantamento é a do adiantamento salarial
+// descontado, que só vem do holerite em PDF (#228).
 const (
-	TipoInss int64 = 20
-	TipoIrrf int64 = 21
+	TipoInss         int64 = 20
+	TipoIrrf         int64 = 21
+	TipoAdiantamento int64 = 22
 )
 
 var nomes = map[int64]string{

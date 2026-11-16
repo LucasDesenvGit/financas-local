@@ -26,7 +26,7 @@ ASSUNTOS = {
     "Trabalho (módulo)": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa", "Holerite",
                           "HoleriteLancamento", "DecimoTerceiro",
                           "FeriasFaltas", "FeriasAgendamento", "FgtsLancamento",
-                          "HoleriteRecebimento", "Rescisao"],
+                          "HoleriteRecebimento", "Rescisao", "HoleriteRubricaEscolha"],
 }
 
 

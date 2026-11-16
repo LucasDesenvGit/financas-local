@@ -1318,7 +1318,7 @@ export const MANUAL: CapituloManual[] = [
       {
         id: 'holerites',
         titulo: 'Holerites',
-        paraQueServe: 'Montar o holerite de cada mês pelo salário bruto, com as horas extras e os descontos, e guardar o histórico.',
+        paraQueServe: 'Montar o holerite de cada mês pelo salário bruto, com as horas extras e os descontos, ou ler o PDF que a empresa manda, e guardar o histórico.',
         passos: [
           'Abra Trabalho › Holerites, escolha o mês e clique em “Abrir o holerite do mês”. O salário vem do Trabalho › Salário, proporcional se você entrou ou saiu no meio do mês (o mês tem 30 dias, como na folha).',
           'Os lançamentos que você marcou “Repetir nos próximos meses” no último holerite (plano de saúde, pensão) já vêm no mês novo.',
@@ -1330,13 +1330,26 @@ export const MANUAL: CapituloManual[] = [
           '“Recebido na conta”: ligue ao holerite o crédito do salário que caiu na conta. Em “Parece o salário”, o site sugere os créditos do dia 15 do mês ao dia 15 do seguinte, dizendo por quê (valor perto do líquido, o banco marcou como salário, cita o empregador, na conta do salário); “Outros créditos do período” deixa ligar qualquer outro. Um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite (o site liga só o que falta do líquido).',
           'A tela mostra quanto foi recebido e a diferença para o líquido estimado. A transação ligada que estava sem categoria passa para “Salário”, como escolha sua. “Desligar” desfaz.',
           'O site só sugere um crédito com um motivo forte: o valor perto do líquido, o banco marcou como salário ou cita o empregador. Um crédito pequeno (abaixo de 20% do líquido) não conta como “parte”, e a transferência entre contas suas nunca é sugerida; os dois ficam em “Outros créditos do período”.',
-          'Se o banco trocar o código do crédito ligado (a transação pendente que vira efetivada), a ligação fica e o site religa sozinho na transação nova (mesma conta, mesmo valor, até 5 dias de diferença). Enquanto isso, o crédito aparece com o aviso “sumiu na sincronização”. O crédito ligado que virou débito também aparece com o aviso, não conta, e dá para desligar.'
+          'Se o banco trocar o código do crédito ligado (a transação pendente que vira efetivada), a ligação fica e o site religa sozinho na transação nova (mesma conta, mesmo valor, até 5 dias de diferença). Enquanto isso, o crédito aparece com o aviso “sumiu na sincronização”. O crédito ligado que virou débito também aparece com o aviso, não conta, e dá para desligar.',
+          '“Ler holerite em PDF” preenche o mês com o PDF que a empresa manda: escolha um ou vários (o ano de uma vez). Se o PDF tiver senha (parte do CPF, a data de nascimento), o site pede; ela só abre o arquivo e não é guardada.',
+          'A prévia mostra cada linha do PDF: o tipo que o site deu (salário, horas extras, DSR, INSS, IRRF, vale-transporte, plano de saúde, adiantamento…), o valor e o trecho do PDF de onde saiu. A situação diz “reconhecido”, “reconhecido pelo que você escolheu antes” ou “escolha o tipo”. Dá para trocar o tipo, corrigir o valor ou deixar a linha de fora.',
+          'A prova real confere a soma de cada coluna com o total impresso e proventos menos descontos com o líquido. Se não bater, ela diz qual total e por quanto: o leitor errou alguma linha, ou alguma ficou de fora.',
+          'A prévia também mostra o INSS, o IRRF e o líquido lidos ao lado dos calculados pelas tabelas, e avisa do que não confere: o CNPJ do PDF não é o do emprego, o salário base é outro (se foi aumento, registre em Trabalho › Salário), o mês já está fechado.',
+          'Nada é gravado até “Confirmar e gravar”. O holerite lido entra fechado e marcado “Lido do PDF”: vale o que a empresa pagou, e o 13º, as férias, o FGTS e a rescisão passam a usar esses números. O aviso traz “Desfazer” por alguns segundos; depois, “Reabrir” volta para a estimativa do site.'
         ],
         dicas: [
+          'Rubrica que o site não conhece (“escolha o tipo”): ela vem sem tipo, e o “Confirmar e gravar” espera você escolher (ou deixar a linha de fora). Escolha uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida. Vale também para a que você corrigiu.',
+          'O PDF é lido no seu computador, sem nenhum serviço de fora, e não fica guardado: só os valores do holerite.',
           'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
           'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',
           'O mês tem 30 dias, como na folha: quem entra no dia 15 recebe 16 dias (30 − 15 + 1), também em fevereiro.',
           'O holerite não é receita: a receita continua sendo a transação do salário na conta. Ligar o crédito ao holerite só explica esse dinheiro, e os relatórios contam a receita uma vez só.'
+        ],
+        erros: [
+          '“Este PDF é uma imagem”: o PDF escaneado ou a foto não têm texto, e por enquanto o leitor só lê PDF com texto. Digite o holerite com “Abrir o holerite do mês”.',
+          '“Não achei a tabela do holerite”: o PDF não tem as colunas de vencimentos e de descontos, ou não é um holerite. Digite o holerite.',
+          '“O PDF passa do limite”: o arquivo vai até 700 KB e 5 páginas. Mande só o holerite do mês.',
+          '“O holerite do mês está fechado”: reabra o mês antes de gravar o lido.'
         ],
         abrir: [{ rotulo: 'Abrir os Holerites', rota: '/trabalho/holerites' }]
       },

@@ -70,14 +70,14 @@ func (s *Servico) emprego(ctx context.Context, id int64) (emprego.Emprego, error
 // depositos são os de cada mês (a competência) de inicio até ate: 8% da base do INSS do holerite (ou 8% do salário do
 // mês, proporcional, sem holerite); 8% da 1ª parcela do 13º no mês em que ela foi paga e 8% do resto em dezembro; e 8%
 // das férias (+ 1/3) no mês em que começam, menos o salário dos dias de férias no mês de cada um (as férias pagam esses
-// dias; revisão do #702).
+// dias; revisão do #702). O holerite lido do PDF (#228) já vem com o FGTS dos dias trabalhados: nele não se tira nada.
 func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate tipos.Data) (map[string]decimal.Decimal, error) {
 	porMes := map[string]decimal.Decimal{}
 	resumos, err := s.holerites.Listar(ctx, e.Id)
 	if err != nil {
 		return nil, err
 	}
-	doHolerite := map[string]bool{}
+	doHolerite, lido := map[string]bool{}, map[string]bool{}
 	for _, r := range resumos {
 		h, err := s.holerites.Obter(ctx, r.Id)
 		if err != nil {
@@ -86,6 +86,7 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 		if h.Calculo != nil {
 			porMes[h.Mes.String()] = h.Calculo.FgtsDoMes.Decimal()
 			doHolerite[h.Mes.String()] = true
+			lido[h.Mes.String()] = h.Origem == holerite.LidoDoPdf
 		}
 	}
 	for mes := inicio; !mes.Depois(ate); mes = mes.SomarMeses(1) {
@@ -130,7 +131,7 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 			base := a.Calculo.Ferias.Decimal().Add(a.Calculo.TercoFerias.Decimal())
 			porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(oitoPct))
 			for m, dias := range diasDeFeriasPorMes(a.Inicio, a.Dias) {
-				if salario, ok := emprego.SalarioDoMes(e.Salarios, m); ok {
+				if salario, ok := emprego.SalarioDoMes(e.Salarios, m); ok && !lido[m.String()] {
 					tirar := salario.SalarioBruto.Decimal().Mul(decimal.NewFromInt(int64(min(dias, 30)))).Div(decimal.NewFromInt(30)).Mul(oitoPct)
 					porMes[m.String()] = decimal.Max(decimal.Zero, porMes[m.String()].Sub(tirar))
 				}
