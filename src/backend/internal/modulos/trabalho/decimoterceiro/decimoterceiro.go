@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/shopspring/decimal"
 
@@ -66,6 +67,12 @@ var (
 	errForaDoAno = errors.New("fora do ano")
 )
 
+// SemDecimo diz se o erro do Obter é só a falta do 13º no ano (não é CLT, o ano está fora do emprego, falta a tabela),
+// e não uma falha: quem soma o 13º (o FGTS) segue sem ele e devolve as outras.
+func SemDecimo(err error) bool {
+	return errors.Is(err, errSemDecimo) || errors.Is(err, errSemTabela) || errors.Is(err, errForaDoAno)
+}
+
 // Obter calcula o 13º do emprego no ano.
 func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta, error) {
 	e, err := s.empregos.Obter(ctx, empregoId)
@@ -89,7 +96,7 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 	if !ok {
 		return Resposta{}, errForaDoAno
 	}
-	soma, _, err := s.holerites.VariaveisDoAno(ctx, empregoId, ano)
+	soma, meses, err := s.holerites.VariaveisDoAno(ctx, empregoId, ano, salario.SalarioBruto)
 	if err != nil {
 		return Resposta{}, err
 	}
@@ -106,12 +113,26 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 	if !okInss || !okIrrf {
 		return Resposta{}, errSemTabela
 	}
-	entrada := Entrada{Ano: ano, Avos: avos, SalarioBase: salario.SalarioBruto, SomaVariaveis: soma, Dependentes: e.Dependentes,
-		Inss: tInss, Irrf: tIrrf}
+	entrada := Entrada{Ano: ano, Avos: avos, SalarioBase: salario.SalarioBruto, SomaVariaveis: soma, MesesComHolerite: meses,
+		Dependentes: e.Dependentes, Inss: tInss, Irrf: tIrrf}
 	err = s.db.QueryRowContext(ctx, `SELECT "PrimeiraParcelaEm", "PrimeiraParcelaValor" FROM "DecimoTerceiro"
 		WHERE "EmpregoId" = ? AND "Ano" = ?`, empregoId, ano).Scan(&entrada.PrimeiraEm, &entrada.PrimeiraValor)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return Resposta{}, fmt.Errorf("ler a 1ª parcela: %w", err)
+	}
+	// Sem a 1ª informada, a que veio com as férias do ano (#213, revisão do #701): paga até 2 dias antes do início.
+	if entrada.PrimeiraEm == nil && entrada.PrimeiraValor == nil {
+		var inicio tipos.Data
+		err := s.db.QueryRowContext(ctx, `SELECT "Inicio" FROM "FeriasAgendamento" WHERE "EmpregoId" = ? AND "AdiantarDecimo" = 1
+			AND "Inicio" >= ? AND "Inicio" < ? ORDER BY "Inicio" LIMIT 1`, empregoId, tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1)).
+			Scan(&inicio)
+		switch {
+		case err == nil:
+			pagamento := inicio.SomarDias(-2)
+			entrada.PrimeiraEm, entrada.PrimeiraComFerias = &pagamento, true
+		case !errors.Is(err, sql.ErrNoRows):
+			return Resposta{}, fmt.Errorf("ler as férias com o 13º: %w", err)
+		}
 	}
 	return Resposta{Calculo: Calcular(entrada), Saida: saida}, nil
 }
@@ -119,7 +140,8 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 // DefinirPrimeira guarda quando e quanto veio a 1ª parcela (os dois nulos: volta ao padrão, metade até 30/11, porque o
 // cálculo só usa o que veio preenchido).
 func (s *Servico) DefinirPrimeira(ctx context.Context, empregoId int64, ano int, em *tipos.Data, valor *tipos.Decimal) (Resposta, error) {
-	if _, err := s.Obter(ctx, empregoId, ano); err != nil {
+	atual, err := s.Obter(ctx, empregoId, ano)
+	if err != nil {
 		return Resposta{}, err
 	}
 	if valor != nil && (valor.Decimal().IsNegative() || valor.Decimal().GreaterThan(decimal.NewFromInt(10_000_000))) {
@@ -128,7 +150,10 @@ func (s *Servico) DefinirPrimeira(ctx context.Context, empregoId int64, ano int,
 	if em != nil && em.Ano() != ano {
 		return Resposta{}, erroDeValidacao(fmt.Sprintf("A 1ª parcela do 13º de %d é paga em %d.", ano, ano))
 	}
-	_, err := s.db.ExecContext(ctx, `INSERT INTO "DecimoTerceiro" ("EmpregoId", "Ano", "PrimeiraParcelaEm", "PrimeiraParcelaValor", "AtualizadoEm")
+	if valor != nil && valor.Decimal().GreaterThan(atual.Calculo.Total.Decimal()) {
+		return Resposta{}, erroDeValidacao("A 1ª parcela não passa do 13º do ano inteiro (" + reais(atual.Calculo.Total.Decimal()) + ").")
+	}
+	_, err = s.db.ExecContext(ctx, `INSERT INTO "DecimoTerceiro" ("EmpregoId", "Ano", "PrimeiraParcelaEm", "PrimeiraParcelaValor", "AtualizadoEm")
 		VALUES (?, ?, ?, ?, ?) ON CONFLICT ("EmpregoId", "Ano") DO UPDATE SET "PrimeiraParcelaEm" = excluded."PrimeiraParcelaEm",
 		"PrimeiraParcelaValor" = excluded."PrimeiraParcelaValor", "AtualizadoEm" = excluded."AtualizadoEm"`,
 		empregoId, ano, em, valor, tipos.NovaDataHora(s.relogio.Agora()))
@@ -204,4 +229,17 @@ func (s *Servico) definirHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	c, err := s.DefinirPrimeira(r.Context(), id, ano, dto.PrimeiraParcelaEm, dto.PrimeiraParcelaValor)
 	s.responder(w, r, c, err)
+}
+
+// reais é "R$ 6.039,14".
+func reais(v decimal.Decimal) string {
+	inteiro, centavos, _ := strings.Cut(v.StringFixed(2), ".")
+	var b strings.Builder
+	for i, c := range inteiro {
+		if i > 0 && (len(inteiro)-i)%3 == 0 {
+			b.WriteByte('.')
+		}
+		b.WriteRune(c)
+	}
+	return "R$ " + b.String() + "," + centavos
 }

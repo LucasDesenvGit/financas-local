@@ -67,8 +67,10 @@ func (s *Servico) emprego(ctx context.Context, id int64) (emprego.Emprego, error
 	return e, err
 }
 
-// depositos são os de cada mês de inicio até ate: 8% da base do INSS do holerite (ou 8% do salário do mês, proporcional,
-// sem holerite), mais 8% do 13º em dezembro e 8% das férias (+ 1/3) no mês em que começam.
+// depositos são os de cada mês (a competência) de inicio até ate: 8% da base do INSS do holerite (ou 8% do salário do
+// mês, proporcional, sem holerite); 8% da 1ª parcela do 13º no mês em que ela foi paga e 8% do resto em dezembro; e 8%
+// das férias (+ 1/3) no mês em que começam, menos o salário dos dias de férias no mês de cada um (as férias pagam esses
+// dias; revisão do #702).
 func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate tipos.Data) (map[string]decimal.Decimal, error) {
 	porMes := map[string]decimal.Decimal{}
 	resumos, err := s.holerites.Listar(ctx, e.Id)
@@ -93,12 +95,27 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 				porMes[mes.String()] = salario.SalarioBruto.Decimal().Mul(dias).Div(decimal.NewFromInt(30)).Mul(oitoPct)
 			}
 		}
-		// O 13º de dezembro; quem saiu no ano recebe na rescisão. Sem o 13º (sem tabela), fica sem.
-		if mes.Mes() == 12 && (e.Saida == nil || e.Saida.Ano() != mes.Ano()) {
-			if d, err := s.decimo.Obter(ctx, e.Id, mes.Ano()); err == nil {
-				porMes[mes.String()] = porMes[mes.String()].Add(d.Total.Decimal().Mul(oitoPct))
-			}
+	}
+	// O 13º de cada ano: a 1ª parcela no mês em que foi paga, o resto em dezembro (cada parte só se o mês está no
+	// intervalo); quem saiu no ano recebe na rescisão. Sem o 13º (sem tabela, fora do ano), fica sem; outra falha volta
+	// (revisão do #702).
+	ultimoAno := ate.Ano()
+	if e.Saida != nil {
+		ultimoAno = min(ultimoAno, e.Saida.Ano()-1)
+	}
+	for ano := inicio.Ano(); ano <= ultimoAno; ano++ {
+		d, err := s.decimo.Obter(ctx, e.Id, ano)
+		if decimoterceiro.SemDecimo(err) {
+			continue
 		}
+		if err != nil {
+			return nil, err
+		}
+		// O mês fora do intervalo fica no mapa, mas o Estimar só lê os do intervalo.
+		primeira := d.Primeira.Valor.Decimal()
+		mesDaPrimeira, dezembro := emprego.InicioDoMes(d.Primeira.Data).String(), tipos.NovaData(ano, 12, 1).String()
+		porMes[mesDaPrimeira] = porMes[mesDaPrimeira].Add(primeira.Mul(oitoPct))
+		porMes[dezembro] = porMes[dezembro].Add(d.Total.Decimal().Sub(primeira).Mul(oitoPct))
 	}
 	periodos, err := s.ferias.Listar(ctx, e.Id)
 	if err != nil {
@@ -106,36 +123,95 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 	}
 	for _, p := range periodos {
 		for _, a := range p.Agendamentos {
+			if a.Calculo == nil { // sem tabela: a fração fica sem o depósito, como o holerite sem cálculo
+				continue
+			}
 			mes := emprego.InicioDoMes(a.Inicio)
-			if a.Calculo != nil { // o mês fora do intervalo o Estimar não lê
-				base := a.Calculo.Ferias.Decimal().Add(a.Calculo.TercoFerias.Decimal())
-				porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(oitoPct))
+			base := a.Calculo.Ferias.Decimal().Add(a.Calculo.TercoFerias.Decimal())
+			porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(oitoPct))
+			for m, dias := range diasDeFeriasPorMes(a.Inicio, a.Dias) {
+				if salario, ok := emprego.SalarioDoMes(e.Salarios, m); ok {
+					tirar := salario.SalarioBruto.Decimal().Mul(decimal.NewFromInt(int64(min(dias, 30)))).Div(decimal.NewFromInt(30)).Mul(oitoPct)
+					porMes[m.String()] = decimal.Max(decimal.Zero, porMes[m.String()].Sub(tirar))
+				}
 			}
 		}
 	}
 	return porMes, nil
 }
 
-// Obter estima o FGTS do emprego até o mês (o de hoje, ou o da saída).
+// diasDeFeriasPorMes são quantos dias de férias caem em cada mês (o dia 1 do mês), do início até o último dia.
+func diasDeFeriasPorMes(inicio tipos.Data, dias int) map[tipos.Data]int {
+	porMes := map[tipos.Data]int{}
+	for i := range dias {
+		porMes[emprego.InicioDoMes(inicio.SomarDias(i))]++
+	}
+	return porMes
+}
+
+// Obter estima o FGTS do emprego até o mês. Depois da saída não há depósito, mas o saldo segue com a correção, e os
+// saques e as conferências de depois dela contam (o saque da rescisão, revisão do #702).
 func (s *Servico) Obter(ctx context.Context, empregoId int64, ate tipos.Data) (Resposta, error) {
 	e, err := s.emprego(ctx, empregoId)
 	if err != nil {
 		return Resposta{}, err
 	}
 	ate = emprego.InicioDoMes(ate)
+	ateDepositos := ate
 	if e.Saida != nil && ate.Depois(emprego.InicioDoMes(*e.Saida)) {
-		ate = emprego.InicioDoMes(*e.Saida)
+		ateDepositos = emprego.InicioDoMes(*e.Saida)
 	}
 	inicio := emprego.InicioDoMes(e.Admissao)
 	lancamentos, err := s.lancamentos(ctx, empregoId)
 	if err != nil {
 		return Resposta{}, err
 	}
-	depositos, err := s.depositos(ctx, e, inicio, ate)
+	depositos, err := s.depositos(ctx, e, inicio, ateDepositos)
 	if err != nil {
 		return Resposta{}, err
 	}
 	return Resposta{Estimativa: Estimar(inicio, ate, depositos, lancamentos), Ate: ate, Lancamentos: lancamentos}, nil
+}
+
+// NaSaida é o FGTS para a rescisão (#215, revisão do #704).
+type NaSaida struct {
+	// Saldo é o estimado até o mês antes da saída, como se o emprego terminasse nela: o mês da saída e o 13º do ano
+	// vêm no depósito da rescisão, e não contam aqui (antes, contavam duas vezes).
+	Saldo tipos.Decimal
+	// BaseDaMulta são os depósitos corrigidos, sem descontar os saques (Lei 8.036, art. 18, § 1º): o saldo mais os
+	// saques (*inferido*: sem a correção deles).
+	BaseDaMulta tipos.Decimal
+	// SaqueAniversario: houve saque-aniversário; na dispensa e no acordo, só a multa sai (Lei 13.932/2019).
+	SaqueAniversario bool
+}
+
+// ParaRescisao é o FGTS na saída em saida.
+func (s *Servico) ParaRescisao(ctx context.Context, empregoId int64, saida tipos.Data) (NaSaida, error) {
+	e, err := s.emprego(ctx, empregoId)
+	if err != nil {
+		return NaSaida{}, err
+	}
+	e.Saida = &saida
+	inicio, ate := emprego.InicioDoMes(e.Admissao), emprego.InicioDoMes(saida).SomarMeses(-1)
+	lancamentos, err := s.lancamentos(ctx, empregoId)
+	if err != nil {
+		return NaSaida{}, err
+	}
+	depositos, err := s.depositos(ctx, e, inicio, ate)
+	if err != nil {
+		return NaSaida{}, err
+	}
+	saldo := Estimar(inicio, ate, depositos, lancamentos).Saldo.Decimal()
+	base := saldo
+	r := NaSaida{}
+	for _, l := range lancamentos {
+		if l.Tipo == TipoSaque && !l.Data.Depois(saida) {
+			base = base.Add(l.Valor.Decimal())
+			r.SaqueAniversario = r.SaqueAniversario || (l.Motivo != nil && *l.Motivo == MotivoSaqueAniversario)
+		}
+	}
+	r.Saldo, r.BaseDaMulta = centavos(saldo), centavos(base)
+	return r, nil
 }
 
 func (s *Servico) lancamentos(ctx context.Context, empregoId int64) ([]Lancamento, error) {

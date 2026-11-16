@@ -157,7 +157,7 @@ import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
               }
             </div>
             @if (!fechado() && mudou()) { <p class="texto-suave">Salve antes de fechar.</p> }
-            <app-recebimento-holerite [holeriteId]="h.id" />
+            <app-recebimento-holerite [holeriteId]="h.id" [versao]="h.situacao + ':' + (h.calculo?.liquido ?? '')" />
           </section>
         }
       </div>

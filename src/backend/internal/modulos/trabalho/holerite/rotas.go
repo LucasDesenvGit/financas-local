@@ -75,6 +75,8 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, 
 		respostas.Mensagem(w, http.StatusConflict, MensagemAberto)
 	case errors.Is(err, ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
+	case errors.Is(err, ErrSemSalario) || errors.Is(err, ErrForaDoEmprego):
+		respostas.Mensagem(w, http.StatusConflict, "Não dá para fechar: "+avisos[err])
 	default:
 		s.log.ErrorContext(r.Context(), "trabalho: "+etapa, "erro", err)
 		respostas.SemCorpo(w, http.StatusInternalServerError)

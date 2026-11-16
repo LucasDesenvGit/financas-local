@@ -47,3 +47,21 @@ test('Configurações › Módulos: sem módulo nesta versão', async ({ page })
   await page.goto('/configuracoes?aba=modulos');
   await expect(page.getByText('Nenhum módulo nesta versão do site.')).toBeVisible();
 });
+
+// Revisão do #697: a lista de módulos que não veio (o site reiniciando) mostra o erro e "Tentar de novo", e não fica
+// presa até recarregar a página.
+test('Configurações › Módulos: a lista que não veio, e tentar de novo', async ({ page, problemas }) => {
+  problemas.ignorar('503');
+  const exemplo = { id: 'exemplo', nome: 'Exemplo', descricao: 'Um módulo de exemplo.', acessaInternet: false, destinos: [], ligado: false };
+  let falhar = true;
+  await page.route('**/api/modulos', (rota) => falhar
+    ? rota.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+    : rota.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([exemplo]) }));
+  await page.goto('/configuracoes?aba=modulos');
+  const bloco = page.locator('section', { has: page.getByRole('heading', { name: 'Módulos' }) });
+  await expect(bloco.getByRole('alert')).toContainText('Não deu para ler os módulos agora');
+  await expect(bloco).not.toContainText('Nenhum módulo nesta versão');
+  falhar = false;
+  await bloco.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(bloco.getByRole('switch', { name: 'Exemplo' })).toBeVisible();
+});

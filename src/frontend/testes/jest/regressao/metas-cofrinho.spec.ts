@@ -32,7 +32,7 @@ describe('Regressão: cofrinho na meta', () => {
     (Array.from(aviso.querySelectorAll('button')).find((b) => b.textContent!.includes('Editar a meta'))!).click();
     await t.atualizar();
     // Ao editar, o cofrinho sumido continua escolhido (marcado), para não ser trocado sem querer.
-    expect(t.tela.form!.reservaNome).toBe('Viagem');
+    expect(t.formulario().edicao()!.dados.reservaNome).toBe('Viagem');
   });
 
   it('meta sem cofrinho segue como antes: valor inicial + saldo da conta', async () => {

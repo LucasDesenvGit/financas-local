@@ -11,12 +11,12 @@ import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component'
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
 import { empregoAtual } from './salario';
-import { diferencaDaVenda, periodoParaAgendar, primeiroDiaPossivel, situacaoDoPeriodo } from './ferias';
+import { diferencaDaVenda, faltasDigitadas, opcoesDaVenda, periodoParaAgendar, primeiroDiaPossivel, situacaoDoPeriodo } from './ferias';
 
 /**
  * #213 (ADR 0065): Trabalho › Férias. Os períodos aquisitivos com o direito, o que já foi agendado e o que sobra, com o
  * aviso de férias vencidas ou vencendo (Nielsen 1); o agendamento de uma fração com a venda de dias e o 13º junto; a
- * conta de cada fração (pagamento até 2 dias antes); e "Comparar 30 dias × vender 10" lado a lado. Estimativa.
+ * conta de cada fração (pagamento até 2 dias antes); e "Comparar" tirar tudo × vender 1/3, lado a lado. Estimativa.
  */
 @Component({
   selector: 'app-trabalho-ferias',
@@ -55,6 +55,10 @@ import { diferencaDaVenda, periodoParaAgendar, primeiroDiaPossivel, situacaoDoPe
                     <div><strong>{{ a.inicio | date: 'dd/MM/yyyy' }}</strong>, {{ a.dias }} dias@if (a.diasVendidos) {, vende {{ a.diasVendidos }}}@if (a.adiantarDecimo) {, com o 13º}</div>
                     @if (a.calculo; as c) {
                       <div class="texto-suave">Recebe {{ c.liquido | currency }} até {{ c.pagamento | date: 'dd/MM' }}; volta em {{ c.retorno | date: 'dd/MM/yyyy' }}.</div>
+                      @if (c.diasEmDobro) {
+                        <div class="aviso-inline">{{ c.diasEmDobro }} {{ c.diasEmDobro === 1 ? 'dia cai' : 'dias caem' }} depois do prazo
+                          ({{ p.fimConcessivo | date: 'dd/MM/yyyy' }}): a empresa paga em dobro (CLT, art. 137).</div>
+                      }
                     }
                     <button type="button" class="botao botao-pequeno" (click)="desmarcar(a.id, a.inicio)">Desmarcar<span class="so-leitor"> as férias de {{ a.inicio | date: 'dd/MM/yyyy' }}</span></button>
                   </div>
@@ -84,7 +88,7 @@ import { diferencaDaVenda, periodoParaAgendar, primeiroDiaPossivel, situacaoDoPe
               <p class="texto-suave">Até 3 frações: uma de 14 dias ou mais, as outras de 5 ou mais. Vender até 1/3 (10 de 30 dias).</p>
               <div class="rodape-form">
                 <button type="button" class="botao" [disabled]="!inicio || ocupado()" (click)="simular()">Ver a conta</button>
-                <button type="button" class="botao" [disabled]="!inicio || ocupado()" (click)="comparar()">Comparar 30 dias × vender 10</button>
+                <button type="button" class="botao" [disabled]="!inicio || ocupado()" (click)="comparar()">Comparar {{ opcoes().tirar }} dias × vender {{ opcoes().vender }}</button>
                 <span class="cresce"></span>
                 <button class="botao botao-primario" [disabled]="fa.invalid || !inicio || ocupado()">Agendar</button>
               </div>
@@ -112,15 +116,15 @@ import { diferencaDaVenda, periodoParaAgendar, primeiroDiaPossivel, situacaoDoPe
             }
             @if (comparacao(); as cmp) {
               <div class="comparacao" aria-live="polite">
-                <h3>30 dias × vender 10</h3>
+                <h3>{{ cmp.opcoes.tirar }} dias × vender {{ cmp.opcoes.vender }}</h3>
                 <table class="tabela">
-                  <thead><tr><th scope="col"></th><th scope="col" class="direita">Tirar 30</th><th scope="col" class="direita">Tirar 20, vender 10</th></tr></thead>
+                  <thead><tr><th scope="col"></th><th scope="col" class="direita">Tirar {{ cmp.opcoes.tirar }}</th><th scope="col" class="direita">Tirar {{ cmp.opcoes.vendendo }}, vender {{ cmp.opcoes.vender }}</th></tr></thead>
                   <tbody>
-                    <tr><th scope="row">Dias de descanso</th><td class="direita">30</td><td class="direita">20</td></tr>
+                    <tr><th scope="row">Dias de descanso</th><td class="direita">{{ cmp.opcoes.tirar }}</td><td class="direita">{{ cmp.opcoes.vendendo }}</td></tr>
                     <tr><th scope="row">Cai na conta</th><td class="direita">{{ cmp.trinta.liquido | currency }}</td><td class="direita">{{ cmp.vendendo.liquido | currency }}</td></tr>
                   </tbody>
                 </table>
-                <p class="texto-suave">Vendendo 10 dias, entram {{ cmp.diferenca | currency }} a mais agora, em troca de 10 dias de trabalho.</p>
+                <p class="texto-suave">Vendendo {{ cmp.opcoes.vender }} dias, entram {{ cmp.diferenca | currency }} a mais agora, em troca de {{ cmp.opcoes.vender }} dias de trabalho.</p>
               </div>
             }
           } @else {
@@ -162,8 +166,14 @@ export class TrabalhoFeriasComponent implements OnInit {
   readonly periodos = signal<PeriodoFerias[]>([]);
   readonly erro = signal<string | null>(null);
   readonly simulacao = signal<CalculoFerias | null>(null);
-  readonly comparacao = signal<{ trinta: CalculoFerias; vendendo: CalculoFerias; diferenca: number } | null>(null);
+  readonly comparacao = signal<{ trinta: CalculoFerias; vendendo: CalculoFerias; opcoes: ReturnType<typeof opcoesDaVenda>;
+    diferenca: number } | null>(null);
   periodoInicio: string | null = null;
+
+  /** Tirar tudo × vender 1/3, pelo direito do período escolhido (revisão do #701: não mais 30 × 10 fixos). */
+  opcoes(): ReturnType<typeof opcoesDaVenda> {
+    return opcoesDaVenda(this.periodos().find((p) => p.inicio === this.periodoInicio)?.diasDireito ?? 30);
+  }
   inicio: string | null = null;
   dias = 30;
   vendidos = 0;
@@ -210,11 +220,12 @@ export class TrabalhoFeriasComponent implements OnInit {
     const e = this.emprego();
     const inicio = this.inicio;
     if (!e || !inicio) return;
-    this.api.simularFerias(e.id, inicio, 30, 0, this.adiantarDecimo).subscribe({
-      next: (trinta) => this.api.simularFerias(e.id, inicio, 20, 10, this.adiantarDecimo).subscribe({
+    const opcoes = this.opcoes();
+    this.api.simularFerias(e.id, inicio, opcoes.tirar, 0, this.adiantarDecimo).subscribe({
+      next: (trinta) => this.api.simularFerias(e.id, inicio, opcoes.vendendo, opcoes.vender, this.adiantarDecimo).subscribe({
         next: (vendendo) => {
           this.simulacao.set(null);
-          this.comparacao.set({ trinta, vendendo, diferenca: diferencaDaVenda(trinta.liquido, vendendo.liquido) });
+          this.comparacao.set({ trinta, vendendo, opcoes, diferenca: diferencaDaVenda(trinta.liquido, vendendo.liquido) });
         },
         error: (err) => this.avisos.erro(mensagemDeErro(err))
       }),
@@ -241,8 +252,13 @@ export class TrabalhoFeriasComponent implements OnInit {
 
   salvarFaltas(p: PeriodoFerias, valor: number | string | null): void {
     const e = this.emprego();
-    const faltas = Number(valor);
-    if (!e || !Number.isInteger(faltas) || faltas === p.faltas) return;
+    const faltas = faltasDigitadas(valor);
+    if (!e || faltas === p.faltas) return;
+    if (faltas === null) {
+      this.avisos.erro('As faltas vão de 0 a 366: o campo vazio não grava nada.');
+      this.mostrar(this.periodos()); // volta o campo ao que está gravado
+      return;
+    }
     this.api.definirFaltas(e.id, p.inicio, faltas).subscribe({
       next: (l) => { this.mostrar(l); this.avisos.sucesso('Faltas gravadas: os dias de direito foram recalculados.'); },
       error: (err) => this.avisos.erro(mensagemDeErro(err))

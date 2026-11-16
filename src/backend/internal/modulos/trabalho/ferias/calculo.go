@@ -5,6 +5,8 @@
 package ferias
 
 import (
+	"time"
+
 	"github.com/shopspring/decimal"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
@@ -35,14 +37,43 @@ type Periodo struct {
 	Completo      bool       `json:"completo"`      // o aquisitivo já terminou (até hoje)
 }
 
+// aniversario é a admissão n anos depois, pelo calendário: quem entrou em 29/02 faz aniversário em 01/03 nos anos que
+// não são bissextos, e de novo em 29/02 nos que são (revisão do #701: somar um ano por vez deslocava o período para
+// 28/02 para sempre).
+func aniversario(admissao tipos.Data, n int) tipos.Data {
+	t := time.Date(admissao.Ano()+n, admissao.Mes(), admissao.Dia(), 12, 0, 0, 0, time.UTC)
+	return tipos.NovaData(t.Year(), t.Month(), t.Day())
+}
+
 // Periodos são os períodos do emprego que já começaram até hoje (e antes da saída), do mais antigo para o mais novo.
 func Periodos(admissao tipos.Data, saida *tipos.Data, hoje tipos.Data) []Periodo {
 	var lista []Periodo
-	for inicio := admissao; !inicio.Depois(hoje) && (saida == nil || !inicio.Depois(*saida)); inicio = inicio.SomarAnos(1) {
-		fim := inicio.SomarAnos(1).SomarDias(-1)
-		lista = append(lista, Periodo{Inicio: inicio, Fim: fim, FimConcessivo: fim.SomarAnos(1), Completo: fim.Antes(hoje)})
+	for n := 0; ; n++ {
+		inicio := aniversario(admissao, n)
+		if inicio.Depois(hoje) || (saida != nil && inicio.Depois(*saida)) {
+			return lista
+		}
+		fim := aniversario(admissao, n+1).SomarDias(-1)
+		lista = append(lista, Periodo{Inicio: inicio, Fim: fim, FimConcessivo: aniversario(admissao, n+2).SomarDias(-1),
+			Completo: fim.Antes(hoje)})
 	}
-	return lista
+}
+
+// DiasEmDobro são os dias da fração que caem depois do fim do concessivo: a empresa paga esses dias em dobro (CLT, art.
+// 137; Súmula 81 do TST, só os dias de depois).
+func DiasEmDobro(inicio tipos.Data, dias int, fimConcessivo tipos.Data) int {
+	ultimo := inicio.SomarDias(dias - 1)
+	if !ultimo.Depois(fimConcessivo) {
+		return 0
+	}
+	if inicio.Depois(fimConcessivo) {
+		return dias
+	}
+	n := 0
+	for d := fimConcessivo.SomarDias(1); !d.Depois(ultimo); d = d.SomarDias(1) {
+		n++
+	}
+	return n
 }
 
 // MensagemFracoes é a regra das frações (CLT, art. 134, § 1º).
@@ -68,7 +99,10 @@ func ValidarFracoes(existentes []int, vendidosAntes, direito, dias, vendidos int
 		return "Os dias passam do que sobra de férias neste período."
 	}
 	sobra := direito - total - dias - vendidosAntes - vendidos
-	if max(maior, dias) < 14 && (sobra < 14 || len(existentes)+1 == 3) {
+	// Os 14 dias só valem quando há fracionamento: o direito inteiro num bloco só (12 dias, com 24 a 32 faltas, ou 18 menos
+	// 6 vendidos) passa, mesmo menor que 14 (revisão do #701).
+	umBlocoSo := len(existentes) == 0 && sobra == 0
+	if !umBlocoSo && max(maior, dias) < 14 && (sobra < 14 || len(existentes)+1 == 3) {
 		return MensagemFracoes
 	}
 	return ""
@@ -83,6 +117,7 @@ type Entrada struct {
 	SomaVariaveis  tipos.Decimal // horas extras, adicional noturno e DSR dos 12 meses antes
 	Dependentes    int64
 	AdiantarDecimo bool
+	DiasEmDobro    int // os dias depois do fim do concessivo, pagos em dobro
 	Inss           encargos.TabelaInss
 	Irrf           encargos.TabelaIrrf
 }
@@ -93,6 +128,7 @@ type Calculo struct {
 	Retorno            tipos.Data    `json:"retorno"`   // o dia de voltar ao trabalho
 	Pagamento          tipos.Data    `json:"pagamento"` // até 2 dias antes do início (CLT, art. 145)
 	Dias               int           `json:"dias"`
+	DiasEmDobro        int           `json:"diasEmDobro"` // depois do fim do concessivo: pagos de novo (CLT, art. 137)
 	DiasVendidos       int           `json:"diasVendidos"`
 	Remuneracao        tipos.Decimal `json:"remuneracao"` // salário + média das variáveis, a base do mês
 	MediaVariaveis     tipos.Decimal `json:"mediaVariaveis"`
@@ -117,13 +153,13 @@ var (
 func Calcular(e Entrada) Calculo {
 	media := e.SomaVariaveis.Decimal().Div(doze).Round(2)
 	remuneracao := e.SalarioBase.Decimal().Add(media)
-	ferias := remuneracao.Mul(decimal.NewFromInt(int64(e.Dias))).Div(trinta).Round(2)
+	ferias := remuneracao.Mul(decimal.NewFromInt(int64(e.Dias + e.DiasEmDobro))).Div(trinta).Round(2)
 	terco := ferias.Div(tres).Round(2)
 	abono := remuneracao.Mul(decimal.NewFromInt(int64(e.DiasVendidos))).Div(trinta).Round(2)
 	tercoAbono := abono.Div(tres).Round(2)
 	tributavel := tipos.DeDecimal(ferias.Add(terco))
 	c := Calculo{
-		Inicio: e.Inicio, Retorno: e.Inicio.SomarDias(e.Dias), Pagamento: e.Inicio.SomarDias(-2), Dias: e.Dias,
+		Inicio: e.Inicio, Retorno: e.Inicio.SomarDias(e.Dias), Pagamento: e.Inicio.SomarDias(-2), Dias: e.Dias, DiasEmDobro: e.DiasEmDobro,
 		DiasVendidos: e.DiasVendidos, Remuneracao: tipos.DeDecimal(remuneracao.Round(2)), MediaVariaveis: tipos.DeDecimal(media),
 		Ferias: tipos.DeDecimal(ferias), TercoFerias: tipos.DeDecimal(terco), Abono: tipos.DeDecimal(abono),
 		TercoAbono: tipos.DeDecimal(tercoAbono), AdiantamentoDecimo: tipos.DeDecimal(decimal.Zero.Round(2)),

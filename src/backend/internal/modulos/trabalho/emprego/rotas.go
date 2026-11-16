@@ -34,6 +34,7 @@ const (
 	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
 	MensagemSemTabela    = "Ainda não há tabela do INSS ou do IRRF para esse mês."
 	MensagemUltimo       = "O emprego precisa de pelo menos um salário: mude o valor em vez de apagar."
+	MensagemPrimeiro     = "O primeiro salário é o da admissão e não sai. Para mudar o valor, grave outro valor no mesmo mês."
 )
 
 // dadosDto é o corpo do POST e do PUT do emprego.
@@ -108,6 +109,8 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, 
 		respostas.Mensagem(w, http.StatusBadRequest, v.mensagem)
 	case errors.Is(err, ErrUltimoSalario):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemUltimo)
+	case errors.Is(err, ErrPrimeiroSalario):
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemPrimeiro)
 	case errors.Is(err, ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	default:

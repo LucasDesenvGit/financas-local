@@ -103,7 +103,7 @@ func rotinas(o Opcoes) []rotina {
 			return transferencias.Reclassificar(ctx, tx, agora())
 		})},
 		{ContasAPagar, emTransacao(func(ctx context.Context, tx *sql.Tx) (int, error) {
-			return cobrancas.Conciliar(ctx, tx, relogio.Hoje(o.Relogio))
+			return cobrancas.Conciliar(ctx, tx, relogio.Hoje(o.Relogio), agora())
 		})},
 		{TrocosSemDuvida, trocos.ClassificarTrocosSemDuvida},
 	}

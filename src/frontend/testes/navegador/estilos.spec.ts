@@ -32,6 +32,37 @@ async function injetar(page: Page, html: string, onde = 'main.pagina'): Promise<
   return page.locator(`[data-injetado="${id}"] > *`).first();
 }
 
+/**
+ * #747: quantos pixels mudam mais que `tolerancia` (0 a 255, em qualquer canal) entre dois prints do mesmo tamanho.
+ * Os PNGs são lidos numa aba em branco do próprio navegador (sem a CSP do site e sem dependência nova). Byte a byte
+ * não serve: ao redesenhar depois de um estilo injetado, o Chromium pode suavizar a borda arredondada com 1 ponto de
+ * diferença em alguns pixels dos cantos, o que acontecia em parte das máquinas e não na CI.
+ */
+async function pixelsDiferentes(page: Page, a: Buffer, b: Buffer, tolerancia: number): Promise<number> {
+  const aba = await page.context().newPage();
+  try {
+    return await aba.evaluate(async ([x, y, t]) => {
+      const ler = async (base64: string) => {
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const img = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+        const tela = new OffscreenCanvas(img.width, img.height).getContext('2d')!;
+        tela.drawImage(img, 0, 0);
+        return tela.getImageData(0, 0, img.width, img.height).data;
+      };
+      const [p, q] = [await ler(x), await ler(y)];
+      if (p.length !== q.length) return Number.POSITIVE_INFINITY;
+      let n = 0;
+      for (let i = 0; i < p.length; i += 4) {
+        const maior = Math.max(...[0, 1, 2, 3].map((c) => Math.abs(p[i + c] - q[i + c])));
+        if (maior > t) n++;
+      }
+      return n;
+    }, [a.toString('base64'), b.toString('base64'), tolerancia] as const);
+  } finally {
+    await aba.close();
+  }
+}
+
 async function abrir(page: Page, rota: string) {
   await page.goto(rota);
   await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
@@ -345,7 +376,9 @@ test.describe('Campo de número (#283)', () => {
     await page.addStyleTag({ content: 'input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none !important; display: none !important; }' });
     await numero.hover();
     const semSetinhas = await numero.screenshot();
-    expect(comoOSiteDesenha.equals(semSetinhas), 'o campo de número não pode ter setinhas').toBe(true);
+    // #747: até 2 pontos por canal é a suavização da borda redesenhada (medida: no máximo 1); a setinha muda cerca de
+    // 330 pixels com mais de 8 pontos no projeto "computador".
+    expect(await pixelsDiferentes(page, comoOSiteDesenha, semSetinhas, 2), 'o campo de número não pode ter setinhas').toBe(0);
   });
 
   test('a seta do teclado continua subindo o valor', async ({ page }) => {
