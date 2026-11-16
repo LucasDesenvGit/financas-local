@@ -269,6 +269,36 @@ func TestIniciarTarefasRodaPeloPeriodica(t *testing.T) {
 	emAndamento.Wait() // para quando o ctx acaba
 }
 
+// Ligar o módulo roda a tarefa na hora, sem esperar o atraso nem o intervalo (#191, revisão do #697).
+func TestLigarRodaATarefaNaHora(t *testing.T) {
+	t.Parallel()
+	m := exemplo()
+	cat, mux := novoCatalogo(t, m)
+	cat.porID["exemplo"] = &moduloLento{m} // a tarefa só rodaria daqui a uma hora
+	cat.modulos[0] = cat.porID["exemplo"]
+	ctx, parar := context.WithCancel(t.Context())
+	var emAndamento sync.WaitGroup
+	cat.IniciarTarefas(ctx, &emAndamento)
+	testeapoio.Chamar(t, mux, "PUT", "/api/modulos/exemplo", `{"ligado":false}`).ConferirStatus(t, http.StatusOK)
+	testeapoio.Chamar(t, mux, "PUT", "/api/modulos/exemplo", `{"ligado":true}`).ConferirStatus(t, http.StatusOK)
+	select {
+	case <-m.rodou:
+	case <-time.After(5 * time.Second):
+		t.Fatal("ligar não rodou a tarefa na hora")
+	}
+	parar()
+	emAndamento.Wait()
+}
+
+// moduloLento é o de exemplo com a tarefa de atraso e intervalo de uma hora.
+type moduloLento struct{ *moduloDeTeste }
+
+func (m *moduloLento) Tarefas() []Tarefa {
+	t := m.moduloDeTeste.Tarefas()
+	t[0].Atraso, t[0].Intervalo = time.Hour, time.Hour
+	return t
+}
+
 func TestCicloSeLigadoDevolveOErroDaLeitura(t *testing.T) {
 	t.Parallel()
 	cat := NovoCatalogo(nil, testeapoio.RelogioDosTestes(), slog.New(slog.DiscardHandler))

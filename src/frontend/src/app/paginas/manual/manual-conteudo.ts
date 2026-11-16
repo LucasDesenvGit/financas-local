@@ -82,7 +82,7 @@ export const MANUAL: CapituloManual[] = [
           'No celular, o menu abre pelo botão ☰ no topo. Tocar no nome de um grupo só mostra ou esconde as telas dele; tocar numa tela leva até ela e fecha o menu. Para fechar sem escolher uma tela, toque no ✕, toque fora do menu ou arraste-o para a esquerda.',
           'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
           'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
-          'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações).',
+          'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações). Clicar em “Atualizado há…” sincroniza na hora; o aviso do resultado diz quantas transações são novas e quantas mudaram, e “Ver em Transações” abre só elas.',
           'O sino, também na barra de cima, junta as notificações de qualquer tela: orçamentos estourados e avisos (conta vencida, consentimento vencendo, falha de sincronização, reserva para conferir, erros). O número nele conta o que está pendente. Detalhes em “Painel”, no capítulo das análises.',
           'O botão do olho esconde todos os valores da tela — útil para mostrar a tela a alguém.',
           'A calculadora abre no botão ao lado ou com Alt+C.',
@@ -279,7 +279,8 @@ export const MANUAL: CapituloManual[] = [
           'A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).',
           'A cada vez, ela relê os últimos dias (padrão: 30) para pegar o que mudou ou entrou atrasado.',
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
-          'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.',
+          'Para sincronizar na hora, clique em “Atualizado há…” na barra de cima ou use “Sincronizar agora” em Configurações › Open Finance.',
+          'O aviso do resultado (“Sincronizado: 3 nova(s), 2 atualizada(s).”) tem “Ver em Transações”: abre as Transações só com essas, no período delas, com o filtro “Novas e atualizadas na sincronização” em “Filtrando:”. Atualizada é a que já existia e mudou de verdade nessa sincronização. O aviso de “Adicionar” conexão traz o mesmo botão, com as transações da primeira carga. Sem nada novo, o aviso vem sem o botão. Com mais de 200, o botão abre o período inteiro, porque são muitas para listar uma a uma. O aviso fica 10 segundos e não some enquanto o mouse ou o foco estão nele.',
           'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
           'Conta em outra moeda (ex.: em dólar) gera um aviso nas notificações (o sino da barra do topo): o site soma as contas como reais, sem conversão.'
         ],
@@ -421,6 +422,7 @@ export const MANUAL: CapituloManual[] = [
           'Marque “Só emergências” ou “Descrição pouco informativa” quando precisar.',
           'Digite em “Buscar” e aperte Enter para procurar na descrição, no estabelecimento e na observação.',
           'Os filtros ativos aparecem em “Filtrando:”; o ✕ de cada um tira só aquele, e “Limpar filtros” tira todos.',
+          'Quem chega de outra tela com uma lista de lançamentos (o “Ver em Transações” do aviso da sincronização, os trocos do Painel, os FIIs) vê a origem em “Filtrando:”, por exemplo “Novas e atualizadas na sincronização: 5 lançamentos”; o ✕ tira esse filtro e mostra o período inteiro.',
           'Para ordenar a lista, clique no nome da coluna: Data, Categoria, Conta ou Valor (a seta ▲ ▼ mostra qual vale e em que direção); clique de novo para inverter. Em Valor, o maior lançamento vem primeiro, seja gasto ou receita; as sem categoria ficam no fim. A ordem vale para todas as páginas e fica no endereço da página.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
@@ -864,7 +866,7 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'contas-a-pagar',
     titulo: 'Contas a pagar',
-    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos e as sugestões que vêm do extrato.',
+    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos, contas pagas com um cofrinho e as sugestões que vêm do extrato.',
     secoes: [
       {
         id: 'cadastrar-conta',
@@ -893,6 +895,24 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
         dicas: ['O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.']
+      },
+      {
+        id: 'pago-com-cofrinho',
+        titulo: 'Conta paga com um cofrinho',
+        paraQueServe: 'Registrar a conta que o banco paga direto com o dinheiro de um cofrinho (por exemplo, o débito automático pelo “Emergência” no Mercado Pago). Esse pagamento não passa pela conta e não chega pelo Open Finance.',
+        passos: [
+          'No cadastro, escolha a conta de pagamento do Open Finance onde fica o cofrinho. Aparece o campo “Pago com o cofrinho”.',
+          'Em “Pago com o cofrinho”, escolha o cofrinho pelo nome. Se ele ainda não aparece na lista, use “Outro…” e digite o nome como está no app do banco. Para o dinheiro sair da conta, escolha “Nenhum”.',
+          'Com “débito automático”, o site lança a despesa sozinho no dia do vencimento, com o valor e a categoria da conta a pagar, e o vencimento avança. Com “paga à mão”, o “Pagar” já vem com o cofrinho.',
+          'O lançamento sozinho vale a partir do dia em que você marca o “Pago com o cofrinho”: um vencimento mais antigo que isso fica vencido, com “Pagar”, para não aparecer despesa em meses já fechados.',
+          'A despesa entra no mês, na categoria, nos orçamentos e nos relatórios. O saldo estimado do cofrinho baixa; o saldo da conta não muda.',
+          'Na lista aparece “paga pelo cofrinho … em …”. Use “ajustar valor” quando a conta veio diferente (luz, água) e “desfazer” se ela não foi paga assim. Desfeita a baixa automática, o site não lança de novo aquele vencimento sozinho: use “Pagar” se ela foi paga.',
+          'Se a cobrança chegar pelo extrato mesmo assim (o cofrinho estava sem saldo e o banco tirou da conta), com o “Texto da cobrança no extrato”, vale a do banco e a despesa do site sai sozinha.',
+          'Não marcou o cofrinho e o débito automático não apareceu? Depois de uma sincronização sem erro, com os dados do banco já de depois do vencimento, o aviso “não veio” pergunta “Foi paga com um cofrinho?”. Se a cobrança chegar pelo extrato depois mesmo assim, vale a do banco, e a despesa pelo cofrinho sai sozinha. O botão abre o “Pagar” com o cofrinho e a data do vencimento, lança a despesa e, marcado “Usar este cofrinho nas próximas”, guarda o “Pago com”.',
+          'O último pagamento ficou sem a despesa (dado antes de marcar o cofrinho)? A conta mostra “o pagamento de … está sem a despesa” com “lançar pelo cofrinho”, que lança no valor da conta a pagar.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
+        dicas: ['Se o cofrinho mudar de nome no app do banco, a conta a pagar avisa “não encontrado”: edite e escolha o novo nome.']
       },
       {
         id: 'assinaturas-recorrentes',
@@ -932,7 +952,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Marcar como paga e já ir para o próximo vencimento.',
         passos: [
           'Clique em “Pagar” na conta.',
-          'Confira a data. Se a conta de pagamento for manual, dá para lançar a despesa junto.',
+          'Confira a data. Se a conta de pagamento for manual, ou se a conta é paga com um cofrinho, dá para lançar a despesa junto.',
           'Confirme: o vencimento avança um mês (ou um ano). No último pagamento antes da data limite, a conta é encerrada sozinha.'
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
@@ -1206,6 +1226,9 @@ export const MANUAL: CapituloManual[] = [
           'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
           'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
           'Sem nada informado pelo banco, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
+          'Conta a pagar paga com o cofrinho (Contas a pagar › “Pago com o cofrinho”) também baixa a estimativa dele: a despesa conta como uma retirada.',
+          'Um gasto que saiu direto do cofrinho (uma compra paga com ele)? Use “registrar saída” na linha da reserva: descrição, valor, data e categoria. Ele entra nos relatórios e baixa a estimativa.',
+          'Ao conferir com a data de hoje, se o saldo informado ficar abaixo da estimativa, dá para marcar “Registrar a diferença como gasto do cofrinho”: a diferença vira despesa, em vez de sumir.',
           'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
           'Reservas marcadas “para conferir” geram aviso nas notificações (o sino da barra de cima).'
         ],
@@ -1302,10 +1325,11 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Configurações › Módulos.',
           'Cada módulo mostra o que faz e se acessa a internet (e para onde). Ligue ou desligue pelo interruptor: vale na hora, sem recarregar a página, e em qualquer navegador.',
-          'Ligado, a tela do módulo aparece no menu. Desligado, ela some; se você abrir o endereço dela, o site mostra que o módulo está desligado, com o botão para ligar.',
+          'Ligado, a tela do módulo aparece no menu, e o que ele faz em segundo plano (buscar as notícias, por exemplo) roda na hora. Desligado, ela some; se você abrir o endereço dela, o site mostra que o módulo está desligado, com o botão para ligar.',
           'Desligar não apaga nada: os dados do módulo ficam guardados e voltam quando você ligar de novo.',
           'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).'
         ],
+        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). Clique em “Tentar de novo”; enquanto isso, as telas dos módulos ficam fora do menu.'],
         abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       },
       {

@@ -71,7 +71,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 
 | | |
 |---|---|
-| **O que é** | Contas e transações manuais, `Categoria`, `RegraCategorizacao`, `RegraDescricao`, `Orcamento`, `Meta`, `MetaAporte`, `ContaAgendada` e `ReservaConferencia`. Regras e contas a pagar podem conter nomes que você digitou |
+| **O que é** | Contas e transações manuais, `Categoria`, `RegraCategorizacao`, `RegraDescricao`, `Orcamento`, `Meta`, `MetaAporte`, `ContaAgendada`, `PagamentoCofrinho` (as baixas pelo cofrinho, #691) e `ReservaConferencia`. Regras e contas a pagar podem conter nomes que você digitou, inclusive o nome do cofrinho ("Pago com") |
 | **De onde vem** | De você |
 | **Sai do computador?** | Não |
 | **Por quanto tempo** | Até você apagar |

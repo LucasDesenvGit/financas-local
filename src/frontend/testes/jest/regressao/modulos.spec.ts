@@ -46,10 +46,21 @@ describe('Módulos (#191)', () => {
     expect(s.ligado('nenhum')).toBe(false);
   });
 
-  it('a leitura que falha deixa a lista vazia: todo módulo conta como desligado', () => {
-    const s = servico({ modulos: () => throwError(() => new Error('rede')) });
+  it('a leitura que falha deixa a lista vazia e marca a falha; a próxima tela que pedir tenta de novo', () => {
+    let falhar = true;
+    const modulos = jest.fn(() => (falhar ? throwError(() => new Error('rede')) : of([trabalho])));
+    const s = servico({ modulos });
     s.carregar();
     expect(s.lista()).toEqual([]);
+    expect(s.falhou()).toBe(true);
+    expect(s.ligado('trabalho')).toBe(false);
+    falhar = false;
+    s.carregar();
+    expect(modulos).toHaveBeenCalledTimes(2);
+    expect(s.falhou()).toBe(false);
+    expect(s.lista()).toEqual([trabalho]);
+    s.carregar(); // depois de dar certo, não pede de novo
+    expect(modulos).toHaveBeenCalledTimes(2);
   });
 
   it('ligar troca o módulo na lista com o que a API devolveu', () => {

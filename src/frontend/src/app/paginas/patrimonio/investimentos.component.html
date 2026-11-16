@@ -1,0 +1,265 @@
+<header class="cabecalho-pagina">
+  <div>
+    <h1>Investimentos</h1>
+    <span class="texto-suave">
+      Renda variável lançada por você + Open Finance, comparados com a Selic
+      @if (dados()?.cotacoesAtualizadasEm; as em) { · cotações de {{ em | date: 'dd/MM HH:mm' }} }
+    </span>
+  </div>
+  <div class="acoes">
+    <button type="button" class="botao" (click)="conferenciaAberta.set(true)">Conferir investimentos</button>
+    <button type="button" class="botao" (click)="abrirImportacao()">⇣ Importar do extrato</button>
+    <button type="button" class="botao" (click)="atualizarCotacoes()" [disabled]="atualizando()">
+      {{ atualizando() ? 'Atualizando…' : '↻ Atualizar cotações' }}
+    </button>
+    <button type="button" class="botao botao-primario" (click)="novaOperacao()">+ Lançar compra/venda</button>
+  </div>
+</header>
+
+@if (dados(); as d) {
+  <app-investimentos-indicadores [dados]="d" (conferir)="conferenciaAberta.set(true)" />
+
+  <div class="segmentado barra-abas" role="tablist">
+    <button type="button" role="tab" [class.ativo]="aba() === 'resumo'" (click)="aba.set('resumo')">Resumo</button>
+    <button type="button" role="tab" [class.ativo]="aba() === 'fii'" (click)="aba.set('fii')">
+      FIIs ({{ quantidadeFiis() }})</button>
+    <button type="button" role="tab" [class.ativo]="aba() === 'rv'" (click)="aba.set('rv')">
+      Renda variável ({{ abertas().length }})</button>
+    <button type="button" role="tab" [class.ativo]="aba() === 'of'" (click)="aba.set('of')">
+      Open Finance ({{ d.openFinance.length }})</button>
+    @if (d.reservas.length) {
+      <button type="button" role="tab" [class.ativo]="aba() === 'reservas'" (click)="aba.set('reservas')">
+        Reservas ({{ d.reservas.length }})
+        @if (reservasAConferir() > 0) { <span class="etiqueta etiqueta-alerta" title="Reservas para conferir">!</span> }
+      </button>
+    }
+  </div>
+
+  @switch (aba()) {
+    @case ('resumo') {
+      <app-investimentos-evolucao [evolucao]="d.evolucao" [oculto]="oculto()" />
+
+      <!-- #247: dólar, euro e iene em reais (PTAX), compacto, de apoio à carteira. -->
+      <app-investimentos-cambio />
+
+      <!-- #279 (ADR 0048): criptomoedas em reais (Mercado Bitcoin), logo abaixo do câmbio. -->
+      <app-investimentos-cripto />
+
+      <app-mais-analises chave="investimentos" conteudo="distribuição por tipo e rentabilidade de cada ativo x Selic">
+        <ng-template>
+          <app-investimentos-analises [dados]="d" />
+        </ng-template>
+      </app-mais-analises>
+    }
+
+    @case ('fii') {
+      <app-investimentos-fiis [versao]="versaoCarteira()" (alterado)="carregar()" />
+    }
+
+    @case ('rv') {
+      <app-investimentos-posicoes [posicoes]="posicoesVisiveis()" [mostrarEncerradas]="mostrarEncerradas()" [oculto]="oculto()"
+        (alternarEncerradas)="mostrarEncerradas.set(!mostrarEncerradas())" (fonteCotacoes)="abrirConfiguracao()"
+        (operacoes)="abrirOperacoes($event)" (editar)="editarAtivo($event)" />
+    }
+
+    @case ('of') {
+      <app-investimentos-open-finance [investimentos]="d.openFinance" [total]="d.totalOpenFinance"
+        [naoRegistrados]="d.openFinanceNaoRegistrados" [registrando]="importandoOpenFinance()" [recolhida]="gradeOfRecolhida()"
+        (registrarCompras)="importarOpenFinance()" (alternarGrade)="alternarGradeOf()" (renomear)="abrirRenomear($event)" />
+      <app-rendimento-investimentos-of />
+    }
+
+    @case ('reservas') {
+      <app-investimentos-reservas [reservas]="d.reservas" (conferir)="abrirConferencia($event)"
+        (registrarSaida)="abrirSaida($event)" />
+    }
+  }
+} @else {
+  <p class="vazio">Carregando…</p>
+}
+
+<!-- Lançar / editar operação -->
+<app-modal [aberto]="formOp !== null" [titulo]="editandoOpId ? 'Editar operação' : 'Lançar compra ou venda'" (fechar)="formOp = null">
+  @if (formOp; as fo) {
+    <form (ngSubmit)="salvarOperacao()" #f="ngForm" class="formulario">
+      <div class="segmentado" role="group" aria-label="Tipo de operação">
+        <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Compra" (click)="fo.tipo = TipoOperacao.Compra; aoMudarDataOuTipo()">Compra</button>
+        <button type="button" [class.ativo]="fo.tipo === TipoOperacao.Venda" (click)="fo.tipo = TipoOperacao.Venda; aoMudarDataOuTipo()">Venda</button>
+      </div>
+      <div class="grade-campos">
+        @if (editandoOpId === null) {
+          <label>Moeda
+            <select name="moeda" [(ngModel)]="fo.moeda" (ngModelChange)="aoMudarMoeda()" [disabled]="moedaTravada">
+              <option value="BRL">BRL — Real (B3)</option>
+              @for (m of moedas(); track m.codigo) { <option [value]="m.codigo">{{ m.codigo }} — {{ m.nome }} (exterior)</option> }
+            </select>
+            @if (moedaTravada) { <small class="texto-suave">A moeda de um ativo já lançado não muda.</small> }
+          </label>
+          <label>{{ fo.moeda === 'BRL' ? 'Código na B3' : 'Código (como no Yahoo Finance)' }}
+            <input name="ticker" [(ngModel)]="fo.ticker" required maxlength="12" autocomplete="off" class="maiusculas"
+              [placeholder]="fo.moeda === 'BRL' ? 'MXRF11' : 'AAPL'">
+          </label>
+          <label>Tipo do ativo
+            <select name="tipoAtivo" [(ngModel)]="fo.tipoAtivo">
+              <option [ngValue]="null">{{ fo.moeda === 'BRL' ? 'Detectar pelo código' : 'Ações (padrão)' }}</option>
+              @for (t of tiposPara(fo.moeda); track t) { <option [ngValue]="t">{{ nomeTipo(t) }}</option> }
+            </select>
+          </label>
+        } @else {
+          <p><span class="texto-suave">Ativo</span><br><strong>{{ fo.ticker }}</strong>
+            @if (fo.moeda !== 'BRL') { <span class="etiqueta etiqueta-suave">{{ fo.moeda }}</span> }</p>
+        }
+      </div>
+      <div class="grade-campos">
+        <label>Data <app-campo-data name="data" [(ngModel)]="fo.data" (ngModelChange)="aoMudarDataOuTipo()" obrigatorio [maximo]="hoje" /></label>
+        <label>Quantidade <input type="number" name="qtd" [(ngModel)]="fo.quantidade" required min="0.000001" step="any"></label>
+        <label>Preço por cota <app-campo-valor name="preco" [(ngModel)]="fo.precoUnitario" [moeda]="fo.moeda" [casas]="4" obrigatorio /></label>
+        <label>Taxas/corretagem <app-campo-valor name="taxas" [(ngModel)]="fo.taxas" [moeda]="fo.moeda" /></label>
+      </div>
+      @if (fo.moeda !== 'BRL') {
+        <div class="grade-campos">
+          <label>Câmbio (R$ por 1 {{ fo.moeda }})
+            <input type="number" name="cambio" [(ngModel)]="fo.cambio" (ngModelChange)="cambioEditado = true"
+              required min="0.000001" step="any">
+          </label>
+          <p class="texto-suave nota-cambio">
+            @if (buscandoCambio()) {
+              Buscando a PTAX do dia…
+            } @else if (ptaxSugerida; as s) {
+              PTAX de {{ s.tipo }} de {{ s.data | date: 'dd/MM/yyyy' }}: {{ s.valor | number: '1.4-4' }}.
+              @if (cambioEditado && fo.cambio !== s.valor) {
+                <button type="button" class="link" (click)="usarPtax()">usar a PTAX</button>
+              } @else {
+                Troque pelo câmbio que a corretora cobrou, se for diferente.
+              }
+            } @else {
+              Sem PTAX para essa data: informe o câmbio que a corretora cobrou.
+            }
+          </p>
+        </div>
+      }
+      <label>Observação <input name="obs" [(ngModel)]="fo.observacao" maxlength="300"></label>
+      <p class="texto-suave">Total da operação: <strong>{{ totalOperacao(fo) | currency: fo.moeda }}</strong>
+        @if (fo.moeda !== 'BRL' && fo.cambio) { ≈ <strong>{{ totalOperacao(fo) * fo.cambio | currency }}</strong> }</p>
+      <div class="rodape-form">
+        @if (editandoOpId) { <button type="button" class="botao botao-perigo" (click)="excluirOperacao()">Excluir</button> }
+        <span class="cresce"></span>
+        <button type="button" class="botao" (click)="formOp = null">Cancelar</button>
+        <button class="botao botao-primario" [disabled]="f.invalid || salvando()">Salvar</button>
+      </div>
+    </form>
+  }
+</app-modal>
+
+<!-- Operações de um ativo, cada compra comparada com o preço atual -->
+<app-investimentos-operacoes [ativo]="ativoAberto()" [operacoes]="operacoes()" [oculto]="oculto()"
+  (editar)="editarOperacao($event)" (nova)="novaOperacao($event)" (fechar)="ativoAberto.set(null)" />
+
+<!-- Editar ativo -->
+<app-investimentos-ativo [ativo]="ativoEditado()" (salvar)="salvarAtivo($event)" (excluir)="excluirAtivo()"
+  (fechar)="ativoEditado.set(null)" />
+
+<app-conferir-investimentos [aberto]="conferenciaAberta()" (fechar)="conferenciaAberta.set(false)"
+  (corrigido)="recarregarDepoisDeAlterar()" (lancarAMao)="lancarCompraQueFaltou($event)"
+  (verOperacoes)="verOperacoesDe($event)" />
+
+<!-- Importar do extrato -->
+<app-investimentos-importacao [aberta]="importacaoAberta()" [carregando]="carregandoSugestoes()" [linhas]="linhasImportacao()"
+  [salvando]="salvando()" (importar)="importarSelecionadas($event)" (fechar)="importacaoAberta.set(false)" />
+
+<!-- #170: nome do investimento do Open Finance (a sincronização não mexe nele) -->
+<app-modal [aberto]="formNome !== null" [titulo]="'Renomear · ' + (formNome?.investimento?.nomeExibicao ?? '')"
+  (fechar)="formNome = null">
+  @if (formNome; as fn) {
+    <form (ngSubmit)="salvarNome()" class="formulario">
+      <label>Nome <input name="nome" [(ngModel)]="fn.nome" maxlength="120" placeholder="Ex.: Caixinha viagem"></label>
+      <p class="texto-suave">No banco: {{ fn.investimento.nome }}. A sincronização não muda o nome que você escolher;
+        vazio, volta ao nome automático.</p>
+      <div class="rodape-form">
+        @if (fn.investimento.nomePersonalizado) {
+          <button type="button" class="botao" (click)="fn.nome = ''; salvarNome()">Voltar ao nome automático</button>
+        }
+        <span class="cresce"></span>
+        <button type="button" class="botao" (click)="formNome = null">Cancelar</button>
+        <button class="botao botao-primario" [disabled]="salvando()">Salvar</button>
+      </div>
+    </form>
+  }
+</app-modal>
+
+<!-- Conferir o saldo real de uma reserva -->
+<app-modal [aberto]="formConferencia !== null" [titulo]="'Conferir saldo · ' + (formConferencia?.reserva?.nome ?? '')"
+  (fechar)="formConferencia = null">
+  @if (formConferencia; as fc) {
+    <form (ngSubmit)="salvarConferencia()" #fcf="ngForm" class="formulario">
+      <p class="texto-suave">
+        @if (fc.reserva.moeda === 'USD') {
+          Abra o Méli Dólar no app do Mercado Pago e informe o saldo que aparece lá, em reais ou em dólares. Em reais,
+          ele é convertido pela PTAX do dia da conferência.
+        } @else {
+          Abra a reserva no app da instituição e informe o saldo que aparece lá.
+        }
+        Os lançamentos até essa data já estão nesse valor; os seguintes são somados a ele.</p>
+      <div class="grade-campos">
+        @if (fc.reserva.moeda === 'USD') {
+          <label>Informado em
+            <select name="moeda" [(ngModel)]="fc.moeda">
+              <option value="BRL">reais (R$)</option>
+              <option value="USD">dólares (US$)</option>
+            </select>
+          </label>
+        }
+        <label>Saldo na instituição
+          <app-campo-valor name="saldo" [(ngModel)]="fc.saldo" [moeda]="fc.moeda" obrigatorio /></label>
+        <label>Conferido em <app-campo-data name="data" [(ngModel)]="fc.data" obrigatorio [maximo]="hoje" /></label>
+      </div>
+      <p class="texto-suave">Estimativa atual: <strong>{{ fc.reserva.saldo | currency }}</strong>
+        @if (fc.reserva.moeda === 'USD' && fc.reserva.quantidade !== null) { ({{ fc.reserva.quantidade | currency: 'USD' }}) }</p>
+      <!-- #691: o saldo ficou abaixo da estimativa? Pode ter sido um gasto pago direto do cofrinho: em vez de a
+           diferença sumir, ela vira despesa (Nielsen 5: prevenir o erro). -->
+      @if (diferencaComoGasto(fc); as diferenca) {
+        <label class="checkbox"><input type="checkbox" name="registrarDiferenca" [(ngModel)]="fc.registrarDiferenca"
+          aria-describedby="ajuda-diferenca">
+          Registrar a diferença ({{ diferenca | currency }}) como gasto do cofrinho</label>
+        <p class="texto-suave pequeno-texto" id="ajuda-diferenca">Marque quando o dinheiro saiu direto do cofrinho, sem passar
+          pela conta (uma conta paga por ele, uma compra). O gasto entra nos relatórios, com a data de hoje.</p>
+      }
+      <div class="rodape-form">
+        @if (fc.reserva.dataConferencia) {
+          <button type="button" class="botao botao-perigo" (click)="removerConferencia()">Voltar a estimar</button>
+        }
+        <span class="cresce"></span>
+        <button type="button" class="botao" (click)="formConferencia = null">Cancelar</button>
+        <button class="botao botao-primario" [disabled]="fcf.invalid || salvando()">Salvar</button>
+      </div>
+    </form>
+  }
+</app-modal>
+
+<!-- #691: registrar saída de um cofrinho (componente de apresentação; criado a cada abertura). -->
+@if (saidaDe(); as r) {
+  <app-saida-reserva [reserva]="r" [categorias]="categorias()" [hoje]="hoje" [salvando]="salvando()"
+    (salvar)="registrarSaida($event)" (fechar)="saidaDe.set(null)" />
+}
+
+<!-- Fonte das cotações -->
+<app-modal [aberto]="configAberta()" titulo="Fonte das cotações" (fechar)="configAberta.set(false)">
+  <form class="formulario" (ngSubmit)="salvarToken(false)">
+    <p>As cotações e os proventos vêm do <strong>Yahoo Finance</strong> (gratuito, sem cadastro, não oficial). A Selic vem da
+      API pública do <strong>Banco Central</strong>. Só o código do ativo é enviado; quantidades e valores ficam no seu computador.</p>
+    <p class="texto-suave">Opcional: um token gratuito da <strong>brapi.dev</strong> é usado como alternativa quando o Yahoo não
+      responder. Ele fica criptografado no banco local.</p>
+    <label>Token da brapi.dev
+      <input type="password" name="token" [(ngModel)]="tokenBrapi" autocomplete="off"
+        [placeholder]="tokenConfigurado() ? '•••••• (configurado)' : 'não configurado'">
+    </label>
+    <div class="rodape-form">
+      @if (tokenConfigurado()) {
+        <button type="button" class="botao botao-perigo" (click)="salvarToken(true)">Remover token</button>
+      }
+      <span class="cresce"></span>
+      <button type="button" class="botao" (click)="configAberta.set(false)">Fechar</button>
+      <button class="botao botao-primario" [disabled]="!tokenBrapi.trim()">Salvar</button>
+    </div>
+  </form>
+</app-modal>

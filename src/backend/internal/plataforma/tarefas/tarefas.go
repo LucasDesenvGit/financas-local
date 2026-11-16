@@ -24,12 +24,21 @@ import (
 //     continua derrubando o Go, que é o certo para um bug fora das tarefas;
 //   - cancelamento não é erro: a função só volta quando o ctx acaba.
 func Periodica(ctx context.Context, log *slog.Logger, nome string, atraso, intervalo time.Duration, ciclo func(context.Context) error) {
+	PeriodicaOuAoSinal(ctx, log, nome, atraso, intervalo, nil, ciclo)
+}
+
+// PeriodicaOuAoSinal é a Periodica que também roda o ciclo na hora em que chega um sinal, sem esperar o atraso nem o
+// intervalo: o módulo que acabou de ser ligado busca logo (#191). Sinais que chegam durante um ciclo viram um só, se
+// quem manda não espera (o canal com espaço para um, e o envio com default). Sinal nil: só a Periodica.
+func PeriodicaOuAoSinal(ctx context.Context, log *slog.Logger, nome string, atraso, intervalo time.Duration, sinal <-chan struct{},
+	ciclo func(context.Context) error) {
 	espera := time.NewTimer(atraso)
+	defer espera.Stop()
 	select {
 	case <-ctx.Done():
-		espera.Stop()
 		return
 	case <-espera.C:
+	case <-sinal:
 	}
 
 	ticker := time.NewTicker(intervalo)
@@ -40,6 +49,7 @@ func Periodica(ctx context.Context, log *slog.Logger, nome string, atraso, inter
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+		case <-sinal:
 		}
 	}
 }
