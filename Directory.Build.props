@@ -1,12 +1,17 @@
 <Project>
   <!--
-    Versão do Finanças Local: site (API + front-end) e gerenciador saem sempre com o mesmo número.
-    Aparece em Configurações › Parametrização › Sistema, em GET /api/auth/estado e no gerenciador.
-    Todo PR para o develop sobe este número pelo tipo do commit (ADR 0039; a CI confere): feat → o do meio (2.2.0 → 2.3.0),
-    correção e ajuste → o último (2.2.0 → 2.2.1), quebra de verdade → o primeiro (3.0.0).
-    Para publicar, a tag vX.Y.Z tem de ser igual a este número: o workflow de versão confere.
+    Base do número de versão do Finanças Local (ADR 0070): site (API + front-end) e gerenciador saem sempre com o mesmo número.
+    Ninguém sobe o número num PR. Ele é calculado no build (go run ./cmd/versao, em src/backend): parte desta base e sobe a
+    cada merge na linha principal do develop, pelo tipo do título do PR (feat → o do meio: 3.24.0 → 3.25.0; o resto → o último:
+    3.24.0 → 3.24.1). Os merges que trazem a main ou uma release/* de volta não sobem.
+    Aparece em Configurações › Parametrização › Sistema, em GET /api/auth/estado e no gerenciador. Sem o histórico do git
+    (cópia baixada em .zip), o número é a base com o sufixo -sem-git.
+    Só a quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) mexe aqui: o PR troca
+    a base para X+1.0.0, depois de perguntar ao usuário. A conta recomeça do último commit que mudou o valor da base.
+    Mudou o valor? Ele fica acima da maior versão do develop e das PRs abertas na hora (subindo o do meio).
+    Para publicar, a tag vX.Y.Z tem de ser igual ao número calculado no commit da release: o workflow de versão confere.
   -->
   <PropertyGroup>
-    <Version>3.16.0</Version>
+    <VersaoBase>3.24.0</VersaoBase>
   </PropertyGroup>
 </Project>

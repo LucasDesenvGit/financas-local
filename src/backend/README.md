@@ -7,6 +7,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 | Pasta | O que tem |
 |---|---|
 | `cmd/financas` | o ponto de entrada: as opções, a ligação das peças e o subcomando `gerar-certificado` |
+| `cmd/versao` | o cálculo da versão (ADR 0070): a base do `Directory.Build.props` mais um passo por merge do `develop`; também monta o CHANGELOG de `changelog.d/` (`-changelog`, `-publicar`). Só a biblioteca padrão e o `git` |
 | `internal/api` | o `ServeMux` com as rotas de todos os assuntos : uma linha por assunto |
 | `internal/plataforma/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (login → rota → banco), com a versão e o relógio |
 | `internal/patrimonio/cambio` | câmbio pela PTAX (#81, ADR 0007): cliente do Banco Central, conversor para reais, `/api/cambio` e a tarefa de 15 em 15 minutos |

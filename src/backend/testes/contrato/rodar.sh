@@ -76,9 +76,10 @@ banco_db="$pasta/dados/sql/FinancasLocal.db"
 )
 
 # O comparador, o Go e a Pluggy falsa compilados fora do namespace sem rede (o go pode precisar baixar módulos). O Go
-# sai como na publicação: sem cgo e com a versão do Directory.Build.props (o /api/go/saude a devolve).
+# sai como na publicação: sem cgo e com a versão calculada (ADR 0070; o /api/go/saude a devolve). Num clone sem o
+# histórico do git, a versão sai com o sufixo -sem-git, igual no executável e no comparador.
 exe="$(cd "$pasta_go" && go env GOEXE)" # ".exe" no Windows
-versao="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$raiz/Directory.Build.props" | head -n1)"
+versao="$(cd "$pasta_go" && go run ./cmd/versao)"
 (cd "$pasta_go" &&
     go test -c -o "$pasta/contrato.test$exe" ./testes/contrato &&
     CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao.Atual=$versao" \
@@ -135,13 +136,14 @@ echo "Contrato contra o Go: $SOMENTE"
 cd "$PASTA_CONTRATO"
 status=0
 "$PASTA/contrato.test$EXE" -test.run "^TestContrato$" -test.v -test.count=1 -alvo="$url" \
-    -raiz="$PASTA/dados/chaves/financaslocal.pem" -banco="$PASTA/dados/sql/FinancasLocal.db" -inicio="$INICIO" -somente="$SOMENTE" $ATUALIZAR || status=$?
+    -raiz="$PASTA/dados/chaves/financaslocal.pem" -banco="$PASTA/dados/sql/FinancasLocal.db" -inicio="$INICIO" -versao="$VERSAO" \
+    -somente="$SOMENTE" $ATUALIZAR || status=$?
 if [[ $status -ne 0 ]]; then echo "--- Fim do log do Go ---"; tail -n 60 "$PASTA/go.log"; fi
 exit $status
 DENTRO
 
 export PASTA="$pasta" PASTA_CONTRATO="$pasta_contrato" PASTA_GO="$pasta_go" PORTA="$porta" INICIO="$inicio" \
-    ATUALIZAR="$atualizar" SOMENTE="$somente" EXE="$exe"
+    ATUALIZAR="$atualizar" SOMENTE="$somente" EXE="$exe" VERSAO="$versao"
 if [[ "$(uname -s)" == Linux ]] && unshare -rn true 2>/dev/null; then
     SEM_REDE=1 PROXY="" unshare -rn bash "$pasta/dentro.sh"
 else

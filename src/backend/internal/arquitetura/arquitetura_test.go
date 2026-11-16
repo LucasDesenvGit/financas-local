@@ -82,8 +82,9 @@ var (
 		"internal/plataforma/auditoria", "internal/plataforma/configuracao", "internal/plataforma/erros", "internal/plataforma/segredos", "internal/plataforma/tarefas",
 		"internal/plataforma/modulos", "internal/plataforma/versao",
 	}
-	// montadores: juntam tudo (rotas e programa) e podem importar qualquer assunto.
-	montadores = []string{"internal/api", "cmd/financas", "testes/contrato", "testes/contrato/pluggyfalsa", "internal/arquitetura"}
+	// montadores: juntam tudo (rotas e programa) e podem importar qualquer assunto. O cmd/versao (ADR 0070) é um
+	// programa à parte, que só usa a biblioteca padrão e o git: nenhum pacote do site o importa, nem ele os deles.
+	montadores = []string{"internal/api", "cmd/financas", "cmd/versao", "testes/contrato", "testes/contrato/pluggyfalsa", "internal/arquitetura"}
 )
 
 // raizDosModulos (#190, #191, ADRs 0056 e 0064): visualizações que se ligam e desligam. Todo pacote daqui é de módulo,

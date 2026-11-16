@@ -25,7 +25,7 @@ src/backend/testes/contrato/rodar.sh --atualizar                       # grava e
 CONTRATO_SOMENTE="00-auth,01-parametros" src/backend/testes/contrato/rodar.sh
 ```
 
-- O roteiro compila o Go (`cmd/financas`, sem cgo e com a versão do `Directory.Build.props`, como na publicação), o comparador e a Pluggy falsa, e sobe o Go com a linha do serviço instalado (`-aplicar-esquema -rotinas-de-partida`), na porta `5451` (`PORTA=...` para trocar).
+- O roteiro compila o Go (`cmd/financas`, sem cgo e com a versão calculada pelo `go run ./cmd/versao`, como na publicação, ADR 0070), o comparador e a Pluggy falsa, e sobe o Go com a linha do serviço instalado (`-aplicar-esquema -rotinas-de-partida`), na porta `5451` (`PORTA=...` para trocar).
 - `MANTER_PASTA=1` guarda a pasta temporária, com o banco e o log do Go (`go.log`).
 - **Roda também no Git Bash do Windows** (conferido em 03/11/2026, com todos os arquivos).
 - **Ubuntu 24.04:** o `unshare -rn` precisa de `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0` (a CI faz isso). Sem ele, o roteiro usa o proxy fechado (abaixo).
@@ -35,7 +35,7 @@ Cada execução começa do zero: banco novo, processo novo. O roteiro depende da
 À mão, sem o roteiro:
 - gere o certificado: `echo contrato | go run ./cmd/financas gerar-certificado -pfx <pasta>/financaslocal.pfx`, que grava também o `<pasta>/financaslocal.pem`, e ponha o caminho e a senha no `appsettings.Production.json` da pasta do `-pasta`, como o `rodar.sh` faz;
 - suba o Go: `go run ./cmd/financas -pasta <pasta> -endereco 127.0.0.1:5453 -wwwroot internal/plataforma/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z -aplicar-esquema -rotinas-de-partida`, com `HTTPS_PROXY=http://127.0.0.1:9`;
-- rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -raiz=<pasta>/financaslocal.pem -banco=<db> -inicio=2026-10-15T01:00:00Z`.
+- rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -raiz=<pasta>/financaslocal.pem -banco=<db> -inicio=2026-10-15T01:00:00Z -versao=$(go run ./cmd/versao)`.
 
 O cliente confere o certificado do Go e confia só no `.pem` do `-raiz` (#638): sem `InsecureSkipVerify`, o que o CodeQL aponta. O `-inicio` do comparador e o `-inicio-do-relogio` do Go são o mesmo instante.
 
@@ -139,7 +139,7 @@ Só o que muda sozinho a cada execução é trocado por um marcador (`normalizar
 | Data e hora entre o início do relógio e 1 dia depois, no formato do EF Core ou ISO | `<relógio +N min, formato>` | o relógio anda, e cada execução cai noutra fração de segundo. `N` são os minutos desde o início: o bloqueio de login aparece como `+15 min`. O formato fica no marcador (com espaço ou `T`, com ou sem `Z`). Um horário em outro fuso cai fora da janela e aparece cru na diferença |
 | GUID | `<GUID>` (maiúsculas, o EF Core) ou `<guid>` (minúsculas, o JSON) | o carimbo de segurança é aleatório |
 | `traceId` do `ValidationProblemDetails` | `<traceId>` | muda a cada requisição |
-| `versao` igual à do `Directory.Build.props` | `<versao>` | sobe a cada PR (ADR 0039) |
+| `versao` igual à do executável sob teste (`-versao`) | `<versao>` | é calculada a cada merge (ADR 0070) |
 | Caminhos dentro da pasta temporária | `<dados>/...` | a pasta muda a cada execução |
 | `Usuario.SenhaHash` | `<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>` | o sal é aleatório; o resto tem de ser igual, para a senha de quem já tem conta continuar valendo |
 | Valor dos cookies | `<valor>` | cifrado |
