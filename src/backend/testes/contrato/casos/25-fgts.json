@@ -1,0 +1,33 @@
+{
+  "descricao": "FGTS do módulo Trabalho (#216, ADR 0066). Usa o emprego 1 do 21-trabalho (admissão em 11/03/2024), o holerite de outubro de 2026 do 22-holerite e o 13º do 23. O saldo é estimado até o mês do relógio do contrato. O 22-holerite deixa o módulo ligado. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "o FGTS estimado",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/fgts"
+    },
+    {
+      "nome": "o saldo que vi no app",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/fgts/lancamentos",
+      "corpo": { "data": "2025-12-31", "tipo": 1, "valor": 9000 }
+    },
+    {
+      "nome": "saque sem motivo",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/fgts/lancamentos",
+      "corpo": { "data": "2026-02-10", "tipo": 2, "valor": 500 }
+    },
+    {
+      "nome": "saque-aniversário",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/fgts/lancamentos",
+      "corpo": { "data": "2026-02-10", "tipo": 2, "valor": 500, "motivo": 2 }
+    },
+    {
+      "nome": "excluir o saque",
+      "metodo": "DELETE",
+      "caminho": "/api/trabalho/empregos/1/fgts/lancamentos/2"
+    }
+  ]
+}

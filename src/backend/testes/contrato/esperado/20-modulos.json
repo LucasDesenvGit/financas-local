@@ -4,7 +4,16 @@
     "requisicao": "GET /api/modulos",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
-    "corpo": []
+    "corpo": [
+      {
+        "acessaInternet": false,
+        "descricao": "O salário pelo bruto, o holerite de cada mês (horas extras, descontos, INSS e IRRF estimados pelas tabelas oficiais), o 13º, as férias, o FGTS e a rescisão, com o histórico. Não entra nos relatórios: a receita continua sendo a transação do salário.",
+        "destinos": [],
+        "id": "trabalho",
+        "ligado": false,
+        "nome": "Trabalho"
+      }
+    ]
   },
   {
     "nome": "ligar um módulo que não existe",

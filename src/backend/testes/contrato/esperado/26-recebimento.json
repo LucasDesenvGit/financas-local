@@ -1,0 +1,365 @@
+[
+  {
+    "nome": "o recebimento de outubro",
+    "requisicao": "GET /api/trabalho/holerites/1/recebimentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "diferenca": -5292.62,
+      "liquido": 5292.62,
+      "outros": [],
+      "recebido": 0.00,
+      "recebimentos": [],
+      "sugestoes": []
+    }
+  },
+  {
+    "nome": "ligar uma transação que não existe",
+    "requisicao": "POST /api/trabalho/holerites/1/recebimentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Escolha um crédito (uma entrada de dinheiro)."
+    }
+  },
+  {
+    "nome": "holerite que não existe",
+    "requisicao": "GET /api/trabalho/holerites/999/recebimentos",
+    "status": 404
+  },
+  {
+    "nome": "abrir o holerite de janeiro",
+    "requisicao": "POST /api/trabalho/empregos/1/holerites",
+    "status": 201,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "aviso": null,
+      "calculo": {
+        "baseInss": 5000.00,
+        "descontos": [
+          {
+            "descricao": "INSS",
+            "referencia": "",
+            "tipo": 20,
+            "valor": 501.51
+          },
+          {
+            "descricao": "IRRF",
+            "referencia": "",
+            "tipo": 21,
+            "valor": 0.00
+          }
+        ],
+        "diasTrabalhados": 30,
+        "fgtsDoMes": 400.00,
+        "inss": {
+          "base": 5000.00,
+          "fonte": "Portaria Interministerial MPS/MF nº 13, de 09/01/2026",
+          "noTeto": false,
+          "parcelas": [
+            {
+              "aliquota": 0.075,
+              "ate": 1621.00,
+              "de": 0.00,
+              "valor": 121.58
+            },
+            {
+              "aliquota": 0.09,
+              "ate": 2902.84,
+              "de": 1621.00,
+              "valor": 115.37
+            },
+            {
+              "aliquota": 0.12,
+              "ate": 4354.27,
+              "de": 2902.84,
+              "valor": 174.17
+            },
+            {
+              "aliquota": 0.14,
+              "ate": 5000.00,
+              "de": 4354.27,
+              "valor": 90.40
+            }
+          ],
+          "valor": 501.51
+        },
+        "irrf": {
+          "aliquota": 0.225,
+          "base": 4392.80,
+          "deducaoUsada": "simplificada",
+          "deducoesLegais": 501.51,
+          "fonte": "Lei nº 15.191/2025 (tabela mensal) e Lei nº 15.270/2025 (redução até R$ 7.350,00)",
+          "impostoDaTabela": 312.89,
+          "parcelaADeduzir": 675.49,
+          "reducaoLei15270": 312.89,
+          "rendimento": 5000.00,
+          "simplificado": 607.20,
+          "valor": 0.00
+        },
+        "liquido": 4498.49,
+        "mes": "2026-01-01",
+        "proventos": [
+          {
+            "descricao": "Salário",
+            "referencia": "30 dias",
+            "tipo": 0,
+            "valor": 5000.00
+          }
+        ],
+        "salarioContratual": 5000.00,
+        "semEncargos": false,
+        "totalDescontos": 501.51,
+        "totalProventos": 5000.00,
+        "valorHora": 22.73
+      },
+      "diasDescanso": 5,
+      "diasUteis": 26,
+      "empregoId": 1,
+      "fechadoEm": null,
+      "id": 3,
+      "lancamentos": [],
+      "mes": "2026-01-01",
+      "situacao": 1
+    },
+    "banco": {
+      "Holerite": {
+        "inseridas": [
+          {
+            "Calculo": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiasDescanso": 5,
+            "DiasUteis": 26,
+            "EmpregoId": 1,
+            "FechadoEm": null,
+            "Id": 3,
+            "Mes": "2026-01-01",
+            "Situacao": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "o salário de fevereiro sugerido para janeiro",
+    "requisicao": "GET /api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "diferenca": -4498.49,
+      "liquido": 4498.49,
+      "outros": [
+        {
+          "conta": "Poupança",
+          "contaId": 3,
+          "data": "2026-02-06",
+          "descricao": "Transferência da conta corrente",
+          "id": 43,
+          "livre": 500.00,
+          "valor": 500.00
+        },
+        {
+          "conta": "Cartão Fictício Platinum",
+          "contaId": 2,
+          "data": "2026-02-10",
+          "descricao": "PAGAMENTO RECEBIDO",
+          "id": 47,
+          "livre": 457.35,
+          "valor": 457.35
+        }
+      ],
+      "recebido": 0.00,
+      "recebimentos": [],
+      "sugestoes": [
+        {
+          "conta": "Conta Corrente Fictícia",
+          "contaId": 1,
+          "data": "2026-02-05",
+          "descricao": "SALARIO EMPRESA FICTICIA LTDA",
+          "id": 41,
+          "livre": 6500.00,
+          "motivos": [
+            "Cita o empregador"
+          ],
+          "valor": 6500.00
+        }
+      ]
+    }
+  },
+  {
+    "nome": "ligar o salário ao holerite",
+    "requisicao": "POST /api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "diferenca": 0.00,
+      "liquido": 4498.49,
+      "outros": [
+        {
+          "conta": "Poupança",
+          "contaId": 3,
+          "data": "2026-02-06",
+          "descricao": "Transferência da conta corrente",
+          "id": 43,
+          "livre": 500.00,
+          "valor": 500.00
+        },
+        {
+          "conta": "Cartão Fictício Platinum",
+          "contaId": 2,
+          "data": "2026-02-10",
+          "descricao": "PAGAMENTO RECEBIDO",
+          "id": 47,
+          "livre": 457.35,
+          "valor": 457.35
+        }
+      ],
+      "recebido": 4498.49,
+      "recebimentos": [
+        {
+          "conta": "Conta Corrente Fictícia",
+          "contaId": 1,
+          "data": "2026-02-05",
+          "debito": false,
+          "descricao": "SALARIO EMPRESA FICTICIA LTDA",
+          "id": 1,
+          "livre": 6500.00,
+          "sumiu": false,
+          "valor": 6500.00,
+          "valorLigado": 4498.49
+        }
+      ],
+      "sugestoes": []
+    },
+    "banco": {
+      "HoleriteRecebimento": {
+        "inseridas": [
+          {
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "HoleriteId": 3,
+            "Id": 1,
+            "TransacaoData": "2026-02-05",
+            "TransacaoDescricao": "SALARIO EMPRESA FICTICIA LTDA",
+            "TransacaoId": 41,
+            "TransacaoValor": "6500.0",
+            "Valor": "4498.49"
+          }
+        ]
+      },
+      "Transacao": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 41
+            },
+            "colunas": {
+              "CategoriaId": {
+                "antes": null,
+                "depois": 19
+              },
+              "CategoriaManual": {
+                "antes": 0,
+                "depois": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "ligar o mesmo de novo",
+    "requisicao": "POST /api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos",
+    "status": 400,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Este crédito já está ligado ao holerite."
+    }
+  },
+  {
+    "nome": "desligar",
+    "requisicao": "DELETE /api/trabalho/holerites/{{holeriteJaneiro}}/recebimentos/{{ligacao}}",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "diferenca": -4498.49,
+      "liquido": 4498.49,
+      "outros": [
+        {
+          "conta": "Poupança",
+          "contaId": 3,
+          "data": "2026-02-06",
+          "descricao": "Transferência da conta corrente",
+          "id": 43,
+          "livre": 500.00,
+          "valor": 500.00
+        },
+        {
+          "conta": "Cartão Fictício Platinum",
+          "contaId": 2,
+          "data": "2026-02-10",
+          "descricao": "PAGAMENTO RECEBIDO",
+          "id": 47,
+          "livre": 457.35,
+          "valor": 457.35
+        }
+      ],
+      "recebido": 0.00,
+      "recebimentos": [],
+      "sugestoes": [
+        {
+          "conta": "Conta Corrente Fictícia",
+          "contaId": 1,
+          "data": "2026-02-05",
+          "descricao": "SALARIO EMPRESA FICTICIA LTDA",
+          "id": 41,
+          "livre": 6500.00,
+          "motivos": [
+            "Cita o empregador"
+          ],
+          "valor": 6500.00
+        }
+      ]
+    },
+    "banco": {
+      "HoleriteRecebimento": {
+        "removidas": [
+          {
+            "ContaId": 1,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "HoleriteId": 3,
+            "Id": 1,
+            "TransacaoData": "2026-02-05",
+            "TransacaoDescricao": "SALARIO EMPRESA FICTICIA LTDA",
+            "TransacaoId": 41,
+            "TransacaoValor": "6500.0",
+            "Valor": "4498.49"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "excluir o holerite de janeiro",
+    "requisicao": "DELETE /api/trabalho/holerites/{{holeriteJaneiro}}",
+    "status": 204,
+    "banco": {
+      "Holerite": {
+        "removidas": [
+          {
+            "Calculo": null,
+            "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "DiasDescanso": 5,
+            "DiasUteis": 26,
+            "EmpregoId": 1,
+            "FechadoEm": null,
+            "Id": 3,
+            "Mes": "2026-01-01",
+            "Situacao": 1
+          }
+        ]
+      }
+    }
+  }
+]

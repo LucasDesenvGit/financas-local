@@ -86,6 +86,45 @@ export const rotas: Routes = [
         title: 'Configurações · Finanças Local'
       },
       {
+        // #210 (ADR 0064): o módulo Trabalho, dentro do portão (desligado, mostra o aviso e a tela nem é criada).
+        path: 'trabalho',
+        loadComponent: () => import('./compartilhado/modulos/portao-modulo.component').then((m) => m.PortaoModuloComponent),
+        data: { modulo: 'trabalho' },
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'salario' },
+          {
+            path: 'salario',
+            loadComponent: () => import('./paginas/trabalho/salario.component').then((m) => m.TrabalhoSalarioComponent),
+            title: 'Salário · Trabalho · Finanças Local'
+          },
+          {
+            path: 'holerites',
+            loadComponent: () => import('./paginas/trabalho/holerites.component').then((m) => m.TrabalhoHoleritesComponent),
+            title: 'Holerites · Trabalho · Finanças Local'
+          },
+          {
+            path: 'decimo-terceiro',
+            loadComponent: () => import('./paginas/trabalho/decimo-terceiro.component').then((m) => m.TrabalhoDecimoTerceiroComponent),
+            title: '13º salário · Trabalho · Finanças Local'
+          },
+          {
+            path: 'ferias',
+            loadComponent: () => import('./paginas/trabalho/ferias.component').then((m) => m.TrabalhoFeriasComponent),
+            title: 'Férias · Trabalho · Finanças Local'
+          },
+          {
+            path: 'fgts',
+            loadComponent: () => import('./paginas/trabalho/fgts.component').then((m) => m.TrabalhoFgtsComponent),
+            title: 'FGTS · Trabalho · Finanças Local'
+          },
+          {
+            path: 'rescisao',
+            loadComponent: () => import('./paginas/trabalho/rescisao.component').then((m) => m.TrabalhoRescisaoComponent),
+            title: 'Rescisão · Trabalho · Finanças Local'
+          }
+        ]
+      },
+      {
         path: 'manual',
         loadComponent: () => import('./paginas/manual/manual.component').then((m) => m.ManualComponent),
         title: 'Manual · Finanças Local'

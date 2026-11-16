@@ -394,3 +394,139 @@ CREATE TABLE "PagamentoCofrinho" (
     "Automatico" INTEGER NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );
+
+CREATE TABLE "Emprego" (
+    "Id" INTEGER NOT NULL,
+    "Empregador" TEXT NOT NULL,
+    "Cnpj" TEXT,
+    "Admissao" TEXT NOT NULL,
+    "Saida" TEXT,
+    "Regime" INTEGER NOT NULL,
+    "JornadaMensalHoras" INTEGER NOT NULL,
+    "Dependentes" INTEGER NOT NULL,
+    "ContaId" INTEGER,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "SalarioVigencia" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "Inicio" TEXT NOT NULL,
+    "SalarioBruto" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "InssVigencia" (
+    "Inicio" TEXT NOT NULL,
+    "Fonte" TEXT NOT NULL
+);
+
+CREATE TABLE "InssFaixa" (
+    "Inicio" TEXT NOT NULL,
+    "Ordem" INTEGER NOT NULL,
+    "Ate" TEXT NOT NULL,
+    "Aliquota" TEXT NOT NULL
+);
+
+CREATE TABLE "IrrfVigencia" (
+    "Inicio" TEXT NOT NULL,
+    "DeducaoDependente" TEXT NOT NULL,
+    "DescontoSimplificado" TEXT NOT NULL,
+    "ReducaoIsencaoAte" TEXT,
+    "ReducaoMaxima" TEXT,
+    "ReducaoAte" TEXT,
+    "ReducaoConstante" TEXT,
+    "ReducaoFator" TEXT,
+    "Fonte" TEXT NOT NULL
+);
+
+CREATE TABLE "IrrfFaixa" (
+    "Inicio" TEXT NOT NULL,
+    "Ordem" INTEGER NOT NULL,
+    "Ate" TEXT,
+    "Aliquota" TEXT NOT NULL,
+    "Deducao" TEXT NOT NULL
+);
+
+CREATE TABLE "Holerite" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "Mes" TEXT NOT NULL,
+    "Situacao" INTEGER NOT NULL,
+    "DiasUteis" INTEGER NOT NULL,
+    "DiasDescanso" INTEGER NOT NULL,
+    "Calculo" TEXT,
+    "FechadoEm" TEXT,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "HoleriteLancamento" (
+    "Id" INTEGER NOT NULL,
+    "HoleriteId" INTEGER NOT NULL,
+    "Tipo" INTEGER NOT NULL,
+    "Descricao" TEXT NOT NULL,
+    "Quantidade" TEXT,
+    "Percentual" TEXT,
+    "Valor" TEXT,
+    "IncideInss" INTEGER NOT NULL,
+    "IncideIrrf" INTEGER NOT NULL,
+    "DeduzIrrf" INTEGER NOT NULL,
+    "Recorrente" INTEGER NOT NULL
+);
+
+CREATE TABLE "DecimoTerceiro" (
+    "EmpregoId" INTEGER NOT NULL,
+    "Ano" INTEGER NOT NULL,
+    "PrimeiraParcelaEm" TEXT,
+    "PrimeiraParcelaValor" TEXT,
+    "AtualizadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "FeriasFaltas" (
+    "EmpregoId" INTEGER NOT NULL,
+    "PeriodoInicio" TEXT NOT NULL,
+    "Faltas" INTEGER NOT NULL
+);
+
+CREATE TABLE "FeriasAgendamento" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "PeriodoInicio" TEXT NOT NULL,
+    "Inicio" TEXT NOT NULL,
+    "Dias" INTEGER NOT NULL,
+    "DiasVendidos" INTEGER NOT NULL,
+    "AdiantarDecimo" INTEGER NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "FgtsLancamento" (
+    "Id" INTEGER NOT NULL,
+    "EmpregoId" INTEGER NOT NULL,
+    "Data" TEXT NOT NULL,
+    "Tipo" INTEGER NOT NULL,
+    "Valor" TEXT NOT NULL,
+    "Motivo" INTEGER,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "HoleriteRecebimento" (
+    "Id" INTEGER NOT NULL,
+    "HoleriteId" INTEGER NOT NULL,
+    "TransacaoId" INTEGER,
+    "Valor" TEXT NOT NULL,
+    "ContaId" INTEGER NOT NULL,
+    "TransacaoData" TEXT NOT NULL,
+    "TransacaoValor" TEXT NOT NULL,
+    "TransacaoDescricao" TEXT NOT NULL,
+    "CriadoEm" TEXT NOT NULL
+);
+
+CREATE TABLE "Rescisao" (
+    "EmpregoId" INTEGER NOT NULL,
+    "Data" TEXT NOT NULL,
+    "Tipo" INTEGER NOT NULL,
+    "Aviso" INTEGER NOT NULL,
+    "Calculo" TEXT NOT NULL,
+    "SaidaAnterior" TEXT,
+    "CriadoEm" TEXT NOT NULL
+);

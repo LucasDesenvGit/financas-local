@@ -136,6 +136,27 @@ type CotacaoMoeda struct {
 	AtualizadoEm string
 }
 
+type DecimoTerceiro struct {
+	EmpregoId            int64
+	Ano                  int64
+	PrimeiraParcelaEm    *string
+	PrimeiraParcelaValor *string
+	AtualizadoEm         string
+}
+
+type Emprego struct {
+	Id                 int64
+	Empregador         string
+	Cnpj               *string
+	Admissao           string
+	Saida              *string
+	Regime             int64
+	JornadaMensalHoras int64
+	Dependentes        int64
+	ContaId            *int64
+	CriadoEm           string
+}
+
 type Emprestimo struct {
 	Id                  int64
 	ConexaoBancariaId   int64
@@ -193,6 +214,33 @@ type FaturaCartao struct {
 	AtualizadoEm   string
 }
 
+type FeriasAgendamento struct {
+	Id             int64
+	EmpregoId      int64
+	PeriodoInicio  string
+	Inicio         string
+	Dias           int64
+	DiasVendidos   int64
+	AdiantarDecimo int64
+	CriadoEm       string
+}
+
+type FeriasFalta struct {
+	EmpregoId     int64
+	PeriodoInicio string
+	Faltas        int64
+}
+
+type FgtsLancamento struct {
+	Id        int64
+	EmpregoId int64
+	Data      string
+	Tipo      int64
+	Valor     string
+	Motivo    *int64
+	CriadoEm  string
+}
+
 type HistoricoInvestimento struct {
 	Id                 int64
 	PluggyInvestmentId string
@@ -205,10 +253,60 @@ type HistoricoInvestimento struct {
 	AtualizadoEm       string
 }
 
+type Holerite struct {
+	Id           int64
+	EmpregoId    int64
+	Mes          string
+	Situacao     int64
+	DiasUteis    int64
+	DiasDescanso int64
+	Calculo      *string
+	FechadoEm    *string
+	CriadoEm     string
+}
+
+type HoleriteLancamento struct {
+	Id         int64
+	HoleriteId int64
+	Tipo       int64
+	Descricao  string
+	Quantidade *string
+	Percentual *string
+	Valor      *string
+	IncideInss int64
+	IncideIrrf int64
+	DeduzIrrf  int64
+	Recorrente int64
+}
+
+type HoleriteRecebimento struct {
+	Id                 int64
+	HoleriteId         int64
+	TransacaoId        *int64
+	Valor              string
+	ContaId            int64
+	TransacaoData      string
+	TransacaoValor     string
+	TransacaoDescricao string
+	CriadoEm           string
+}
+
 type IndiceMensal struct {
 	Codigo     string
 	Mes        string
 	Fechamento string
+}
+
+type InssFaixa struct {
+	Inicio   string
+	Ordem    int64
+	Ate      string
+	Aliquota string
+}
+
+type InssVigencium struct {
+	Inicio string
+	Fonte  string
 }
 
 type Investimento struct {
@@ -231,6 +329,26 @@ type Investimento struct {
 	Status             *string
 	NomePersonalizado  *string
 	AtualizadoEm       string
+}
+
+type IrrfFaixa struct {
+	Inicio   string
+	Ordem    int64
+	Ate      *string
+	Aliquota string
+	Deducao  string
+}
+
+type IrrfVigencium struct {
+	Inicio               string
+	DeducaoDependente    string
+	DescontoSimplificado string
+	ReducaoIsencaoAte    *string
+	ReducaoMaxima        *string
+	ReducaoAte           *string
+	ReducaoConstante     *string
+	ReducaoFator         *string
+	Fonte                string
 }
 
 type Meta struct {
@@ -334,6 +452,16 @@ type RegraDescricao struct {
 	CriadoEm            string
 }
 
+type Rescisao struct {
+	EmpregoId     int64
+	Data          string
+	Tipo          int64
+	Aviso         int64
+	Calculo       string
+	SaidaAnterior *string
+	CriadoEm      string
+}
+
 type ReservaConferencium struct {
 	Id              int64
 	ContaId         int64
@@ -341,6 +469,14 @@ type ReservaConferencium struct {
 	SaldoConferido  string
 	DataConferencia string
 	AtualizadoEm    string
+}
+
+type SalarioVigencium struct {
+	Id           int64
+	EmpregoId    int64
+	Inicio       string
+	SalarioBruto string
+	CriadoEm     string
 }
 
 type SincronizacaoLog struct {

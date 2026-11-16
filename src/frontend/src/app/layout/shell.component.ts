@@ -69,6 +69,17 @@ export const MENU: EntradaMenu[] = [
       { rota: '/categorias', rotulo: 'Categorias e regras', icone: Icones.categorias },
       { rota: '/configuracoes', rotulo: 'Configurações', icone: Icones.configuracoes }
     ]
+  },
+  {
+    // #209, #210: o módulo Trabalho (ADR 0064). Só aparece com ele ligado em Configurações › Módulos.
+    id: 'trabalho', rotulo: 'Trabalho', icone: Icones.grupoTrabalho, telas: [
+      { rota: '/trabalho/salario', rotulo: 'Salário', icone: Icones.trabalhoSalario, modulo: 'trabalho' },
+      { rota: '/trabalho/holerites', rotulo: 'Holerites', icone: Icones.trabalhoHolerites, modulo: 'trabalho' },
+      { rota: '/trabalho/decimo-terceiro', rotulo: '13º salário', icone: Icones.trabalhoDecimo, modulo: 'trabalho' },
+      { rota: '/trabalho/ferias', rotulo: 'Férias', icone: Icones.trabalhoFerias, modulo: 'trabalho' },
+      { rota: '/trabalho/fgts', rotulo: 'FGTS', icone: Icones.trabalhoFgts, modulo: 'trabalho' },
+      { rota: '/trabalho/rescisao', rotulo: 'Rescisão', icone: Icones.trabalhoRescisao, modulo: 'trabalho' }
+    ]
   }
 ];
 
