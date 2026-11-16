@@ -218,7 +218,12 @@ const respostas: Record<string, unknown> = {
       cor: '#8fd5b4', concluida: true, percentual: 1, aporteMensalSugerido: null, valorInicial: 200, saldoConta: 0,
       reservaNome: null, saldoReserva: null, reservaConferir: false, reservaNaoEncontrada: false, prioridade: 0, icone: null }
   ],
-  '/api/reservas': [],
+  // #691: o cofrinho da Conta Exemplo (o "Pago com" do Condomínio, em Contas a pagar).
+  '/api/reservas': [
+    { contaId: 1, nomeConta: 'Conta Exemplo', nome: 'Emergência', saldo: 3200, guardado: 3200, retirado: 0, movimentos: 4,
+      primeiroMovimento: null, ultimoMovimento: null, saldoConferido: null, dataConferencia: null, podeTerSaldoAnterior: false,
+      conferenciaAntiga: false, moeda: 'BRL' }
+  ],
   // #318: aportes fictícios da Viagem nos últimos meses (o gráfico "Como está indo"); a RESERVA não tem nenhum.
   '/api/metas/1/aportes': [
     { data: dataIso(new Date(ano, hoje.getMonth() - 3, 5)), valor: 500 },
@@ -242,10 +247,27 @@ const respostas: Record<string, unknown> = {
     { id: 3, descricao: 'Streaming', valor: 44.9, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 12)),
       recorrencia: 1, categoriaId: null, categoriaNome: 'Lazer', contaId: 2, contaNome: 'Cartão Exemplo', ativa: true,
       ultimoPagamentoEm: null, diasParaVencer: 22, dataLimite: null, pagamentosRestantes: null, encerrada: false,
-      formaCobranca: 3, textoCobranca: 'STREAMING', observacao: 'conta da família' }
+      formaCobranca: 3, textoCobranca: 'STREAMING', observacao: 'conta da família' },
+    // #691: débito automático pago com o cofrinho: o app deu a baixa sozinho no último vencimento.
+    { id: 4, descricao: 'Condomínio', valor: 620, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 5)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Moradia', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: dataIso(new Date(ano, hoje.getMonth(), 5)), diasParaVencer: 15, dataLimite: null, pagamentosRestantes: null,
+      encerrada: false, formaCobranca: 2, textoCobranca: null, observacao: null, reservaNome: 'Emergência',
+      ultimoPeloCofrinho: { transacaoId: 90, data: dataIso(new Date(ano, hoje.getMonth(), 5)), valor: 618.4, reservaNome: 'Emergência',
+        automatico: true, podeDesfazer: true } },
+    // #691: paga à mão pelo cofrinho; o último pagamento ficou sem a despesa (dado antes de marcar o cofrinho).
+    { id: 5, descricao: 'Internet', valor: 99.9, proximoVencimento: dataIso(new Date(ano, hoje.getMonth() + 1, 8)),
+      recorrencia: 1, categoriaId: null, categoriaNome: 'Moradia', contaId: 1, contaNome: 'Conta Exemplo', ativa: true,
+      ultimoPagamentoEm: dataIso(new Date(ano, hoje.getMonth(), 8)), diasParaVencer: 18, dataLimite: null, pagamentosRestantes: null,
+      encerrada: false, formaCobranca: 1, textoCobranca: null, observacao: null, reservaNome: 'Emergência', ultimoPeloCofrinho: null,
+      ultimoSemDespesa: dataIso(new Date(ano, hoje.getMonth(), 8)) }
   ],
   // #158: um aviso de aumento, com a ação "Atualizar o valor".
   '/api/contas-agendadas/avisos': [
+    // #691: o débito da Luz não chegou pelo extrato, e a conta já sincronizou depois: "foi paga com um cofrinho?".
+    { contaAgendadaId: 2, descricao: 'Luz', tipo: 'nao-veio', texto: 'A cobrança de Luz não chegou pelo extrato. Foi paga com um cofrinho?',
+      valorAnterior: null, valorNovo: null, contaNovaId: null, contaNovaNome: null, data: dataIso(new Date(ano, hoje.getMonth(), 5)),
+      podeSerCofrinho: true },
     { contaAgendadaId: 3, descricao: 'Streaming', tipo: 'aumentou', texto: 'Streaming aumentou na última cobrança.',
       valorAnterior: 44.9, valorNovo: 49.9, contaNovaId: null, contaNovaNome: null, data: null }
   ],

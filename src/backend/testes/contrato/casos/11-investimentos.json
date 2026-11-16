@@ -171,6 +171,86 @@
       "sessao": "visitante"
     },
     {
+      "nome": "registrar saída do cofrinho",
+      "comentario": "#691 (ADR 0063): gasto pago direto do cofrinho, lançado pelo app na conta do Open Finance (apagado mais abaixo).",
+      "metodo": "POST",
+      "caminho": "/api/reservas/saida",
+      "corpo": { "contaId": 1, "nome": "Caixinha viagem", "data": "2026-10-14", "valor": 35.5, "descricao": "  Compra pelo cofrinho ",
+        "categoriaId": null }
+    },
+    {
+      "nome": "registrar saída numa conta manual",
+      "metodo": "POST",
+      "caminho": "/api/reservas/saida",
+      "corpo": { "contaId": 3, "nome": "Cofrinho", "data": "2026-10-14", "valor": 10, "descricao": "x" }
+    },
+    {
+      "nome": "registrar saída no futuro",
+      "metodo": "POST",
+      "caminho": "/api/reservas/saida",
+      "corpo": { "contaId": 1, "nome": "Caixinha viagem", "data": "2026-10-15", "valor": 10, "descricao": "x" }
+    },
+    {
+      "nome": "registrar saída sem login",
+      "metodo": "POST",
+      "caminho": "/api/reservas/saida",
+      "corpo": { "contaId": 1, "nome": "Caixinha viagem", "data": "2026-10-14", "valor": 10, "descricao": "x" },
+      "sessao": "visitante"
+    },
+    {
+      "nome": "achar a saída lançada",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=Compra%20pelo%20cofrinho&tamanhoPagina=1",
+      "capturar": { "idSaida": "/itens/0/id" }
+    },
+    {
+      "nome": "conferir um cofrinho fora da lista do banco",
+      "comentario": "#691: a conta 1 detalha só a Caixinha viagem; a Emergência é estimada e conferível.",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": { "contaId": 1, "nome": "Emergência", "saldo": 300, "data": "2026-10-14" }
+    },
+    {
+      "nome": "conferir com a diferença em outra data",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": { "contaId": 1, "nome": "Emergência", "saldo": 250, "data": "2026-10-13", "registrarDiferenca": true }
+    },
+    {
+      "nome": "conferir com a diferença como gasto",
+      "comentario": "#691: a estimativa (300) passa do conferido (250): os 50 viram gasto do cofrinho, e a conferência é gravada.",
+      "metodo": "PUT",
+      "caminho": "/api/reservas/conferencia",
+      "corpo": { "contaId": 1, "nome": "emergência", "saldo": 250, "registrarDiferenca": true }
+    },
+    {
+      "nome": "listar com a saída e a diferença",
+      "metodo": "GET",
+      "caminho": "/api/reservas"
+    },
+    {
+      "nome": "achar a diferença lançada",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?busca=diferen%C3%A7a%20da%20confer%C3%AAncia&tamanhoPagina=1",
+      "capturar": { "idDiferenca": "/itens/0/id" }
+    },
+    {
+      "nome": "apagar a saída lançada",
+      "comentario": "Limpeza: os arquivos seguintes não veem os lançamentos do cofrinho.",
+      "metodo": "DELETE",
+      "caminho": "/api/transacoes/{{idSaida}}"
+    },
+    {
+      "nome": "apagar a diferença lançada",
+      "metodo": "DELETE",
+      "caminho": "/api/transacoes/{{idDiferenca}}"
+    },
+    {
+      "nome": "tirar a conferência da Emergência",
+      "metodo": "DELETE",
+      "caminho": "/api/reservas/conferencia?contaId=1&nome=Emerg%C3%AAncia"
+    },
+    {
       "nome": "tirar a conferência",
       "comentario": "O nome aparado e sem diferença de maiúsculas.",
       "metodo": "DELETE",
