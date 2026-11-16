@@ -17,7 +17,12 @@ import { Modulo } from '../../core/modelos';
       <h2 id="titulo-modulos">Módulos</h2>
       <p class="texto-suave">Partes do site que vão além do básico das finanças. Desligado, o módulo some do menu, não roda nada
         em segundo plano e não acessa a internet. Os dados dele ficam guardados para quando você ligar de novo.</p>
-      @if (modulos.lista(); as lista) {
+      @if (modulos.falhou()) {
+        <div class="aviso-inline" role="alert">
+          <p>Não deu para ler os módulos agora (o site pode estar reiniciando depois de uma atualização).</p>
+          <button type="button" class="botao" (click)="modulos.carregar()">Tentar de novo</button>
+        </div>
+      } @else if (modulos.lista(); as lista) {
         @if (lista.length) {
           <ul class="lista-modulos">
             @for (m of lista; track m.id) {

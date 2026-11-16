@@ -6,7 +6,7 @@
 | Troquei de computador, ou apaguei a pasta `chaves` | [Chaves perdidas](#chaves-perdidas) |
 | Uma atualização não funcionou | [Atualização que falhou](#atualização-que-falhou) |
 
-Fazer a cópia está em [Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md) (**Mais opções**) e, pelos scripts, no `scripts/geral/4-backup.sh`. Backup diário agendado antes da #154, pelo caminho antigo `scripts/4-backup.sh`? A atualização pelos scripts troca sozinha a entrada do crontab ou do Agendador de Tarefas pelo caminho novo, com o mesmo horário (#655); se ela avisar que não conseguiu, rode `scripts/geral/4-backup.sh --agendar`.
+Fazer a cópia está em [Instalador e gerenciador](INSTALADOR-E-GERENCIADOR.md) (**Mais opções**) e, pelos scripts, no `scripts/geral/4-backup.sh` (`--agendar` para todo dia).
 
 ## Restaurar uma cópia
 
@@ -132,7 +132,11 @@ Os erros mais comuns do instalador estão em [Problemas comuns](PROBLEMAS-COMUNS
 
 ### Pelos scripts
 
-**O site não subiu depois de atualizar?** Desde a #86, os scripts não usam mais o .NET, e não há volta automática para ele. Para voltar à última versão com o .NET: `git checkout v-ultimo-dotnet` e rode o `instalar.sh` de novo (no Windows sem bash, o `instalar-windows.cmd`). O que só o .NET usava só é apagado depois de o site novo responder.
-
 - **Windows:** o `instalar-windows.cmd` volta sozinho para a versão anterior se a nova não subir. O log fica em `instaladores\instalacao-windows.log`.
 - **Linux:** veja o que o script mostrou e o log do serviço, com `journalctl --user -u financaslocal.service`.
+
+### Voltar à última versão com o .NET
+
+O back-end é só o Go desde a #86. Como último recurso, a última versão com o .NET está na tag `v-ultimo-dotnet`: `git checkout v-ultimo-dotnet` e o `instalar.sh` (no Windows sem bash, o `instalar-windows.cmd`). O banco é o mesmo, mas o Client Secret da Pluggy e o token da brapi gravados pelo Go não abrem no .NET e precisam ser informados de novo.
+
+A mesma tag tem a ferramenta que trazia uma instalação antiga com IIS e SQL Server Express para o SQLite (`Financas.MigrarSqlite`), com o passo a passo no guia de instalação daquela versão.

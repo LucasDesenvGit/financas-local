@@ -5,7 +5,7 @@ description: Confere no navegador de verdade uma mudança do front-end do Finan�
 
 # Testar no navegador (Finanças Local)
 
-Os testes do Jest (`src/frontend/testes/jest/`) não desenham a tela. Esta skill fecha essa lacuna com o Playwright: o **build de produção**, servido com a **mesma CSP da API** (lida do `Seguranca.cs`), num navegador de verdade, com a **API falsa** (`testes/navegador/api-falsa.ts`). Não precisa de back-end nem de banco, e **nenhum dado real** aparece.
+Os testes do Jest (`src/frontend/testes/jest/`) não desenham a tela. Esta skill fecha essa lacuna com o Playwright: o **build de produção**, servido com a **mesma CSP da API** (lida do `intermediarios.go` do Go), num navegador de verdade, com a **API falsa** (`testes/navegador/api-falsa.ts`). Não precisa de back-end nem de banco, e **nenhum dado real** aparece.
 
 Tudo roda em `src/frontend`, com o Node portátil no PATH quando o do sistema não for o do projeto:
 
@@ -23,7 +23,7 @@ npx playwright test -g metas    # só os testes com "metas" no nome
 
 Cada tela do menu tem de abrir **sem**: erro no console, exceção, bloqueio da CSP, erro mandado para `/api/erros/front-end` e chamada da API sem simulação. Neste computador usa o Edge instalado (`NAVEGADOR=chrome` troca); na CI, o Chromium do Playwright.
 
-**Antes de subir (push), rode também com o navegador da CI** (#264: passou no Edge e falhou na CI, só no celular):
+**Antes de subir (push), rode também com o navegador da CI** (o porquê, o que o `test:afetados` escolhe, o tempo e o que fazer quando falha só na CI: `CONTRIBUINDO.md`, "Testes rápidos"):
 
 ```bash
 npx playwright install chromium                         # uma vez
@@ -32,16 +32,7 @@ NAVEGADOR=chromium npx playwright test <arquivo> --repeat-each=5   # teste novo:
 NAVEGADOR=chromium npx playwright test                  # tudo, com o Chromium da CI (quando quiser a suíte inteira)
 ```
 
-`npm run test:afetados` (#286) faz a mesma escolha da CI no PR (ADR 0047), contando também o que ainda não foi commitado:
-- só os testes ligados ao que mudou desde o `develop`;
-- tudo, se mudou arquivo global (estilos, `core/`, configuração);
-- nada, se o front-end não mudou.
-
-Numa mudança de uma tela, leva uns 45 s, contra uns 2,7 min da suíte inteira. A suíte inteira continua rodando na CI, no merge. `python3 ../../scripts/ci/front/testes-afetados.py --base origin/develop` só mostra o que rodaria.
-
-Falhou só na CI? `gh run download <run> -n testes-navegador` e olhe o print e o `error-context.md` antes de mexer; não suba tentativas para ver se passa.
-
-Para simular a CI mais lenta: `--workers=8 --repeat-each=10 --retries=0`. Medida em px com folga de 0,5 (`toBeGreaterThanOrEqual(23.5)` para 24 px: no Linux da CI, 24 vira 23,99997); depois de um clique que troca o conteúdo, espere a troca (`not.toHaveText(antes)`) antes de ler.
+`python3 ../../scripts/ci/front/testes-afetados.py --base origin/develop` só mostra o que rodaria. Para simular a CI mais lenta: `--workers=8 --repeat-each=10 --retries=0`.
 
 **Falhou?** Leia `testes/navegador/resultados/<teste>/error-context.md` (a árvore da página no momento da falha) e o `test-failed-1.png` antes de mexer. Não "conserte" o teste para passar: descubra se a tela quebrou.
 

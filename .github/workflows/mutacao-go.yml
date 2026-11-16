@@ -3,8 +3,8 @@ name: Teste de mutação (Go)
 # #373 (ADR 0051): mede se os testes do Go pegam erro de verdade. O gremlins estraga o código de propósito, numa cópia
 # (troca < por <=, && por ||, + por -...), e conta as mudanças que os testes não pegaram. É lento (~1 min por pacote).
 # #456: no PR que mexe no back-end, mede só os pacotes da lista que o PR mudou, e falha abaixo do piso; toda segunda de
-# manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow), mede a lista inteira. Antes de medir, confere que
-# todo pacote de internal/ está na lista ou em scripts/ci/go/mutacao-go-fora.txt, com o motivo.
+# manhã e à mão (Actions → "Teste de mutação (Go)" → Run workflow), mede a lista inteira. Pacote novo de internal/, que
+# ainda não está na lista nem em scripts/ci/go/mutacao-go-fora.txt, é medido sem piso, com um aviso da linha a pôr (#716).
 # Os pacotes e os pisos ficam em scripts/ci/go/mutacao-go.txt; o relatório sai no resumo e no artefato de cada grupo.
 # #673: um job por grupo, em paralelo (abaixo, no job "grupos").
 # #433: o do gerenciador em Go (src/gerenciador-go, scripts/ci/go/mutacao-gerenciador-go.txt) roda no PR que mexe nele,
@@ -16,6 +16,7 @@ on:
       - 'src/backend/**'
       - 'src/gerenciador-go/**'
       - 'scripts/ci/go/mutacao-go.py'
+      - 'scripts/ci/go/test_mutacao_go.py'
       - 'scripts/ci/go/mutacao-go*.txt'
       - 'scripts/ci/go/mutacao-gerenciador-go*.txt'
       - 'scripts/ci/comum.py' # o mutacao-go.py usa o arquivos_mudados dele
@@ -50,6 +51,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # no PR, o script compara com a base (base...HEAD)
+
+      # #716: o teste do próprio script (o pacote novo não é erro, os erros que continuam), antes de usá-lo.
+      - name: Teste do script da mutação
+        run: python3 -B scripts/ci/go/test_mutacao_go.py
 
       - name: Escolher os grupos
         id: escolher

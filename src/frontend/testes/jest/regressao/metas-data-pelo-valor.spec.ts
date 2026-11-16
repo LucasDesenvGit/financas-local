@@ -1,5 +1,5 @@
 import { dataPeloValorMensal, planejarMetas } from '../../../src/app/paginas/planejamento/metas-plano';
-import { abrirMetas, meta } from '../apoio/metas';
+import { abrirMetas, meta, semTempoDeAviso } from '../apoio/metas';
 import { plano } from '../apoio/plano-metas';
 
 /**
@@ -26,69 +26,75 @@ describe('Regressão: data alvo pelo valor por mês (#359)', () => {
     expect(dataPeloValorMensal(0, 500, { ano: 2026, mes: 10 })).toBeNull();
   });
 
-  it('dá para criar uma meta sem data alvo: a data vai vazia para a API', () => {
-    const { tela, criadas } = abrirMetas([]);
+  it('dá para criar uma meta sem data alvo: a data vai vazia para a API', async () => {
+    const { tela, criadas, formulario, atualizar, salvar } = abrirMetas([]);
     tela.nova();
-    tela.form!.nome = 'Reserva';
-    tela.form!.valorAlvo = 30000;
-    tela.salvar();
+    await atualizar();
+    const fm = formulario().edicao()!;
+    fm.dados.nome = 'Reserva';
+    fm.dados.valorAlvo = 30000;
+    salvar();
     expect(criadas).toHaveLength(1);
     expect(criadas[0].dataAlvo).toBeNull();
   });
 
   it('o valor por mês preenche a data alvo, a frase diz quando, e mudar o alvo recalcula', async () => {
-    const { tela, raiz, atualizar, criadas } = abrirMetas([]);
+    const { tela, raiz, atualizar, criadas, formulario, salvar } = abrirMetas([]);
     tela.nova();
     await atualizar();
-    const fm = tela.form!;
-    fm.nome = 'Viagem';
-    tela.mudarAlvo(fm, 6000);
-    fm.valorAtual = 1000;
-    tela.porMesNoForm = 1000;
-    tela.recalcularPorMes(fm);
+    const fm = formulario().edicao()!;
+    fm.dados.nome = 'Viagem';
+    formulario().mudarAlvo(fm, 6000);
+    fm.dados.valorAtual = 1000;
+    fm.porMes = 1000;
+    formulario().recalcularPorMes(fm);
     await atualizar();
     // Faltam 5.000: 5 meses, contando o atual.
-    expect(fm.dataAlvo).toBe(mesDaqui(4));
+    expect(fm.dados.dataAlvo).toBe(mesDaqui(4));
     const nota = raiz.querySelector('.nota-por-mes')!.textContent!.replace(/\s+/g, ' ');
     expect(nota).toContain('Com R$ 1.000,00 por mês, você chega lá em');
     expect(nota).toContain('(5 meses)');
     // O rótulo do campo é visível (WCAG 3.3.2).
     expect([...raiz.querySelectorAll('label')].some((l) => l.textContent!.includes('Quanto vou guardar por mês'))).toBe(true);
-    tela.mudarAlvo(fm, 2000);
-    tela.recalcularPorMes(fm);
+    formulario().mudarAlvo(fm, 2000);
+    formulario().recalcularPorMes(fm);
     await atualizar();
     // Faltam 1.000: este mês basta.
-    expect(fm.dataAlvo).toBe(mesDaqui(0));
+    expect(fm.dados.dataAlvo).toBe(mesDaqui(0));
     expect(raiz.querySelector('.nota-por-mes')!.textContent).toContain('este mês');
-    tela.salvar();
+    salvar();
     expect(criadas[0].dataAlvo).toBe(mesDaqui(0));
   });
 
   it('com o alvo já alcançado, a frase diz que não falta nada, e a data não muda', async () => {
-    const { tela, raiz, atualizar } = abrirMetas([]);
+    const { tela, raiz, atualizar, formulario } = abrirMetas([]);
     tela.nova();
-    const fm = tela.form!;
-    fm.valorAlvo = 1000;
-    fm.valorAtual = 1000;
-    fm.dataAlvo = '2030-01-01';
-    tela.porMesNoForm = 500;
-    tela.recalcularPorMes(fm);
     await atualizar();
-    expect(fm.dataAlvo).toBe('2030-01-01');
+    const fm = formulario().edicao()!;
+    fm.dados.valorAlvo = 1000;
+    fm.dados.valorAtual = 1000;
+    fm.dados.dataAlvo = '2030-01-01';
+    fm.porMes = 500;
+    formulario().recalcularPorMes(fm);
+    await atualizar();
+    expect(fm.dados.dataAlvo).toBe('2030-01-01');
     expect(raiz.querySelector('.nota-por-mes')!.textContent).toContain('não falta nada');
   });
 
-  it('o valor por mês fica gravado na meta: editar mostra o valor, e salvar manda de novo', () => {
+  it('o valor por mês fica gravado na meta: editar mostra o valor, e salvar manda de novo', async () => {
     const reserva = meta({ id: 7, nome: 'Reserva', valorAlvo: 1000, valorAtual: 0, dataAlvo: '2027-07-01', guardarPorMes: 100 });
-    const { tela, atualizadas } = abrirMetas([reserva]);
+    const { tela, atualizadas, formulario, atualizar, salvar } = abrirMetas([reserva]);
+    semTempoDeAviso();
     tela.editar(reserva);
-    expect(tela.porMesNoForm).toBe(100);
-    tela.salvar();
+    await atualizar();
+    expect(formulario().edicao()!.porMes).toBe(100);
+    salvar();
     expect(atualizadas[0]).toMatchObject({ id: 7, dto: { guardarPorMes: 100 } });
     // Apagar o valor volta a deixar o plano decidir.
     tela.editar(reserva);
-    tela.porMesNoForm = null;
-    tela.salvar();
+    await atualizar();
+    formulario().edicao()!.porMes = null;
+    salvar();
     expect(atualizadas[1].dto.guardarPorMes).toBeNull();
   });
 
@@ -165,13 +171,13 @@ describe('Regressão: data alvo pelo valor por mês (#359)', () => {
     // Sobra de R$ 3.500/mês, 90% para as metas: no máximo R$ 3.150; a outra meta já guarda R$ 1.000 por mês.
     const outra = meta({ id: 2, nome: 'Carro', valorAlvo: 30000, valorAtual: 0, dataAlvo: null, guardarPorMes: 1000,
       reservaNome: null, saldoReserva: null });
-    const { tela, raiz, atualizar } = abrirMetas([outra], plano());
+    const { tela, raiz, atualizar, formulario } = abrirMetas([outra], plano());
     await atualizar();
     tela.nova();
     await atualizar();
-    const fm = tela.form!;
-    fm.nome = 'Teste';
-    tela.mudarAlvo(fm, 1000);
+    const fm = formulario().edicao()!;
+    fm.dados.nome = 'Teste';
+    formulario().mudarAlvo(fm, 1000);
     await atualizar();
     expect(tela.limitePorMes()).toBe(2150);
     const campo = raiz.querySelector<HTMLInputElement>('app-campo-valor[name="porMes"] input')!;
@@ -186,12 +192,12 @@ describe('Regressão: data alvo pelo valor por mês (#359)', () => {
     expect(salvar.disabled).toBe(true);
     // Sem a frase "você chega lá" nem data preenchida com um valor que não cabe.
     expect(raiz.querySelector('.nota-por-mes')).toBeNull();
-    expect(fm.dataAlvo).toBeNull();
+    expect(fm.dados.dataAlvo).toBeNull();
     campo.value = '200';
     campo.dispatchEvent(new Event('input'));
     await atualizar();
     expect(raiz.querySelector('app-campo-valor[name="porMes"] .campo-valor-mensagem')).toBeNull();
     expect(salvar.disabled).toBe(false);
-    expect(fm.dataAlvo).toBe(mesDaqui(4));
+    expect(fm.dados.dataAlvo).toBe(mesDaqui(4));
   });
 });
