@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
 import { mensagemDeErro } from './erro.interceptor';
-import { StatusSincronizacao } from './modelos';
+import { ResultadoSincronizacao, StatusSincronizacao } from './modelos';
 import { AvisosService } from './avisos.service';
 
 /**
@@ -61,14 +61,17 @@ export class StatusSincronizacaoService {
     });
   }
 
-  /** Sincroniza agora (botão da barra); o aviso de resultado continua como antes. */
-  sincronizar(): void {
+  /**
+   * Sincroniza agora (botão da barra). O aviso de sucesso vem de quem chama (#688: o "Ver em Transações" monta o link
+   * com o compartilhado, que o core não importa).
+   */
+  sincronizar(avisarSucesso: (r: ResultadoSincronizacao) => void): void {
     if (this.sincronizando()) return;
     this.sincronizandoAqui.set(true);
     this.api.sincronizar().subscribe({
       next: (r) => {
         this.sincronizandoAqui.set(false);
-        if (r.sucesso) this.avisos.sucesso(`Sincronizado: ${r.transacoesNovas} nova(s), ${r.transacoesAtualizadas} atualizada(s).`);
+        if (r.sucesso) avisarSucesso(r);
         else this.avisos.erro(r.mensagem ?? 'Falha na sincronização.');
         this.atualizar();
       },

@@ -82,7 +82,7 @@ export const MANUAL: CapituloManual[] = [
           'No celular, o menu abre pelo botão ☰ no topo. Tocar no nome de um grupo só mostra ou esconde as telas dele; tocar numa tela leva até ela e fecha o menu. Para fechar sem escolher uma tela, toque no ✕, toque fora do menu ou arraste-o para a esquerda.',
           'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
           'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
-          'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações).',
+          'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações). Clicar em “Atualizado há…” sincroniza na hora; o aviso do resultado diz quantas transações são novas e quantas mudaram, e “Ver em Transações” abre só elas.',
           'O sino, também na barra de cima, junta as notificações de qualquer tela: orçamentos estourados e avisos (conta vencida, consentimento vencendo, falha de sincronização, reserva para conferir, erros). O número nele conta o que está pendente. Detalhes em “Painel”, no capítulo das análises.',
           'O botão do olho esconde todos os valores da tela — útil para mostrar a tela a alguém.',
           'A calculadora abre no botão ao lado ou com Alt+C.',
@@ -279,7 +279,8 @@ export const MANUAL: CapituloManual[] = [
           'A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).',
           'A cada vez, ela relê os últimos dias (padrão: 30) para pegar o que mudou ou entrou atrasado.',
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
-          'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.',
+          'Para sincronizar na hora, clique em “Atualizado há…” na barra de cima ou use “Sincronizar agora” em Configurações › Open Finance.',
+          'O aviso do resultado (“Sincronizado: 3 nova(s), 2 atualizada(s).”) tem “Ver em Transações”: abre as Transações só com essas, no período delas, com o filtro “Novas e atualizadas na sincronização” em “Filtrando:”. Atualizada é a que já existia e mudou de verdade nessa sincronização. O aviso de “Adicionar” conexão traz o mesmo botão, com as transações da primeira carga. Sem nada novo, o aviso vem sem o botão. Com mais de 200, o botão abre o período inteiro, porque são muitas para listar uma a uma. O aviso fica 10 segundos e não some enquanto o mouse ou o foco estão nele.',
           'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
           'Conta em outra moeda (ex.: em dólar) gera um aviso nas notificações (o sino da barra do topo): o site soma as contas como reais, sem conversão.'
         ],
@@ -421,6 +422,7 @@ export const MANUAL: CapituloManual[] = [
           'Marque “Só emergências” ou “Descrição pouco informativa” quando precisar.',
           'Digite em “Buscar” e aperte Enter para procurar na descrição, no estabelecimento e na observação.',
           'Os filtros ativos aparecem em “Filtrando:”; o ✕ de cada um tira só aquele, e “Limpar filtros” tira todos.',
+          'Quem chega de outra tela com uma lista de lançamentos (o “Ver em Transações” do aviso da sincronização, os trocos do Painel, os FIIs) vê a origem em “Filtrando:”, por exemplo “Novas e atualizadas na sincronização: 5 lançamentos”; o ✕ tira esse filtro e mostra o período inteiro.',
           'Para ordenar a lista, clique no nome da coluna: Data, Categoria, Conta ou Valor (a seta ▲ ▼ mostra qual vale e em que direção); clique de novo para inverter. Em Valor, o maior lançamento vem primeiro, seja gasto ou receita; as sem categoria ficam no fim. A ordem vale para todas as páginas e fica no endereço da página.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],

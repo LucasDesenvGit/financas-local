@@ -513,6 +513,16 @@ export interface SincronizacaoLog {
 
 export interface ResultadoSincronizacao {
   sucesso: boolean; transacoesNovas: number; transacoesAtualizadas: number; mensagem: string | null;
+  /** #688: quais foram as novas e as atualizadas; null quando não houve nenhuma. */
+  lancamentos: LancamentosSincronizados | null;
+}
+
+/** #688: as transações que uma sincronização trouxe ou mudou. */
+export interface LancamentosSincronizados {
+  /** Em ordem de id, até 200 (MAXIMO_IDS_URL); vazio quando passam disso. */
+  ids: number[];
+  /** Data mais antiga e mais recente entre elas (yyyy-MM-dd). */
+  inicio: string; fim: string;
 }
 
 /** Status leve da sincronização para a barra superior (UX-8). */
