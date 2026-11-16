@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.14.1] — 2026-11-16 · desenvolvimento
+
+### Correções
+- **Contas a pagar: o "Pago com" sem a palavra "Cofrinho" repetida** (#719). A lista punha "Cofrinho" antes de cada nome, e o nome quase sempre já tem a palavra ("Cofrinho Cofrinho da Virada"). Agora o campo se chama "Pago com o cofrinho" e a lista mostra só o nome, como no app do banco; a opção sem cofrinho virou "Nenhum (sai do saldo da conta)". O "Qual cofrinho" do "Pagar" também mostra só o nome.
+
 ## [3.14.0] — 2026-11-11 · desenvolvimento
 
 ### Funcionalidades

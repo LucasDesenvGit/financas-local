@@ -8,6 +8,14 @@ import { Conta, ContaAgendada, FormaCobranca, OrigemConta, PagamentoCofrinho, Re
 /** Opção do campo "Pago com": um cofrinho da conta, com o saldo (null = não está mais na lista de reservas). */
 export interface OpcaoCofrinho { nome: string; saldo: number | null }
 
+/**
+ * #719: o texto da opção é só o nome, como no app do banco. O rótulo do campo já diz que é um cofrinho, e o nome quase
+ * sempre já tem a palavra ("Cofrinho da Virada"): o prefixo a repetia (Nielsen 8, sem informação a mais).
+ */
+export function textoOpcaoCofrinho(o: OpcaoCofrinho): string {
+  return o.saldo === null ? `${o.nome} (não encontrado nas reservas)` : o.nome;
+}
+
 /** O cofrinho só existe em conta do Open Finance, e a conta cobrada no cartão não sai dele. */
 export function aceitaCofrinho(conta: Conta | undefined, forma: FormaCobranca): boolean {
   return conta?.origem === OrigemConta.OpenFinance && forma !== FormaCobranca.CartaoCredito;

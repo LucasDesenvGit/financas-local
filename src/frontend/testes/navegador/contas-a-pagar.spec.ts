@@ -101,14 +101,17 @@ test('Contas a pagar: pago com o cofrinho (#691)', async ({ page, api, problemas
 
   await page.getByRole('button', { name: '+ Nova conta' }).click();
   const dialogo = page.getByRole('dialog');
-  await expect(dialogo.getByLabel('Pago com')).toHaveCount(0);
+  await expect(dialogo.getByLabel('Pago com o cofrinho')).toHaveCount(0);
   await dialogo.getByLabel('Conta de pagamento (opcional)').selectOption({ label: 'Conta Exemplo' });
-  await dialogo.getByLabel('Pago com').selectOption({ label: 'Cofrinho Emergência' });
+  // #719: a opção é só o nome do cofrinho; o rótulo já diz que é um cofrinho.
+  await expect(dialogo.getByLabel('Pago com o cofrinho').locator('option'))
+    .toHaveText(['Nenhum (sai do saldo da conta)', 'Emergência', 'Outro…']);
+  await dialogo.getByLabel('Pago com o cofrinho').selectOption({ label: 'Emergência' });
   await expect(dialogo).toContainText('o “Pagar” lança a despesa e baixa o cofrinho');
-  await dialogo.getByLabel('Pago com').selectOption({ label: 'Outro cofrinho…' });
+  await dialogo.getByLabel('Pago com o cofrinho').selectOption({ label: 'Outro…' });
   await expect(dialogo.getByLabel('Nome do cofrinho')).toBeVisible();
   await dialogo.getByLabel('Como é cobrada').selectOption({ label: 'no cartão de crédito' });
-  await expect(dialogo.getByLabel('Pago com')).toHaveCount(0);
+  await expect(dialogo.getByLabel('Pago com o cofrinho')).toHaveCount(0);
   expect(problemas.lista).toEqual([]);
 });
 
