@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	github.com/shopspring/decimal v1.6.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/sys v0.50.0
 	golang.org/x/text v0.44.0
 	modernc.org/sqlite v1.62.0
 	software.sslmate.com/src/go-pkcs12 v0.7.4
