@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.15.2] — 2026-11-16 · desenvolvimento
+
+### Correções
+- **Dependências: SQLite 1.62.0, `x/sys` 0.50.0, `x/text` 0.44.0, Angular 22.2.6 e Lucide 1.72.0** (#744, Dependabot #737 a #743, juntos num PR só porque mexem nos mesmos `go.mod`, `go.sum` e `package-lock.json`). No site e no gerenciador, o `modernc.org/sqlite` vai de 1.61.1 a 1.62.0 e o `golang.org/x/sys` de 0.49.0 a 0.50.0; no site, o `golang.org/x/text` de 0.43.0 a 0.44.0. No front-end, o Angular (`common`, `compiler`, `core`, `forms`, `platform-browser`, `router` e `compiler-cli`) sobe uma correção, 22.2.5 → 22.2.6, o `@angular/build` e o `@angular/cli`, só de desenvolvimento, 22.2.6 → 22.2.7, e os ícones do `@lucide/angular` vão de 1.69.0 a 1.72.0. Os commits são os do Dependabot, trazidos por *cherry-pick*. Manual: não se aplica.
+
 ## [3.15.1] — 2026-11-16 · desenvolvimento
 
 ### Correções
