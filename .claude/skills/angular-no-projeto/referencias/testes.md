@@ -14,29 +14,23 @@ Um comportamento testado num lugar só (#204). Não repita no Jest o que o naveg
 
 - **Dados de teste:** as fábricas de `testes/jest/apoio/` (`conta()`, `contas.ts`; uma por assunto). Assunto novo com dados repetidos ganha a sua.
 - **Título do teste:** `describe('Regressão: <o que> (#N)')` em `regressao/` e `describe('Usabilidade: ...')` em `usabilidade/`, com o número da issue; o comentário diz a regra que o teste garante.
-- **Teste prova que falha:** estrague o código (ou o CSS do build, em `dist/`), veja falhar e desfaça. Não passou a falhar? Os dados não exercitam o caso.
-- **Padrão novo com teste próprio:** escolher data ou mês entra em `testes/jest/usabilidade/escolher-data-sobe-nivel.spec.ts`; clique em linha ou bloco com equivalente de teclado, em `testes/jest/regressao/clique-com-teclado.spec.ts`; cor nova do tema, em `testes/jest/regressao/contraste-tema.spec.ts` (`docs/UI-UX.md`, padrões adotados).
+- **Teste prova que falha:** estrague o código, veja falhar e desfaça (o do CSS, no `CONTRIBUINDO.md`).
+- **Padrão com teste próprio** (escolher data ou mês, clique com equivalente de teclado, cor do tema): o componente ou a cor nova entra no teste que `docs/UI-UX.md` cita no padrão.
 
 ## Pegadinhas que custam um ciclo da CI
 
-- **Dependência nova no front-end:** meça um teste que a use antes (`npx jest testes/jest/<pasta>/<arquivo>.spec.ts`). Pesou? Substituto leve em `testes/jest/apoio/` e no `moduleNameMapper` do `jest.config.js`, como o `lucide-falso.js`. A trava é de 20 s por arquivo e 150 s a suíte.
-- **Teste que lê o código como texto** (procura no template ou no CSS de um componente): pelo `testes/jest/apoio/codigo.ts` (`codigo`, `codigosDoApp`), nunca `readFileSync` direto no `.ts`: o template em `.html` ficaria de fora, e o teste passaria sem olhar (ADR 0059).
-- **Tela nova:** linha em `TELAS` (`testes/navegador/base.ts`) e os endpoints em `api-falsa.ts`, senão o teste falha com "chamada da API sem simulação".
-- **Teste novo no navegador** abre a tela pela rota escrita (`page.goto('/transacoes')`), senão a escolha dos testes afetados não o acha, e roda `--repeat-each=5` nos dois projetos antes do push.
-- **Medida em px:** folga de 0,5 (`toBeGreaterThanOrEqual(23.5)` para 24 px).
-- **Depois de um clique que troca o conteúdo:** espere a troca (`not.toHaveText(antes)`) antes de ler.
-- **Arquivo novo que vale para todas as telas** fora das pastas globais: entra em `GLOBAIS` no `scripts/ci/front/testes-afetados.py`.
+Estão no `CONTRIBUINDO.md`, "Testes rápidos", com o porquê: dependência nova medida antes (e o substituto leve no `moduleNameMapper`), teste novo no navegador pela rota escrita e com `--repeat-each=5`, folga de 0,5 px, esperar a troca antes de ler, arquivo global em `GLOBAIS`. Tela nova em `TELAS` e na `api-falsa.ts`: skill `testar-no-navegador`, seção 3. E a da ADR 0059:
 
-O porquê de cada uma está no `CONTRIBUINDO.md` e na `testar-no-navegador`.
+- **Teste que lê o código como texto** (procura no template ou no CSS): pelo `testes/jest/apoio/codigo.ts`, nunca `readFileSync` direto no `.ts`, senão o template em `.html` fica de fora e o teste passa sem olhar (ADR 0059).
 
 ## O que rodar, e quando
 
 | Quando | Comando (em `src/frontend`) |
 |---|---|
 | Durante o trabalho | `npx jest testes/jest/<pasta>/<arquivo>.spec.ts`; `npx playwright test -g <tela>` com o build em `dist/` |
-| Antes do push | `npm run test:tipos` e `NAVEGADOR=chromium npm run test:afetados` (Chromium do Playwright, o mesmo da CI; `npx playwright install chromium` uma vez) |
+| Antes do push | `npm run test:tipos` e `NAVEGADOR=chromium npm run test:afetados` (`CONTRIBUINDO.md`, "Testes rápidos") |
 | Mexeu em import, criou arquivo ou pasta | `npm run test:arquitetura` (só local, #476; a CI não roda) |
 | Mudou o que se vê | `FOTOS=<rotas> FOTOS_PASTA=<pasta temporária> npx playwright test fotos`, e olhe os PNGs (skill `testar-no-navegador`) |
-| Falhou só na CI | `gh run download <run> -n testes-navegador`; leia o `error-context.md` e o print antes de mexer |
+| Falhou só na CI | `CONTRIBUINDO.md`, "Testes rápidos" |
 
 **Vários agentes ao mesmo tempo:** o build em `dist/` é um só para todos, e o servidor de teste sobe na porta 4300 (`PORTA` troca). Quem chama compila uma vez (`npx ng build --configuration production`); cada agente só roda `PORTA=<4301, 4302…> npx playwright test ...`, com a sua `FOTOS_PASTA`, sem compilar de novo. Dois `ng build` ao mesmo tempo apagam o `dist/` um do outro; dois servidores na mesma porta, um deles não sobe.
