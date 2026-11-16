@@ -38,6 +38,7 @@ func (r *rodada) sincronizarTransacoes(ctx context.Context, conta contaLocal, da
 	if err != nil {
 		return 0, 0, err
 	}
+	var mudadas []*transacoes.Transacao
 	err = banco.EmTransacao(ctx, r.db, func(tx *sql.Tx) error {
 		locais := map[string]*transacoes.Transacao{}
 		lista, err := transacoes.Listar(ctx, tx, `WHERE "ContaId" = ? AND "PluggyTransactionId" IS NOT NULL AND "Data" >= ?`, conta.id, dataInicial.SomarDias(-margemDaJanela))
@@ -110,12 +111,27 @@ func (r *rodada) sincronizarTransacoes(ctx context.Context, conta contaLocal, da
 		if err := transacoes.GravarTodas(ctx, tx, gravar); err != nil {
 			return err
 		}
-		return transacoes.Excluir(ctx, tx, apagar...)
+		if err := transacoes.Excluir(ctx, tx, apagar...); err != nil {
+			return err
+		}
+		mudadas = semAsApagadas(slices.Concat(inserir, gravar), apagar)
+		return nil
 	})
 	if err != nil {
 		return 0, 0, err
 	}
+	// Só depois de confirmar: a etapa desfeita não deixa id de transação que não existe.
+	for _, t := range mudadas {
+		r.lancamentos.somar(t.Id, t.Data)
+	}
 	return novas, atualizadas, nil
+}
+
+// semAsApagadas tira a atualizada que a mesma rodada apagou (a pendente que o banco já efetivou com outro código, #172):
+// ela não existe mais para a tela abrir. Ela continua contada em atualizadas, como antes da #688: o número do aviso pode
+// passar da quantidade de ids.
+func semAsApagadas(lista []*transacoes.Transacao, apagar []int64) []*transacoes.Transacao {
+	return slices.DeleteFunc(lista, func(t *transacoes.Transacao) bool { return slices.Contains(apagar, t.Id) })
 }
 
 // aplicar passa os dados da Pluggy para a transação, na ordem do C#: a regra de descrição usa o valor, e a categoria usa
