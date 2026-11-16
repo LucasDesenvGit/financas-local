@@ -21,7 +21,7 @@
     "@angular/forms": "^22.2.5",
     "@angular/platform-browser": "^22.2.5",
     "@angular/router": "^22.2.5",
-    "@lucide/angular": "1.69.0",
+    "@lucide/angular": "1.72.0",
     "chart.js": "^4.6.1",
     "qrcode-generator": "2.0.4",
     "rxjs": "~7.8.2",
