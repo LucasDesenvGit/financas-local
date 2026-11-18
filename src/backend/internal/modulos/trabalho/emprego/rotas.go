@@ -48,6 +48,8 @@ type dadosDto struct {
 	Dependentes        int64          `json:"dependentes"`
 	ContaId            *int64         `json:"contaId"`
 	SalarioBruto       *tipos.Decimal `json:"salarioBruto"`
+	// AdiantamentoQuinzenal ausente é false: o emprego paga uma vez no mês.
+	AdiantamentoQuinzenal bool `json:"adiantamentoQuinzenal"`
 }
 
 func (d dadosDto) dados() (Dados, error) {
@@ -55,7 +57,8 @@ func (d dadosDto) dados() (Dados, error) {
 		return Dados{}, invalido("Informe a data de admissão.")
 	}
 	r := Dados{Empregador: d.Empregador, Cnpj: d.Cnpj, Admissao: *d.Admissao, Saida: d.Saida, Regime: RegimeClt,
-		JornadaMensalHoras: 220, Dependentes: d.Dependentes, ContaId: d.ContaId, SalarioInicial: d.SalarioBruto}
+		JornadaMensalHoras: 220, Dependentes: d.Dependentes, ContaId: d.ContaId, SalarioInicial: d.SalarioBruto,
+		AdiantamentoQuinzenal: d.AdiantamentoQuinzenal}
 	if d.Regime != nil {
 		r.Regime = *d.Regime
 	}

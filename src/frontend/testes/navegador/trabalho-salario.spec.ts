@@ -97,3 +97,40 @@ test('Trabalho › Salário: o mês, como calculei e o aumento', async ({ page }
   await expect(historico.locator('tbody tr')).toHaveCount(3);
   expect(pedidos).toEqual([`POST /api/trabalho/empregos/1/salarios {"inicio":"${inicio}","salarioBruto":6500}`]);
 });
+
+test('Trabalho › Salário: marcar que o salário vem em duas vezes', async ({ page }) => {
+  await json(page, '**/api/modulos', [{ ...trabalho, ligado: true }]);
+  // A lista devolve o que foi gravado: a tela recarrega depois de salvar.
+  let atual = { ...emprego, adiantamentoQuinzenal: false };
+  await page.route('**/api/trabalho/empregos', (rota) => rota.fulfill({ status: 200, contentType: 'application/json',
+    body: JSON.stringify([atual]) }));
+  await json(page, '**/api/trabalho/empregos/1/estimativa**', estimativa);
+  const pedidos: string[] = [];
+  await page.route('**/api/trabalho/empregos/1', (rota) => {
+    const corpo = rota.request().postData() ?? '';
+    pedidos.push(`${rota.request().method()} ${new URL(rota.request().url()).pathname} ${corpo}`);
+    atual = { ...atual, adiantamentoQuinzenal: JSON.parse(corpo).adiantamentoQuinzenal };
+    return rota.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(atual) });
+  });
+
+  await page.goto('/trabalho/salario');
+  const dados = page.locator('.dados-emprego');
+  await expect(dados).toContainText('Uma vez no mês');
+  await page.getByRole('button', { name: 'Editar emprego' }).click();
+  const caixa = page.getByRole('checkbox', { name: /Recebo em duas vezes/ });
+  await expect(caixa).not.toBeChecked();
+  await expect(caixa).toHaveAccessibleDescription(/O holerite do mês continua um só/);
+  await caixa.check();
+  const pasta = process.env['FOTOS_PASTA'];
+  const foto = async (nome: string) => {
+    if (!pasta) return;
+    mkdirSync(pasta, { recursive: true });
+    await page.screenshot({ path: join(pasta, `trabalho-${nome}-${test.info().project.name}.png`), fullPage: true });
+  };
+  await foto('emprego-form');
+  await page.getByRole('button', { name: 'Salvar' }).click();
+  await expect(dados).toContainText('Em duas vezes (adiantamento no dia 15)');
+  await foto('emprego-dados');
+  expect(pedidos).toHaveLength(1);
+  expect(pedidos[0]).toMatch(/^PUT \/api\/trabalho\/empregos\/1 .*"adiantamentoQuinzenal":true/);
+});

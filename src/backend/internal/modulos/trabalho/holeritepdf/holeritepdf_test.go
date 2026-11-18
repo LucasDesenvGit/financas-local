@@ -297,6 +297,7 @@ func TestAvisosDoEmpregoEDoMes(t *testing.T) {
 	comOutro := a.emprego("5000", `,"cnpj":"99.999.999/0001-99"`)
 	doPdf := a.emprego("5000", `,"cnpj":"98.765.432/0001-10"`)
 	estagio := a.emprego("1500", `,"regime":2`)
+	quinzenal := a.emprego("5000", `,"adiantamentoQuinzenal":true`)
 	recente := a.chamar("POST", "/api/trabalho/empregos", `{"empregador":"Nova","admissao":"2026-11-03","salarioBruto":5000}`)
 	recente.ConferirStatus(t, http.StatusCreated)
 	casos := []struct {
@@ -315,6 +316,12 @@ func TestAvisosDoEmpregoEDoMes(t *testing.T) {
 		{"salário diferente", doPdf, [][]ficticios.Texto{ficticios.ProventosEQtde()},
 			[]string{"O salário base do PDF (R$ 4.000,00) é diferente do cadastrado para outubro de 2026 (R$ 5.000,00). Se foi aumento, registre em Trabalho › Salário, a partir de outubro de 2026."},
 			[]string{"CNPJ"}},
+		{"paga em duas vezes, sem o adiantamento no PDF", quinzenal, [][]ficticios.Texto{ficticios.ViaClassica()},
+			[]string{MensagemSemAdiantamento}, nil},
+		{"paga em duas vezes, com o adiantamento descontado", quinzenal, [][]ficticios.Texto{ficticios.EventosEReais()},
+			nil, []string{"paga em duas vezes"}},
+		{"paga uma vez: sem o aviso do adiantamento", semCnpj, [][]ficticios.Texto{ficticios.ViaClassica()},
+			nil, []string{"paga em duas vezes"}},
 		{"estágio: sem lido × calculado", estagio, [][]ficticios.Texto{ficticios.ViaClassica()}, nil, []string{"INSS do PDF", "IRRF do PDF"}},
 		{"mês antes da admissão", decodificar[emprego.Emprego](t, recente).Id, [][]ficticios.Texto{ficticios.ViaClassica()},
 			[]string{"Outubro de 2026 é de antes da admissão ou depois da saída deste emprego"}, nil},

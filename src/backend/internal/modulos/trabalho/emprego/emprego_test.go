@@ -67,7 +67,7 @@ func TestCriarEmprego(t *testing.T) {
 	// O CNPJ fica só com os dígitos, e o primeiro salário começa no mês da admissão.
 	r.ConferirJSON(t, `{"id":1,"empregador":"Empresa Fictícia Ltda","cnpj":"12345678000190","admissao":"2024-03-11",
 		"saida":null,"regime":1,"jornadaMensalHoras":220,"dependentes":0,"contaId":null,"contaNome":null,
-		"salarios":[{"id":1,"inicio":"2024-03-01","salarioBruto":5000.00}]}`)
+		"adiantamentoQuinzenal":false,"salarios":[{"id":1,"inicio":"2024-03-01","salarioBruto":5000.00}]}`)
 }
 
 func TestCriarComPadroesEConta(t *testing.T) {
@@ -75,12 +75,12 @@ func TestCriarComPadroesEConta(t *testing.T) {
 	a := novo(t)
 	conta := a.fab.Conta(func(c *testeapoio.Conta) { c.Nome = "Conta salário" })
 	r := a.chamar("POST", "/api/trabalho/empregos", fmt.Sprintf(`{"empregador":"  Outra  ","admissao":"2026-01-05",
-		"salarioBruto":3000,"contaId":%d,"cnpj":""}`, conta.Id))
+		"salarioBruto":3000,"contaId":%d,"cnpj":"","adiantamentoQuinzenal":true}`, conta.Id))
 	r.ConferirStatus(t, http.StatusCreated)
 	var e Emprego
 	decodificar(t, r, &e)
 	if e.Empregador != "Outra" || e.Regime != RegimeClt || e.JornadaMensalHoras != 220 || e.Cnpj != nil ||
-		e.ContaNome == nil || *e.ContaNome != "Conta salário" {
+		e.ContaNome == nil || *e.ContaNome != "Conta salário" || !e.AdiantamentoQuinzenal {
 		t.Fatalf("emprego = %+v", e)
 	}
 }
@@ -233,6 +233,19 @@ func TestAtualizarEmprego(t *testing.T) {
 	decodificar(t, r, &e)
 	if e.Empregador != "Nova Razão" || e.Dependentes != 2 || e.Saida == nil || len(e.Salarios) != 1 {
 		t.Fatalf("emprego = %+v", e)
+	}
+	// Pagar em duas vezes (adiantamento no dia 15) liga e desliga; ausente no corpo, desliga.
+	for _, c := range []struct {
+		corpo string
+		quer  bool
+	}{
+		{`{"empregador":"E","admissao":"2024-03-31","adiantamentoQuinzenal":true}`, true},
+		{`{"empregador":"E","admissao":"2024-03-31"}`, false},
+	} {
+		a.chamar("PUT", caminho, c.corpo).ConferirStatus(t, http.StatusOK)
+		if e, _ := a.s.Obter(t.Context(), id); e.AdiantamentoQuinzenal != c.quer {
+			t.Errorf("%s: adiantamentoQuinzenal = %v", c.corpo, e.AdiantamentoQuinzenal)
+		}
 	}
 	a.chamar("PUT", "/api/trabalho/empregos/99", `{"empregador":"E","admissao":"2024-03-01"}`).ConferirStatus(t, http.StatusNotFound)
 	a.chamar("PUT", caminho, `{"empregador":"","admissao":"2024-03-01"}`).ConferirStatus(t, http.StatusBadRequest)

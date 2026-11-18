@@ -405,6 +405,7 @@ CREATE TABLE "Emprego" (
     "JornadaMensalHoras" INTEGER NOT NULL,
     "Dependentes" INTEGER NOT NULL,
     "ContaId" INTEGER,
+    "AdiantamentoQuinzenal" INTEGER NOT NULL,
     "CriadoEm" TEXT NOT NULL
 );
 

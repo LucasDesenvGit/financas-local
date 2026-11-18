@@ -866,6 +866,8 @@ export interface Emprego {
   dependentes: number;
   contaId: number | null;
   contaNome: string | null;
+  /** O salário vem em duas vezes: o adiantamento perto do dia 15 e o saldo no fim do mês. */
+  adiantamentoQuinzenal: boolean;
   /** Do mais novo para o mais antigo. */
   salarios: SalarioVigencia[];
 }
@@ -879,6 +881,7 @@ export interface SalvarEmprego {
   jornadaMensalHoras: number;
   dependentes: number;
   contaId: number | null;
+  adiantamentoQuinzenal: boolean;
   /** Só ao criar: o primeiro salário, no mês da admissão. */
   salarioBruto?: number;
 }

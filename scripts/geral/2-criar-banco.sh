@@ -82,6 +82,7 @@ adicionar_coluna_se_ausente "ContaAgendada" "ReservaNome" "TEXT NULL"
 adicionar_coluna_se_ausente "ContaAgendada" "ReservaDesde" "TEXT NULL"
 adicionar_coluna_se_ausente "Transacao" "ReservaNome" "TEXT NULL"
 adicionar_coluna_se_ausente "Holerite" "Origem" "INTEGER NOT NULL DEFAULT 1"
+adicionar_coluna_se_ausente "Emprego" "AdiantamentoQuinzenal" "INTEGER NOT NULL DEFAULT 0"
 ok 'colunas conferidas'
 
 etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'

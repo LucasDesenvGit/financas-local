@@ -65,20 +65,23 @@ type Emprego struct {
 	Dependentes        int64       `json:"dependentes"`
 	ContaId            *int64      `json:"contaId"`
 	ContaNome          *string     `json:"contaNome"`
-	Salarios           []Salario   `json:"salarios"`
+	// AdiantamentoQuinzenal: o salário vem em duas vezes, o adiantamento perto do dia 15 e o saldo no fim do mês.
+	AdiantamentoQuinzenal bool      `json:"adiantamentoQuinzenal"`
+	Salarios              []Salario `json:"salarios"`
 }
 
 // Dados é o que a pessoa preenche no emprego. SalarioInicial só vale ao criar (a primeira vigência, no mês da admissão).
 type Dados struct {
-	Empregador         string
-	Cnpj               *string
-	Admissao           tipos.Data
-	Saida              *tipos.Data
-	Regime             int64
-	JornadaMensalHoras int64
-	Dependentes        int64
-	ContaId            *int64
-	SalarioInicial     *tipos.Decimal
+	Empregador            string
+	Cnpj                  *string
+	Admissao              tipos.Data
+	Saida                 *tipos.Data
+	Regime                int64
+	JornadaMensalHoras    int64
+	Dependentes           int64
+	ContaId               *int64
+	AdiantamentoQuinzenal bool
+	SalarioInicial        *tipos.Decimal
 }
 
 // Servico lê e grava os empregos.
@@ -180,8 +183,9 @@ func (s *Servico) Criar(ctx context.Context, d Dados) (Emprego, error) {
 		}
 		agora := tipos.NovaDataHora(s.relogio.Agora())
 		r, err := tx.ExecContext(ctx, `INSERT INTO "Emprego" ("Empregador", "Cnpj", "Admissao", "Saida", "Regime",
-			"JornadaMensalHoras", "Dependentes", "ContaId", "CriadoEm") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			d.Empregador, d.Cnpj, d.Admissao, d.Saida, d.Regime, d.JornadaMensalHoras, d.Dependentes, d.ContaId, agora)
+			"JornadaMensalHoras", "Dependentes", "ContaId", "AdiantamentoQuinzenal", "CriadoEm") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			d.Empregador, d.Cnpj, d.Admissao, d.Saida, d.Regime, d.JornadaMensalHoras, d.Dependentes, d.ContaId,
+			d.AdiantamentoQuinzenal, agora)
 		if err != nil {
 			return fmt.Errorf("gravar o emprego: %w", err)
 		}
@@ -240,8 +244,9 @@ func (s *Servico) Atualizar(ctx context.Context, id int64, d Dados) (Emprego, er
 			return fmt.Errorf("levar o primeiro salário para a admissão: %w", err)
 		}
 		r, err := tx.ExecContext(ctx, `UPDATE "Emprego" SET "Empregador" = ?, "Cnpj" = ?, "Admissao" = ?, "Saida" = ?,
-			"Regime" = ?, "JornadaMensalHoras" = ?, "Dependentes" = ?, "ContaId" = ? WHERE "Id" = ?`,
-			d.Empregador, d.Cnpj, d.Admissao, d.Saida, d.Regime, d.JornadaMensalHoras, d.Dependentes, d.ContaId, id)
+			"Regime" = ?, "JornadaMensalHoras" = ?, "Dependentes" = ?, "ContaId" = ?, "AdiantamentoQuinzenal" = ? WHERE "Id" = ?`,
+			d.Empregador, d.Cnpj, d.Admissao, d.Saida, d.Regime, d.JornadaMensalHoras, d.Dependentes, d.ContaId,
+			d.AdiantamentoQuinzenal, id)
 		if err != nil {
 			return fmt.Errorf("atualizar o emprego: %w", err)
 		}
@@ -337,7 +342,7 @@ func (s *Servico) ExcluirSalario(ctx context.Context, empregoId, salarioId int64
 }
 
 const selecaoEmprego = `SELECT e."Id", e."Empregador", e."Cnpj", e."Admissao", e."Saida", e."Regime",
-	e."JornadaMensalHoras", e."Dependentes", e."ContaId", c."Nome"
+	e."JornadaMensalHoras", e."Dependentes", e."ContaId", c."Nome", e."AdiantamentoQuinzenal"
 	FROM "Emprego" e LEFT JOIN "Conta" c ON c."Id" = e."ContaId"`
 
 // Listar devolve os empregos: os atuais (sem saída) primeiro, do mais novo para o mais antigo.
@@ -382,7 +387,7 @@ func (s *Servico) Obter(ctx context.Context, id int64) (Emprego, error) {
 func lerEmprego(l interface{ Scan(...any) error }) (Emprego, error) {
 	var e Emprego
 	err := l.Scan(&e.Id, &e.Empregador, &e.Cnpj, &e.Admissao, &e.Saida, &e.Regime, &e.JornadaMensalHoras, &e.Dependentes,
-		&e.ContaId, &e.ContaNome)
+		&e.ContaId, &e.ContaNome, &e.AdiantamentoQuinzenal)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return e, fmt.Errorf("ler o emprego: %w", err)
 	}
