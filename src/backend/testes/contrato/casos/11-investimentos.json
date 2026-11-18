@@ -356,68 +356,6 @@
       "sessao": "visitante"
     },
     {
-      "nome": "configuração da cotação",
-      "comentario": "Só diz se há token, nunca o valor.",
-      "metodo": "GET",
-      "caminho": "/api/carteira/configuracao"
-    },
-    {
-      "nome": "token com espaço no meio",
-      "metodo": "PUT",
-      "caminho": "/api/carteira/configuracao",
-      "corpo": {
-        "tokenBrapi": "abc def"
-      }
-    },
-    {
-      "nome": "token longo demais",
-      "metodo": "PUT",
-      "caminho": "/api/carteira/configuracao",
-      "corpo": {
-        "tokenBrapi": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-      }
-    },
-    {
-      "nome": "token em branco não muda nada",
-      "metodo": "PUT",
-      "caminho": "/api/carteira/configuracao",
-      "corpo": {
-        "tokenBrapi": "   "
-      }
-    },
-    {
-      "nome": "gravar o token",
-      "metodo": "PUT",
-      "caminho": "/api/carteira/configuracao",
-      "corpo": {
-        "tokenBrapi": "  token-de-contrato  "
-      }
-    },
-    {
-      "nome": "configuração com o token",
-      "metodo": "GET",
-      "caminho": "/api/carteira/configuracao"
-    },
-    {
-      "nome": "remover o token",
-      "metodo": "PUT",
-      "caminho": "/api/carteira/configuracao",
-      "corpo": {
-        "remover": true
-      }
-    },
-    {
-      "nome": "configuração sem o token",
-      "metodo": "GET",
-      "caminho": "/api/carteira/configuracao"
-    },
-    {
-      "nome": "configuração sem login",
-      "metodo": "GET",
-      "caminho": "/api/carteira/configuracao",
-      "sessao": "visitante"
-    },
-    {
       "nome": "criar a compra de um ativo novo",
       "comentario": "O código é normalizado, e o ativo é criado como FII pelo final 11. Sem rede, a cotação falha, e o cadastro segue.",
       "metodo": "POST",

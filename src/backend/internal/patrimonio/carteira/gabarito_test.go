@@ -77,7 +77,7 @@ func cenarioDoGabarito(t *testing.T, g gabarito) (*Servico, *sql.DB, relogio.Rel
 	}
 	log := slog.New(slog.DiscardHandler)
 	c := cambio.NovoServico(db, cliente, r, log)
-	return NovoServico(db, c, reservas.NovoServico(db, c, r, log), nil, nil, nil, r, log), db, r
+	return NovoServico(db, c, reservas.NovoServico(db, c, r, log), nil, nil, r, log), db, r
 }
 
 // Regra: a visão completa é a do CarteiraService do C# sobre o mesmo cenário: posições, totais, evolução, Open Finance,
@@ -277,11 +277,11 @@ func cotacoesDoGabarito(t *testing.T, db *sql.DB, r relogio.Relogio) *cotacoes.S
 	for caminho, lista := range rotas {
 		srv.Em("GET", caminho, testeapoio.RespostaDeFora{Status: lista[0].Status, Corpo: lista[0].Corpo})
 	}
-	cliente, err := cotacoes.NovoCliente(srv.URL(), srv.URL(), srv.Cliente())
+	cliente, err := cotacoes.NovoCliente(srv.URL(), srv.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
-	return cotacoes.NovoServico(db, cliente, nil, nil, r, slog.New(slog.DiscardHandler))
+	return cotacoes.NovoServico(db, cliente, nil, r, slog.New(slog.DiscardHandler))
 }
 
 // Regra: o extrato é o do ExtratoCarteiraService do C# sobre o mesmo cenário (testdata/extrato.json): o que vira sugestão e o
@@ -325,7 +325,7 @@ func TestExtratoIgualAoCSharp(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := testeapoio.HojeEmBrasilia(hoje.Ano(), hoje.Mes(), hoje.Dia())
-	s := NovoServico(db, nil, nil, nil, cotacoesDoGabarito(t, db, r), nil, r, slog.New(slog.DiscardHandler))
+	s := NovoServico(db, nil, nil, nil, cotacoesDoGabarito(t, db, r), r, slog.New(slog.DiscardHandler))
 
 	sugestoes, err := s.Sugestoes(t.Context())
 	if err != nil {

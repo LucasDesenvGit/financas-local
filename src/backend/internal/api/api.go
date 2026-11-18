@@ -89,11 +89,11 @@ func Montar(d Dependencias) Montado {
 	reservasDaCarteira := reservas.NovoServico(d.DB, cambioDaCarteira, d.Relogio, d.Log)
 	reservas.Registrar(mux, reservasDaCarteira)                                              // #82: as reservas (ADRs 0010, 0037 e 0038)
 	metas.Registrar(mux, metas.NovoServico(d.DB, reservasDaCarteira, par, d.Relogio, d.Log)) // #79: metas e o plano do caixa
-	// O token da brapi só vale depois da troca dos segredos (#85, ADR 0049): o cofre abre a chave no primeiro uso.
+	// O cofre dos segredos (o Client Secret da Pluggy) abre a chave no primeiro uso.
 	cofre := segredos.NovoTardio(d.Config.PastaChaves)
-	cotacoesDaCarteira := cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, cofre, d.Relogio, d.Log)
+	cotacoesDaCarteira := cotacoes.NovoServico(d.DB, cotacoes.ClientePadrao(), cambioDaCarteira, d.Relogio, d.Log)
 	daCarteira := carteira.NovoServico(d.DB, cambioDaCarteira, reservasDaCarteira,
-		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log), cotacoesDaCarteira, cofre, d.Relogio, d.Log)
+		selic.NovoServico(d.DB, selic.ClientePadrao(), d.Relogio, d.Log), cotacoesDaCarteira, d.Relogio, d.Log)
 	carteira.Registrar(mux, daCarteira)                                                                                                     // #82: a carteira
 	conferenciabanco.Registrar(mux, conferenciabanco.NovoServico(d.DB, reservasDaCarteira, daCarteira, cambioDaCarteira, d.Relogio, d.Log)) // #445: conferir com o banco
 	painel.Registrar(mux, painel.NovoServico(d.DB, daCarteira, reservasDaCarteira, cambioDaCarteira, par, contasAPagar, d.Relogio, d.Log))  // #80: empréstimos e relatórios

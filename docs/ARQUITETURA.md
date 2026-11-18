@@ -14,7 +14,7 @@ flowchart TB
     sistema["Finanças Local<br/>[Sistema]<br/>Painel, transações, orçamentos, metas e<br/>investimentos, tudo no seu computador"]
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]<br/>Open Finance: extratos, saldos<br/>e investimentos dos bancos"]
     bcb["Banco Central<br/>[Sistema de fora]<br/>Selic e PTAX"]
-    cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
+    cotacoes["Yahoo Finance<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
     mercado["Mercado Bitcoin<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
     github["GitHub<br/>[Sistema de fora]<br/>Versões novas"]
     noticias["G1, BBC News Brasil e TabNews<br/>[Sistemas de fora]<br/>Notícias, só com o módulo ligado"]
@@ -51,7 +51,7 @@ flowchart TB
 
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]"]
     bcb["Banco Central: Selic e PTAX<br/>[Sistema de fora]"]
-    cotacoes["Yahoo Finance / brapi<br/>[Sistema de fora]"]
+    cotacoes["Yahoo Finance<br/>[Sistema de fora]"]
     mercado["Mercado Bitcoin<br/>[Sistema de fora]"]
     github["GitHub<br/>[Sistema de fora]"]
     noticias["G1, BBC e TabNews<br/>[Sistemas de fora]"]
@@ -141,7 +141,7 @@ flowchart TB
 - **Planejamento × Painel:** os orçamentos e as contas a pagar leem a base dos relatórios (`internal/analises/relatorios`), e os orçamentos, os totais de empréstimos (`internal/patrimonio/emprestimos`).
 - **Investimentos × Transações:** as duas setas existem. Investimentos lê os lançamentos e a categorização, e Transações usa as reservas para reconhecer transferências (`transferencias` importa `reservas`).
 - **Fora do mapa:** tudo o que o back-end inteiro usa: login e sessão, parâmetros, erros do sistema, auditoria, banco e tipos.
-- **Partida:** as seis rotinas que acertam dados ao subir o site (`internal/partida`, #444) só chamam a regra de cada assunto (categorização, transferências, cobranças, carteira), na ordem em que o .NET as rodava.
+- **Partida:** as sete rotinas que acertam dados ao subir o site (`internal/partida`, #444) só chamam a regra de cada assunto (categorização, transferências, cobranças, carteira), na ordem em que o .NET as rodava; a sétima, só do Go, apaga o token antigo da brapi (#763).
 - **Núcleo × módulos:** módulo é a visualização que entra sem mexer no núcleo e pode ser desligada (#190, #191, [ADR 0064](adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)). É compilado no executável, mora em `internal/modulos/<id>`, implementa o contrato do `internal/plataforma/modulos` e se liga em Configurações › Módulos (a escolha fica na `Configuracao`). Desligado, as rotas dele respondem 409 e as tarefas não rodam. O primeiro é o Trabalho (#209, [ADR 0065](adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)), que lê o nome da conta onde o salário cai e não entra nos relatórios. O de Notícias (#10, [ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) não usa nenhum assunto do núcleo.
 
 ## Onde roda o quê
@@ -250,9 +250,9 @@ As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice s
 O site em Go ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md); detalhes no [README](../src/backend/README.md)). Ele substituiu a API em .NET um assunto por vez (épico #70): primeiro atrás dela (#231), depois na frente (#85, versão 3.0.0), e o .NET saiu na #86 (versão 3.2), com a última versão dele na tag `v-ultimo-dotnet`.
 
 - **Um executável só** (`cmd/financas`, `financas-go`): serve o Angular do `wwwroot` e a `/api`, em HTTPS em `127.0.0.1:5443`, como serviço do sistema (`internal/plataforma/servicosistema`: Serviço do Windows ou systemd). O `appsettings.json` (ao lado do executável) e o `appsettings.Production.json` (gerado pela instalação) dizem o banco, as chaves e o certificado.
-- **Ao iniciar:** `-aplicar-esquema` cria ou atualiza o banco pelos scripts de `banco/` (embutidos no executável, com a cópia antes de mudar), e `-rotinas-de-partida` roda as seis rotinas que acertam dados (`internal/partida`, #444).
+- **Ao iniciar:** `-aplicar-esquema` cria ou atualiza o banco pelos scripts de `banco/` (embutidos no executável, com a cópia antes de mudar), e `-rotinas-de-partida` roda as sete rotinas que acertam dados (`internal/partida`, #444).
 - **Login, sessão, CSRF e limite de tentativas:** do próprio Go (`internal/plataforma/autenticacao`, #75), na frente de todas as rotas.
-- **Segredos** (Client Secret da Pluggy, token da brapi): AES-256-GCM, gravados com o prefixo `v2:` na tabela `Configuracao` (`internal/plataforma/segredos`). A chave fica em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows e pela permissão de arquivo no Linux. Os segredos gravados pelo .NET (Data Protection) não são lidos: a tela pede para informá-los de novo.
+- **Segredos** (o Client Secret da Pluggy; o token da brapi saiu na #763, ADR 0072): AES-256-GCM, gravados com o prefixo `v2:` na tabela `Configuracao` (`internal/plataforma/segredos`). A chave fica em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows e pela permissão de arquivo no Linux. Os segredos gravados pelo .NET (Data Protection) não são lidos: a tela pede para informá-los de novo.
 - **Tarefas em segundo plano:** câmbio, cripto e a sincronização do Open Finance (`internal/plataforma/tarefas`).
 - **Erros:** os avisos e erros do log vão para a tabela `ErroSistema` (Configurações › Erros, [ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md); `internal/plataforma/erros`, #298).
 - **Banco:** em WAL, no formato que o EF Core gravava (decimal, data e GUID como texto, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)), para os bancos que já existem continuarem os mesmos. Consultas só parametrizadas (`sqlc` ou `?`); dinheiro nunca em `float64`, nem somado ou comparado no SQL.

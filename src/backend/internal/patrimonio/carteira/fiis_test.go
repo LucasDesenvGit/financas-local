@@ -49,7 +49,7 @@ func TestFiisIgualAoCSharp(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := testeapoio.HojeEmBrasilia(hoje.Ano(), hoje.Mes(), hoje.Dia())
-	s := NovoServico(db, nil, nil, nil, cotacoesFalsas{}, cofreFalso{}, r, slog.New(slog.DiscardHandler))
+	s := NovoServico(db, nil, nil, nil, cotacoesFalsas{}, r, slog.New(slog.DiscardHandler))
 	serie := serieDoGabarito(relogio.Hoje(r))
 	for _, p := range g.Passos {
 		if sql, ok := strings.CutPrefix(p.Nome, "mudar: "); ok {

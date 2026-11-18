@@ -296,12 +296,6 @@ export class ApiService {
   dispensarTrocosAutomaticos(): Observable<void> {
     return this.http.post<void>(`${this.base}/carteira/conferencia/trocos-automaticos/dispensar`, {});
   }
-  configuracaoCotacao(): Observable<{ tokenBrapiConfigurado: boolean }> {
-    return this.http.get<{ tokenBrapiConfigurado: boolean }>(`${this.base}/carteira/configuracao`);
-  }
-  salvarConfiguracaoCotacao(tokenBrapi: string | null, remover: boolean): Observable<void> {
-    return this.http.put<void>(`${this.base}/carteira/configuracao`, { tokenBrapi, remover });
-  }
 
   // Open Finance
   parametros(): Observable<Parametro[]> { return this.http.get<Parametro[]>(`${this.base}/parametros`); }

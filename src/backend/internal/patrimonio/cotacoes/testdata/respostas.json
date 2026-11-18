@@ -59,12 +59,6 @@
    "corpo": "{}"
   }
  ],
- "/api/quote/FFFF3": [
-  {
-   "status": 200,
-   "corpo": "{\"results\": [{\"regularMarketPrice\": 33.333333, \"regularMarketPreviousClose\": 33, \"longName\": null, \"shortName\": \"F Curto\"}]}"
-  }
- ],
  "/v8/finance/chart/GGGG3.SA": [
   {
    "status": 200,
@@ -73,12 +67,6 @@
   {
    "status": 200,
    "corpo": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"1\": {\"amount\": 0.7, \"date\": 1770037200}}}}], \"error\": null}}"
-  }
- ],
- "/api/quote/GGGG3": [
-  {
-   "status": 200,
-   "corpo": "{\"results\": [{\"longName\": \"Sem preço\"}]}"
   }
  ],
  "/v8/finance/chart/HHHH3.SA": [
@@ -91,12 +79,6 @@
    "corpo": "{}"
   }
  ],
- "/api/quote/HHHH3": [
-  {
-   "status": 401,
-   "corpo": "{}"
-  }
- ],
  "/v8/finance/chart/IIII3.SA": [
   {
    "status": 200,
@@ -105,12 +87,6 @@
   {
    "status": 404,
    "corpo": "{}"
-  }
- ],
- "/api/quote/IIII3": [
-  {
-   "status": 200,
-   "corpo": "{\"results\": [{\"regularMarketPrice\": 7.5}]}"
   }
  ],
  "/v8/finance/chart/JJJJ3.SA": [
@@ -131,12 +107,6 @@
   {
    "status": 200,
    "corpo": "{\"chart\": {\"result\": [], \"error\": null}}"
-  }
- ],
- "/api/quote/KKKK3": [
-  {
-   "status": 200,
-   "corpo": "{\"results\": []}"
   }
  ],
  "/v8/finance/chart/LLLL3.SA": [

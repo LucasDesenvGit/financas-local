@@ -242,24 +242,12 @@
     (salvar)="registrarSaida($event)" (fechar)="saidaDe.set(null)" />
 }
 
-<!-- Fonte das cotações -->
+<!-- Fonte das cotações (a brapi saiu na #763: só o Yahoo) -->
 <app-modal [aberto]="configAberta()" titulo="Fonte das cotações" (fechar)="configAberta.set(false)">
-  <form class="formulario" (ngSubmit)="salvarToken(false)">
-    <p>As cotações e os proventos vêm do <strong>Yahoo Finance</strong> (gratuito, sem cadastro, não oficial). A Selic vem da
-      API pública do <strong>Banco Central</strong>. Só o código do ativo é enviado; quantidades e valores ficam no seu computador.</p>
-    <p class="texto-suave">Opcional: um token gratuito da <strong>brapi.dev</strong> é usado como alternativa quando o Yahoo não
-      responder. Ele fica criptografado no banco local.</p>
-    <label>Token da brapi.dev
-      <input type="password" name="token" [(ngModel)]="tokenBrapi" autocomplete="off"
-        [placeholder]="tokenConfigurado() ? '•••••• (configurado)' : 'não configurado'">
-    </label>
-    <div class="rodape-form">
-      @if (tokenConfigurado()) {
-        <button type="button" class="botao botao-perigo" (click)="salvarToken(true)">Remover token</button>
-      }
-      <span class="cresce"></span>
-      <button type="button" class="botao" (click)="configAberta.set(false)">Fechar</button>
-      <button class="botao botao-primario" [disabled]="!tokenBrapi.trim()">Salvar</button>
-    </div>
-  </form>
+  <p>As cotações e os proventos vêm do <strong>Yahoo Finance</strong> (gratuito, sem cadastro, não oficial). A Selic vem da
+    API pública do <strong>Banco Central</strong>. Só o código do ativo é enviado; quantidades e valores ficam no seu computador.</p>
+  <div class="rodape-form">
+    <span class="cresce"></span>
+    <button type="button" class="botao" (click)="configAberta.set(false)">Fechar</button>
+  </div>
 </app-modal>

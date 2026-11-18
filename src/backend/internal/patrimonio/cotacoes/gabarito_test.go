@@ -15,12 +15,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// cofreFalso guarda o segredo às claras: o teste é da cotação, e não da cifra.
-type cofreFalso struct{}
-
-func (cofreFalso) Cifrar(_, segredo string) (string, error)   { return segredo, nil }
-func (cofreFalso) Decifrar(_, gravado string) (string, error) { return gravado, nil }
-
 type semHistorico struct{}
 
 func (semHistorico) GarantirHistorico(context.Context, string, tipos.Data) error { return nil }
@@ -100,7 +94,8 @@ func conferirIgual(t *testing.T, nome string, obtido any, esperado json.RawMessa
 	}
 }
 
-// Regra: a atualização é a do CotacaoService do C#, com as mesmas respostas (testdata/respostas.json) sobre o mesmo cenário:
+// Regra: a atualização é a do CotacaoService do C#, sem a brapi (#763: os ativos que só ela respondia viram falha), com
+// as mesmas respostas (testdata/respostas.json) sobre o mesmo cenário:
 // os pedidos, na ordem e com o endereço exato, e o banco como ficou: o nome, o tipo corrigido pelo nome oficial, o preço com 4
 // casas, os proventos, os fechamentos mensais (o último do mês, o existente corrigido), o IFIX, e o que é falha.
 func TestAtualizarIgualAoCSharp(t *testing.T) {
@@ -131,15 +126,12 @@ func TestAtualizarIgualAoCSharp(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := testeapoio.AgoraEmBrasilia(2026, 10, 30, 15, 0)
-	if _, err := db.Exec(`INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES (?, 'token-de-teste', 1, '2026-01-01 00:00:00')`, ChaveTokenBrapi); err != nil {
-		t.Fatal(err)
-	}
 	srv := respostasDoTeste(t)
-	cliente, err := NovoCliente(srv.URL(), srv.URL(), srv.Cliente())
+	cliente, err := NovoCliente(srv.URL(), srv.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := NovoServico(db, cliente, semHistorico{}, cofreFalso{}, r, slog.New(slog.DiscardHandler))
+	s := NovoServico(db, cliente, semHistorico{}, r, slog.New(slog.DiscardHandler))
 	s.esperar = func(context.Context, time.Duration) error { return nil }
 	obtido, err := s.Atualizar(t.Context(), nil)
 	if err != nil {
