@@ -83,7 +83,7 @@ Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerad
 4. O workflow **Versão (instalador .msi)**:
    - gera o `.msi`;
    - testa instalar, atualizar, desinstalar e migrar;
-   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e, do CHANGELOG, a seção da versão e as de desenvolvimento abaixo dela até a última publicada. Se alguém criou o Release à mão antes, o título e as notas são acertados.
+   - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e, do CHANGELOG, a seção da versão (com as PRs sem arquivo em `changelog.d/` pelo título, em "Outras mudanças", #757) e as de desenvolvimento abaixo dela até a última publicada. Se alguém criou o Release à mão antes, o título e as notas são acertados.
 5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
 6. **Traga a `main` de volta para o `develop`:** PR de `main` para `develop` e merge. Esse merge não sobe a versão, porque o conteúdo já foi contado (ADR 0070). Assim, o `CHANGELOG` do `develop` fica igual ao publicado e a `changelog.d/` esvazia: na 2.17.0, isso não foi feito, e o `develop` ficou sem a seção dela.
 
