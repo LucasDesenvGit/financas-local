@@ -77,6 +77,8 @@ type Resultado struct {
 	TransacoesNovas       int     `json:"transacoesNovas"`
 	TransacoesAtualizadas int     `json:"transacoesAtualizadas"`
 	Mensagem              *string `json:"mensagem"`
+	// Lancamentos (#688): quais foram as novas e as atualizadas; nil quando não houve nenhuma.
+	Lancamentos *Lancamentos `json:"lancamentos"`
 }
 
 func falhou(mensagem string) Resultado { return Resultado{Mensagem: &mensagem} }
@@ -214,6 +216,7 @@ func (s *Servico) Sincronizar(ctx context.Context, conexaoId *int64, origem stri
 		total.Sucesso, mensagem = false, strings.Join(erros, " | ")
 	}
 	total.Mensagem = &mensagem
+	total.Lancamentos = r.lancamentos.resultado()
 	return total, nil
 }
 
@@ -248,6 +251,8 @@ type rodada struct {
 	regras     *categorizacao.Regras
 	descricoes *regrasdescricao.Regras
 	origem     string
+	// lancamentos vêm de todas as conexões, inclusive das contas gravadas antes de uma conexão falhar.
+	lancamentos lancamentosDaRodada
 }
 
 // sincronizarConexao roda uma conexão. A falha fica no log e na conexão, e vira o resultado; erro só no cancelamento.
@@ -403,7 +408,7 @@ func (r *rodada) rotinasDoFim(ctx context.Context) error {
 		func(tx *sql.Tx) (int, error) {
 			return categorizacao.IgnorarComprasParceladasEstornadas(ctx, tx, hoje, r.agora())
 		},
-		func(tx *sql.Tx) (int, error) { return cobrancas.Conciliar(ctx, tx, hoje) },
+		func(tx *sql.Tx) (int, error) { return cobrancas.Conciliar(ctx, tx, hoje, r.agora()) },
 	}
 	for _, rotina := range rotinas {
 		err := banco.EmTransacao(ctx, r.db, func(tx *sql.Tx) error {

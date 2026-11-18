@@ -2,7 +2,8 @@ import { Location } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
 import { TestBed } from '@angular/core/testing';
 import { Icones } from '../../../src/app/compartilhado/ui/icones';
-import { MENU, ShellComponent, ehGrupo, filtrarMenu, grupoDaUrl, telasDoMenu } from '../../../src/app/layout/shell.component';
+import { EntradaMenu, MENU, ShellComponent, ehGrupo, filtrarMenu, grupoDaUrl, telaDeModuloVisivel, telasDoMenu } from '../../../src/app/layout/shell.component';
+import { ModulosService } from '../../../src/app/core/modulos.service';
 import { abrirShell } from '../apoio/shell';
 
 /**
@@ -12,7 +13,9 @@ import { abrirShell } from '../apoio/shell';
  * (ADR 0017); a gaveta do celular não fecha ao abrir um grupo.
  */
 describe('Regressão: menu lateral em grupos (sanfona)', () => {
-  const GRUPOS = ['movimentacao', 'planejamento', 'patrimonio', 'analises', 'ajustes'];
+  const GRUPOS = ['movimentacao', 'planejamento', 'patrimonio', 'analises', 'ajustes', 'trabalho'];
+  /** Os que aparecem com a lista de módulos vazia (abrirShell): o Trabalho é módulo e fica de fora. */
+  const GRUPOS_DO_NUCLEO = GRUPOS.filter((g) => g !== 'trabalho');
 
   it('Painel solto no topo, os grupos do #193 na ordem, com as telas de cada um', () => {
     expect(ehGrupo(MENU[0])).toBe(false);
@@ -23,7 +26,8 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
       ['Planejamento', ['Orçamentos', 'Metas']],
       ['Patrimônio', ['Investimentos', 'Empréstimos e financiamentos']],
       ['Análises', ['Relatórios', 'Visão anual', 'Projeção']],
-      ['Ajustes', ['Categorias e regras', 'Configurações']]
+      ['Ajustes', ['Categorias e regras', 'Configurações']],
+      ['Trabalho', ['Salário', 'Holerites', '13º salário', 'Férias', 'FGTS', 'Rescisão']]   // o módulo (#209), que só aparece ligado
     ]);
     expect(grupos.map((g) => g.id)).toEqual(GRUPOS);
   });
@@ -32,7 +36,8 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
     const t = await abrirShell();
     const links = Array.from(t.raiz.querySelectorAll<HTMLAnchorElement>('nav.menu a'));
     const rotas = links.map((a) => a.getAttribute('href'));
-    expect(rotas).toEqual([...telasDoMenu().map((i) => i.rota), '/manual']);
+    // A lista de módulos vem vazia (abrirShell): as telas de módulo ficam de fora.
+    expect(rotas).toEqual([...telasDoMenu().filter((i) => !i.modulo).map((i) => i.rota), '/manual']);
     expect(new Set(rotas).size).toBe(14);
     expect(links.at(-1)!.classList).toContain('item-manual');
     // Elementos do menu com data-roteiro estável e único, para o roteiro (#194) apontar sem depender de classe.
@@ -43,7 +48,7 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
 
   it('primeira vez: todos os grupos abertos, nada salvo ainda', async () => {
     const t = await abrirShell({ url: '/painel' });
-    for (const g of GRUPOS) {
+    for (const g of GRUPOS_DO_NUCLEO) {
       expect(t.cabecalho(g).getAttribute('aria-expanded')).toBe('true');
       expect(t.telasDoGrupo(g).hasAttribute('inert')).toBe(false);
     }
@@ -79,7 +84,7 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
     await t.atualizar();
     t.cabecalho('analises').click();
     await t.atualizar();
-    for (const g of GRUPOS) expect(t.cabecalho(g).getAttribute('aria-expanded')).toBe('true');
+    for (const g of GRUPOS_DO_NUCLEO) expect(t.cabecalho(g).getAttribute('aria-expanded')).toBe('true');
   });
 
   it('o grupo da tela aberta abre sozinho: pela URL, por um link e pelo voltar do navegador', async () => {
@@ -149,7 +154,7 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
   it('valor estranho salvo vale o padrão (tudo aberto); id que não existe é ignorado', async () => {
     localStorage.setItem(ShellComponent.CHAVE_GRUPOS, '{quebrado');
     const t = await abrirShell({ url: '/painel' });
-    for (const g of GRUPOS) expect(t.cabecalho(g).getAttribute('aria-expanded')).toBe('true');
+    for (const g of GRUPOS_DO_NUCLEO) expect(t.cabecalho(g).getAttribute('aria-expanded')).toBe('true');
 
     TestBed.resetTestingModule();
     localStorage.setItem(ShellComponent.CHAVE_GRUPOS, JSON.stringify(['grupo-que-saiu', 7, 'ajustes']));
@@ -206,24 +211,35 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
     expect(t.app().classList).toContain('menu-aberto');
   });
 
-  describe('módulos que se ligam e desligam (#190): o filtro já está pronto', () => {
+  describe('módulos que se ligam e desligam (#190, #191)', () => {
     it('tela escondida some do grupo; grupo sem nenhuma tela some também', () => {
       const semEmprestimos = filtrarMenu(MENU, (tela) => tela.rota !== '/emprestimos');
       const patrimonio = semEmprestimos.filter(ehGrupo).find((g) => g.id === 'patrimonio')!;
       expect(patrimonio.telas.map((x) => x.rota)).toEqual(['/investimentos']);
 
       const semPatrimonio = filtrarMenu(MENU, (tela) => !['/investimentos', '/emprestimos'].includes(tela.rota));
-      expect(semPatrimonio.filter(ehGrupo).map((g) => g.id)).toEqual(['movimentacao', 'planejamento', 'analises', 'ajustes']);
-      expect(MENU.filter(ehGrupo).length).toBe(5);   // o MENU original fica intacto
+      expect(semPatrimonio.filter(ehGrupo).map((g) => g.id)).toEqual(['movimentacao', 'planejamento', 'analises', 'ajustes', 'trabalho']);
+      expect(MENU.filter(ehGrupo).length).toBe(6);   // o MENU original fica intacto
     });
 
-    it('na tela, trocar o filtro esconde a tela e o cabeçalho do grupo vazio', async () => {
+    it('a tela de um módulo só aparece com ele ligado; a do núcleo, sempre', () => {
+      const grupo: EntradaMenu = { id: 'exemplo', rotulo: 'Exemplo', icone: Icones.painel,
+        telas: [{ rota: '/exemplo', rotulo: 'Exemplo', icone: Icones.painel, modulo: 'exemplo' }] };
+      const menu = [...MENU, grupo];
+      const desligado = filtrarMenu(menu, (tela) => telaDeModuloVisivel(tela, () => false));
+      expect(desligado.filter(ehGrupo).map((g) => g.id)).toEqual(['movimentacao', 'planejamento', 'patrimonio', 'analises', 'ajustes']);
+      // O grupo Trabalho, de módulo, também some desligado.
+      const ligado = filtrarMenu(menu, (tela) => telaDeModuloVisivel(tela, (id) => id === 'exemplo'));
+      expect(ligado.filter(ehGrupo).map((g) => g.id)).toContain('exemplo');
+    });
+
+    it('na tela, o filtro do menu segue a lista de módulos sem recarregar', async () => {
       const t = await abrirShell({ url: '/painel' });
-      t.shell.telaVisivel.set((tela) => !['/categorias', '/configuracoes'].includes(tela.rota));
-      await t.atualizar();
-      expect(t.cabecalho('ajustes')).toBeNull();
-      expect(t.raiz.querySelector('a[href="/categorias"]')).toBeNull();
-      expect(t.cabecalho('analises')).not.toBeNull();
+      const tela = { rota: '/exemplo', rotulo: 'Exemplo', icone: Icones.painel, modulo: 'exemplo' };
+      expect(t.shell.telaVisivel()(tela)).toBe(false);
+      expect(t.shell.telaVisivel()({ ...tela, modulo: undefined })).toBe(true);
+      TestBed.inject(ModulosService).lista.set([{ id: 'exemplo', nome: 'Exemplo', descricao: 'd', acessaInternet: false, destinos: [], ligado: true }]);
+      expect(t.shell.telaVisivel()(tela)).toBe(true);
     });
   });
 

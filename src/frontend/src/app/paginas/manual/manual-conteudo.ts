@@ -82,7 +82,7 @@ export const MANUAL: CapituloManual[] = [
           'No celular, o menu abre pelo botão ☰ no topo. Tocar no nome de um grupo só mostra ou esconde as telas dele; tocar numa tela leva até ela e fecha o menu. Para fechar sem escolher uma tela, toque no ✕, toque fora do menu ou arraste-o para a esquerda.',
           'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
           'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
-          'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações).',
+          'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações). Clicar em “Atualizado há…” sincroniza na hora; o aviso do resultado diz quantas transações são novas e quantas mudaram, e “Ver em Transações” abre só elas.',
           'O sino, também na barra de cima, junta as notificações de qualquer tela: orçamentos estourados e avisos (conta vencida, consentimento vencendo, falha de sincronização, reserva para conferir, erros). O número nele conta o que está pendente. Detalhes em “Painel”, no capítulo das análises.',
           'O botão do olho esconde todos os valores da tela — útil para mostrar a tela a alguém.',
           'A calculadora abre no botão ao lado ou com Alt+C.',
@@ -279,7 +279,8 @@ export const MANUAL: CapituloManual[] = [
           'A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).',
           'A cada vez, ela relê os últimos dias (padrão: 30) para pegar o que mudou ou entrou atrasado.',
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
-          'Para sincronizar na hora, use “Sincronizar agora” em Configurações › Open Finance.',
+          'Para sincronizar na hora, clique em “Atualizado há…” na barra de cima ou use “Sincronizar agora” em Configurações › Open Finance.',
+          'O aviso do resultado (“Sincronizado: 3 nova(s), 2 atualizada(s).”) tem “Ver em Transações”: abre as Transações só com essas, no período delas, com o filtro “Novas e atualizadas na sincronização” em “Filtrando:”. Atualizada é a que já existia e mudou de verdade nessa sincronização. O aviso de “Adicionar” conexão traz o mesmo botão, com as transações da primeira carga. Sem nada novo, o aviso vem sem o botão. Com mais de 200, o botão abre o período inteiro, porque são muitas para listar uma a uma. O aviso fica 10 segundos e não some enquanto o mouse ou o foco estão nele.',
           'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
           'Conta em outra moeda (ex.: em dólar) gera um aviso nas notificações (o sino da barra do topo): o site soma as contas como reais, sem conversão.'
         ],
@@ -421,6 +422,7 @@ export const MANUAL: CapituloManual[] = [
           'Marque “Só emergências” ou “Descrição pouco informativa” quando precisar.',
           'Digite em “Buscar” e aperte Enter para procurar na descrição, no estabelecimento e na observação.',
           'Os filtros ativos aparecem em “Filtrando:”; o ✕ de cada um tira só aquele, e “Limpar filtros” tira todos.',
+          'Quem chega de outra tela com uma lista de lançamentos (o “Ver em Transações” do aviso da sincronização, os trocos do Painel, os FIIs) vê a origem em “Filtrando:”, por exemplo “Novas e atualizadas na sincronização: 5 lançamentos”; o ✕ tira esse filtro e mostra o período inteiro.',
           'Para ordenar a lista, clique no nome da coluna: Data, Categoria, Conta ou Valor (a seta ▲ ▼ mostra qual vale e em que direção); clique de novo para inverter. Em Valor, o maior lançamento vem primeiro, seja gasto ou receita; as sem categoria ficam no fim. A ordem vale para todas as páginas e fica no endereço da página.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
@@ -864,7 +866,7 @@ export const MANUAL: CapituloManual[] = [
   {
     id: 'contas-a-pagar',
     titulo: 'Contas a pagar',
-    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos e as sugestões que vêm do extrato.',
+    resumo: 'Cadastrar vencimentos, pagar, data limite, assinaturas no cartão, débitos automáticos, contas pagas com um cofrinho e as sugestões que vêm do extrato.',
     secoes: [
       {
         id: 'cadastrar-conta',
@@ -893,6 +895,24 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
         dicas: ['O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.']
+      },
+      {
+        id: 'pago-com-cofrinho',
+        titulo: 'Conta paga com um cofrinho',
+        paraQueServe: 'Registrar a conta que o banco paga direto com o dinheiro de um cofrinho (por exemplo, o débito automático pelo “Emergência” no Mercado Pago). Esse pagamento não passa pela conta e não chega pelo Open Finance.',
+        passos: [
+          'No cadastro, escolha a conta de pagamento do Open Finance onde fica o cofrinho. Aparece o campo “Pago com o cofrinho”.',
+          'Em “Pago com o cofrinho”, escolha o cofrinho pelo nome. Se ele ainda não aparece na lista, use “Outro…” e digite o nome como está no app do banco. Para o dinheiro sair da conta, escolha “Nenhum”.',
+          'Com “débito automático”, o site lança a despesa sozinho no dia do vencimento, com o valor e a categoria da conta a pagar, e o vencimento avança. Com “paga à mão”, o “Pagar” já vem com o cofrinho.',
+          'O lançamento sozinho vale a partir do dia em que você marca o “Pago com o cofrinho”: um vencimento mais antigo que isso fica vencido, com “Pagar”, para não aparecer despesa em meses já fechados.',
+          'A despesa entra no mês, na categoria, nos orçamentos e nos relatórios. O saldo estimado do cofrinho baixa; o saldo da conta não muda.',
+          'Na lista aparece “paga pelo cofrinho … em …”. Use “ajustar valor” quando a conta veio diferente (luz, água) e “desfazer” se ela não foi paga assim. Desfeita a baixa automática, o site não lança de novo aquele vencimento sozinho: use “Pagar” se ela foi paga.',
+          'Se a cobrança chegar pelo extrato mesmo assim (o cofrinho estava sem saldo e o banco tirou da conta), com o “Texto da cobrança no extrato”, vale a do banco e a despesa do site sai sozinha.',
+          'Não marcou o cofrinho e o débito automático não apareceu? Depois de uma sincronização sem erro, com os dados do banco já de depois do vencimento, o aviso “não veio” pergunta “Foi paga com um cofrinho?”. Se a cobrança chegar pelo extrato depois mesmo assim, vale a do banco, e a despesa pelo cofrinho sai sozinha. O botão abre o “Pagar” com o cofrinho e a data do vencimento, lança a despesa e, marcado “Usar este cofrinho nas próximas”, guarda o “Pago com”.',
+          'O último pagamento ficou sem a despesa (dado antes de marcar o cofrinho)? A conta mostra “o pagamento de … está sem a despesa” com “lançar pelo cofrinho”, que lança no valor da conta a pagar.'
+        ],
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
+        dicas: ['Se o cofrinho mudar de nome no app do banco, a conta a pagar avisa “não encontrado”: edite e escolha o novo nome.']
       },
       {
         id: 'assinaturas-recorrentes',
@@ -932,7 +952,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Marcar como paga e já ir para o próximo vencimento.',
         passos: [
           'Clique em “Pagar” na conta.',
-          'Confira a data. Se a conta de pagamento for manual, dá para lançar a despesa junto.',
+          'Confira a data. Se a conta de pagamento for manual, ou se a conta é paga com um cofrinho, dá para lançar a despesa junto.',
           'Confirme: o vencimento avança um mês (ou um ano). No último pagamento antes da data limite, a conta é encerrada sozinha.'
         ],
         abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
@@ -1206,6 +1226,9 @@ export const MANUAL: CapituloManual[] = [
           'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
           'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
           'Sem nada informado pelo banco, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
+          'Conta a pagar paga com o cofrinho (Contas a pagar › “Pago com o cofrinho”) também baixa a estimativa dele: a despesa conta como uma retirada.',
+          'Um gasto que saiu direto do cofrinho (uma compra paga com ele)? Use “registrar saída” na linha da reserva: descrição, valor, data e categoria. Ele entra nos relatórios e baixa a estimativa.',
+          'Ao conferir com a data de hoje, se o saldo informado ficar abaixo da estimativa, dá para marcar “Registrar a diferença como gasto do cofrinho”: a diferença vira despesa, em vez de sumir.',
           'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
           'Reservas marcadas “para conferir” geram aviso nas notificações (o sino da barra de cima).'
         ],
@@ -1255,9 +1278,191 @@ export const MANUAL: CapituloManual[] = [
     ]
   },
   {
+    id: 'trabalho',
+    titulo: 'Trabalho (módulo)',
+    resumo: 'O salário pelo bruto, o holerite de cada mês, o 13º, as férias, o FGTS e a rescisão, com o INSS e o IRRF estimados e o histórico. Vem desligado.',
+    secoes: [
+      {
+        id: 'ligar-trabalho',
+        titulo: 'Ligar o Trabalho',
+        paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
+        passos: [
+          'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário, Férias, FGTS e Rescisão) aparece no menu na hora.',
+          'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
+          'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
+        ],
+        abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
+      },
+      {
+        id: 'salario',
+        titulo: 'Salário',
+        paraQueServe: 'Saber o bruto, para onde vão os descontos e o líquido do mês, com o histórico de aumentos. É estimativa, não holerite.',
+        passos: [
+          'Abra Trabalho › Salário. Na primeira vez, cadastre o emprego: empregador, CNPJ (opcional), admissão, regime, jornada mensal (220 h na CLT), dependentes para o IR, a conta onde o salário cai e o salário bruto.',
+          '“O mês” mostra o salário bruto, o INSS, o IRRF e o líquido estimado. Use ‹ › ou o nome do mês para ver outro mês.',
+          '“Como calculei” abre a conta linha a linha: as faixas do INSS, a dedução usada no IRRF (o INSS e os dependentes, ou o desconto simplificado, o que der menos imposto), a faixa, a redução da Lei 15.270/2025 (de 2026 em diante, para rendimento de até R$ 7.350,00) e a fonte de cada tabela.',
+          'Aumento: em “Histórico de salários”, escolha o mês, informe o salário novo e clique em “Gravar aumento”. O salário vale por mês: o aumento conta para o mês inteiro, sem proporção pelos dias. Os meses antes do aumento continuam com o salário de antes; gravar de novo no mesmo mês troca o valor.',
+          '“Apagar” tira um salário do histórico (os meses dele passam a usar o anterior). O primeiro salário, o da admissão, não sai: para mudar o valor dele, grave outro valor no mesmo mês.',
+          'Corrigiu a admissão? O primeiro salário passa a valer desde o mês da nova admissão, para antes ou para depois. Para depois, ela fica antes do primeiro aumento (ou apague o aumento antes). A saída não pode ficar antes de um salário do histórico: apague esse salário antes.',
+          'Estágio e PJ ficam sem o cálculo do INSS e do IRRF.',
+          '“+ Outro emprego” cadastra mais um; os outros aparecem em “Outros empregos”. “Editar emprego” muda os dados ou exclui o emprego.'
+        ],
+        dicas: [
+          'Nada do Trabalho entra nos relatórios: a receita continua sendo a transação do salário na conta. O Trabalho explica esse dinheiro (bruto, descontos), sem contar duas vezes.',
+          'O valor que vale é o do seu holerite: convenção coletiva, benefícios da empresa e arredondamentos mudam o número.',
+          '“O mês” usa o salário cheio, mesmo no mês da admissão, da saída ou do aumento. O holerite do mês (Trabalho › Holerites) é que conta os dias.'
+        ],
+        erros: ['“Ainda não há tabela do INSS ou do IRRF para esse mês”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026. Para meses antes disso, não há estimativa.'],
+        abrir: [{ rotulo: 'Abrir o Salário', rota: '/trabalho/salario' }]
+      },
+      {
+        id: 'holerites',
+        titulo: 'Holerites',
+        paraQueServe: 'Montar o holerite de cada mês pelo salário bruto, com as horas extras e os descontos, ou ler o PDF que a empresa manda, e guardar o histórico.',
+        passos: [
+          'Abra Trabalho › Holerites, escolha o mês e clique em “Abrir o holerite do mês”. O salário vem do Trabalho › Salário, proporcional se você entrou ou saiu no meio do mês (o mês tem 30 dias, como na folha).',
+          'Os lançamentos que você marcou “Repetir nos próximos meses” no último holerite (plano de saúde, pensão) já vêm no mês novo.',
+          '“+ Lançamento” acrescenta: horas extras (as horas e o percentual, 50% ou 100%), adicional noturno (as horas, 20% se não disser), outro provento (bônus, PLR, comissão, ajuda de custo: marque se tem INSS e IRRF), vale-transporte (o custo do mês; o desconto fica em até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outro desconto (marque se deduz do IR).',
+          '“Dias úteis” e “Domingos e feriados” vêm do calendário: segunda a sábado; os domingos e os feriados nacionais de data fixa (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12). Acerte os outros feriados (os estaduais, os municipais e os de data móvel). No mês da admissão ou da saída, conte só os dias do período em que você trabalhou. Eles calculam o DSR, o descanso pago sobre as horas extras e o adicional noturno.',
+          '“Salvar e calcular” mostra o holerite: cada provento e desconto com a referência, o INSS, o IRRF (com a dedução que der menos imposto e a redução da Lei 15.270/2025), os totais, o líquido e o FGTS do mês (que a empresa deposita, sem sair do salário).',
+          '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes.',
+          'A lista à esquerda mostra cada mês, aberto ou fechado, com o líquido. O holerite aberto fica no endereço da página, então o voltar do navegador funciona.',
+          '“Recebido na conta”: ligue ao holerite o crédito do salário que caiu na conta. Em “Parece o salário”, o site sugere os créditos do dia 15 do mês ao dia 15 do seguinte, dizendo por quê (valor perto do líquido, o banco marcou como salário, cita o empregador, na conta do salário); “Outros créditos do período” deixa ligar qualquer outro. Um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite (o site liga só o que falta do líquido).',
+          'A tela mostra quanto foi recebido e a diferença para o líquido estimado. A transação ligada que estava sem categoria passa para “Salário”, como escolha sua. “Desligar” desfaz.',
+          'O site só sugere um crédito com um motivo forte: o valor perto do líquido, o banco marcou como salário ou cita o empregador. Um crédito pequeno (abaixo de 20% do líquido) não conta como “parte”, e a transferência entre contas suas nunca é sugerida; os dois ficam em “Outros créditos do período”.',
+          'Se o banco trocar o código do crédito ligado (a transação pendente que vira efetivada), a ligação fica e o site religa sozinho na transação nova (mesma conta, mesmo valor, até 5 dias de diferença). Enquanto isso, o crédito aparece com o aviso “sumiu na sincronização”. O crédito ligado que virou débito também aparece com o aviso, não conta, e dá para desligar.',
+          '“Ler holerite em PDF” preenche o mês com o PDF que a empresa manda: escolha um ou vários (o ano de uma vez). Se o PDF tiver senha (parte do CPF, a data de nascimento), o site pede; ela só abre o arquivo e não é guardada.',
+          'A prévia mostra cada linha do PDF: o tipo que o site deu (salário, horas extras, DSR, INSS, IRRF, vale-transporte, plano de saúde, adiantamento…), o valor e o trecho do PDF de onde saiu. A situação diz “reconhecido”, “reconhecido pelo que você escolheu antes” ou “escolha o tipo”. Dá para trocar o tipo, corrigir o valor ou deixar a linha de fora.',
+          'A prova real confere a soma de cada coluna com o total impresso e proventos menos descontos com o líquido. Se não bater, ela diz qual total e por quanto: o leitor errou alguma linha, ou alguma ficou de fora.',
+          'A prévia também mostra o INSS, o IRRF e o líquido lidos ao lado dos calculados pelas tabelas, e avisa do que não confere: o CNPJ do PDF não é o do emprego, o salário base é outro (se foi aumento, registre em Trabalho › Salário), o mês já está fechado.',
+          'Nada é gravado até “Confirmar e gravar”. O holerite lido entra fechado e marcado “Lido do PDF”: vale o que a empresa pagou, e o 13º, as férias, o FGTS e a rescisão passam a usar esses números. O aviso traz “Desfazer” por alguns segundos; depois, “Reabrir” volta para a estimativa do site.'
+        ],
+        dicas: [
+          'Rubrica que o site não conhece (“escolha o tipo”): ela vem sem tipo, e o “Confirmar e gravar” espera você escolher (ou deixar a linha de fora). Escolha uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida. Vale também para a que você corrigiu.',
+          'O PDF é lido no seu computador, sem nenhum serviço de fora, e não fica guardado: só os valores do holerite.',
+          'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
+          'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',
+          'O mês tem 30 dias, como na folha: quem entra no dia 15 recebe 16 dias (30 − 15 + 1), também em fevereiro.',
+          'O holerite não é receita: a receita continua sendo a transação do salário na conta. Ligar o crédito ao holerite só explica esse dinheiro, e os relatórios contam a receita uma vez só.'
+        ],
+        erros: [
+          '“Este PDF é uma imagem”: o PDF escaneado ou a foto não têm texto, e por enquanto o leitor só lê PDF com texto. Digite o holerite com “Abrir o holerite do mês”.',
+          '“Não achei a tabela do holerite”: o PDF não tem as colunas de vencimentos e de descontos, ou não é um holerite. Digite o holerite.',
+          '“O PDF passa do limite”: o arquivo vai até 700 KB e 5 páginas. Mande só o holerite do mês.',
+          '“O holerite do mês está fechado”: reabra o mês antes de gravar o lido.'
+        ],
+        abrir: [{ rotulo: 'Abrir os Holerites', rota: '/trabalho/holerites' }]
+      },
+      {
+        id: 'decimo-terceiro',
+        titulo: '13º salário',
+        paraQueServe: 'Saber quanto vem de 13º, em quais datas, e quanto já veio adiantado.',
+        passos: [
+          'Abra Trabalho › 13º salário e escolha o ano em ‹ ›.',
+          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano. As horas de cada mês valem pelo salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor. O mês sem holerite entra como zero, e a tela avisa quantos meses têm.',
+          'A 1ª parcela, até 30/11, é metade do 13º, sem desconto. A 2ª, até 20/12, é o 13º menos o INSS, o IRRF e a 1ª parcela.',
+          'O IR do 13º é separado do salário: só as deduções da lei (INSS e dependentes), e a redução da Lei 15.270/2025 também vale para ele.',
+          'Se a 1ª parcela veio antes (com as férias) ou num valor diferente, informe em “A 1ª parcela que veio”: a 2ª é recalculada. Só a data, sem o valor, mantém a metade calculada. “Voltar ao padrão” desfaz.',
+          '“Como calculei” mostra cada passo da conta.'
+        ],
+        dicas: ['Se você saiu no ano, o 13º proporcional vem na rescisão, e a tela avisa.'],
+        erros: ['“Estágio e PJ não têm 13º salário pela CLT”: o emprego cadastrado não é CLT.',
+          '“A 1ª parcela informada passa do 13º líquido”: a 2ª fica zero, e a diferença a empresa desconta. Confira o valor informado; ele não pode passar do 13º do ano inteiro.'],
+        abrir: [{ rotulo: 'Abrir o 13º salário', rota: '/trabalho/decimo-terceiro' }]
+      },
+      {
+        id: 'ferias',
+        titulo: 'Férias',
+        paraQueServe: 'Saber quantos dias de férias você tem, até quando tirar, agendar e calcular quanto vem, inclusive vendendo dias.',
+        passos: [
+          'Abra Trabalho › Férias. Cada período aquisitivo (12 meses de trabalho, contados da admissão) mostra os dias de direito, os agendados, os vendidos, quantos sobram e até quando tirar (o concessivo, os 12 meses seguintes).',
+          '“Vencida” quer dizer que o prazo passou com dias sobrando: a empresa paga essas férias em dobro. “Vencendo”: faltam 60 dias ou menos para o prazo.',
+          'As faltas sem justificativa no período diminuem os dias de direito: até 5, 30 dias; de 6 a 14, 24; de 15 a 23, 18; de 24 a 32, 12; acima de 32, nenhum (CLT, art. 130). Digite as faltas no período.',
+          'Para agendar, escolha o período, o dia do início, os dias de férias e os vendidos (até 1/3, 10 de 30), e se a 1ª parcela do 13º vem junto. As férias podem ir em até 3 frações: uma de 14 dias ou mais e as outras de 5 ou mais. Com menos de 14 dias de direito (12, com 24 a 32 faltas), elas vão num bloco só. Uma fração não pode cruzar com outra já agendada.',
+          'A 1ª parcela do 13º vem junto com as férias uma vez por ano, quando elas são pagas (2 dias antes do início) até 30/11, quando a 1ª vence, e no mesmo ano. Pedida nas férias, ela já aparece em Trabalho › 13º salário, com a data do pagamento delas e o valor que elas pagaram (a metade da remuneração do mês do início).',
+          'Férias marcadas depois do prazo (o fim do concessivo) saem em dobro: os dias depois do prazo a empresa paga duas vezes (CLT, art. 137).',
+          '“Ver a conta” mostra as férias e o 1/3 (com INSS e IRRF), o abono e o 1/3 dele (sem desconto), o 13º adiantado e o que cai na conta, até 2 dias antes do início. A remuneração é o salário do mês mais a média das horas extras dos 12 meses antes.',
+          '“Comparar” mostra lado a lado tirar todos os dias de direito × vender 1/3 deles (30 × vender 10; com 24 de direito, 24 × vender 8): quanto entra em cada caso.',
+          '“Desmarcar” apaga um agendamento e devolve os dias ao período.'
+        ],
+        dicas: ['O salário do mês seguinte às férias vem menor: os dias de férias já foram pagos antes.',
+          'Com o 13º junto, a 2ª parcela em Trabalho › 13º salário já desconta o que veio com as férias. Só informe a 1ª parcela lá se a empresa pagou outro valor.',
+          'Os dias depois do fim do prazo de concessão saem em dobro, também no “Ver a conta”. A dobra não paga INSS (Lei 8.212/1991, art. 28, § 9º, “d”); o IRRF é sobre o total.'],
+        erros: ['“As férias de um período começam depois que ele termina”: o período aquisitivo ainda não completou 12 meses na data escolhida.',
+          '“Com N faltas, o direito cai para…”: as faltas novas deixariam o direito menor que o já agendado. Desmarque férias antes.',
+          '“As férias começam depois da saída do emprego”: as férias que sobraram vêm na rescisão (Trabalho › Rescisão).'],
+        abrir: [{ rotulo: 'Abrir as Férias', rota: '/trabalho/ferias' }]
+      },
+      {
+        id: 'fgts',
+        titulo: 'FGTS',
+        paraQueServe: 'Acompanhar o FGTS do emprego: quanto entra por mês, o saldo e os saques.',
+        passos: [
+          'Abra Trabalho › FGTS. O saldo é estimado mês a mês desde a admissão: 8% da base do INSS do holerite do mês (ou do salário, sem holerite), mais 8% do 13º (a 1ª parcela no mês em que foi paga, o resto em dezembro) e das férias (com o 1/3) no mês em que começam, corrigido a 3% ao ano. Os dias de férias saem do salário do mês: as férias já pagam esses dias.',
+          'Com mais de um emprego CLT, escolha o emprego no alto da tela: o FGTS de um emprego antigo continua lá, e depois da saída o saldo segue corrigido, sem depósito.',
+          'Em “Lançar”, escolha “Saldo que vi no app do FGTS” e digite o saldo do app: a estimativa recomeça dali, e a tela mostra a diferença entre o app e o que o site estimava. A empresa deposita o FGTS do mês até o dia 20 do mês seguinte: o site soma depois da conferência os depósitos que o app ainda não mostrava naquele dia. Diferença grande pode ser depósito que a empresa não fez.',
+          'Saque: escolha o motivo (rescisão, saque-aniversário, compra de imóvel ou outro). Distribuição de resultados: o valor que a Caixa creditou.',
+          '“Os últimos meses” mostra a correção, o depósito, os saques e o saldo de cada mês; “conferido” marca o mês em que o saldo é o do app.',
+          '“Excluir” apaga um lançamento, e o saldo é recalculado.'
+        ],
+        dicas: [
+          'O FGTS não entra no patrimônio do Painel nem nos relatórios: é seu, mas só sai em casos da lei. O saque entra pela transação na conta, como qualquer crédito.',
+          'A correção oficial é a TR mais 3% ao ano; a TR fica de fora da estimativa. Por isso, confira com o app de vez em quando.',
+          'Com o saque-aniversário, se você for demitido sem justa causa, sai só a multa de 40%: o saldo fica bloqueado.'
+        ],
+        erros: ['“Estágio e PJ não têm FGTS”: o emprego cadastrado não é CLT.'],
+        abrir: [{ rotulo: 'Abrir o FGTS', rota: '/trabalho/fgts' }]
+      },
+      {
+        id: 'rescisao',
+        titulo: 'Rescisão',
+        paraQueServe: 'Simular quanto se recebe ao sair do emprego em cada tipo de desligamento, e registrar a rescisão real.',
+        passos: [
+          'Abra Trabalho › Rescisão, escolha o tipo (dispensa sem justa causa, pedido de demissão, acordo, justa causa ou fim do contrato de experiência), o aviso prévio e a data de saída, e clique em “Simular”.',
+          '“A conta” mostra as verbas: o saldo de salário, o aviso prévio indenizado (30 dias mais 3 por ano de casa, até 90; no acordo, a metade), o 13º e as férias proporcionais (com o 1/3) e as férias vencidas (em dobro, se o prazo para tirar passou). E os descontos: INSS e IRRF do saldo de salário e do 13º, a 1ª parcela do 13º que já veio e, no pedido de demissão sem cumprir o aviso, 30 dias de salário.',
+          'O aviso indenizado conta como tempo de serviço: a data projetada aparece e vale para o 13º e as férias.',
+          'O FGTS: o saldo estimado até o mês antes da saída (Trabalho › FGTS), o depósito da rescisão (o mês da saída, o aviso e o 13º; saindo depois de 20/12, também o FGTS do 13º do ano, que vence em 20/01), a multa (40% na dispensa sem justa causa, 20% no acordo) sobre todos os depósitos, sem descontar os saques, e quanto dá para sacar (tudo, 80% no acordo, nada no pedido de demissão e na justa causa; com o saque-aniversário, só a multa). E se pode haver seguro-desemprego.',
+          'O aviso indenizado conta como tempo de serviço: se ele passa do ano, o 13º ganha os avos do ano seguinte. Saindo depois de 20/12, o 13º do ano já veio inteiro e não entra. No acordo, o aviso é pago pela metade, com o meio dia.',
+          '“Comparar os tipos” mostra, na mesma data, quanto cai na conta e quanto sai do FGTS em cada tipo.',
+          '“Registrar esta rescisão” guarda a conta como está e fecha o emprego na data de saída. “Desfazer o registro” reabre.'
+        ],
+        dicas: ['Na justa causa, só vêm o saldo de salário e as férias vencidas.',
+          'As férias indenizadas e o aviso indenizado não têm INSS nem IR; o 13º tem os dele, separados.'],
+        erros: ['“Ainda não há tabela do INSS ou do IRRF para o mês da saída”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026.'],
+        abrir: [{ rotulo: 'Abrir a Rescisão', rota: '/trabalho/rescisao' }]
+      }
+    ]
+  },
+  {
+    id: 'noticias',
+    titulo: 'Notícias (módulo)',
+    resumo: 'As notícias do dia do G1, da BBC News Brasil e do TabNews. Vem desligado, porque acessa a internet.',
+    secoes: [
+      {
+        id: 'noticias',
+        titulo: 'Notícias',
+        paraQueServe: 'Ver as principais notícias do dia no mesmo lugar das finanças.',
+        passos: [
+          'Ligue o módulo em Configurações › Módulos (ou pelo botão “Ligar Notícias” no endereço da tela). Ligado, ele acessa g1.globo.com, feeds.bbci.co.uk e www.tabnews.com.br; desligado, nada sai do computador.',
+          'Com o módulo ligado, o site busca as notícias a cada 45 minutos e guarda as 20 mais novas de cada fonte. A tela “Notícias” aparece no menu.',
+          'Cada notícia mostra o título, a fonte e quando saiu. Clique no título para ler no site da notícia, em outra aba.',
+          'Os botões no topo filtram por fonte. Embaixo deles, a situação de cada fonte: quando foi atualizada e se a última tentativa falhou (as outras continuam aparecendo).',
+          '“Atualizar agora” busca na hora, no máximo uma vez a cada 5 minutos.'
+        ],
+        dicas: ['Só o pedido de cada fonte sai do computador, sem nada seu. As fontes ficam sabendo o endereço de internet da sua casa, como em qualquer site que você abre.',
+          'As imagens das notícias não aparecem: o site não carrega nada de fora (é a regra de segurança dele).'],
+        erros: ['“As notícias foram atualizadas há pouco”: espere 5 minutos para o “Atualizar agora”.',
+          'Uma fonte com “a última tentativa falhou”: o site dela não respondeu ou mudou o formato. Os detalhes ficam em Configurações › Erros.',
+          '“As notícias estão sendo buscadas agora”: a busca de 45 minutos está rodando; veja de novo em alguns segundos.',
+          '“Não deu para ler as notícias”: o site não respondeu (ele pode estar reiniciando). “Tentar de novo” lê outra vez.'],
+        abrir: [{ rotulo: 'Abrir as Notícias', rota: '/noticias' }, { rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
+      }
+    ]
+  },
+  {
     id: 'configuracoes',
     titulo: 'Configurações',
-    resumo: 'Parametrização, aparência, segurança e os erros do sistema.',
+    resumo: 'Parametrização, módulos, aparência, segurança e os erros do sistema.',
     secoes: [
       {
         id: 'parametrizacao',
@@ -1270,6 +1475,20 @@ export const MANUAL: CapituloManual[] = [
           'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.'
         ],
         abrir: [{ rotulo: 'Abrir a Parametrização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
+      },
+      {
+        id: 'modulos',
+        titulo: 'Módulos',
+        paraQueServe: 'Ligar só as partes do site que vão além do básico das finanças e que você quer usar. Desligado, o módulo some do menu, não roda nada em segundo plano e não acessa a internet.',
+        passos: [
+          'Abra Configurações › Módulos.',
+          'Cada módulo mostra o que faz e se acessa a internet (e para onde). Ligue ou desligue pelo interruptor: vale na hora, sem recarregar a página, e em qualquer navegador.',
+          'Ligado, a tela do módulo aparece no menu, e o que ele faz em segundo plano (buscar as notícias, por exemplo) roda na hora. Desligado, ela some; se você abrir o endereço dela, o site mostra que o módulo está desligado, com o botão para ligar.',
+          'Desligar não apaga nada: os dados do módulo ficam guardados e voltam quando você ligar de novo.',
+          'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).'
+        ],
+        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). Clique em “Tentar de novo”; enquanto isso, as telas dos módulos ficam fora do menu.'],
+        abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       },
       {
         id: 'aparencia',
@@ -1289,7 +1508,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
-          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador; com o acesso pelo celular ligado, o celular aparece pelo IP dele na rede.',
+          '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, módulos ligados ou desligados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador; com o acesso pelo celular ligado, o celular aparece pelo IP dele na rede.',
           'Os acessos ficam guardados por 180 dias e depois são apagados sozinhos, uma vez por dia. Para mudar o prazo (de 30 a 730 dias), use Configurações › Parametrização › Segurança, “Guardar o histórico de acessos por”.'
         ],
         abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
@@ -1419,8 +1638,9 @@ export const MANUAL: CapituloManual[] = [
 
 /** Capítulo (e seção) do manual da tela de uma URL ("/transacoes?x=1" → transações); null fora das telas do menu. */
 export function ajudaDaUrl(url: string): { capitulo: string; secao?: string } | null {
-  const tela = url.split(/[/?#]/).filter(Boolean)[0] ?? '';
-  return AJUDA_POR_ROTA[tela] ?? null;
+  // #211: a tela de um módulo tem dois trechos ("trabalho/holerites"); vale o mais específico.
+  const partes = url.split(/[?#]/)[0].split('/').filter(Boolean);
+  return AJUDA_POR_ROTA[partes.slice(0, 2).join('/')] ?? AJUDA_POR_ROTA[partes[0] ?? ''] ?? null;
 }
 
 /**
@@ -1441,5 +1661,12 @@ export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }
   projecao: { capitulo: 'relatorios', secao: 'projecao' },
   categorias: { capitulo: 'categorias' },
   configuracoes: { capitulo: 'configuracoes' },
+  trabalho: { capitulo: 'trabalho', secao: 'salario' },
+  'trabalho/holerites': { capitulo: 'trabalho', secao: 'holerites' },
+  'trabalho/decimo-terceiro': { capitulo: 'trabalho', secao: 'decimo-terceiro' },
+  'trabalho/ferias': { capitulo: 'trabalho', secao: 'ferias' },
+  'trabalho/fgts': { capitulo: 'trabalho', secao: 'fgts' },
+  'trabalho/rescisao': { capitulo: 'trabalho', secao: 'rescisao' },
+  noticias: { capitulo: 'noticias' },
   'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
 };

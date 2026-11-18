@@ -44,7 +44,7 @@ As áreas são as mesmas das telas do front-end (`src/frontend/src/app/paginas/`
 
 ## Entrada e saída
 
-- **Corpo JSON:** `respostas.LerObjeto(w, r, "dto", "<nome do tipo>", campos...)`, com um campo por propriedade:
+- **Corpo JSON:** `respostas.LerObjeto(w, r, campos...)`, com um campo por propriedade:
   - `CampoTexto`: obrigatório, tamanho máximo e expressão regular;
   - `CampoInteiro` e `CampoInteiroOpcional`: aceitam número em texto, com faixa de valores;
   - `CampoEnum`: só número, de 0 a 255;
@@ -52,7 +52,7 @@ As áreas são as mesmas das telas do front-end (`src/frontend/src/app/paginas/`
   - `CampoBool`: o valor quando a propriedade não vem vai no `Valor`.
 
   Ele responde sozinho o 400 com as mensagens de validação. O nome do tipo aparece na mensagem de erro de conversão, e os testes de contrato a conferem: copie o de um assunto vizinho.
-- **Query:** o nome não diferencia maiúsculas e vale o primeiro valor. O que não converte para o tipo do parâmetro é o 400 `The value 'x' is not valid.`
+- **Query:** o nome não diferencia maiúsculas e vale o primeiro valor. O que não converte para o tipo do parâmetro é o 400 `O valor 'x' não é válido.`
 - **Rota `{id:int}`:** o que não é int de 32 bits cai no 404 sem corpo.
 - **Erro de regra:** `respostas.Mensagem(w, status, "...")`, o `{"mensagem"}` com o texto que o front-end mostra. Erro inesperado: o 500 genérico (`servidor.ResponderErroInterno`), com o erro no log.
 - **DTO de saída:** uma struct com as propriedades em camelCase, na ordem que o contrato espera. Lista vazia sai `[]`, e não `null`.

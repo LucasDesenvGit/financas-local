@@ -17,6 +17,8 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/categorias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/parametros"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/analises/painel"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/noticias"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/conferenciabanco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contasagendadas"
@@ -34,6 +36,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/planejamento/metas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/planejamento/orcamentos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/config"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/saude"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/segredos"
@@ -56,6 +59,7 @@ func NovasRotas(d Dependencias) *http.ServeMux { return Montar(d).Rotas }
 type Montado struct {
 	Rotas         *http.ServeMux
 	Sincronizacao *sincronizacao.Servico // a mesma instância nas rotas e na tarefa, por causa da trava de uma rodada por vez
+	Modulos       *modulos.Catalogo      // os módulos (ADR 0064): o cmd/financas roda as tarefas deles
 }
 
 // Montar monta os assuntos. Caminho sem rota recebe 404 sem corpo, como o MapFallback("/api/{**caminho}") do .NET.
@@ -100,5 +104,12 @@ func Montar(d Dependencias) Montado {
 	}
 	sincronia := sincronizacao.NovoServico(d.DB, cofre, clientePluggy, daCarteira, d.Relogio, d.Log)
 	openfinance.Registrar(mux, openfinance.NovoServico(d.DB, cofre, par, sincronia, cotacoesDaCarteira, d.Relogio, d.Log)) // #83: as rotas do Open Finance
-	return Montado{Rotas: mux, Sincronizacao: sincronia}
+
+	// Os módulos (#190, ADR 0064): um catalogo.Adicionar por módulo, na ordem em que aparecem em Configurações ›
+	// Módulos. O catálogo guarda as rotas de cada um (desligado, 409) e põe as dele (GET /api/modulos).
+	catalogo := modulos.NovoCatalogo(d.DB, d.Relogio, d.Log)
+	catalogo.Adicionar(trabalho.Novo(d.DB, d.Relogio, d.Log)) // #209, #210: o primeiro módulo
+	catalogo.Adicionar(noticias.Novo(d.DB, d.Relogio, d.Log)) // #10: acessa a internet, nasce desligado (ADR 0067)
+	catalogo.Montar(mux)
+	return Montado{Rotas: mux, Sincronizacao: sincronia, Modulos: catalogo}
 }

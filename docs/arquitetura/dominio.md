@@ -140,6 +140,25 @@ stateDiagram-v2
     instalador --> [*]: abriu, e o gerenciador fecha
 ```
 
+O holerite do mês, no Trabalho (#211; o lido do PDF, #228):
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "Aberto (estimativa)" as aberto
+    state "Fechado (calculado)" as fechado
+    state "Fechado (lido do PDF)" as lido
+    [*] --> aberto: Abrir o holerite do mês
+    [*] --> lido: Confirmar o PDF (mês sem holerite)
+    aberto --> fechado: Fechar o mês
+    aberto --> lido: Confirmar o PDF (guarda os lançamentos)
+    fechado --> aberto: Reabrir (auditoria)
+    lido --> aberto: Reabrir (auditoria), com os lançamentos de antes
+    lido --> aberto: Desfazer, se substituiu a estimativa
+    lido --> [*]: Desfazer, se o mês não tinha holerite
+    aberto --> [*]: Excluir
+```
+
 ## Classes do domínio
 
 Só o centro do domínio: quem pertence a quem e a regra principal de cada um.
@@ -195,6 +214,20 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 
 | Termo | No código | Regra principal | No glossário |
 |---|---|---|---|
+| Módulo | `modulos.Modulo`, `internal/modulos/<id>`, `ModulosService` | Visualização fora do núcleo que se liga e desliga em Configurações › Módulos; desligada, não roda nem acessa a internet ([ADR 0064](../adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)) | — |
+| Salário com vigência | `SalarioVigencia`, `emprego.SalarioDoMes` | O salário de um mês é o da última vigência que começou até ele; um aumento não muda o passado ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)) | — |
+| Tabela do INSS e do IRRF | `encargos.TabelaInss`, `encargos.TabelaIrrf`, `encargos.Vigente` | Vale a da última vigência que começou até o mês; o IRRF usa a dedução que der menos imposto e, desde 2026, a redução da Lei 15.270/2025 | — |
+| Holerite | `Holerite`, `holerite.Calcular` | Aberto, é calculado na hora; fechado, guarda o cálculo (`Calculo`) e não muda com o salário ou a tabela depois ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). Não é receita | — |
+| Avos do 13º | `decimoterceiro.Avos` | Cada mês do ano em que a pessoa trabalhou 15 dias ou mais (de calendário) conta 1/12 | — |
+| Período aquisitivo e concessivo | `ferias.Periodos` | Cada 12 meses de trabalho dão férias, que têm de ser tiradas nos 12 meses seguintes; vencido com saldo, a empresa paga em dobro | — |
+| Abono pecuniário | `ferias.Calcular` | A venda de até 1/3 dos dias de férias; o abono e o 1/3 dele não têm INSS nem IR | — |
+| FGTS estimado | `fgts.Estimar` | 8% da base de cada mês (e do 13º e das férias), corrigido a 3% ao ano, recomeçando da última conferência com o app; fora do patrimônio ([ADR 0066](../adr/0066-fgts-fora-do-patrimonio-estimado-no-trabalho.md)) | — |
+| Recebimento do salário | `HoleriteRecebimento`, `recebimento.Pontuar` | A transação que pagou o holerite; só explica a receita, que continua sendo a transação, uma vez só ([ADR 0065](../adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)) | — |
+| Holerite lido do PDF | `Holerite.Origem` = 2, `holerite.GravarLido` | Fechado, com o cálculo montado das linhas que a pessoa confirmou: vale o que a empresa pagou, e o 13º, as férias e o FGTS usam esses números. Reabrir volta para a estimativa ([ADR 0068](../adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) | — |
+| Rubrica | `leitor.Rubrica`, `holeritepdf.Classificar`, `HoleriteRubricaEscolha` | Uma linha do holerite da empresa (código, descrição, referência, valor). O tipo vem do dicionário no código ou do que a pessoa escolheu antes para o mesmo emprego | — |
+| Prova real do holerite | `leitor.Prova` | A soma das rubricas de cada coluna contra o total impresso, e proventos menos descontos contra o líquido impresso: se não bate, o leitor errou alguma linha | — |
+| Aviso prévio proporcional | `rescisao.DiasDeAviso`, `rescisao.AvisoPago` | 30 dias mais 3 por ano de casa, até 90 (Lei 12.506/2011); indenizado, conta como tempo de serviço (a data projetada) | — |
+| DSR | `holerite.Calcular`, `DiasDoDsr` | Descanso semanal remunerado sobre as horas extras e o adicional noturno: o total ÷ os dias úteis × os domingos e feriados | — |
 | Fatura do mês | `faturas.DoMes` | A fatura que fecha no mês escolhido, a mesma no Painel e em Contas | `faturaDoMes` |
 | Dívida total | `conferenciabanco.CartaoDto` | O saldo negativo do cartão, com as parcelas futuras; nunca abaixo de zero | `dividaCartao` |
 | Natureza do gasto | `NaturezaGasto`, `Categoria.Natureza` | Essencial ou estilo de vida, para a regra 50/30/20 | — |
@@ -206,4 +239,7 @@ O [glossário do site](../../src/frontend/src/app/compartilhado/glossario/glossa
 | Emergência | `Transacao.Emergencia` | Gasto marcado à mão, destacado nos relatórios e orçamentos | `reservaEmergencia`, para a reserva |
 | Reserva | `ReservaDto`, `internal/patrimonio/reservas` | Dinheiro separado dentro de uma conta ([ADR 0010](../adr/0010-reservas-estimadas-pelo-extrato.md), [0037](../adr/0037-reservas-pelo-valor-do-open-finance.md)) | — |
 | Conta a pagar | `ContaAgendada` | Compromisso com vencimento e recorrência; não confundir com `Conta` | — |
+| Pago com o cofrinho | `ContaAgendada.ReservaNome`, `Transacao.ReservaNome`, `PagamentoCofrinho`, `cobrancas.PagarPeloCofrinho` | Gasto que sai direto de uma reserva, sem passar pela conta: o app lança a despesa (no vencimento, no débito automático), a reserva baixa e o saldo da conta não muda ([ADR 0063](../adr/0063-gasto-pago-direto-de-um-cofrinho.md)) | — |
+| Notícia | `noticias.Noticia`, tabela `Noticia` | Uma notícia pública guardada de uma fonte: título, link (`https://` num domínio da fonte) e data; as 20 mais novas de cada fonte, trocadas a cada busca ([ADR 0067](../adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) | — |
+| Fonte de notícias | `fontes.Fonte`, tabela `NoticiaFonte` | G1, BBC News Brasil ou TabNews: o endereço, o leitor e os domínios dos links; guarda quando deu certo e o erro da última tentativa | — |
 | Acesso pelo celular | `internal/plataforma/celular`, `Configuracao` `AcessoCelular.Ip` | Desligado por padrão; ligado, o site escuta também num IPv4 privado da rede de casa, com o certificado da autoridade local ([ADR 0061](../adr/0061-acesso-pelo-celular-na-rede-local.md)) | — |

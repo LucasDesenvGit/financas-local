@@ -18,11 +18,16 @@ ASSUNTOS = {
     "Segurança": ["Usuario", "AuditoriaAcesso", "Configuracao"],
     "Open Finance": ["ConexaoBancaria", "SincronizacaoLog", "CategoriaPluggy"],
     "Financeiro": ["Conta", "FaturaCartao", "Transacao", "Categoria", "RegraCategorizacao", "RegraDescricao"],
-    "Planejamento": ["Orcamento", "Meta", "MetaAporte", "ContaAgendada"],
+    "Planejamento": ["Orcamento", "Meta", "MetaAporte", "ContaAgendada", "PagamentoCofrinho"],
     "Investimentos": ["Investimento", "HistoricoInvestimento", "Ativo", "OperacaoAtivo", "ProventoAtivo", "PrecoMensalAtivo",
                       "Emprestimo", "PagamentoEmprestimo", "ReservaConferencia"],
     "Índices e cotações": ["TaxaSelicDiaria", "IndiceMensal", "CotacaoMoeda", "CotacaoCripto"],
     "Sistema": ["ErroSistema"],
+    "Trabalho (módulo)": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa", "Holerite",
+                          "HoleriteLancamento", "DecimoTerceiro",
+                          "FeriasFaltas", "FeriasAgendamento", "FgtsLancamento",
+                          "HoleriteRecebimento", "Rescisao", "HoleriteRubricaEscolha"],
+    "Notícias (módulo)": ["Noticia", "NoticiaFonte"],
 }
 
 

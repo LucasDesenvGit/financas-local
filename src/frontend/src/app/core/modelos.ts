@@ -291,6 +291,22 @@ export interface ContaAgendada {
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** Inativa por ter passado da data limite ao pagar. */
   encerrada: boolean;
+  /** #691: "Pago com" este cofrinho (reserva) da conta de pagamento; null = o saldo da conta. */
+  reservaNome: string | null;
+  /** #691: a última baixa que o app deu pelo cofrinho, com "Ajustar valor" e "Desfazer". */
+  ultimoPeloCofrinho: PagamentoCofrinho | null;
+  /** #691: o último pagamento (recente) que ficou sem despesa, para lançar pelo cofrinho. */
+  ultimoSemDespesa?: string | null;
+}
+
+/** #691: gasto pago direto de um cofrinho (POST /reservas/saida). */
+export interface SaidaReserva {
+  contaId: number; nome: string; data: string; valor: number; descricao: string; categoriaId: number | null;
+}
+
+/** #691: baixa de uma conta a pagar com a despesa saindo de um cofrinho (automática no vencimento ou pelo "Pagar"). */
+export interface PagamentoCofrinho {
+  transacaoId: number; data: string; valor: number; reservaNome: string; automatico: boolean; podeDesfazer: boolean;
 }
 
 export interface SalvarContaAgendada {
@@ -302,6 +318,8 @@ export interface SalvarContaAgendada {
   formaCobranca: FormaCobranca; textoCobranca: string | null; observacao: string | null;
   /** #205: a chave da sugestão do extrato que originou o cadastro (vazia na edição: a ligação que já existe fica). */
   chaveExtrato?: string | null;
+  /** #691: "Pago com" este cofrinho da conta (null = o saldo da conta). */
+  reservaNome: string | null;
 }
 
 /** Pagamento mensal achado no extrato que ainda não está em Contas a pagar. */
@@ -310,6 +328,8 @@ export interface AvisoContaAgendada {
   contaAgendadaId: number; descricao: string; tipo: 'nao-veio' | 'mudou-de-cartao' | 'aumentou' | 'cartao-arquivado';
   texto: string; valorAnterior: number | null; valorNovo: number | null; contaNovaId: number | null;
   contaNovaNome: string | null; data: string | null;
+  /** #691: no "não veio" de conta do Open Finance sem "Pago com", depois de sincronizar: "foi paga com um cofrinho?". */
+  podeSerCofrinho?: boolean;
 }
 
 export interface SugestaoContaAgendada {
@@ -493,6 +513,16 @@ export interface SincronizacaoLog {
 
 export interface ResultadoSincronizacao {
   sucesso: boolean; transacoesNovas: number; transacoesAtualizadas: number; mensagem: string | null;
+  /** #688: quais foram as novas e as atualizadas; null quando não houve nenhuma. */
+  lancamentos: LancamentosSincronizados | null;
+}
+
+/** #688: as transações que uma sincronização trouxe ou mudou. */
+export interface LancamentosSincronizados {
+  /** Em ordem de id, até 200 (MAXIMO_IDS_URL); vazio quando passam disso. */
+  ids: number[];
+  /** Data mais antiga e mais recente entre elas (yyyy-MM-dd). */
+  inicio: string; fim: string;
 }
 
 /** Status leve da sincronização para a barra superior (UX-8). */
@@ -803,3 +833,211 @@ export interface InvestimentoConferencia { chave: string; nome: string; origem: 
 export interface ConferenciaBanco {
   contas: ContaConferencia[]; cartoes: CartaoConferencia[]; investimentos: InvestimentoConferencia[];
 }
+
+/** #191 (ADR 0064): um módulo do catálogo, que se liga e desliga em Configurações › Módulos. */
+export interface Modulo {
+  id: string;
+  nome: string;
+  descricao: string;
+  /** Liga, o módulo acessa a internet: os destinos dizem para onde. */
+  acessaInternet: boolean;
+  destinos: string[];
+  ligado: boolean;
+}
+
+/** #210 (ADR 0065): módulo Trabalho. Regime: 1 CLT, 2 estágio, 3 PJ (estágio e PJ sem cálculo de encargos). */
+export enum RegimeEmprego { Clt = 1, Estagio = 2, Pj = 3 }
+
+/** Uma vigência do salário: o bruto a partir de um mês (sempre o dia 1). */
+export interface SalarioVigencia { id: number; inicio: string; salarioBruto: number; }
+
+export interface Emprego {
+  id: number;
+  empregador: string;
+  cnpj: string | null;
+  admissao: string;
+  saida: string | null;
+  regime: RegimeEmprego;
+  jornadaMensalHoras: number;
+  dependentes: number;
+  contaId: number | null;
+  contaNome: string | null;
+  /** Do mais novo para o mais antigo. */
+  salarios: SalarioVigencia[];
+}
+
+export interface SalvarEmprego {
+  empregador: string;
+  cnpj: string | null;
+  admissao: string;
+  saida: string | null;
+  regime: RegimeEmprego;
+  jornadaMensalHoras: number;
+  dependentes: number;
+  contaId: number | null;
+  /** Só ao criar: o primeiro salário, no mês da admissão. */
+  salarioBruto?: number;
+}
+
+export interface ParcelaInss { de: number; ate: number; aliquota: number; valor: number; }
+export interface CalculoInss { base: number; valor: number; noTeto: boolean; parcelas: ParcelaInss[]; fonte: string; }
+export interface CalculoIrrf {
+  rendimento: number; deducoesLegais: number; simplificado: number; deducaoUsada: 'legal' | 'simplificada';
+  base: number; aliquota: number; parcelaADeduzir: number; impostoDaTabela: number; reducaoLei15270: number;
+  valor: number; fonte: string;
+}
+
+/** A estimativa do mês: estimativa, não holerite. */
+export interface EstimativaSalario {
+  mes: string; salarioBruto: number; vigenciaDe: string; semEncargos: boolean;
+  inss: CalculoInss | null; irrf: CalculoIrrf | null; liquido: number;
+}
+
+export interface FaixaInss { ate: number; aliquota: number; }
+export interface TabelaInss { inicio: string; fonte: string; faixas: FaixaInss[]; }
+export interface FaixaIrrf { ate: number | null; aliquota: number; deducao: number; }
+export interface ReducaoIrrf { isencaoAte: number; maxima: number; ate: number; constante: number; fator: number; }
+export interface TabelaIrrf {
+  inicio: string; fonte: string; deducaoDependente: number; descontoSimplificado: number; reducao: ReducaoIrrf | null;
+  faixas: FaixaIrrf[];
+}
+export interface TabelasTrabalho { inss: TabelaInss[]; irrf: TabelaIrrf[]; }
+
+/** #211: o holerite do mês. Tipos: até 9 proventos (1 hora extra, 2 adicional noturno, 3 outro); de 10, descontos. */
+export enum TipoLancamentoHolerite {
+  HoraExtra = 1, AdicionalNoturno = 2, OutroProvento = 3,
+  ValeTransporte = 10, ValeAlimentacao = 11, PlanoDeSaude = 12, PensaoAlimenticia = 13, OutroDesconto = 14
+}
+export enum SituacaoHolerite { Aberto = 1, Fechado = 2 }
+/** #228: o holerite calculado pelo site (#211) ou lido do PDF (fechado, com o que o PDF imprime). */
+export enum OrigemHolerite { Calculado = 1, LidoDoPdf = 2 }
+/** Tipo de uma linha do holerite: os lançamentos (1 a 14), o salário (0), o DSR (4), o INSS (20), o IRRF (21) e o
+ * adiantamento (22, só do PDF). Até 9, proventos. */
+export enum TipoLinhaHolerite {
+  Salario = 0, HoraExtra = 1, AdicionalNoturno = 2, OutroProvento = 3, Dsr = 4,
+  ValeTransporte = 10, ValeAlimentacao = 11, PlanoDeSaude = 12, PensaoAlimenticia = 13, OutroDesconto = 14,
+  Inss = 20, Irrf = 21, Adiantamento = 22
+}
+
+export interface LancamentoHolerite {
+  id?: number;
+  tipo: TipoLancamentoHolerite;
+  descricao: string;
+  quantidade: number | null;
+  percentual: number | null;
+  valor: number | null;
+  incideInss: boolean;
+  incideIrrf: boolean;
+  deduzIrrf: boolean;
+  recorrente: boolean;
+}
+
+export interface LinhaHolerite { tipo: number; descricao: string; referencia: string; valor: number; }
+
+export interface CalculoHolerite {
+  mes: string; salarioContratual: number; diasTrabalhados: number; valorHora: number;
+  proventos: LinhaHolerite[]; descontos: LinhaHolerite[];
+  totalProventos: number; totalDescontos: number; liquido: number; baseInss: number;
+  inss: CalculoInss | null; irrf: CalculoIrrf | null; fgtsDoMes: number; semEncargos: boolean;
+}
+
+export interface Holerite {
+  id: number; empregoId: number; mes: string; situacao: SituacaoHolerite; origem: OrigemHolerite; diasUteis: number; diasDescanso: number;
+  fechadoEm: string | null; lancamentos: LancamentoHolerite[]; calculo: CalculoHolerite | null; aviso: string | null;
+}
+
+export interface ResumoHolerite {
+  id: number; mes: string; situacao: SituacaoHolerite; origem: OrigemHolerite; totalProventos: number | null; totalDescontos: number | null;
+  liquido: number | null;
+}
+
+/** #228 (ADR 0068): o holerite em PDF. Como o tipo da rubrica foi achado. */
+export type ComoRubrica = 'dicionario' | 'escolha' | 'desconhecida';
+export interface RubricaLida {
+  codigo: string; descricao: string; referencia: string; valor: number; provento: boolean; trecho: string;
+  tipo: TipoLinhaHolerite; como: ComoRubrica;
+}
+export interface ProvaHolerite { descricao: string; impresso: number; encontrado: number; diferenca: number; bateu: boolean; }
+export interface ComparacaoHolerite { descricao: string; lido: number; calculado: number; diferenca: number; }
+export interface PreviaHoleritePdf {
+  empregador: string; cnpj: string | null; mes: string | null; rubricas: RubricaLida[];
+  totalVencimentos: number | null; totalDescontos: number | null; liquido: number | null; salarioBase: number | null;
+  baseInss: number | null; baseFgts: number | null; fgtsDoMes: number | null; baseIrrf: number | null;
+  provas: ProvaHolerite[]; comparacoes: ComparacaoHolerite[]; avisos: string[]; existente: Holerite | null;
+}
+export interface RubricaConfirmada { codigo: string; descricao: string; referencia: string; valor: number; provento: boolean; tipo: TipoLinhaHolerite; }
+export interface ConfirmarHoleritePdf {
+  mes: string; rubricas: RubricaConfirmada[]; salarioBase: number | null; baseInss: number | null; baseFgts: number | null; fgtsDoMes: number | null;
+}
+export interface HoleritePdfGravado { holerite: Holerite; desfazer: string; }
+
+/** #214: o 13º salário do ano (estimativa). */
+/** valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). */
+export interface ParcelaDecimo { valor: number; data: string; informada: boolean; valorInformado: boolean; comFerias?: boolean; }
+export interface DecimoTerceiro {
+  ano: number; avos: number; salarioBase: number; mediaVariaveis: number; total: number;
+  primeira: ParcelaDecimo; inss: CalculoInss; irrf: CalculoIrrf; segunda: ParcelaDecimo; liquido: number;
+  /** A 1ª informada passou do 13º líquido: a 2ª fica zero e a empresa desconta isto. */
+  excedente: number;
+  /** Os meses do ano com holerite calculado: os outros entram como zero na média das horas extras. */
+  mesesComHolerite: number;
+  /** Saiu no ano: o 13º proporcional entra na rescisão. */
+  saida: string | null;
+}
+
+/** #213: as férias. */
+export interface CalculoFerias {
+  inicio: string; retorno: string; pagamento: string; dias: number; diasVendidos: number; remuneracao: number;
+  /** Os dias depois do fim do concessivo: pagos em dobro (CLT, art. 137). */
+  diasEmDobro: number;
+  mediaVariaveis: number; ferias: number; tercoFerias: number; abono: number; tercoAbono: number;
+  inss: CalculoInss; irrf: CalculoIrrf; adiantamentoDecimo: number; liquido: number;
+}
+export interface AgendamentoFerias {
+  id: number; inicio: string; dias: number; diasVendidos: number; adiantarDecimo: boolean; calculo: CalculoFerias | null;
+}
+export interface PeriodoFerias {
+  inicio: string; fim: string; fimConcessivo: string; completo: boolean; faltas: number; diasDireito: number;
+  diasAgendados: number; diasVendidos: number; saldo: number; vencida: boolean; vencendo: boolean;
+  agendamentos: AgendamentoFerias[];
+}
+export interface AgendarFerias { periodoInicio: string; inicio: string; dias: number; diasVendidos: number; adiantarDecimo: boolean; }
+
+/** #216 (ADR 0066): o FGTS, estimado e conferido; fora do patrimônio. Tipo: 1 saldo do app, 2 saque, 3 distribuição. */
+export enum TipoLancamentoFgts { Conferencia = 1, Saque = 2, Distribuicao = 3 }
+export enum MotivoSaqueFgts { Rescisao = 1, SaqueAniversario = 2, Imovel = 3, Outro = 4 }
+export interface LancamentoFgts { id: number; data: string; tipo: TipoLancamentoFgts; valor: number; motivo: MotivoSaqueFgts | null; }
+export interface MesFgts { mes: string; correcao: number; deposito: number; distribuicao: number; saques: number; saldo: number; conferido: boolean; }
+export interface ConferenciaFgts { data: string; informado: number; estimado: number; diferenca: number; }
+export interface Fgts { saldo: number; ate: string; meses: MesFgts[]; conferencias: ConferenciaFgts[]; lancamentos: LancamentoFgts[]; }
+
+/** #212: o crédito do salário ligado ao holerite (não conta duas vezes: a receita é a transação). */
+export interface CreditoSalario { id: number; data: string; descricao: string; contaId: number; conta: string; valor: number; livre: number; }
+/** sumiu: a sincronização trocou a transação e o site ainda não achou a nova (conta como recebida); debito: virou
+ * débito (não conta). */
+export interface RecebimentoHolerite extends CreditoSalario { valorLigado: number; sumiu: boolean; debito: boolean; }
+export interface SugestaoRecebimento extends CreditoSalario { motivos: string[]; }
+export interface RecebimentosHolerite {
+  liquido: number | null; recebido: number; diferenca: number | null;
+  recebimentos: RecebimentoHolerite[]; sugestoes: SugestaoRecebimento[]; outros: CreditoSalario[];
+}
+
+/** #215: a rescisão. Tipo: 1 sem justa causa, 2 pedido de demissão, 3 acordo, 4 justa causa, 5 fim da experiência. */
+export enum TipoRescisao { SemJustaCausa = 1, PedidoDemissao = 2, Acordo = 3, JustaCausa = 4, FimExperiencia = 5 }
+/** Aviso: 0 sem, 1 trabalhado, 2 indenizado (no pedido de demissão: não cumprido). */
+export enum AvisoRescisao { Sem = 0, Trabalhado = 1, Indenizado = 2 }
+export interface LinhaRescisao { descricao: string; referencia: string; valor: number; }
+export interface CalculoRescisao {
+  tipo: TipoRescisao; nomeDoTipo: string; aviso: AvisoRescisao; saida: string; dataProjetada: string; diasDeAviso: number;
+  remuneracao: number; verbas: LinhaRescisao[]; descontos: LinhaRescisao[]; totalVerbas: number; totalDescontos: number;
+  liquido: number; seguroDesemprego: boolean;
+  fgts: { saldo: number; depositoRescisao: number; percentualMulta: number; multa: number; percentualSaque: number; sacavel: number; };
+}
+export interface ComparacaoRescisao {
+  tipo: TipoRescisao; nome: string; aviso: AvisoRescisao; liquido: number; multa: number; sacavel: number; seguroDesemprego: boolean;
+}
+
+/** #10 (ADR 0067): o módulo Notícias. Datas em UTC ("2026-11-14T12:30:00"). */
+export interface FonteNoticias { id: string; nome: string; atualizadoEm: string | null; erro: string | null; }
+export interface Noticia { fonte: string; fonteNome: string; titulo: string; link: string; publicadaEm: string | null; }
+export interface ListaNoticias { fontes: FonteNoticias[]; noticias: Noticia[]; }

@@ -26,7 +26,9 @@ const NOMES_EVENTOS: Record<string, string> = {
   TrocosAutomaticos: 'Trocos automáticos aplicados',
   TrocosAutomaticosDesfeitos: 'Trocos automáticos desfeitos',
   AcessoCelularLigado: 'Acesso pelo celular ligado',
-  AcessoCelularDesligado: 'Acesso pelo celular desligado'
+  AcessoCelularDesligado: 'Acesso pelo celular desligado',
+  ModuloLigado: 'Módulo ligado',
+  ModuloDesligado: 'Módulo desligado'
 };
 
 /** "RegraDescricaoCriada (22)" → "Regra de descrição criada (22)"; evento desconhecido volta igual. */

@@ -106,3 +106,26 @@ func TestAoMesmoTempo(t *testing.T) {
 		t.Errorf("%d de 100 estados voltaram", len(vistas))
 	}
 }
+
+// Regra: o TirarSe que não confere deixa a chave valendo (revisão do #706: o desfazer de outro emprego não gasta a chave
+// do certo); o que confere tira; a vencida sai mesmo sem conferir.
+func TestTirarSe(t *testing.T) {
+	r := novoRelogio()
+	m := Nova[int64](r)
+	chave := m.Guardar(7)
+	if _, ok := m.TirarSe(chave, func(e int64) bool { return e == 8 }); ok {
+		t.Fatal("tirou sem conferir")
+	}
+	if v, ok := m.TirarSe(chave, func(e int64) bool { return e == 7 }); !ok || v != 7 {
+		t.Fatalf("o certo, depois do errado: %d, %v", v, ok)
+	}
+	if _, ok := m.TirarSe(chave, func(int64) bool { return true }); ok {
+		t.Error("a chave valeu duas vezes")
+	}
+	vencida := m.Guardar(9)
+	r.andar(Prazo)
+	conferiu := false
+	if _, ok := m.TirarSe(vencida, func(int64) bool { conferiu = true; return true }); ok || conferiu || len(m.itens) != 0 {
+		t.Errorf("vencida: ok %v, conferiu %v, %d guardados", ok, conferiu, len(m.itens))
+	}
+}

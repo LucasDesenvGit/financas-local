@@ -24,6 +24,7 @@ flowchart TB
         sincronizacao["sincronizacao<br/>[Componente]<br/>Grava o que vem da Pluggy<br/>em cada assunto"]
         partida["partida<br/>[Componente]<br/>As seis rotinas que acertam<br/>dados ao subir"]
         tarefas["tarefas<br/>[Componente]<br/>Câmbio, cripto e sincronização<br/>em segundo plano"]
+        nucleomodulos["modulos<br/>[Componente]<br/>Catálogo, liga/desliga e a guarda<br/>das rotas e tarefas dos módulos"]
         clientes["Clientes de fora<br/>[Componentes: HTTPS]<br/>Pluggy, PTAX, Selic, cotações e cripto"]
         transversais["Transversais<br/>[Componentes]<br/>Auditoria, erros do sistema,<br/>Configuracao, segredos e versão"]
         base["Base<br/>[Componentes]<br/>Banco (sqlc, esquema, transação),<br/>respostas, tipos, texto e relógio"]
@@ -43,6 +44,8 @@ flowchart TB
     servidor -- "/api" --> autenticacao
     autenticacao -- "pedido com login e CSRF conferidos" --> api
     api -- "Registrar" --> assuntos
+    api -- "monta o catálogo" --> nucleomodulos
+    entrada -- "tarefas dos módulos" --> nucleomodulos
     assuntos -- "chamam" --> regras
     assuntos -- "Open Finance pede a sincronização" --> sincronizacao
     tarefas -- "a cada intervalo" --> sincronizacao
@@ -79,6 +82,9 @@ Os pacotes de `src/backend`, cada um em um componente só. O componente é o pap
 | Sincronização | `internal/openfinance/sincronizacao` | A rodada com a Pluggy (#83): grava contas, transações, investimentos e empréstimos e, no fim, roda as mesmas rotinas da partida. | assunto |
 | Partida | `internal/partida` | As seis rotinas que acertam dados ao subir (#444). Só chama a regra de cada assunto. | assunto |
 | Tarefas | `internal/plataforma/tarefas` | O laço periódico das tarefas em segundo plano, que segue no próximo ciclo depois de um erro ou de um pânico. | transversal |
+| Núcleo dos módulos | `internal/plataforma/modulos` | O contrato que cada módulo implementa, o catálogo com o liga/desliga (na `Configuracao`), as rotas `/api/modulos`, a guarda das rotas de cada módulo (desligado, 409) e as tarefas dele, que só rodam com ele ligado (#191, ADR 0064). | transversal |
+| Módulo Trabalho | `internal/modulos/trabalho`, `internal/modulos/trabalho/emprego`, `internal/modulos/trabalho/encargos`, `internal/modulos/trabalho/holerite`, `internal/modulos/trabalho/decimoterceiro`, `internal/modulos/trabalho/ferias`, `internal/modulos/trabalho/fgts`, `internal/modulos/trabalho/recebimento`, `internal/modulos/trabalho/rescisao`, `internal/modulos/trabalho/leitor`, `internal/modulos/trabalho/leitor/ficticios`, `internal/modulos/trabalho/holeritepdf` | O primeiro módulo (#209, ADR 0065): o `trabalho` implementa o contrato e junta as rotas; o `emprego` guarda o emprego e o salário com vigência e estima o mês; o `holerite` calcula, guarda e congela o holerite de cada mês (#211); o `decimoterceiro` calcula o 13º pelos avos e pela média dos holerites (#214); o `ferias` monta os períodos, agenda as frações pelas regras da CLT e calcula cada uma (#213); o `fgts` estima o saldo mês a mês e guarda as conferências e os saques (#216, ADR 0066); o `recebimento` liga o crédito do salário (a transação) ao holerite, sem somar nada nos relatórios (#212; usa o `tipolancamento` do núcleo); o `rescisao` simula os cinco tipos de desligamento com o FGTS e registra a rescisão real (#215); o `leitor` lê o holerite em PDF (as palavras com a posição, a tabela, o rodapé e a prova real), sem HTTP, e o `leitor/ficticios` gera os PDFs inventados dos testes dele; o `holeritepdf` classifica as rubricas, monta a prévia e grava o holerite lido só com a confirmação (#228, ADR 0068); o `encargos` calcula o INSS e o IRRF pelas tabelas da vigência, sem HTTP. Rotas em `/api/trabalho/`. | módulo |
+| Módulo Notícias | `internal/modulos/noticias`, `internal/modulos/noticias/fontes` | O módulo das notícias (#10, ADR 0067): o `noticias` implementa o contrato, guarda as notícias e tem a tarefa de 45 minutos; o `fontes` busca e lê o RSS do G1 e da BBC News Brasil e a API do TabNews, com as defesas da ADR. Rotas em `/api/noticias`. | módulo |
 | Clientes de fora | `internal/openfinance/pluggy`, `internal/patrimonio/cotacoes`, `internal/patrimonio/selic` | HTTPS para a Pluggy (ADR 0006), o Yahoo Finance e a brapi, e a Selic do Banco Central. A PTAX e o Mercado Bitcoin moram no `cambio` e no `cripto`. | assunto |
 | Transversais | `internal/plataforma/auditoria`, `internal/plataforma/configuracao`, `internal/plataforma/erros`, `internal/plataforma/segredos`, `internal/plataforma/versao` | Auditoria, a tabela `Configuracao`, os erros do sistema (ADR 0022, com as rotas de Configurações › Erros), os segredos cifrados e a versão. | transversal |
 | Base | `internal/plataforma/banco`, `internal/plataforma/banco/consultas`, `internal/plataforma/banco/esquema`, `internal/plataforma/banco/esquema/embutido`, `internal/plataforma/config`, `internal/plataforma/relogio`, `internal/plataforma/respostas`, `internal/plataforma/texto`, `internal/plataforma/tipos` | O SQLite em WAL, a transação, as consultas do `sqlc`, o esquema ao iniciar com a cópia embutida dos scripts, os appsettings, o fuso de Brasília, as respostas HTTP de sempre e os tipos no formato do banco. | base |
@@ -110,14 +116,15 @@ Quem pode importar quem. As setas vão de quem importa para quem é importado.
 ```mermaid
 flowchart TB
     montadores["Montadores<br/>cmd/financas, api, testes/contrato"]
-    modulos["Módulos (#190)<br/>nenhum ainda"]
+    modulos["Módulos (#190, ADR 0064)<br/>internal/modulos/&lt;id&gt;: trabalho, noticias"]
     assuntos["Assuntos<br/>com rotas, regras, sincronização,<br/>partida e clientes de fora"]
-    transversais["Transversais<br/>auditoria, configuracao, erros,<br/>segredos, tarefas e versao"]
+    transversais["Transversais<br/>auditoria, configuracao, erros,<br/>segredos, tarefas, versao e modulos"]
     base["Base<br/>banco, servidor, respostas, sessao,<br/>tipos, texto, relogio, config e servicosistema"]
 
     montadores -- "qualquer um" --> assuntos
     montadores --> modulos
     modulos -- "qualquer assunto do núcleo" --> assuntos
+    modulos -- "o contrato" --> transversais
     assuntos -- "só os pares da tabela dependencias" --> assuntos
     assuntos --> transversais
     assuntos --> base
@@ -130,6 +137,6 @@ O teste de arquitetura confere cinco regras:
 2. **O `internal/plataforma/testeapoio` só nos `_test.go`.** O executável não leva o banco vazio de teste nem as fábricas de dados.
 3. **A regra não conhece HTTP.** Os pacotes da lista `regraSemHTTP` (as regras sem HTTP e a base sem HTTP) não chegam a `net/http`, `internal/plataforma/respostas` nem `internal/plataforma/servidor`, nem por outro pacote. Há duas exceções registradas: o `transferencias` (pelo `reservas.EhMovimentoDeReserva`) e o `tarefas` (pelos erros do sistema).
 4. **Um assunto importa outro só pelo mapa de contextos.** A regra *não* é "um assunto não importa outro": muitos importam, como o `painel`, que junta o resumo de cada tela. Mas cada par tem de estar na tabela `dependencias`, com o motivo. Base e transversais não importam assunto. Pacote fora de todos os grupos faz o teste falhar.
-5. **Módulos à parte.** O núcleo não importa módulo, e um módulo não importa outro. Ainda não há módulo.
+5. **Módulos à parte.** Todo pacote da pasta internal/modulos é de módulo, sem lista: `internal/modulos/<id>` e os assuntos dele (`internal/modulos/<id>/<assunto>`), que se importam à vontade. O núcleo (inclusive o `internal/plataforma/modulos`) não importa módulo, e um módulo não importa outro (ADR 0064).
 
 **Conferido em 04/11/2026:** `go test -count=1 -tags arquitetura ./internal/arquitetura/` passou, com as cinco regras e as duas exceções acima. O mesmo teste confere se cada pacote aparece na [tabela](#cada-pacote-num-componente) desta página.

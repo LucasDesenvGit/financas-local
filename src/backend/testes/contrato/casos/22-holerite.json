@@ -1,0 +1,72 @@
+{
+  "descricao": "Holerite do mês do módulo Trabalho (#211, ADR 0065). Usa o emprego 1 do 21-trabalho (5000 até maio de 2026 e 6000 de junho em diante). O 21-trabalho termina com o módulo desligado: este liga de novo. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "ligar o Trabalho",
+      "metodo": "PUT",
+      "caminho": "/api/modulos/trabalho",
+      "corpo": { "ligado": true }
+    },
+    {
+      "nome": "abrir o holerite de outubro de 2026",
+      "comentario": "Outubro de 2026: 27 dias úteis e 4 domingos (o padrão do DSR). Sem lançamentos: só o salário de 6000.",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/holerites",
+      "corpo": { "mes": "2026-10" }
+    },
+    {
+      "nome": "o mesmo mês de novo",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/holerites",
+      "corpo": { "mes": "2026-10" }
+    },
+    {
+      "nome": "lançamentos do mês",
+      "comentario": "Hora da 6000 / 220; horas extras a 50%, adicional noturno a 20% (sem percentual), DSR, PLR fora das bases, VT acima dos 6%, plano de saúde (recorrente) e pensão (deduz do IR).",
+      "metodo": "PUT",
+      "caminho": "/api/trabalho/holerites/1",
+      "corpo": { "diasUteis": 27, "diasDescanso": 4, "lancamentos": [
+        { "tipo": 1, "quantidade": 10, "percentual": 50 },
+        { "tipo": 2, "quantidade": 20 },
+        { "tipo": 3, "descricao": "PLR", "valor": 1000 },
+        { "tipo": 10, "valor": 400 },
+        { "tipo": 12, "valor": 250, "recorrente": true },
+        { "tipo": 13, "valor": 500 }
+      ] }
+    },
+    {
+      "nome": "lançamento sem horas",
+      "metodo": "PUT",
+      "caminho": "/api/trabalho/holerites/1",
+      "corpo": { "diasUteis": 27, "diasDescanso": 4, "lancamentos": [ { "tipo": 1, "percentual": 50 } ] }
+    },
+    {
+      "nome": "fechar outubro",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/holerites/1/fechar"
+    },
+    {
+      "nome": "fechado não muda",
+      "metodo": "PUT",
+      "caminho": "/api/trabalho/holerites/1",
+      "corpo": { "diasUteis": 27, "diasDescanso": 4, "lancamentos": [] }
+    },
+    {
+      "nome": "novembro traz o plano de saúde recorrente",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/holerites",
+      "corpo": { "mes": "2026-11" }
+    },
+    {
+      "nome": "a lista dos holerites",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/holerites"
+    },
+    {
+      "nome": "reabrir outubro",
+      "comentario": "Grava HoleriteReaberto (2026-10) na auditoria.",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/holerites/1/reabrir"
+    }
+  ]
+}

@@ -60,6 +60,7 @@ var regraSemHTTP = []string{
 	"internal/plataforma/desfazer", "internal/patrimonio/emprestimos", "internal/movimentacao/faturas", "internal/movimentacao/parcelas", "internal/movimentacao/poucoinformativa",
 	"internal/ajustes/regrasdescricao", "internal/analises/relatorios", "internal/plataforma/relogio", "internal/plataforma/segredos", "internal/movimentacao/sugestoes",
 	"internal/plataforma/texto", "internal/movimentacao/tipolancamento", "internal/plataforma/tipos", "internal/movimentacao/transacoes",
+	"internal/modulos/trabalho/encargos", "internal/modulos/trabalho/leitor", "internal/modulos/trabalho/leitor/ficticios",
 }
 
 // Regra de pacote que ainda chega ao HTTP por outro pacote. Quando deixar de chegar, o teste avisa para tirar daqui.
@@ -77,17 +78,30 @@ var (
 		"internal/plataforma/servidor", "internal/plataforma/sessao", "internal/plataforma/testeapoio", "internal/plataforma/texto", "internal/plataforma/tipos",
 	}
 	// transversais: serviços que qualquer assunto usa (auditoria, parâmetros do banco, erros do sistema, tarefas em
-	// segundo plano, segredos, versão).
+	// segundo plano, segredos, versão) e o núcleo dos módulos (o contrato que cada módulo implementa, ADR 0064).
 	transversais = []string{
 		"internal/plataforma/auditoria", "internal/plataforma/configuracao", "internal/plataforma/erros", "internal/plataforma/segredos", "internal/plataforma/tarefas",
-		"internal/plataforma/versao",
+		"internal/plataforma/modulos", "internal/plataforma/versao",
 	}
 	// montadores: juntam tudo (rotas e programa) e podem importar qualquer assunto.
 	montadores = []string{"internal/api", "cmd/financas", "testes/contrato", "testes/contrato/pluggyfalsa", "internal/arquitetura"}
-	// modulos (#190, #191, ADR 0056): visualizações que se ligam e desligam. Um módulo usa o núcleo (assuntos, base e
-	// transversais), mas o núcleo não importa módulo, e um módulo não importa outro. O primeiro módulo entra aqui.
-	modulos = []string{}
 )
+
+// raizDosModulos (#190, #191, ADRs 0056 e 0064): visualizações que se ligam e desligam. Todo pacote daqui é de módulo,
+// sem lista: internal/modulos/<id> é o módulo e internal/modulos/<id>/<assunto>, os assuntos dele. Um módulo usa o
+// núcleo (assuntos, base e transversais), mas o núcleo não importa módulo, e um módulo não importa outro (os pacotes
+// do mesmo <id> se importam à vontade).
+const raizDosModulos = "internal/modulos/"
+
+// moduloDe é o módulo do pacote ("internal/modulos/trabalho/holerite" → "internal/modulos/trabalho"), ou "".
+func moduloDe(caminho string) string {
+	resto, ok := strings.CutPrefix(caminho, raizDosModulos)
+	if !ok || resto == "" {
+		return ""
+	}
+	id, _, _ := strings.Cut(resto, "/")
+	return raizDosModulos + id
+}
 
 // dependencias é a tabela de quem pode importar quem entre os assuntos: a semente do mapa de contextos (#462, #474).
 // Assunto sem linha não importa nenhum outro. Dependência nova = acrescentar aqui, com o motivo, no mesmo PR.
@@ -107,8 +121,9 @@ var dependencias = []struct {
 		"internal/movimentacao/transferencias"}, "as rotas de categorias e regras reaplicam as regras nas transações (#77)"},
 	{"internal/ajustes/categorizacao", []string{"internal/movimentacao/parcelas", "internal/movimentacao/tipolancamento", "internal/movimentacao/transacoes"},
 		"a regra de categoria olha o tipo do lançamento e grava na transação; o acerto das compras parceladas estornadas casa o estorno com as parcelas (#444)"},
-	{"internal/movimentacao/cobrancas", []string{"internal/analises/relatorios", "internal/movimentacao/sugestoes"},
-		"a conciliação avança o vencimento como a lista e usa a chave do extrato das sugestões (#79, #158, #205)"},
+	{"internal/movimentacao/cobrancas", []string{"internal/ajustes/categorizacao", "internal/analises/relatorios", "internal/movimentacao/sugestoes",
+		"internal/movimentacao/transacoes"},
+		"a conciliação avança o vencimento como a lista e usa a chave do extrato das sugestões (#79, #158, #205); a baixa pelo cofrinho lança a despesa com a categoria e apaga a duplicada (#691)"},
 	{"internal/movimentacao/contasagendadas", []string{"internal/ajustes/categorizacao", "internal/movimentacao/cobrancas", "internal/analises/relatorios",
 		"internal/movimentacao/sugestoes", "internal/movimentacao/transacoes"},
 		"as contas a pagar listam pela base dos relatórios, conciliam e lançam a despesa do pagamento (#79)"},
@@ -146,7 +161,8 @@ var dependencias = []struct {
 		"a regra de descrição renomeia a transação e recategoriza"},
 	{"internal/analises/relatorios", []string{"internal/movimentacao/parcelas", "internal/movimentacao/transacoes"},
 		"a base dos relatórios lê as transações (#447); a projeção soma as parcelas futuras (#80, #165)"},
-	{"internal/patrimonio/reservas", []string{"internal/patrimonio/cambio"}, "reserva em dólar convertida pela PTAX"},
+	{"internal/patrimonio/reservas", []string{"internal/patrimonio/cambio", "internal/movimentacao/cobrancas"},
+		"reserva em dólar convertida pela PTAX; a saída do cofrinho e a diferença da conferência lançam a despesa pela regra das cobranças (#691)"},
 	{"internal/plataforma/saude", nil, "GET de saúde da API"},
 	{"internal/patrimonio/selic", nil, "Selic do BCB"},
 	{"internal/openfinance/sincronizacao", []string{"internal/patrimonio/carteira", "internal/ajustes/categorizacao", "internal/movimentacao/cobrancas", "internal/movimentacao/contas", "internal/patrimonio/cotacoes",
@@ -229,15 +245,19 @@ func violacoes(pacotes []pacote) []string {
 	for _, c := range montadores {
 		grupo[c] = "montador"
 	}
-	for _, c := range modulos {
-		grupo[c] = "modulo"
-	}
 	permitido := map[string]map[string]bool{}
 	for _, d := range dependencias {
 		grupo[d.De] = "assunto"
 		permitido[d.De] = map[string]bool{}
 		for _, para := range d.Para {
 			permitido[d.De][para] = true
+		}
+	}
+	for _, p := range pacotes {
+		for _, c := range append([]string{p.Caminho}, p.Imports...) {
+			if moduloDe(c) != "" {
+				grupo[c] = "modulo"
+			}
 		}
 	}
 	for _, p := range pacotes {
@@ -253,6 +273,9 @@ func violacoes(pacotes []pacote) []string {
 		for _, imp := range p.Imports {
 			// Regra 5: os módulos (ADR 0056).
 			if grupo[imp] == "modulo" && grupo[p.Caminho] == "modulo" {
+				if moduloDe(imp) == moduloDe(p.Caminho) {
+					continue // o módulo e os assuntos dele
+				}
 				v = append(v, fmt.Sprintf("regra 5 (um módulo não depende de outro): %s importa %s. O que fazer: o que "+
 					"os dois usam vai para o núcleo (um assunto ou a base); cada módulo se liga e desliga sozinho.",
 					p.Caminho, imp))
@@ -455,9 +478,7 @@ func TestPacotesForaDaPagina(t *testing.T) {
 
 // Regra: cada regra falha com um import proibido de mentira, e a mensagem diz a regra e o que fazer.
 func TestCadaRegraFalha(t *testing.T) {
-	antes := modulos
-	modulos = []string{"internal/trabalho", "internal/noticias"}
-	defer func() { modulos = antes }()
+	modulos := []string{"internal/modulos/trabalho", "internal/modulos/trabalho/holerite", "internal/modulos/noticias"}
 	limpo := func() []pacote {
 		var r []pacote
 		// Um grafo mínimo que passa: os pacotes das listas, sem import nenhum, e as exceções chegando ao HTTP.
@@ -497,8 +518,12 @@ func TestCadaRegraFalha(t *testing.T) {
 		return append(r, func() pacote { p := pacote{Caminho: caminho}; f(&p); return p }())
 	}
 	// O módulo pode usar o núcleo: um assunto, sem linha na tabela.
-	if v := violacoes(mudar("internal/trabalho", func(p *pacote) { p.Imports = []string{"internal/movimentacao/transacoes"} })); len(v) > 0 {
+	if v := violacoes(mudar("internal/modulos/trabalho", func(p *pacote) { p.Imports = []string{"internal/movimentacao/transacoes"} })); len(v) > 0 {
 		t.Errorf("módulo usando um assunto do núcleo: %v", v)
+	}
+	// E o módulo usa os assuntos dele.
+	if v := violacoes(mudar("internal/modulos/trabalho", func(p *pacote) { p.Imports = []string{"internal/modulos/trabalho/holerite"} })); len(v) > 0 {
+		t.Errorf("módulo usando um assunto dele: %v", v)
 	}
 	casos := []struct {
 		nome     string
@@ -518,10 +543,12 @@ func TestCadaRegraFalha(t *testing.T) {
 			"regra 4: internal/novo não está em nenhum grupo"},
 		{"assunto fora do mapa", mudar("internal/patrimonio/selic", func(p *pacote) { p.Imports = []string{"internal/patrimonio/carteira"} }),
 			"regra 4 (mapa de contextos): internal/patrimonio/selic importa internal/patrimonio/carteira"},
-		{"módulo importa módulo", mudar("internal/noticias", func(p *pacote) { p.Imports = []string{"internal/trabalho"} }),
-			"regra 5 (um módulo não depende de outro): internal/noticias importa internal/trabalho"},
-		{"núcleo importa módulo", mudar("internal/movimentacao/contas", func(p *pacote) { p.Imports = []string{"internal/trabalho"} }),
-			"regra 5 (o núcleo não depende de módulo): internal/movimentacao/contas importa o módulo internal/trabalho"},
+		{"módulo importa módulo", mudar("internal/modulos/noticias", func(p *pacote) { p.Imports = []string{"internal/modulos/trabalho/holerite"} }),
+			"regra 5 (um módulo não depende de outro): internal/modulos/noticias importa internal/modulos/trabalho/holerite"},
+		{"núcleo importa módulo", mudar("internal/movimentacao/contas", func(p *pacote) { p.Imports = []string{"internal/modulos/trabalho"} }),
+			"regra 5 (o núcleo não depende de módulo): internal/movimentacao/contas importa o módulo internal/modulos/trabalho"},
+		{"núcleo dos módulos importa módulo", mudar("internal/plataforma/modulos", func(p *pacote) { p.Imports = []string{"internal/modulos/noticias"} }),
+			"regra 5 (o núcleo não depende de módulo): internal/plataforma/modulos importa o módulo internal/modulos/noticias"},
 		{"base que depende de assunto", mudar("internal/plataforma/tipos", func(p *pacote) { p.Imports = []string{"internal/movimentacao/contas"} }),
 			"regra 4: internal/plataforma/tipos (base) importa o assunto internal/movimentacao/contas"},
 	}

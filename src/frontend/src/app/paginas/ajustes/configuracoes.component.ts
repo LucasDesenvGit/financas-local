@@ -7,6 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { StatusSincronizacaoService } from '../../core/status-sincronizacao.service';
+import { avisarSincronizacao, textoDaConexaoAdicionada } from '../../compartilhado/aviso-sincronizacao';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { Auditoria, Conexao, SincronizacaoLog } from '../../core/modelos';
 import { AvisosService } from '../../core/avisos.service';
@@ -17,13 +18,14 @@ import { ParametrizacaoComponent } from './parametrizacao.component';
 import { AparenciaComponent } from './aparencia.component';
 import { ErrosComponent } from './erros.component';
 import { AcessoCelularComponent } from './acesso-celular.component';
+import { ModulosComponent } from './modulos.component';
 
-type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erros';
+type Aba = 'open-finance' | 'parametrizacao' | 'modulos' | 'aparencia' | 'seguranca' | 'erros';
 
 @Component({
   selector: 'app-configuracoes',
   imports: [FormsModule, DatePipe, LogoBancoComponent, ParametrizacaoComponent, AparenciaComponent, ErrosComponent,
-    AcessoCelularComponent],
+    AcessoCelularComponent, ModulosComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina">
@@ -38,6 +40,9 @@ type Aba = 'open-finance' | 'parametrizacao' | 'aparencia' | 'seguranca' | 'erro
     @switch (aba()) {
     @case ('parametrizacao') {
       <app-parametrizacao />
+    }
+    @case ('modulos') {
+      <app-modulos />
     }
     @case ('aparencia') {
       <app-aparencia />
@@ -256,6 +261,7 @@ export class ConfiguracoesComponent implements OnInit {
   readonly abas: { id: Aba; rotulo: string }[] = [
     { id: 'open-finance', rotulo: 'Open Finance' },
     { id: 'parametrizacao', rotulo: 'Parametrização' },
+    { id: 'modulos', rotulo: 'Módulos' },
     { id: 'aparencia', rotulo: 'Aparência' },
     { id: 'seguranca', rotulo: 'Segurança' },
     { id: 'erros', rotulo: 'Erros' }
@@ -309,7 +315,7 @@ export class ConfiguracoesComponent implements OnInit {
 
   private abaDaUrl(params: ParamMap): Aba {
     const aba = params.get('aba');
-    return ['open-finance', 'parametrizacao', 'aparencia', 'seguranca', 'erros'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
+    return ['open-finance', 'parametrizacao', 'modulos', 'aparencia', 'seguranca', 'erros'].includes(aba ?? '') ? (aba as Aba) : 'open-finance';
   }
 
   /** #172: grava o nome (vazio apaga); a API já reclassifica as transferências. */
@@ -377,7 +383,7 @@ export class ConfiguracoesComponent implements OnInit {
       next: (r) => {
         this.ocupado.set(false);
         this.novoItemId = '';
-        if (r.sucesso) this.avisos.sucesso(`Conexão adicionada: ${r.transacoesNovas} transação(ões) importada(s).`);
+        if (r.sucesso) avisarSincronizacao(this.avisos, this.router, r, textoDaConexaoAdicionada(r));
         else this.avisos.erro(r.mensagem ?? 'Conexão adicionada, mas a sincronização falhou.');
         this.carregarConexoes();
       },
@@ -435,7 +441,7 @@ export class ConfiguracoesComponent implements OnInit {
     this.api.sincronizar(conexaoId).subscribe({
       next: (r) => {
         this.ocupado.set(false);
-        if (r.sucesso) this.avisos.sucesso(`Sincronizado: ${r.transacoesNovas} nova(s), ${r.transacoesAtualizadas} atualizada(s).`);
+        if (r.sucesso) avisarSincronizacao(this.avisos, this.router, r);
         else this.avisos.erro(r.mensagem ?? 'Falha na sincronização.');
         this.carregarConexoes();
       },

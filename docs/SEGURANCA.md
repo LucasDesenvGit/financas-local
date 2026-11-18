@@ -14,6 +14,7 @@ Sempre por HTTPS, com o mínimo de dados; quantidades, valores e dados pessoais 
 | `api.bcb.gov.br` | taxa Selic | só datas |
 | `olinda.bcb.gov.br` | cotação PTAX de moedas estrangeiras | só o código da moeda e datas |
 | `query1.finance.yahoo.com` / `brapi.dev` | cotações de ações e FIIs (fontes gratuitas e não oficiais) | o código do ativo; para a `brapi.dev`, também o seu token (no cabeçalho `Authorization`, fora da URL), se você informou um |
+| `g1.globo.com` / `feeds.bbci.co.uk` / `www.tabnews.com.br` | só com o módulo **Notícias** ligado (vem desligado): as notícias do dia, a cada 45 minutos ([ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) | só o pedido do feed, sem nada seu |
 | `api.mercadobitcoin.net` | cotação de criptomoedas em reais, a cada 30 minutos ([ADR 0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md)) | só os pares fixos (BTC-BRL, ETH-BRL, SOL-BRL, USDT-BRL) |
 | `api.github.com` / `github.com` | só o **Gerenciador** do Windows, para achar e baixar a versão nova, conferindo o SHA256 ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)) | só o pedido da página de versões. O gerenciador do Linux não acessa a internet (só na instalação de desenvolvimento, pelo `git`, quando se clica em "Atualizar para a última do develop"; [ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)) |
 

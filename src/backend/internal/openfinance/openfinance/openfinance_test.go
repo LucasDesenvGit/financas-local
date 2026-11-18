@@ -1009,7 +1009,7 @@ func TestAdicionarConexao(t *testing.T) {
 			c.falso.resultado = sincronizacao.Resultado{Sucesso: true, TransacoesNovas: 3, Mensagem: &mensagem}
 			r := c.chamar(t, "POST", "/api/open-finance/conexoes", `{"itemId":"`+strings.ToUpper(itemValido)+`"}`)
 			conferirStatus(t, r, 200)
-			testeapoio.ConferirJSON(t, r.Corpo, `{"sucesso":true,"transacoesNovas":3,"transacoesAtualizadas":0,"mensagem":"Sincronização concluída."}`)
+			testeapoio.ConferirJSON(t, r.Corpo, `{"sucesso":true,"transacoesNovas":3,"transacoesAtualizadas":0,"mensagem":"Sincronização concluída.","lancamentos":null}`)
 			var chave string
 			var titulo, status *string
 			var ativa bool

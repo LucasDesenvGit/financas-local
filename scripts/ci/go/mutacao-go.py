@@ -10,9 +10,10 @@ cobre. Ponto cego, de propósito no relatório: a condição de um "case" não �
 mutação dentro de "case" sai como NOT COVERED e nunca é testada. Nessas regras, valem as mutações à mão no PR.
 
 No PR (#456), com --base, mede só os pacotes da lista que o PR mudou (como o testes-afetados.py, ADR 0047); toda
-semana e à mão, pelo workflow "Teste de mutação (Go)", mede a lista inteira. Antes de medir, confere que todo pacote
-de internal/ com código fora de teste está na lista ou em mutacao-go-fora.txt, com o motivo: pacote novo não fica de
-fora sem ninguém perceber.
+semana e à mão, pelo workflow "Teste de mutação (Go)", mede a lista inteira. Pacote novo (#716), que ainda não está
+na lista nem em mutacao-go-fora.txt, é medido como os da lista, mas sem piso: não derruba a CI, e um aviso diz a linha
+a acrescentar, com a eficácia medida. É erro só o pacote nas duas listas, a linha de pacote que não existe e o de fora
+sem o motivo.
 
 Por grupo (#673): a lista inteira passou dos 60 min, e o workflow mede cada grupo num job, em paralelo. O grupo de um
 pacote é a área dele (internal/<area>/<assunto>; internal/<assunto>, sem área, fica no grupo "raiz"), ou o nome da
@@ -36,6 +37,7 @@ Saída: <módulo>/mutacao/<pacote>.json (o do gremlins) e <módulo>/mutacao/rela
 """
 import argparse
 import json
+import math
 import os
 import subprocess
 import sys
@@ -64,8 +66,8 @@ TITULO = '## Teste de mutação (gerenciador em Go)' if GERENCIADOR else '## Tes
 # lista dele deixa de fora, de propósito, os pacotes que chamam o Windows (a mutação roda no Linux).
 FORA = 'mutacao-go-fora.txt'
 # Arquivos da própria mutação: se só eles mudaram, o PR mede um pacote pequeno, para o script novo rodar de verdade.
-DA_MUTACAO = ('scripts/ci/go/mutacao-go', 'scripts/ci/go/mutacao-gerenciador-go', 'scripts/ci/comum.py',
-              '.github/workflows/mutacao-go.yml')
+DA_MUTACAO = ('scripts/ci/go/mutacao-go', 'scripts/ci/go/mutacao-gerenciador-go', 'scripts/ci/go/test_mutacao_go.py',
+              'scripts/ci/comum.py', '.github/workflows/mutacao-go.yml')
 PACOTE_DE_PROVA = 'internal/plataforma/tipos'
 
 
@@ -124,16 +126,19 @@ def pacotes_do_modulo():
     return pacotes
 
 
-def conferir_lista(limites, fora):
-    """Todo pacote está na lista ou fora de propósito (num lugar só, com o motivo), e nenhum dos dois cita pacote
-    que não existe. Devolve os erros, já com o que fazer."""
-    existentes = pacotes_do_modulo()
+def pacotes_novos(limites, fora, existentes=None):
+    """Os pacotes de internal/ que ainda não estão na lista nem fora de propósito (#716): são medidos sem piso."""
+    if existentes is None:
+        existentes = pacotes_do_modulo()
+    return sorted(existentes - set(limites) - set(fora))
+
+
+def conferir_lista(limites, fora, existentes=None):
+    """Nenhum pacote está nas duas listas, nenhuma cita pacote que não existe, e o de fora tem o motivo. Devolve os
+    erros, já com o que fazer. O pacote que não está em nenhuma das duas não é erro: é novo (pacotes_novos)."""
+    if existentes is None:
+        existentes = pacotes_do_modulo()
     erros = []
-    for p in sorted(existentes - set(limites) - set(fora)):
-        erros.append(f'{p} não está em scripts/ci/go/{LISTA} nem em scripts/ci/go/{FORA}. Com regra de negócio: meça '
-                     f'(Actions → "Teste de mutação (Go)" → Run workflow, com "{p}" em pacotes) e ponha na lista com o '
-                     f'piso da medição. Sem regra (código gerado, só montagem, apoio a teste): ponha em {FORA}, com o '
-                     f'motivo.')
     for p in sorted(set(limites) & set(fora)):
         erros.append(f'{p} está em scripts/ci/go/{LISTA} e em scripts/ci/go/{FORA}: deixe só num dos dois.')
     for p in sorted((set(limites) | set(fora)) - existentes):
@@ -150,7 +155,7 @@ def mudados(base):
 
 
 def pacotes_mudados(arquivos, limites):
-    """Os pacotes da lista com arquivo .go mudado, de código ou de teste (teste mais fraco também baixa a eficácia), ou
+    """Os pacotes da lista (ou novos, #716) com arquivo .go mudado, de código ou de teste (teste mais fraco também baixa a eficácia), ou
     com arquivo mudado no testdata/ deles (um gabarito muda o que os testes conferem)."""
     prefixo = MODULO + '/'
     pacotes = set()
@@ -234,7 +239,7 @@ def relatorio(resultados, limites, titulo=TITULO):
     for r in resultados:
         piso = limites.get(r['pacote'])
         situacao = ' ❌' if piso is not None and r['eficacia'] < piso else ''
-        texto_piso = f'{piso:.0f}%' if piso is not None else '— (fora da lista)'
+        texto_piso = f'{piso:.0f}%' if piso is not None else '— (sem piso: pacote novo ou fora da lista)'
         linhas.append(f"| `{r['pacote']}` | {r['mortas']} | {len(r['vivas'])} | {len(r['equivalentes'])} | "
                       f"{r['sem_teste']} | {r['eficacia']:.1f}%{situacao} | {texto_piso} |")
     linhas += ['', 'Eficácia = mortas / (mortas + vivas), sem as equivalentes conhecidas. "Sem teste" inclui as mutações '
@@ -244,6 +249,12 @@ def relatorio(resultados, limites, titulo=TITULO):
             linhas += ['', f"### Vivas em `{r['pacote']}`", '']
             linhas += [f"- `{a}:{l}:{c}` {t}: `{trecho}`" for a, l, c, t, trecho, _ in r['vivas']]
     return '\n'.join(linhas) + '\n'
+
+
+def linha_para_a_lista(resultado):
+    """A linha de mutacao-go.txt para um pacote novo: o piso é a eficácia medida, arredondada para baixo (o piso só
+    sobe, e não pode começar acima do que os testes pegam)."""
+    return f"{resultado['pacote']} {math.floor(resultado['eficacia'])}"
 
 
 def escrever(texto, saida=sys.stdout):
@@ -269,20 +280,28 @@ def main():
     opcoes = argumentos.parse_args()
 
     limites = pisos()
+    novos = []
     if not GERENCIADOR:
-        erros = conferir_lista(limites, fora_de_proposito())
+        fora, existentes = fora_de_proposito(), pacotes_do_modulo()
+        erros = conferir_lista(limites, fora, existentes)
         for e in erros:
             print(f'::error::{e}')
         if erros:
             sys.exit(1)
+        novos = pacotes_novos(limites, fora, existentes)
+    # O que pode ser medido: a lista e os pacotes novos (#716), que entram sem piso.
+    alvos = list(limites) + novos
     if opcoes.conferir_lista:
-        print(f'Lista em dia: todo pacote de {MODULO}/internal está em {LISTA} ou em {FORA}.')
+        for p in novos:
+            print(f'::warning::{p} é novo: não está em {LISTA} nem em {FORA}. É medido sem piso quando mudar; '
+                  f'ponha a linha na lista com a eficácia medida, ou em {FORA} com o motivo.', file=sys.stderr)
+        print(f'Lista em dia ({len(novos)} pacote(s) novo(s), medido(s) sem piso).')
         return
 
     if opcoes.pacotes:
         pedidos = opcoes.pacotes
     elif opcoes.base:
-        pedidos = escolher_no_pr(mudados(opcoes.base), limites)
+        pedidos = escolher_no_pr(mudados(opcoes.base), alvos)
         if not pedidos:
             # Com --grupos, a saída é o JSON da matriz: o aviso vai só para o resumo do job e para o stderr.
             escrever(f'{TITULO}\n\nNada a medir: o PR não mexe em pacote da lista ({MODULO}).\n',
@@ -291,7 +310,7 @@ def main():
                 print('[]')
             return
     else:
-        pedidos = list(limites)
+        pedidos = alvos
 
     fixos = grupos_fixos()
     if opcoes.grupos:
@@ -312,6 +331,10 @@ def main():
     for r in abaixo:
         print(f"::error::{r['pacote']}: eficácia {r['eficacia']:.1f}% abaixo do piso de {limites[r['pacote']]:.0f}%: "
               "um teste deixou de pegar mutação (veja as vivas no relatório)")
+    for r in resultados:
+        if r['pacote'] in novos:
+            print(f"::warning::{r['pacote']} é novo e foi medido sem piso ({r['eficacia']:.1f}%). Ponha em "
+                  f"scripts/ci/go/{LISTA} a linha \"{linha_para_a_lista(r)}\", ou o pacote em {FORA} com o motivo.")
     sys.exit(1 if abaixo else 0)
 
 
