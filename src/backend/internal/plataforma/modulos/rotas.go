@@ -72,7 +72,7 @@ func (c *Catalogo) listarHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (c *Catalogo) definirHTTP(w http.ResponseWriter, r *http.Request) {
 	ligado := &respostas.CampoBoolOpcional{Propriedade: "Ligado"}
-	if !respostas.LerObjeto(w, r, "dto", "DefinirModuloDto", ligado) {
+	if !respostas.LerObjeto(w, r, ligado) {
 		return
 	}
 	if ligado.Valor == nil {

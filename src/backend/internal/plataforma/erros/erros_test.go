@@ -474,9 +474,9 @@ func TestLerInt32(t *testing.T) {
 		{"0x7FFFFFFF", 2147483647, ""},
 		{"0x80000000", -2147483648, ""},
 		{"&hFFFFFFFF", -1, ""},
-		{"0x1FFFFFFFF", 0, "The value '0x1FFFFFFFF' is not valid for Pagina."},
+		{"0x1FFFFFFFF", 0, "O valor '0x1FFFFFFFF' não é válido para Pagina."},
 		{"0x", 0, "The input was not valid."},
-		{"abc", 0, "The value 'abc' is not valid for Pagina."},
+		{"abc", 0, "O valor 'abc' não é válido para Pagina."},
 	}
 	for _, c := range casos {
 		valor, erro := lerInt32(c.bruto, "Pagina")

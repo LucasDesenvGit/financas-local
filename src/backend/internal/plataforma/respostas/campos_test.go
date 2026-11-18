@@ -9,7 +9,7 @@ import (
 // lerCampos lê o corpo com os campos e devolve o erro de conversão (o caminho) ou os erros de validação.
 func lerCampos(t *testing.T, corpo string, campos ...Campo) (string, map[string][]string) {
 	t.Helper()
-	_, erro := lerObjeto([]byte(corpo), "Dto", doRecord("Dto"), campos)
+	_, erro := lerObjeto([]byte(corpo), campos)
 	if erro != nil {
 		return erro.Caminho, nil
 	}
@@ -23,7 +23,7 @@ func lerCampos(t *testing.T, corpo string, campos ...Campo) (string, map[string]
 // Regra (#503): a data obrigatória que não veio é o 400 de campo obrigatório; sem Obrigatoria, fica a data zero, como no
 // C#. null e outro formato continuam erro de conversão.
 func TestCampoData(t *testing.T) {
-	obrigatoria := map[string][]string{"D": {"The D field is required."}}
+	obrigatoria := map[string][]string{"D": {"O campo D é obrigatório."}}
 	casos := []struct {
 		corpo       string
 		obrigatoria bool
@@ -66,8 +66,8 @@ func TestCampoInteiro(t *testing.T) {
 		{"ausente fica o padrão", `{}`, "", 5, map[string][]string{}},
 		{"no limite de baixo", `{"p":0}`, "", 0, map[string][]string{}},
 		{"no limite de cima", `{"p":10000}`, "", 10000, map[string][]string{}},
-		{"negativo fora da faixa", `{"p":-1}`, "", -1, map[string][]string{"P": {"The field P must be between 0 and 10000."}}},
-		{"acima da faixa", `{"p":10001}`, "", 10001, map[string][]string{"P": {"The field P must be between 0 and 10000."}}},
+		{"negativo fora da faixa", `{"p":-1}`, "", -1, map[string][]string{"P": {"O campo P tem de estar entre 0 e 10000."}}},
+		{"acima da faixa", `{"p":10001}`, "", 10001, map[string][]string{"P": {"O campo P tem de estar entre 0 e 10000."}}},
 		{"casa decimal", `{"p":7.0}`, "$.p", 0, nil},
 		{"expoente", `{"p":1e2}`, "$.p", 0, nil},
 		{"texto com espaço", `{"p":" 7"}`, "$.p", 0, nil},
@@ -97,8 +97,8 @@ func TestCampoInteiroOpcionalComFaixa(t *testing.T) {
 		{`{}`, map[string][]string{}},
 		{`{"p":1}`, map[string][]string{}},
 		{`{"p":48}`, map[string][]string{}},
-		{`{"p":0}`, map[string][]string{"P": {"The field P must be between 1 and 48."}}},
-		{`{"p":49}`, map[string][]string{"P": {"The field P must be between 1 and 48."}}},
+		{`{"p":0}`, map[string][]string{"P": {"O campo P tem de estar entre 1 e 48."}}},
+		{`{"p":49}`, map[string][]string{"P": {"O campo P tem de estar entre 1 e 48."}}},
 	}
 	for _, c := range casos {
 		campo := &CampoInteiroOpcional{Propriedade: "P", Faixa: &Faixa{1, 48}}
@@ -156,7 +156,7 @@ func TestCampoEnum(t *testing.T) {
 // Regra: decimal? com a escala que veio, também em texto; [Range] em double com os limites em pt-BR ("0,01").
 func TestCampoDecimalOpcional(t *testing.T) {
 	faixa := &Faixa{0.01, 999999999}
-	mensagem := "The field P must be between 0,01 and 999999999."
+	mensagem := "O campo P tem de estar entre 0,01 e 999999999."
 	casos := []struct {
 		nome, corpo string
 		conversao   string
@@ -198,8 +198,8 @@ func TestCampoTextoComPadrao(t *testing.T) {
 	}{
 		{`{"c":"#12abEF"}`, map[string][]string{}},
 		{`{"c":"red"}`, map[string][]string{"C": {padrao.Mensagem("C")}}},
-		{`{"c":""}`, map[string][]string{"C": {"The C field is required."}}},
-		{`{"c":"  "}`, map[string][]string{"C": {"The C field is required.", padrao.Mensagem("C")}}},
+		{`{"c":""}`, map[string][]string{"C": {"O campo C é obrigatório."}}},
+		{`{"c":"  "}`, map[string][]string{"C": {"O campo C é obrigatório.", padrao.Mensagem("C")}}},
 	}
 	for _, c := range casos {
 		campo := &CampoTexto{Propriedade: "C", Maximo: 100, Padrao: padrao}
@@ -216,7 +216,7 @@ func mesmo(a, b *int64) bool { return (a == nil && b == nil) || (a != nil && b !
 // Regra: byte? com [Range(1, 31)] (o dia do mês): número de 0 a 255 ou em texto; null fica nil; fora de 0 a 255, com
 // casas ou com "+" é erro de conversão; fora da faixa, a mensagem do RangeAttribute.
 func TestCampoByteOpcional(t *testing.T) {
-	mensagem := "The field P must be between 1 and 31."
+	mensagem := "O campo P tem de estar entre 1 e 31."
 	casos := []struct {
 		nome, corpo, conversao, valor string
 		erros                         map[string][]string
@@ -295,7 +295,7 @@ func TestCampoDecimal(t *testing.T) {
 func TestMensagemDoPadrao(t *testing.T) {
 	t.Parallel()
 	padrao := NovoPadrao(`^(BRL|USD)$`)
-	if m := padrao.Mensagem("Moeda"); m != "The field Moeda must match the regular expression '^(BRL|USD)$'." {
+	if m := padrao.Mensagem("Moeda"); m != "O campo Moeda não está no formato esperado." {
 		t.Errorf("mensagem padrão: %q", m)
 	}
 	padrao.MensagemPropria = "Moeda inválida: use BRL ou USD."

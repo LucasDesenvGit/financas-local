@@ -1370,12 +1370,11 @@
     "corpo": {
       "errors": {
         "Nome": [
-          "The Nome field is required."
+          "O campo Nome é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1387,12 +1386,11 @@
     "corpo": {
       "errors": {
         "Nome": [
-          "The field Nome must be a string with a maximum length of 120."
+          "O campo Nome pode ter até 120 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1404,12 +1402,11 @@
     "corpo": {
       "errors": {
         "ValorAlvo": [
-          "The field ValorAlvo must be between 0,01 and 999999999."
+          "O campo ValorAlvo tem de estar entre 0,01 e 999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1421,12 +1418,11 @@
     "corpo": {
       "errors": {
         "ValorAtual": [
-          "The field ValorAtual must be between 0 and 999999999."
+          "O campo ValorAtual tem de estar entre 0 e 999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1438,12 +1434,11 @@
     "corpo": {
       "errors": {
         "Cor": [
-          "The field Cor must match the regular expression '^#[0-9a-fA-F]{6}$'."
+          "O campo Cor não está no formato esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1455,12 +1450,11 @@
     "corpo": {
       "errors": {
         "Cor": [
-          "The Cor field is required."
+          "O campo Cor é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1472,12 +1466,11 @@
     "corpo": {
       "errors": {
         "Icone": [
-          "The field Icone must match the regular expression '^[a-z-]+$'."
+          "O campo Icone não está no formato esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1489,12 +1482,11 @@
     "corpo": {
       "errors": {
         "GuardarPorMes": [
-          "The field GuardarPorMes must be between 0,01 and 999999999."
+          "O campo GuardarPorMes tem de estar entre 0,01 e 999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1506,12 +1498,11 @@
     "corpo": {
       "errors": {
         "ReservaNome": [
-          "The field ReservaNome must be a string with a maximum length of 100."
+          "O campo ReservaNome pode ter até 100 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1878,12 +1869,11 @@
     "corpo": {
       "errors": {
         "Valor": [
-          "The field Valor must be between -999999999 and 999999999."
+          "O campo Valor tem de estar entre -999999999 e 999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2198,12 +2188,11 @@
     "corpo": {
       "errors": {
         "Ids": [
-          "The field Ids must be a string or array type with a minimum length of '1'."
+          "O campo Ids precisa de pelo menos 1 item."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2215,12 +2204,11 @@
     "corpo": {
       "errors": {
         "Ids": [
-          "The Ids field is required."
+          "O campo Ids é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

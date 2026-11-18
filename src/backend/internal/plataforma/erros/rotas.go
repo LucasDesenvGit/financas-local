@@ -179,7 +179,7 @@ func (s *Servico) situacao(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resolvido := &respostas.CampoBool{Propriedade: "Resolvido"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SituacaoErroDto", resolvido) {
+	if !respostas.LerObjeto(w, r, resolvido) {
 		return
 	}
 	var resolvidoEm *tipos.DataHora
@@ -231,7 +231,7 @@ func (s *Servico) registrarDoFrontEnd(w http.ResponseWriter, r *http.Request) {
 	mensagem := &respostas.CampoTexto{Propriedade: "Mensagem", Maximo: 1000}
 	detalhe := &respostas.CampoTexto{Propriedade: "Detalhe", Maximo: 8000, Opcional: true}
 	rota := &respostas.CampoTexto{Propriedade: "Rota", Maximo: 300, Opcional: true}
-	if !respostas.LerTextos(w, r, "dto", "Financas.Api.Dtos.ErroFrontEndDto", mensagem, detalhe, rota) {
+	if !respostas.LerTextos(w, r, mensagem, detalhe, rota) {
 		return
 	}
 	login, err := auditoria.Login(r.Context(), s.q)

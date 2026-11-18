@@ -137,7 +137,7 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 	categoria := respostas.CampoInteiro{Propriedade: "CategoriaId"}
 	ano, mes := campoAno(), campoMes()
 	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 999999999}}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarOrcamentoDto", &categoria, &ano, &mes, &valor) {
+	if !respostas.LerObjeto(w, r, &categoria, &ano, &mes, &valor) {
 		return
 	}
 	ctx := r.Context()
@@ -205,12 +205,12 @@ func (s *Servico) excluir(w http.ResponseWriter, r *http.Request) {
 // aplicarSugestao grava os valores escolhidos na sugestão (cria ou altera o orçamento de cada categoria no mês).
 func (s *Servico) aplicarSugestao(w http.ResponseWriter, r *http.Request) {
 	ano, mes := campoAno(), campoMes()
-	itens := respostas.CampoListaDeObjetos{Propriedade: "Itens", TipoItem: "Financas.Api.Dtos.ItemAplicarSugestaoDto",
+	itens := respostas.CampoListaDeObjetos{Propriedade: "Itens",
 		Minimo: 1, Maximo: 500, Obrigatoria: true, Novo: func() []respostas.Campo {
 			return []respostas.Campo{&respostas.CampoInteiro{Propriedade: "CategoriaId"},
 				&respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}}}
 		}}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.AplicarSugestaoOrcamentoDto", &ano, &mes, &itens) {
+	if !respostas.LerObjeto(w, r, &ano, &mes, &itens) {
 		return
 	}
 	type item struct {
@@ -267,7 +267,7 @@ func (s *Servico) aplicarSugestao(w http.ResponseWriter, r *http.Request) {
 // copiarMesAnterior copia os orçamentos do mês anterior para o mês informado, sem sobrescrever os que já existem.
 func (s *Servico) copiarMesAnterior(w http.ResponseWriter, r *http.Request) {
 	ano, mes := campoAno(), campoMes()
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.CopiarOrcamentoDto", &ano, &mes) {
+	if !respostas.LerObjeto(w, r, &ano, &mes) {
 		return
 	}
 	ctx := r.Context()

@@ -75,28 +75,22 @@ func ValoresDaQuery(r *http.Request, nome string) []string {
 	}
 }
 
-// MensagemDaQuery é a do 400 automático para o valor da query que não vira o tipo do parâmetro (ou do item de uma
-// lista): "The value 'abc' is not valid." (contratos 02-cambio, 04-contas, 06-regras e 07-transacoes). Vazio num tipo
-// que não aceita null é MensagemDeValorInvalido.
-func MensagemDaQuery(valor string) string {
-	if strings.TrimSpace(valor) == "" {
-		return MensagemDeValorInvalido(valor)
-	}
-	return "The value '" + valor + "' is not valid."
-}
+// MensagemDaQuery é a do 400 para o valor da query que não vira o tipo do parâmetro (ou do item de uma lista):
+// "O valor 'abc' não é válido." (contratos 02-cambio, 04-contas, 06-regras e 07-transacoes).
+func MensagemDaQuery(valor string) string { return MensagemDeValorInvalido(valor) }
 
-// MensagemDaPropriedade é a mesma mensagem para uma propriedade de um objeto lido da query ([FromQuery] FiltroDto):
-// ela cita o nome da propriedade ("The value 'um' is not valid for Pagina.", contrato 07-transacoes).
+// MensagemDaPropriedade é a mesma mensagem para um campo de um filtro lido da query: ela cita o nome do campo ("O
+// valor 'um' não é válido para Pagina.", contrato 07-transacoes).
 func MensagemDaPropriedade(valor, propriedade string) string {
 	if strings.TrimSpace(valor) == "" {
 		return MensagemDeValorInvalido(valor)
 	}
-	return "The value '" + valor + "' is not valid for " + propriedade + "."
+	return "O valor '" + valor + "' não é válido para " + propriedade + "."
 }
 
-// MensagemDeValorInvalido é a do valor vazio num tipo que não aceita null e a do número que não existe no enum
-// ("The value '9' is invalid.", contrato 07-transacoes).
-func MensagemDeValorInvalido(valor string) string { return "The value '" + valor + "' is invalid." }
+// MensagemDeValorInvalido é a do valor que não serve: vazio num tipo que não aceita vazio, número que não existe no
+// enum ("O valor '9' não é válido.", contrato 07-transacoes) ou texto que não vira o tipo.
+func MensagemDeValorInvalido(valor string) string { return "O valor '" + valor + "' não é válido." }
 
 // InteiroDaQuery é o Int32Converter que o model binding usa (na cultura invariante): espaços nas pontas, sinal e,
 // com "0x", "#" ou "&h" na frente, hexadecimal ("0x7EA" é 2026). O gabarito é o testdata/query.json.

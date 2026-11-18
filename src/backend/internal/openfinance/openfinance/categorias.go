@@ -66,7 +66,7 @@ func (s *Servico) lerCategorias(ctx context.Context) ([]categoriaDto, error) {
 func (s *Servico) mapearCategoria(w http.ResponseWriter, r *http.Request) {
 	categoriaId := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
 	aplicar := respostas.CampoBool{Propriedade: "AplicarExistentes"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.MapearCategoriaPluggyDto", &categoriaId, &aplicar) {
+	if !respostas.LerObjeto(w, r, &categoriaId, &aplicar) {
 		return
 	}
 	ctx := r.Context()

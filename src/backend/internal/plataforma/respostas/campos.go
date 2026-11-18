@@ -16,10 +16,10 @@ type Faixa struct {
 	Minimo, Maximo float64
 }
 
-// mensagem é a do RangeAttribute: os limites saem com a cultura do servidor (pt-BR: "0,01"), como o .NET formata o
-// double. Conferido no contrato (06-regras, "criar regra de descrição com valor fora da faixa").
+// mensagem é a do valor fora da faixa, com os limites em pt-BR ("0,01"): contrato 06-regras, "criar regra de
+// descrição com valor fora da faixa".
 func (f Faixa) mensagem(propriedade string) string {
-	return fmt.Sprintf("The field %s must be between %s and %s.", propriedade, numeroPtBR(f.Minimo), numeroPtBR(f.Maximo))
+	return fmt.Sprintf("O campo %s tem de estar entre %s e %s.", propriedade, numeroPtBR(f.Minimo), numeroPtBR(f.Maximo))
 }
 
 // numeroPtBR é o double.ToString da cultura pt-BR: com o expoente abaixo de -4, o .NET passa para a notação científica
@@ -108,7 +108,6 @@ func (c *CampoInteiroOpcional) validar(erros map[string][]string) {
 type CampoEnum struct {
 	Propriedade string
 	Anulavel    bool
-	Tipo        string // o nome completo do enum no C#, para o erro de conversão numa classe (LerClasse)
 	Valor       *int64
 }
 
@@ -309,23 +308,22 @@ func (c *CampoDecimalOpcional) validar(erros map[string][]string) {
 // Padrao é o [RegularExpression] de um CampoTexto: vale só para texto que não é vazio (o RegularExpressionAttribute
 // deixa passar nulo e ""), e o texto inteiro tem de casar.
 type Padrao struct {
-	Expressao string // como está no atributo do C#, que aparece na mensagem
 	// MensagemPropria é o ErrorMessage do atributo, quando o C# dá um ("Moeda inválida: use BRL ou USD.").
 	MensagemPropria string
 	re              *regexp.Regexp
 }
 
 func NovoPadrao(expressao string) *Padrao {
-	return &Padrao{Expressao: expressao, re: regexp.MustCompile(`^(?:` + expressao + `)$`)}
+	return &Padrao{re: regexp.MustCompile(`^(?:` + expressao + `)$`)}
 }
 
 // Casa é o RegularExpressionAttribute: o texto inteiro casa com a expressão; nulo e vazio passam.
 func (p *Padrao) Casa(valor string) bool { return valor == "" || p.re.MatchString(valor) }
 
-// Mensagem é a do RegularExpressionAttribute, com a expressão como está no C#.
+// Mensagem é a do texto que não casa com a expressão: a própria do campo, quando ele dá uma, ou a padrão.
 func (p *Padrao) Mensagem(propriedade string) string {
 	if p.MensagemPropria != "" {
 		return p.MensagemPropria
 	}
-	return fmt.Sprintf("The field %s must match the regular expression '%s'.", propriedade, p.Expressao)
+	return fmt.Sprintf("O campo %s não está no formato esperado.", propriedade)
 }

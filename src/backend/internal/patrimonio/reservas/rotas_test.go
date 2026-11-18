@@ -63,11 +63,11 @@ func TestRotasDasReservas(t *testing.T) {
 		{"tirar sem a conta é da conta 0", "DELETE", "/api/reservas/conferencia?nome=Viagem", "", 404,
 			`{"mensagem":"Registro não encontrado."}`, []string{"1 | Viagem | 100.0 | 2026-10-30"}},
 		{"tirar sem o nome", "DELETE", "/api/reservas/conferencia?contaId=1", "", 400,
-			`{"errors":{"nome":["The nome field is required."]}}`, []string{"1 | Viagem | 100.0 | 2026-10-30"}},
+			`{"errors":{"nome":["O campo nome é obrigatório."]}}`, []string{"1 | Viagem | 100.0 | 2026-10-30"}},
 		{"tirar com o nome só de espaços", "DELETE", "/api/reservas/conferencia?contaId=1&nome=%20%20", "", 400,
-			`{"errors":{"nome":["The nome field is required."]}}`, []string{"1 | Viagem | 100.0 | 2026-10-30"}},
+			`{"errors":{"nome":["O campo nome é obrigatório."]}}`, []string{"1 | Viagem | 100.0 | 2026-10-30"}},
 		{"tirar com a conta que não é número, e sem o nome", "DELETE", "/api/reservas/conferencia?contaId=abc", "", 400,
-			`{"errors":{"contaId":["The value 'abc' is not valid."],"nome":["The nome field is required."]}}`,
+			`{"errors":{"contaId":["O valor 'abc' não é válido."],"nome":["O campo nome é obrigatório."]}}`,
 			[]string{"1 | Viagem | 100.0 | 2026-10-30"}},
 	}
 	for _, c := range casos {

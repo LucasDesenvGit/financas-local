@@ -302,15 +302,14 @@
     "corpo": {
       "errors": {
         "Prioridade": [
-          "The field Prioridade must be between 0 and 10000."
+          "O campo Prioridade tem de estar entre 0 e 10000."
         ],
         "Texto": [
-          "The field Texto must be a string with a minimum length of 2 and a maximum length of 200."
+          "O campo Texto tem de ter de 2 a 200 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -322,12 +321,11 @@
     "corpo": {
       "errors": {
         "Texto": [
-          "The Texto field is required."
+          "O campo Texto é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -369,12 +367,11 @@
     "corpo": {
       "errors": {
         "Prioridade": [
-          "The field Prioridade must be between 0 and 10000."
+          "O campo Prioridade tem de estar entre 0 e 10000."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2414,12 +2411,11 @@
     "corpo": {
       "errors": {
         "tipo": [
-          "The value 'abc' is not valid."
+          "O valor 'abc' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2441,12 +2437,11 @@
     "corpo": {
       "errors": {
         "valorMinimo": [
-          "The value 'abc' is not valid."
+          "O valor 'abc' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2966,15 +2961,14 @@
     "corpo": {
       "errors": {
         "ValorMaximo": [
-          "The field ValorMaximo must be between 0,01 and 999999999."
+          "O campo ValorMaximo tem de estar entre 0,01 e 999999999."
         ],
         "ValorMinimo": [
-          "The field ValorMinimo must be between 0,01 and 999999999."
+          "O campo ValorMinimo tem de estar entre 0,01 e 999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -2986,16 +2980,15 @@
     "corpo": {
       "errors": {
         "NovaDescricao": [
-          "The NovaDescricao field is required.",
-          "The field NovaDescricao must be a string with a minimum length of 1 and a maximum length of 300."
+          "O campo NovaDescricao é obrigatório.",
+          "O campo NovaDescricao tem de ter de 1 a 300 caracteres."
         ],
         "Texto": [
-          "The field Texto must be a string with a minimum length of 2 and a maximum length of 200."
+          "O campo Texto tem de ter de 2 a 200 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

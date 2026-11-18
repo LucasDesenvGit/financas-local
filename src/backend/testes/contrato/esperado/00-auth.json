@@ -22,8 +22,7 @@
     "tipo": "application/problem+json; charset=utf-8",
     "corpo": {
       "status": 400,
-      "title": "Bad Request",
-      "traceId": "<traceId>",
+      "title": "Pedido recusado: o token de segurança não veio ou não confere.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -35,15 +34,14 @@
     "corpo": {
       "errors": {
         "Login": [
-          "The field Login must be a string with a minimum length of 3 and a maximum length of 100."
+          "O campo Login tem de ter de 3 a 100 caracteres."
         ],
         "Senha": [
-          "The Senha field is required."
+          "O campo Senha é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -223,12 +221,11 @@
     "corpo": {
       "errors": {
         "Senha": [
-          "The Senha field is required."
+          "O campo Senha é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -298,8 +295,7 @@
     "tipo": "application/problem+json; charset=utf-8",
     "corpo": {
       "status": 400,
-      "title": "Bad Request",
-      "traceId": "<traceId>",
+      "title": "Pedido recusado: o token de segurança não veio ou não confere.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -311,15 +307,14 @@
     "corpo": {
       "errors": {
         "NovaSenha": [
-          "The NovaSenha field is required."
+          "O campo NovaSenha é obrigatório."
         ],
         "SenhaAtual": [
-          "The SenhaAtual field is required."
+          "O campo SenhaAtual é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -331,15 +326,11 @@
     "corpo": {
       "errors": {
         "$": [
-          "Expected start of a property name or value, but instead reached end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 34."
-        ],
-        "dto": [
-          "The dto field is required."
+          "Os dados do pedido não estão num formato válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -589,8 +580,7 @@
     "tipo": "application/problem+json; charset=utf-8",
     "corpo": {
       "status": 400,
-      "title": "Bad Request",
-      "traceId": "<traceId>",
+      "title": "Pedido recusado: o token de segurança não veio ou não confere.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

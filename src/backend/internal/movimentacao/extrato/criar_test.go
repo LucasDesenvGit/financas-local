@@ -120,9 +120,9 @@ func TestCriarComErro(t *testing.T) {
 	if err := json.Unmarshal(resp.Corpo, &problema); err != nil {
 		t.Fatal(err)
 	}
-	testeapoio.ConferirJSON(t, problema.Errors, `{"Descricao":["The Descricao field is required."],
-		"Valor":["The field Valor must be between 0,01 and 999999999."],
-		"Observacao":["The field Observacao must be a string with a maximum length of 1000."]}`)
+	testeapoio.ConferirJSON(t, problema.Errors, `{"Descricao":["O campo Descricao é obrigatório."],
+		"Valor":["O campo Valor tem de estar entre 0,01 e 999999999."],
+		"Observacao":["O campo Observacao pode ter até 1000 caracteres."]}`)
 	for _, data := range []string{`"10/10/2026"`, `"2026-10-1"`, `null`, `20261010`} {
 		r := testeapoio.Chamar(t, mux, "POST", "/api/transacoes", fmt.Sprintf(`{"contaId":%d,"data":%s,"descricao":"x","valor":1,"tipo":1}`,
 			manual.Id, data))
@@ -134,5 +134,5 @@ func TestCriarComErro(t *testing.T) {
 	if err := json.Unmarshal(semData.Corpo, &problema); err != nil {
 		t.Fatal(err)
 	}
-	testeapoio.ConferirJSON(t, problema.Errors, `{"Data":["The Data field is required."]}`)
+	testeapoio.ConferirJSON(t, problema.Errors, `{"Data":["O campo Data é obrigatório."]}`)
 }

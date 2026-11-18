@@ -19,7 +19,6 @@ import (
 //     relógio anda, e cada execução cai em outra fração de segundo. Vira "<relógio +N min, formato>", com N os
 //     minutos desde Inicio: um horário em outro fuso (3 h antes) fica fora da janela e aparece cru na diferença;
 //   - GUID gerado na hora (carimbo de segurança): "<GUID>" ou "<guid>", guardando se veio em maiúsculas;
-//   - traceId do ValidationProblemDetails: "<traceId>";
 //   - a versão do sistema (calculada a cada merge, ADR 0070): "<versao>";
 //   - a pasta temporária dos dados: "<dados>", com o resto do caminho com "/" (no Windows o .NET e o Go usam "\\", e o
 //     esperado gravado no Linux vale nos dois);
@@ -42,7 +41,6 @@ var (
 	dataHoraIso = regexp.MustCompile(`^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(\.\d{1,7})?(Z|[+-]\d{2}:\d{2})?$`)
 	guidMaiusc  = regexp.MustCompile(`^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$`)
 	guidMinusc  = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
-	traceID     = regexp.MustCompile(`^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$`)
 )
 
 // instante lê uma data e hora num dos dois formatos. Sem fuso, é UTC (o EF Core grava UTC sem marcador).
@@ -142,8 +140,6 @@ func (n Normalizador) geral(chave string, v any) any {
 		return x
 	case string:
 		switch {
-		case chave == "traceId" && traceID.MatchString(x):
-			return "<traceId>"
 		case chave == "versao" && n.Versao != "" && x == n.Versao:
 			return "<versao>"
 		}

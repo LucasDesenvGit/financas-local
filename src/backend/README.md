@@ -48,7 +48,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 | `internal/plataforma/servidor` | HTTPS local, cabeçalhos de segurança (a CSP), erros, os arquivos do front-end e o certificado |
 | `internal/plataforma/sessao` | quem está logado, no contexto da requisição |
 | `internal/plataforma/autenticacao` | login, sessão em cookie assinado, CSRF, limite por IP, bloqueio e auditoria (#75) |
-| `internal/plataforma/respostas` | as respostas comuns a todos os assuntos: ler o JSON e validar os campos, o 400 com as mensagens de validação (`ValidationProblemDetails`), o 415 e o `{"mensagem"}` que o front-end mostra |
+| `internal/plataforma/respostas` | as respostas comuns a todos os assuntos: ler o JSON e validar os campos, o 400 com as mensagens de validação em português (por campo, em `errors`), o 415 e o `{"mensagem"}` que o front-end mostra |
 | `internal/plataforma/auditoria` | a auditoria: grava em `AuditoriaAcesso` o evento, o login, o IP e o navegador |
 | `internal/plataforma/configuracao` | ler e gravar a tabela `Configuracao` (#76), chave e valor em texto, convertidos para número, sim/não e data |
 | `internal/ajustes/parametros` | a Parametrização do site (#76): o catálogo, a gravação que valida tudo antes e o diagnóstico |

@@ -80,13 +80,13 @@ func TestNormalizadorTexto(t *testing.T) {
 
 func TestNormalizadorCorpo(t *testing.T) {
 	n := Normalizador{Inicio: time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC), Versao: "2.37.7"}
-	corpo := deJSON(t, `{"versao":"2.37.7","traceId":"00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+	corpo := deJSON(t, `{"versao":"2.37.7",
 		"dotNet":".NET 10.0.3","tamanho":123456,"valor":-5000.0,"outraVersao":"2.37.6"}`)
 	saida, err := n.corpo(corpo, map[string]string{"/dotNet": "texto", "/tamanho": "numero"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	esperado := deJSON(t, `{"versao":"<versao>","traceId":"<traceId>","dotNet":"<texto>","tamanho":"<número>",
+	esperado := deJSON(t, `{"versao":"<versao>","dotNet":"<texto>","tamanho":"<número>",
 		"valor":-5000.0,"outraVersao":"2.37.6"}`)
 	if difs := comparar("", esperado, saida); len(difs) > 0 {
 		t.Error(strings.Join(difs, "\n"))

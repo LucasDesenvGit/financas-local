@@ -492,7 +492,7 @@ func (s *Servico) obterHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Servico) ligarHTTP(w http.ResponseWriter, r *http.Request) {
-	corpo, ok := respostas.LerCorpo(w, r, "dto")
+	corpo, ok := respostas.LerCorpo(w, r)
 	if !ok {
 		return
 	}

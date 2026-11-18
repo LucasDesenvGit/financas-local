@@ -116,15 +116,15 @@ func TestValidacoesDaQuery(t *testing.T) {
 	casos := []struct {
 		caminho, campo, mensagem string
 	}{
-		{"/api/relatorios/categorias?inicio=ontem&fim=2026-10-14", "inicio", "The value 'ontem' is not valid."},
-		{"/api/relatorios/categorias?inicio=&fim=2026-10-14", "inicio", "The value '' is invalid."},
-		{"/api/relatorios/categorias?inicio=2026-01-01&fim=2026-01-02&tipo=9", "tipo", "The value '9' is invalid."},
-		{"/api/relatorios/categorias?inicio=2026-01-01&fim=2026-01-02&tipo=xyz", "tipo", "The value 'xyz' is not valid."},
-		{"/api/relatorios/categorias?inicio=2026-01-01&fim=2026-01-02&agrupar=talvez", "agrupar", "The value 'talvez' is not valid."},
-		{"/api/relatorios/fluxo?inicio=2026-01-01&fim=x", "fim", "The value 'x' is not valid."},
-		{"/api/relatorios/anual?ano=dois", "ano", "The value 'dois' is not valid."},
-		{"/api/relatorios/projecao?meses=seis", "meses", "The value 'seis' is not valid."},
-		{"/api/relatorios/maiores-despesas?inicio=1/2/3", "inicio", "The value '1/2/3' is not valid."},
+		{"/api/relatorios/categorias?inicio=ontem&fim=2026-10-14", "inicio", "O valor 'ontem' não é válido."},
+		{"/api/relatorios/categorias?inicio=&fim=2026-10-14", "inicio", "O valor '' não é válido."},
+		{"/api/relatorios/categorias?inicio=2026-01-01&fim=2026-01-02&tipo=9", "tipo", "O valor '9' não é válido."},
+		{"/api/relatorios/categorias?inicio=2026-01-01&fim=2026-01-02&tipo=xyz", "tipo", "O valor 'xyz' não é válido."},
+		{"/api/relatorios/categorias?inicio=2026-01-01&fim=2026-01-02&agrupar=talvez", "agrupar", "O valor 'talvez' não é válido."},
+		{"/api/relatorios/fluxo?inicio=2026-01-01&fim=x", "fim", "O valor 'x' não é válido."},
+		{"/api/relatorios/anual?ano=dois", "ano", "O valor 'dois' não é válido."},
+		{"/api/relatorios/projecao?meses=seis", "meses", "O valor 'seis' não é válido."},
+		{"/api/relatorios/maiores-despesas?inicio=1/2/3", "inicio", "O valor '1/2/3' não é válido."},
 	}
 	for _, caso := range casos {
 		r := testeapoio.Chamar(t, c.mux, "GET", caso.caminho, "")

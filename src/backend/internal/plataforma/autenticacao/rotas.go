@@ -78,7 +78,7 @@ func (a *Autenticacao) estado(w http.ResponseWriter, r *http.Request) {
 func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 	login := &respostas.CampoTexto{Propriedade: "Login", Minimo: 3, Maximo: 100}
 	senha := &respostas.CampoTexto{Propriedade: "Senha", Maximo: 200}
-	if !respostas.LerTextos(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha) {
+	if !respostas.LerTextos(w, r, login, senha) {
 		return
 	}
 	ctx := r.Context()
@@ -130,7 +130,7 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 	login := &respostas.CampoTexto{Propriedade: "Login", Minimo: 3, Maximo: 100}
 	senha := &respostas.CampoTexto{Propriedade: "Senha", Maximo: 200}
-	if !respostas.LerTextos(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha) {
+	if !respostas.LerTextos(w, r, login, senha) {
 		return
 	}
 	ctx := r.Context()
@@ -226,7 +226,7 @@ func (a *Autenticacao) sair(w http.ResponseWriter, r *http.Request) {
 func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 	atual := &respostas.CampoTexto{Propriedade: "SenhaAtual", Maximo: 200}
 	nova := &respostas.CampoTexto{Propriedade: "NovaSenha", Maximo: 200}
-	if !respostas.LerTextos(w, r, "dto", "Financas.Api.Dtos.AlterarSenhaDto", atual, nova) {
+	if !respostas.LerTextos(w, r, atual, nova) {
 		return
 	}
 	ctx := r.Context()

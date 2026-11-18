@@ -612,8 +612,8 @@ func (s *Servico) itensDaLista(w http.ResponseWriter, r *http.Request, etapa str
 
 // importarDoExtrato é o POST /api/carteira/extrato/importar.
 func (s *Servico) importarDoExtrato(w http.ResponseWriter, r *http.Request) {
-	itens := respostas.CampoListaDeObjetos{Propriedade: "Itens", TipoItem: "Financas.Api.Dtos.ImportarExtratoItemDto", Minimo: 1, Maximo: 500, Obrigatoria: true, Novo: camposDoItemDoExtrato}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ImportarExtratoDto", &itens) {
+	itens := respostas.CampoListaDeObjetos{Propriedade: "Itens", Minimo: 1, Maximo: 500, Obrigatoria: true, Novo: camposDoItemDoExtrato}
+	if !respostas.LerObjeto(w, r, &itens) {
 		return
 	}
 	lista, ok := s.itensDaLista(w, r, "importar do extrato", itens.Itens)

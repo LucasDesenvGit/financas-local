@@ -311,7 +311,7 @@ func lerEntrada(w http.ResponseWriter, r *http.Request) (*entrada, bool) {
 		icone:         respostas.CampoTexto{Propriedade: "Icone", Maximo: 30, Opcional: true, Padrao: padraoIcone},
 		guardarPorMes: respostas.CampoDecimalOpcional{Propriedade: "GuardarPorMes", Faixa: faixaValor},
 	}
-	ok := respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarMetaDto", &e.nome, &e.valorAlvo, &e.valorAtual,
+	ok := respostas.LerObjeto(w, r, &e.nome, &e.valorAlvo, &e.valorAtual,
 		&e.dataAlvo, &e.contaId, &e.cor, &e.concluida, &e.reservaNome, &e.icone, &e.guardarPorMes)
 	return e, ok
 }
@@ -468,7 +468,7 @@ func (s *Servico) aporte(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: -999999999, Maximo: 999999999}}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.AporteDto", &valor) {
+	if !respostas.LerObjeto(w, r, &valor) {
 		return
 	}
 	ctx := r.Context()
@@ -558,7 +558,7 @@ func (s *Servico) aportes(w http.ResponseWriter, r *http.Request) {
 // no fim; o empate fica na ordem do Id, a da tabela).
 func (s *Servico) prioridades(w http.ResponseWriter, r *http.Request) {
 	ids := respostas.CampoLista{Propriedade: "Ids", Item: respostas.ItemInt, Minimo: 1, Maximo: 200}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.PrioridadesMetasDto", &ids) {
+	if !respostas.LerObjeto(w, r, &ids) {
 		return
 	}
 	vistos := map[int64]bool{}

@@ -148,7 +148,7 @@ func lerSalvarConta(w http.ResponseWriter, r *http.Request) (salvarContaDto, boo
 	arquivada := respostas.CampoBool{Propriedade: "Arquivada"}
 	banco := respostas.CampoTexto{Propriedade: "Banco", Maximo: 30, Opcional: true}
 	vinculada := respostas.CampoInteiroOpcional{Propriedade: "ContaVinculadaId"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarContaDto", &nome, &tipo, &numero, &saldoInicial,
+	if !respostas.LerObjeto(w, r, &nome, &tipo, &numero, &saldoInicial,
 		&limite, &diaFechamento, &diaVencimento, &cor, &incluir, &arquivada, &banco, &vinculada) {
 		return salvarContaDto{}, false
 	}
@@ -494,7 +494,7 @@ func (s *Servico) limiteAjustado(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ajustado := respostas.CampoBoolOpcional{Propriedade: "Ajustado"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ResponderLimiteAjustadoDto", &ajustado) {
+	if !respostas.LerObjeto(w, r, &ajustado) {
 		return
 	}
 	c, err := lerConta(r.Context(), s.db, id)

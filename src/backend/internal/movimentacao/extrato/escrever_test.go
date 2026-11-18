@@ -137,7 +137,7 @@ func TestAtualizarComErro(t *testing.T) {
 	t.Run("corpo inválido antes do 404", func(t *testing.T) {
 		resp := testeapoio.Chamar(t, mux, "PUT", "/api/transacoes/999", corpo(carteira.Id, `,"valor":0`))
 		resp.ConferirStatus(t, http.StatusBadRequest)
-		if !strings.Contains(string(resp.Corpo), "The field Valor must be between 0,01 and 999999999.") {
+		if !strings.Contains(string(resp.Corpo), "O campo Valor tem de estar entre 0,01 e 999999999.") {
 			t.Errorf("%s", resp.Corpo)
 		}
 	})
@@ -341,7 +341,7 @@ func TestTransferir(t *testing.T) {
 	semData := testeapoio.Chamar(t, mux, "POST", "/api/transacoes/transferencia", fmt.Sprintf(`{"contaOrigemId":%d,
 		"contaDestinoId":%d,"valor":10}`, poupanca.Id, carteira.Id))
 	semData.ConferirStatus(t, http.StatusBadRequest)
-	if !strings.Contains(string(semData.Corpo), `"Data":["The Data field is required."]`) {
+	if !strings.Contains(string(semData.Corpo), `"Data":["O campo Data é obrigatório."]`) {
 		t.Errorf("transferir sem data: %s", semData.Corpo)
 	}
 	var gravadas int
@@ -426,11 +426,11 @@ func TestListaDeIds(t *testing.T) {
 	casos := []struct {
 		nome, corpo, erro string
 	}{
-		{"sem a lista", `{"emergencia":true}`, `"Ids":["The Ids field is required."]`},
-		{"a lista nula", `{"ids":null}`, `"Ids":["The Ids field is required."]`},
-		{"vazia", `{"ids":[]}`, `"Ids":["The field Ids must be a string or array type with a minimum length of '1'."]`},
+		{"sem a lista", `{"emergencia":true}`, `"Ids":["O campo Ids é obrigatório."]`},
+		{"a lista nula", `{"ids":null}`, `"Ids":["O campo Ids é obrigatório."]`},
+		{"vazia", `{"ids":[]}`, `"Ids":["O campo Ids precisa de pelo menos 1 item."]`},
 		{"1001 ids", `{"ids":[` + strings.Join(mil, ",") + `]}`,
-			`"Ids":["The field Ids must be a string or array type with a maximum length of '1000'."]`},
+			`"Ids":["O campo Ids pode ter até 1000 itens."]`},
 		{"item que não é número", `{"ids":[1,"x"]}`, `"$.ids[1]"`},
 		{"não é lista", `{"ids":5}`, `"$.ids"`},
 	}

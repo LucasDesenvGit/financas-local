@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 )
 
@@ -71,11 +70,11 @@ func TestParametroDaQuery(t *testing.T) {
 	}
 }
 
-// Regra: a mensagem do 400 da query: vazio (ou só espaço) é "is invalid", o resto "is not valid".
+// Regra: a mensagem do 400 da query cita o valor que veio, mesmo vazio ou só com espaço.
 func TestMensagemDaQuery(t *testing.T) {
-	for valor, esperado := range map[string]string{"": "The value '' is invalid.", " ": "The value ' ' is invalid.",
-		"abc": "The value 'abc' is not valid."} {
-		if m := MensagemDaQuery(valor); m != esperado || !strings.HasPrefix(m, "The value '") {
+	for valor, esperado := range map[string]string{"": "O valor '' não é válido.", " ": "O valor ' ' não é válido.",
+		"abc": "O valor 'abc' não é válido."} {
+		if m := MensagemDaQuery(valor); m != esperado {
 			t.Errorf("MensagemDaQuery(%q) = %q, esperado %q", valor, m, esperado)
 		}
 	}
@@ -127,15 +126,32 @@ func TestValoresDaQuery(t *testing.T) {
 	}
 }
 
-// Regra: as mensagens do 400 de uma propriedade do objeto da query citam o nome dela; o vazio é "is invalid".
+// Regra: o caminho do erro acrescenta o nome com ponto; o nome com um caractere que confundiria o caminho vai entre
+// colchetes e aspas.
+func TestCaminhoDaChave(t *testing.T) {
+	casos := []struct{ caminho, nome, esperado string }{
+		{"$", "valor", "$.valor"},
+		{"$.valores", "Abc", "$.valores.Abc"},
+		{"$.valores", "A.b", "$.valores['A.b']"},
+		{"$", "com espaço", "$['com espaço']"},
+		{"$", "a[0]", "$['a[0]']"},
+	}
+	for _, c := range casos {
+		if obtido := CaminhoDaChave(c.caminho, c.nome); obtido != c.esperado {
+			t.Errorf("CaminhoDaChave(%q, %q) = %q, esperado %q", c.caminho, c.nome, obtido, c.esperado)
+		}
+	}
+}
+
+// Regra: as mensagens do 400 de uma propriedade do objeto da query citam o nome dela; o vazio, não.
 func TestMensagemDaPropriedade(t *testing.T) {
-	if m := MensagemDaPropriedade("um", "Pagina"); m != "The value 'um' is not valid for Pagina." {
+	if m := MensagemDaPropriedade("um", "Pagina"); m != "O valor 'um' não é válido para Pagina." {
 		t.Errorf("%q", m)
 	}
-	if m := MensagemDaPropriedade("", "Pagina"); m != "The value '' is invalid." {
+	if m := MensagemDaPropriedade("", "Pagina"); m != "O valor '' não é válido." {
 		t.Errorf("%q", m)
 	}
-	if m := MensagemDeValorInvalido("9"); m != "The value '9' is invalid." {
+	if m := MensagemDeValorInvalido("9"); m != "O valor '9' não é válido." {
 		t.Errorf("%q", m)
 	}
 }

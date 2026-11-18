@@ -113,12 +113,11 @@
     "corpo": {
       "errors": {
         "inicio": [
-          "The value 'ontem' is not valid."
+          "O valor 'ontem' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

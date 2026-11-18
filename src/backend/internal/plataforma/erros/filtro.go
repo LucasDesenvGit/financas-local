@@ -1,7 +1,6 @@
 package erros
 
 import (
-	"fmt"
 	"math"
 	"net/url"
 	"regexp"
@@ -48,7 +47,7 @@ func lerFiltro(consulta string) (filtro, map[string][]string) {
 			return true
 		}
 		if strings.TrimSpace(bruto) == "" {
-			falhou(propriedade, fmt.Sprintf("The value '%s' is invalid.", bruto))
+			falhou(propriedade, respostas.MensagemDeValorInvalido(bruto))
 			return false
 		}
 		n, mensagem := lerInt32(bruto, propriedade)
@@ -93,16 +92,16 @@ func lerFiltro(consulta string) (filtro, map[string][]string) {
 	tamanhoLido := inteiro("TamanhoPagina", &f.tamanhoPagina)
 
 	if f.origem != nil && respostas.TamanhoUtf16(*f.origem) > 30 {
-		falhou("Origem", "The field Origem must be a string with a maximum length of 30.")
+		falhou("Origem", "O campo Origem pode ter até 30 caracteres.")
 	}
 	if f.situacao != nil && !situacaoValida.MatchString(*f.situacao) {
-		falhou("Situacao", "The field Situacao must match the regular expression '^(abertos|resolvidos|todos)$'.")
+		falhou("Situacao", "O campo Situacao não está no formato esperado.")
 	}
 	if paginaLida && f.pagina < 1 {
-		falhou("Pagina", "The field Pagina must be between 1 and 2147483647.")
+		falhou("Pagina", "O campo Pagina tem de estar entre 1 e 2147483647.")
 	}
 	if tamanhoLido && (f.tamanhoPagina < 1 || f.tamanhoPagina > 100) {
-		falhou("TamanhoPagina", "The field TamanhoPagina must be between 1 and 100.")
+		falhou("TamanhoPagina", "O campo TamanhoPagina tem de estar entre 1 e 100.")
 	}
 	if len(erros) > 0 {
 		return f, erros
@@ -132,7 +131,7 @@ func primeirosValores(consulta string) map[string]string {
 }
 
 func naoValido(bruto, propriedade string) string {
-	return fmt.Sprintf("The value '%s' is not valid for %s.", bruto, propriedade)
+	return respostas.MensagemDaPropriedade(bruto, propriedade)
 }
 
 // lerInt32 é o Int32Converter: o texto sem os espaços das pontas; com 0x ou &h, hexadecimal de até 8 dígitos (os 32
@@ -165,8 +164,8 @@ func lerInt32(bruto, propriedade string) (int, string) {
 var nomesDosNiveis = map[string]Nivel{"aviso": Aviso, "erro": Erro, "critico": Critico}
 
 // lerNivel é o EnumConverter mais o EnumTypeModelBinder: nome (sem diferença de maiúsculas) ou número, vários
-// separados por vírgula (que se juntam, como flags); o que não se lê é "not valid for", e o número que não é um dos
-// três é "is invalid".
+// separados por vírgula (que se juntam, como flags); o que não se lê cita o campo ("não é válido para Nivel"), e o
+// número que não é um dos três, não.
 func lerNivel(bruto string) (Nivel, string) {
 	total := 0
 	for _, parte := range strings.Split(bruto, ",") {
@@ -185,7 +184,7 @@ func lerNivel(bruto string) (Nivel, string) {
 	case Aviso, Erro, Critico:
 		return Nivel(total), ""
 	}
-	return 0, fmt.Sprintf("The value '%s' is invalid.", bruto)
+	return 0, respostas.MensagemDeValorInvalido(bruto)
 }
 
 // Formatos de data que o DateOnly.Parse da cultura invariante aceita e que fazem sentido numa URL. A hora, se vier,

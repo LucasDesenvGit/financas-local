@@ -19,11 +19,10 @@ type ResultadoAplicacaoDto struct {
 	TransacoesAtualizadas int64 `json:"transacoesAtualizadas"`
 }
 
-// lerIds é o model binding de um DTO de lote: Ids ([Required, MinLength(1), MaxLength(1000)] List<long>) e mais os
-// campos do DTO. Devolve os ids sem repetição (o Distinct do C#).
-func lerIds(w http.ResponseWriter, r *http.Request, tipoDto string, outros ...respostas.Campo) ([]int64, bool) {
+// lerIds lê o corpo de uma ação em lote: Ids (obrigatória, de 1 a 1000) e mais os outros campos. Devolve os ids sem repetição (o Distinct do C#).
+func lerIds(w http.ResponseWriter, r *http.Request, outros ...respostas.Campo) ([]int64, bool) {
 	ids := respostas.CampoLista{Propriedade: "Ids", Item: respostas.ItemLong, Minimo: 1, Maximo: 1000}
-	if !respostas.LerObjeto(w, r, "dto", tipoDto, append([]respostas.Campo{&ids}, outros...)...) {
+	if !respostas.LerObjeto(w, r, append([]respostas.Campo{&ids}, outros...)...) {
 		return nil, false
 	}
 	unicos := []int64{}
@@ -49,7 +48,7 @@ func emLista(ids []int64) (string, []any) {
 // "Valor < 0" do C# é conferido aqui, em decimal: dinheiro não se compara no SQL.
 func (s *Servico) emergenciaEmLote(w http.ResponseWriter, r *http.Request) {
 	emergencia := respostas.CampoBool{Propriedade: "Emergencia"}
-	ids, ok := lerIds(w, r, "Financas.Api.Dtos.EmergenciaLoteDto", &emergencia)
+	ids, ok := lerIds(w, r, &emergencia)
 	if !ok {
 		return
 	}
@@ -87,7 +86,7 @@ func (s *Servico) emergenciaEmLote(w http.ResponseWriter, r *http.Request) {
 // revisadaEmLote é o PUT /api/transacoes/revisada-em-lote (#9): a descrição pouco informativa já olhada sai do filtro.
 func (s *Servico) revisadaEmLote(w http.ResponseWriter, r *http.Request) {
 	revisada := respostas.CampoBool{Propriedade: "Revisada"}
-	ids, ok := lerIds(w, r, "Financas.Api.Dtos.RevisadaLoteDto", &revisada)
+	ids, ok := lerIds(w, r, &revisada)
 	if !ok {
 		return
 	}
@@ -109,7 +108,7 @@ func (s *Servico) revisadaEmLote(w http.ResponseWriter, r *http.Request) {
 // várias transações, com o tipo acompanhando; depois, as transferências conferidas de novo.
 func (s *Servico) categoriaEmLote(w http.ResponseWriter, r *http.Request) {
 	categoria := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
-	ids, ok := lerIds(w, r, "Financas.Api.Dtos.CategorizarLoteDto", &categoria)
+	ids, ok := lerIds(w, r, &categoria)
 	if !ok {
 		return
 	}

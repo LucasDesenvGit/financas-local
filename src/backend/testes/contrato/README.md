@@ -147,7 +147,6 @@ Só o que muda sozinho a cada execução é trocado por um marcador (`normalizar
 |---|---|---|
 | Data e hora entre o início do relógio e 1 dia depois, no formato do EF Core ou ISO | `<relógio +N min, formato>` | o relógio anda, e cada execução cai noutra fração de segundo. `N` são os minutos desde o início: o bloqueio de login aparece como `+15 min`. O formato fica no marcador (com espaço ou `T`, com ou sem `Z`). Um horário em outro fuso cai fora da janela e aparece cru na diferença |
 | GUID | `<GUID>` (maiúsculas, o EF Core) ou `<guid>` (minúsculas, o JSON) | o carimbo de segurança é aleatório |
-| `traceId` do `ValidationProblemDetails` | `<traceId>` | muda a cada requisição |
 | `versao` igual à do executável sob teste (`-versao`) | `<versao>` | é calculada a cada merge (ADR 0070) |
 | Caminhos dentro da pasta temporária | `<dados>/...` | a pasta muda a cada execução |
 | `Usuario.SenhaHash` | `<hash v3: prf 2, 100000 iterações, sal de 16 bytes, chave de 32 bytes>` | o sal é aleatório; o resto tem de ser igual, para a senha de quem já tem conta continuar valendo |

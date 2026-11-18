@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -237,7 +236,7 @@ func TestValidarLimites(t *testing.T) {
 	}
 }
 
-// Regra: o corpo é lido como o System.Text.Json do ASP.NET, com as mesmas mensagens e posições.
+// Regra: o corpo é lido na ordem do texto, e o primeiro erro de tipo sai com o caminho do valor (#710).
 func TestSalvarCorpo(t *testing.T) {
 	casos := []struct {
 		nome, corpo string
@@ -245,22 +244,21 @@ func TestSalvarCorpo(t *testing.T) {
 		esperado    string
 	}{
 		{"sem valores", `{"valores":{}}`, 400, `{"mensagem":"Nenhum parâmetro informado."}`},
-		{"sem o campo", `{}`, 400, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.",
-			"status":400,"errors":{"Valores":["The Valores field is required."]},"traceId":"<traceId>"}`},
-		{"valores nulo", `{"valores":null}`, 400, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.",
-			"status":400,"errors":{"Valores":["The Valores field is required."]},"traceId":"<traceId>"}`},
-		{"corpo null", `null`, 400, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.",
-			"status":400,"errors":{"":["A non-empty request body is required."],"dto":["The dto field is required."]},"traceId":"<traceId>"}`},
-		{"decimal, com a posição do fim do número", `{ "valores": { "Sincronizacao.IntervaloHoras": 1.5 } }`, 400, erroJSON(
-			`$.valores['Sincronizacao.IntervaloHoras']`, "System.Int32", 50)},
-		{"chave sem caractere especial vai com ponto", `{"valores":{"Abc":true}}`, 400, erroJSON(`$.valores.Abc`, "System.Int32", 22)},
-		{"texto que não é número", `{"valores":{"A.b":"1,5"}}`, 400, erroJSON(`$.valores['A.b']`, "System.Int32", 23)},
-		{"texto com espaço", `{"valores":{"A.b":" 1"}}`, 400, erroJSON(`$.valores['A.b']`, "System.Int32", 22)},
-		{"passa do int", `{"valores":{"A.b":2147483648}}`, 400, erroJSON(`$.valores['A.b']`, "System.Int32", 28)},
-		{"nulo no valor", `{"valores":{"A.b":null}}`, 400, erroJSON(`$.valores['A.b']`, "System.Int32", 22)},
-		{"valores não é objeto", `{"valores":[1]}`, 400, erroJSON(`$.valores`, "System.Collections.Generic.Dictionary`2[System.String,System.Int32]", 12)},
-		{"corpo não é objeto", `[1]`, 400, erroJSON(`$`, "Financas.Api.Dtos.SalvarParametrosDto", 1)},
-		{"o erro de tipo vem antes do erro de sintaxe depois dele", `{"valores":{"A.b":1.5}, x}`, 400, erroJSON(`$.valores['A.b']`, "System.Int32", 21)},
+		{"sem o campo", `{}`, 400, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"Há dados inválidos no pedido.",
+			"status":400,"errors":{"Valores":["O campo Valores é obrigatório."]}}`},
+		{"valores nulo", `{"valores":null}`, 400, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"Há dados inválidos no pedido.",
+			"status":400,"errors":{"Valores":["O campo Valores é obrigatório."]}}`},
+		{"corpo null", `null`, 400, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"Há dados inválidos no pedido.",
+			"status":400,"errors":{"":["O pedido veio sem dados."]}}`},
+		{"decimal", `{ "valores": { "Sincronizacao.IntervaloHoras": 1.5 } }`, 400, erroJSON(`$.valores['Sincronizacao.IntervaloHoras']`)},
+		{"chave sem caractere especial vai com ponto", `{"valores":{"Abc":true}}`, 400, erroJSON(`$.valores.Abc`)},
+		{"texto que não é número", `{"valores":{"A.b":"1,5"}}`, 400, erroJSON(`$.valores['A.b']`)},
+		{"texto com espaço", `{"valores":{"A.b":" 1"}}`, 400, erroJSON(`$.valores['A.b']`)},
+		{"passa do int", `{"valores":{"A.b":2147483648}}`, 400, erroJSON(`$.valores['A.b']`)},
+		{"nulo no valor", `{"valores":{"A.b":null}}`, 400, erroJSON(`$.valores['A.b']`)},
+		{"valores não é objeto", `{"valores":[1]}`, 400, erroJSON(`$.valores`)},
+		{"corpo não é objeto", `[1]`, 400, erroJSON(`$`)},
+		{"o erro de tipo vem antes do erro de sintaxe depois dele", `{"valores":{"A.b":1.5}, x}`, 400, erroJSON(`$.valores['A.b']`)},
 		{"texto com sinal vale, e o nome não liga para maiúsculas", `{"VALORES":{"Seguranca.MinutosBloqueio":"+0020"}}`, 200, ""},
 		{"propriedade a mais é ignorada, a repetida fica com o último", `{"outra":{"x":[1,{"y":2}]},"valores":{"Seguranca.MinutosBloqueio":9999},"valores":{"Seguranca.MinutosBloqueio":21}}`, 200, ""},
 		{"chave repetida fica com o último valor", `{"valores":{"Seguranca.MinutosBloqueio":0,"Seguranca.MinutosBloqueio":22}}`, 200, ""},
@@ -271,23 +269,22 @@ func TestSalvarCorpo(t *testing.T) {
 			r := testeapoio.Chamar(t, mux, "PUT", "/api/parametros", c.corpo)
 			r.ConferirStatus(t, c.status)
 			if c.esperado != "" {
-				// O traceId é novo a cada resposta (o formato é conferido no pacote respostas).
-				testeapoio.ConferirJSON(t, traceID.ReplaceAll(r.Corpo, []byte(`"traceId":"<traceId>"`)), c.esperado)
+				testeapoio.ConferirJSON(t, r.Corpo, c.esperado)
 			}
 		})
 	}
 }
 
-var traceID = regexp.MustCompile(`"traceId":"00-[0-9a-f]{32}-[0-9a-f]{16}-00"`)
-
-func erroJSON(caminho, tipo string, posicao int) string {
-	mensagem := "The JSON value could not be converted to " + tipo + ". Path: " + caminho + " | LineNumber: 0 | BytePositionInLine: " + itoa(posicao) + "."
-	erros, _ := json.Marshal(map[string][]string{caminho: {mensagem}, "dto": {"The dto field is required."}})
-	return `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":` +
-		string(erros) + `,"traceId":"<traceId>"}`
+// erroJSON é o 400 do valor de outro tipo no caminho: o "$" é o corpo inteiro.
+func erroJSON(caminho string) string {
+	mensagem := "Os dados do pedido não estão num formato válido."
+	if caminho != "$" {
+		mensagem = "O valor de " + strings.TrimPrefix(caminho, "$.") + " não é do tipo esperado."
+	}
+	erros, _ := json.Marshal(map[string][]string{caminho: {mensagem}})
+	return `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"Há dados inválidos no pedido.","status":400,"errors":` +
+		string(erros) + `}`
 }
-
-func itoa(n int) string { b, _ := json.Marshal(n); return string(b) }
 
 // Regra: o valor repetido e o com sinal chegam ao banco como o .NET gravaria.
 func TestSalvarRepetidoESinal(t *testing.T) {

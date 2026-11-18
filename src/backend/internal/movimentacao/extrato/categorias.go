@@ -58,7 +58,7 @@ func novoFiltroDoCorpo() *filtroDoCorpo {
 		conta:      respostas.CampoInteiroOpcional{Propriedade: "ContaId"},
 		categoria:  respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"},
 		categorias: respostas.CampoLista{Propriedade: "CategoriaIds", Item: respostas.ItemInt, Opcional: true, Maximo: 200},
-		naturezas: respostas.CampoLista{Propriedade: "Naturezas", Item: respostas.ItemEnum("Financas.Api.Entidades.NaturezaGasto"),
+		naturezas: respostas.CampoLista{Propriedade: "Naturezas", Item: respostas.ItemEnum,
 			Opcional: true, Maximo: 2},
 		ids:              respostas.CampoLista{Propriedade: "Ids", Item: respostas.ItemLong, Opcional: true, Maximo: 200},
 		semCategoria:     respostas.CampoBool{Propriedade: "SemCategoria"},
@@ -69,7 +69,7 @@ func novoFiltroDoCorpo() *filtroDoCorpo {
 		busca:            respostas.CampoTexto{Propriedade: "Busca", Maximo: 100, Opcional: true},
 		ordem:            respostas.CampoTexto{Propriedade: "Ordem", Maximo: semLimite, Opcional: true, Padrao: padraoOrdem},
 		direcao:          respostas.CampoTexto{Propriedade: "Direcao", Maximo: semLimite, Opcional: true, Padrao: padraoDirecao},
-		tipo:             respostas.CampoEnum{Propriedade: "Tipo", Anulavel: true, Tipo: "Financas.Api.Entidades.TipoTransacao"},
+		tipo:             respostas.CampoEnum{Propriedade: "Tipo", Anulavel: true},
 		pagina:           respostas.CampoInteiro{Propriedade: "Pagina", Faixa: &respostas.Faixa{Minimo: 1, Maximo: math.MaxInt32}, Valor: 1},
 		tamanho:          respostas.CampoInteiro{Propriedade: "TamanhoPagina", Faixa: &respostas.Faixa{Minimo: 1, Maximo: 500}, Valor: 50},
 	}
@@ -98,17 +98,17 @@ type escolha struct {
 // lerCategoriasEmLote é o model binding do AlterarCategoriasEmLoteDto (uma classe): Itens (até 1000, cada um um
 // AlteracaoCategoriaDto), Filtro, CategoriaId e Automatica. Um item null volta como nil.
 func lerCategoriasEmLote(w http.ResponseWriter, r *http.Request) (itens []*escolha, f *filtro, geral escolha, ok bool) {
-	itensCampo := respostas.CampoListaDeObjetos{Propriedade: "Itens", TipoItem: "Financas.Api.Dtos.AlteracaoCategoriaDto",
+	itensCampo := respostas.CampoListaDeObjetos{Propriedade: "Itens",
 		Maximo: 1000, Novo: func() []respostas.Campo {
 			return []respostas.Campo{&respostas.CampoLong{Propriedade: "Id"}, &respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"},
 				&respostas.CampoBool{Propriedade: "Automatica"}}
 		}}
 	filtroCampos := novoFiltroDoCorpo()
-	filtroCampo := respostas.CampoObjeto{Propriedade: "Filtro", Tipo: "Financas.Api.Dtos.FiltroTransacoesDto",
+	filtroCampo := respostas.CampoObjeto{Propriedade: "Filtro",
 		Campos: filtroCampos.campos()}
 	categoria := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
 	automatica := respostas.CampoBool{Propriedade: "Automatica"}
-	if !respostas.LerClasse(w, r, "dto", "Financas.Api.Dtos.AlterarCategoriasEmLoteDto", &itensCampo, &filtroCampo,
+	if !respostas.LerObjeto(w, r, &itensCampo, &filtroCampo,
 		&categoria, &automatica) {
 		return nil, nil, escolha{}, false
 	}

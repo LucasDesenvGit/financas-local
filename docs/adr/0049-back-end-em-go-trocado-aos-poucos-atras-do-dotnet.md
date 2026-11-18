@@ -41,7 +41,7 @@ Reescrevemos o back-end em **Go** (hoje em `src/backend`; até a #627, `src/back
 ### O que continua valendo
 
 - **O formato do banco do EF Core** (decimal, data e GUID como texto) e **o banco em WAL**, com `busy_timeout` de 30 s, `BEGIN IMMEDIATE` e transação curta: [README do banco](../../src/backend/internal/plataforma/banco/README.md). Restaurar uma cópia apaga o `-wal` e o `-shm` ([guia de operação](../OPERACAO.md)).
-- **O JSON e as mensagens de antes**, que o contrato confere; desde a #86, os esperados são a regressão do Go ([0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md)).
+- **O JSON de antes**, que o contrato confere (as mensagens de validação saem em português desde a #710); desde a #86, os esperados são a regressão do Go ([0051](0051-testes-do-back-end-em-go-cada-regra-com-teste.md)).
 - **Segredos** (#76, no lugar da [0005](0005-segredos-criptografados-com-data-protection.md)): AES-256-GCM, valor `v2:` com nonce novo a cada gravação e o nome da chave da `Configuracao` como dado autenticado. A chave fica em `dados/chaves/segredos.chave` (DPAPI no Windows, `0600` no Linux); chave que não se lê é erro, nunca uma chave nova por cima.
 - **Sessão** (#75): cookie assinado com HMAC-SHA256 pela chave `dados/chaves/sessao-go.chave`, e CSRF *double-submit* assinado e ligado ao usuário. A senha continua no hash v3 do ASP.NET Identity.
 - **Esquema** ([0003](0003-esquema-por-scripts-sql-idempotentes.md)): o Go o aplica ao iniciar, com a assinatura do .NET no `PRAGMA user_version`. Os scripts vão no executável por uma cópia do `go generate`, porque o `//go:embed` não sai do módulo.
@@ -91,3 +91,4 @@ Uma linha por atualização; o texto inteiro está no histórico do git (acima) 
 - **2026-11-02, #85 parte 4:** a inversão. O Go na frente vira o padrão, na 3.0.0, depois do ensaio com o banco real (92 de 93 telas iguais).
 - **2026-11-03, #86 parte 2:** a instalação sem o .NET; sem volta pelos scripts, a volta é a tag `v-ultimo-dotnet`. Quem vinha da 2.x ficou sem a cópia "antes do Go", só com a de toda atualização.
 - **2026-11-03, #86 partes 3 a 6:** o .NET saiu do gerenciador (#616), dos scripts e do `.msi` (#617), da CI (#620) e do código (#625, #626), e a pasta virou `src/backend` (#627). A migração terminou.
+- **2026-11-15, #710:** as mensagens de validação que a API monta (`internal/plataforma/respostas`) saem em português, sem o `traceId` nem o nome do DTO do C#, e o JSON quebrado tem uma mensagem só. O formato (`type`, `title`, `status`, `errors`, `{"mensagem"}`) não muda; os esperados do contrato mudaram de propósito, só nessas mensagens.

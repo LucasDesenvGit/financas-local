@@ -122,7 +122,7 @@ func (s *Servico) ajustar(w http.ResponseWriter, r *http.Request) {
 	observacao := respostas.CampoTexto{Propriedade: "Observacao", Maximo: 1000, Opcional: true}
 	ignorar := respostas.CampoBool{Propriedade: "IgnorarRelatorios"}
 	emergencia := respostas.CampoBool{Propriedade: "Emergencia"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.AtualizarTransacaoOpenFinanceDto", &descricao, &categoria,
+	if !respostas.LerObjeto(w, r, &descricao, &categoria,
 		&observacao, &ignorar, &emergencia) {
 		return
 	}
