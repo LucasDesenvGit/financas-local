@@ -80,6 +80,7 @@
     "status": 201,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "adiantamentoQuinzenal": false,
       "admissao": "2024-03-11",
       "cnpj": "12345678000190",
       "contaId": null,
@@ -102,6 +103,7 @@
       "Emprego": {
         "inseridas": [
           {
+            "AdiantamentoQuinzenal": 0,
             "Admissao": "2024-03-11",
             "Cnpj": "12345678000190",
             "ContaId": null,
@@ -143,6 +145,7 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "adiantamentoQuinzenal": false,
       "admissao": "2024-03-11",
       "cnpj": "12345678000190",
       "contaId": null,
@@ -433,6 +436,7 @@
     "tipo": "application/json; charset=utf-8",
     "corpo": [
       {
+        "adiantamentoQuinzenal": false,
         "admissao": "2024-03-11",
         "cnpj": "12345678000190",
         "contaId": null,

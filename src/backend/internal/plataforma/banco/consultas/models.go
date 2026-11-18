@@ -145,16 +145,17 @@ type DecimoTerceiro struct {
 }
 
 type Emprego struct {
-	Id                 int64
-	Empregador         string
-	Cnpj               *string
-	Admissao           string
-	Saida              *string
-	Regime             int64
-	JornadaMensalHoras int64
-	Dependentes        int64
-	ContaId            *int64
-	CriadoEm           string
+	Id                    int64
+	Empregador            string
+	Cnpj                  *string
+	Admissao              string
+	Saida                 *string
+	Regime                int64
+	JornadaMensalHoras    int64
+	Dependentes           int64
+	ContaId               *int64
+	AdiantamentoQuinzenal int64
+	CriadoEm              string
 }
 
 type Emprestimo struct {

@@ -8,7 +8,7 @@ import {
 describe('Trabalho › Salário (#210)', () => {
   const emprego = (id: number, saida: string | null, admissao = '2024-03-11'): Emprego => ({
     id, empregador: `E${id}`, cnpj: '12345678000190', admissao, saida, regime: RegimeEmprego.Clt, jornadaMensalHoras: 220,
-    dependentes: 1, contaId: 3, contaNome: 'Conta', salarios: [
+    dependentes: 1, contaId: 3, contaNome: 'Conta', adiantamentoQuinzenal: true, salarios: [
       { id: 2, inicio: '2026-06-01', salarioBruto: 6000 }, { id: 1, inicio: '2024-03-01', salarioBruto: 5000 }]
   });
 
@@ -46,11 +46,14 @@ describe('Trabalho › Salário (#210)', () => {
     expect(formularioVazio()).toMatchObject({ regime: RegimeEmprego.Clt, jornadaMensalHoras: 220, dependentes: 0 });
     const f = { ...formularioVazio(), empregador: '  Empresa  ', cnpj: ' ', admissao: '2026-01-05', salarioBruto: 3000, contaId: 2 };
     expect(paraSalvar(f, true)).toEqual({ empregador: 'Empresa', cnpj: null, admissao: '2026-01-05', saida: null, regime: 1,
-      jornadaMensalHoras: 220, dependentes: 0, contaId: 2, salarioBruto: 3000 });
+      jornadaMensalHoras: 220, dependentes: 0, contaId: 2, adiantamentoQuinzenal: false, salarioBruto: 3000 });
     expect(paraSalvar(f, false).salarioBruto).toBeUndefined();
     const edicao = formularioDe(emprego(4, null));
     expect(edicao.cnpj).toBe('12.345.678/0001-90');
     expect(edicao.salarioBruto).toBeNull();
+    // Pagar em duas vezes (o adiantamento do dia 15) vem do emprego e volta no corpo.
+    expect(edicao.adiantamentoQuinzenal).toBe(true);
+    expect(paraSalvar({ ...edicao, adiantamentoQuinzenal: false }, false).adiantamentoQuinzenal).toBe(false);
     expect(paraSalvar({ ...edicao, jornadaMensalHoras: null, dependentes: null, contaId: null }, false))
       .toMatchObject({ jornadaMensalHoras: 220, dependentes: 0, contaId: null });
   });

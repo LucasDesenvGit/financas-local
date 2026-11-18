@@ -684,7 +684,8 @@ CREATE INDEX IF NOT EXISTS IX_PagamentoCofrinho_Transacao ON PagamentoCofrinho (
 /* Trabalho: emprego e salário com vigência (#210, ADR 0065)           */
 /* ------------------------------------------------------------------ */
 /* Módulo Trabalho (ADR 0064). Nada daqui entra nos relatórios: a receita continua vindo só das transações.
-   Regime: 1 CLT, 2 estágio, 3 PJ (estágio e PJ ficam sem cálculo de encargos). */
+   Regime: 1 CLT, 2 estágio, 3 PJ (estágio e PJ ficam sem cálculo de encargos). AdiantamentoQuinzenal: o salário vem em
+   duas vezes, o adiantamento perto do dia 15 e o saldo no fim do mês (o holerite do mês desconta o adiantamento). */
 CREATE TABLE IF NOT EXISTS Emprego
 (
     Id                 INTEGER NOT NULL CONSTRAINT PK_Emprego PRIMARY KEY AUTOINCREMENT,
@@ -696,6 +697,7 @@ CREATE TABLE IF NOT EXISTS Emprego
     JornadaMensalHoras INTEGER NOT NULL DEFAULT 220,
     Dependentes        INTEGER NOT NULL DEFAULT 0,
     ContaId            INTEGER NULL,
+    AdiantamentoQuinzenal INTEGER NOT NULL DEFAULT 0,
     -- Preenchido pela API; sem DEFAULT no banco.
     CriadoEm           TEXT    NOT NULL,
     CONSTRAINT FK_Emprego_Conta FOREIGN KEY (ContaId) REFERENCES Conta (Id) ON DELETE SET NULL

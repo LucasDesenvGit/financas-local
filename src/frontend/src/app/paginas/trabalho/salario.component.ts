@@ -64,6 +64,10 @@ import {
               <label>Salário bruto <app-campo-valor name="salario" [(ngModel)]="f.salarioBruto" obrigatorio [minimo]="0.01" /></label>
             }
           </div>
+          <label class="checkbox"><input type="checkbox" name="adiantamentoQuinzenal" [(ngModel)]="f.adiantamentoQuinzenal"
+            aria-describedby="dica-adiantamento"> Recebo em duas vezes: o adiantamento no dia 15 e o saldo no fim do mês</label>
+          <p id="dica-adiantamento" class="texto-suave dica-adiantamento">O holerite do mês continua um só, o do fim do mês, que
+            desconta o adiantamento. Ao ler o PDF, o site avisa se ele não trouxer esse desconto.</p>
           @if (f.regime !== RegimeEmprego.Clt) {
             <p class="aviso-inline">Estágio e PJ ficam sem o cálculo do INSS e do IRRF: o site guarda o valor bruto.</p>
           }
@@ -93,6 +97,7 @@ import {
             <dt>Jornada</dt><dd>{{ e.jornadaMensalHoras }} h por mês</dd>
             <dt>Dependentes para o IR</dt><dd>{{ e.dependentes }}</dd>
             <dt>Conta do salário</dt><dd>{{ e.contaNome ?? 'não informada' }}</dd>
+            <dt>Pagamento</dt><dd>{{ e.adiantamentoQuinzenal ? 'Em duas vezes (adiantamento no dia 15)' : 'Uma vez no mês' }}</dd>
           </dl>
         </section>
 
@@ -207,6 +212,7 @@ import {
     .form-aumento { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 16px; }
     .aumento-mes { display: flex; flex-direction: column; gap: 4px; }
     .aviso-estimativa { margin-top: 0; }
+    .dica-adiantamento { margin: 4px 0 0; font-size: 0.85rem; }
     .lista-simples { margin: 0; padding-left: 20px; }
   `]
 })

@@ -1300,7 +1300,7 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Salário',
         paraQueServe: 'Saber o bruto, para onde vão os descontos e o líquido do mês, com o histórico de aumentos. É estimativa, não holerite.',
         passos: [
-          'Abra Trabalho › Salário. Na primeira vez, cadastre o emprego: empregador, CNPJ (opcional), admissão, regime, jornada mensal (220 h na CLT), dependentes para o IR, a conta onde o salário cai e o salário bruto.',
+          'Abra Trabalho › Salário. Na primeira vez, cadastre o emprego: empregador, CNPJ (opcional), admissão, regime, jornada mensal (220 h na CLT), dependentes para o IR, a conta onde o salário cai e o salário bruto. Se o salário vem em duas vezes (o adiantamento no dia 15 e o saldo no fim do mês), marque “Recebo em duas vezes”: o holerite do mês continua um só, o do fim do mês, que desconta o adiantamento.',
           '“O mês” mostra o salário bruto, o INSS, o IRRF e o líquido estimado. Use ‹ › ou o nome do mês para ver outro mês.',
           '“Como calculei” abre a conta linha a linha: as faixas do INSS, a dedução usada no IRRF (o INSS e os dependentes, ou o desconto simplificado, o que der menos imposto), a faixa, a redução da Lei 15.270/2025 (de 2026 em diante, para rendimento de até R$ 7.350,00) e a fonte de cada tabela.',
           'Aumento: em “Histórico de salários”, escolha o mês, informe o salário novo e clique em “Gravar aumento”. O salário vale por mês: o aumento conta para o mês inteiro, sem proporção pelos dias. Os meses antes do aumento continuam com o salário de antes; gravar de novo no mesmo mês troca o valor.',
@@ -1336,7 +1336,7 @@ export const MANUAL: CapituloManual[] = [
           '“Ler holerite em PDF” preenche o mês com o PDF que a empresa manda: escolha um ou vários (o ano de uma vez). Se o PDF tiver senha (parte do CPF, a data de nascimento), o site pede; ela só abre o arquivo e não é guardada.',
           'A prévia mostra cada linha do PDF: o tipo que o site deu (salário, horas extras, DSR, INSS, IRRF, vale-transporte, plano de saúde, adiantamento…), o valor e o trecho do PDF de onde saiu. A situação diz “reconhecido”, “reconhecido pelo que você escolheu antes” ou “escolha o tipo”. Dá para trocar o tipo, corrigir o valor ou deixar a linha de fora.',
           'A prova real confere a soma de cada coluna com o total impresso e proventos menos descontos com o líquido. Se não bater, ela diz qual total e por quanto: o leitor errou alguma linha, ou alguma ficou de fora.',
-          'A prévia também mostra o INSS, o IRRF e o líquido lidos ao lado dos calculados pelas tabelas, e avisa do que não confere: o CNPJ do PDF não é o do emprego, o salário base é outro (se foi aumento, registre em Trabalho › Salário), o mês já está fechado.',
+          'A prévia também mostra o INSS, o IRRF e o líquido lidos ao lado dos calculados pelas tabelas, e avisa do que não confere: o CNPJ do PDF não é o do emprego, o salário base é outro (se foi aumento, registre em Trabalho › Salário), o mês já está fechado, o emprego recebe em duas vezes e o PDF não desconta o adiantamento (costuma ser o recibo do dia 15, que não se grava: o do mês é o do fim do mês).',
           'Nada é gravado até “Confirmar e gravar”. O holerite lido entra fechado e marcado “Lido do PDF”: vale o que a empresa pagou, e o 13º, as férias, o FGTS e a rescisão passam a usar esses números. O aviso traz “Desfazer” por alguns segundos; depois, “Reabrir” volta para a estimativa do site.'
         ],
         dicas: [

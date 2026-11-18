@@ -158,6 +158,9 @@ func (s *Servico) avisar(ctx context.Context, e emprego.Emprego, p *Previa) erro
 	if len(p.Provas) == 0 {
 		p.Avisos = append(p.Avisos, "Não achei os totais no PDF, então não deu para conferir a soma: confira as linhas com o holerite.")
 	}
+	if e.AdiantamentoQuinzenal && !temAdiantamento(p.Rubricas) {
+		p.Avisos = append(p.Avisos, MensagemSemAdiantamento)
+	}
 	if err := s.avisarCnpj(ctx, e, p); err != nil {
 		return err
 	}
@@ -189,6 +192,22 @@ func (s *Servico) avisar(ctx context.Context, e emprego.Emprego, p *Previa) erro
 			"guardados: reabrir o holerite volta para a estimativa.", holerite.NomeDoMes(mes)))
 	}
 	return s.comparar(ctx, e.Id, mes, p)
+}
+
+// MensagemSemAdiantamento: o emprego paga em duas vezes, e o PDF não desconta o adiantamento. Costuma ser o recibo do
+// adiantamento (o do dia 15), que não é o holerite do mês: o mês tem um holerite só, o do fim do mês.
+const MensagemSemAdiantamento = "Este emprego paga em duas vezes, mas o PDF não tem o adiantamento entre os descontos. Se " +
+	"este for o recibo do adiantamento (o do dia 15), não grave: o holerite do mês é o do fim do mês, que já desconta o " +
+	"adiantamento. Se for o do fim do mês, confira o tipo das linhas."
+
+// temAdiantamento diz se alguma linha lida é o adiantamento descontado.
+func temAdiantamento(rubricas []RubricaLida) bool {
+	for _, r := range rubricas {
+		if r.Tipo == holerite.TipoAdiantamento {
+			return true
+		}
+	}
+	return false
 }
 
 // avisarCnpj: o CNPJ do PDF é o deste emprego? É de outro emprego cadastrado? De nenhum?

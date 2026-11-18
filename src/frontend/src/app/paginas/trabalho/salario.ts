@@ -78,17 +78,19 @@ export interface FormularioEmprego {
   jornadaMensalHoras: number | null;
   dependentes: number | null;
   contaId: number | null;
+  adiantamentoQuinzenal: boolean;
   salarioBruto: number | null;
 }
 
 export function formularioVazio(): FormularioEmprego {
   return { empregador: '', cnpj: '', admissao: null, saida: null, regime: RegimeEmprego.Clt, jornadaMensalHoras: 220,
-    dependentes: 0, contaId: null, salarioBruto: null };
+    dependentes: 0, contaId: null, adiantamentoQuinzenal: false, salarioBruto: null };
 }
 
 export function formularioDe(e: Emprego): FormularioEmprego {
   return { empregador: e.empregador, cnpj: formatarCnpj(e.cnpj), admissao: e.admissao, saida: e.saida, regime: e.regime,
-    jornadaMensalHoras: e.jornadaMensalHoras, dependentes: e.dependentes, contaId: e.contaId, salarioBruto: null };
+    jornadaMensalHoras: e.jornadaMensalHoras, dependentes: e.dependentes, contaId: e.contaId,
+    adiantamentoQuinzenal: e.adiantamentoQuinzenal, salarioBruto: null };
 }
 
 /** O corpo do POST ou do PUT. A validação de verdade é da API, que responde a mensagem. */
@@ -96,7 +98,7 @@ export function paraSalvar(f: FormularioEmprego, criando: boolean): SalvarEmpreg
   const corpo: SalvarEmprego = {
     empregador: f.empregador.trim(), cnpj: f.cnpj.trim() || null, admissao: f.admissao ?? '', saida: f.saida || null,
     regime: Number(f.regime), jornadaMensalHoras: f.jornadaMensalHoras ?? 220, dependentes: f.dependentes ?? 0,
-    contaId: f.contaId ? Number(f.contaId) : null
+    contaId: f.contaId ? Number(f.contaId) : null, adiantamentoQuinzenal: f.adiantamentoQuinzenal
   };
   if (criando && f.salarioBruto !== null) corpo.salarioBruto = f.salarioBruto;
   return corpo;
