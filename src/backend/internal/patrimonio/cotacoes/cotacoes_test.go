@@ -488,3 +488,71 @@ func TestEsperarComContexto(t *testing.T) {
 		t.Errorf("cancelado: %v", err)
 	}
 }
+
+// Regra: o campo só existe num objeto; fora dele, ou num objeto quebrado, é erro de formato, e o campo que falta é só false.
+func TestCampo(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		cru, nome, valor string
+		achou, err       bool
+	}{
+		{cru: `{"a":1}`, nome: "a", valor: "1", achou: true},
+		{cru: `{"a":1}`, nome: "b"},
+		{cru: `[1]`, nome: "a", err: true},
+		{cru: ``, nome: "a", err: true},
+		{cru: `{"a":`, nome: "a", err: true},
+	}
+	for _, c := range casos {
+		v, achou, err := campo(json.RawMessage(c.cru), c.nome)
+		if string(v) != c.valor || achou != c.achou || (err != nil) != c.err || (err != nil && !errors.Is(err, errFormato)) {
+			t.Errorf("campo(%q, %q) = %q, %v, %v", c.cru, c.nome, v, achou, err)
+		}
+	}
+}
+
+// Regra: o texto do campo só vale se for um texto JSON bem formado; número, falta do campo ou escape quebrado é nil.
+func TestTextoDoCampo(t *testing.T) {
+	t.Parallel()
+	casos := []struct {
+		cru, esperado string
+		nulo          bool
+	}{
+		{cru: `{"t":"PETR4"}`, esperado: "PETR4"},
+		{cru: `{"t":"ação"}`, esperado: "ação"},
+		{cru: `{"t":5}`, nulo: true},
+		{cru: `{"u":"x"}`, nulo: true},
+		{cru: `[]`, nulo: true},
+		{cru: `{"t":"\x"}`, nulo: true},
+	}
+	for _, c := range casos {
+		s := textoDoCampo(json.RawMessage(c.cru), "t")
+		if (s == nil) != c.nulo || (s != nil && *s != c.esperado) {
+			t.Errorf("textoDoCampo(%q) = %v", c.cru, s)
+		}
+	}
+}
+
+type transporteQueFalha struct{}
+
+func (transporteQueFalha) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, errors.New("rede fora do ar")
+}
+
+// Regra: o caminho quebrado e a rede fora do ar são erro; o status fora de 2xx não é erro, é resposta vazia.
+func TestObter(t *testing.T) {
+	t.Parallel()
+	c := novaCena(t)
+	if corpo, err := c.s.fonte.(*Cliente).obter(t.Context(), "v8/finance/chart/X"); corpo != nil || err != nil {
+		t.Errorf("404: %q, %v", corpo, err)
+	}
+	if _, err := c.s.fonte.(*Cliente).obter(t.Context(), "%zz"); err == nil {
+		t.Error("caminho quebrado sem erro")
+	}
+	semRede, err := NovoCliente("https://exemplo.test/", &http.Client{Transport: transporteQueFalha{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := semRede.obter(t.Context(), "x"); err == nil || !strings.Contains(err.Error(), "consultar a cotação") {
+		t.Errorf("rede fora do ar: %v", err)
+	}
+}
