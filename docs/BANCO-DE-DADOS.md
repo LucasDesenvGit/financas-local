@@ -337,7 +337,7 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
 3. Rode `python3 scripts/ci/banco/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
 4. Tabela nova: entra em `ASSUNTOS` no `scripts/dev/gerar-diagrama-banco.py`. Rode `python3 scripts/dev/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).
-5. No commit, use `feat(banco)!:` para marcar que a estrutura mudou. Quem atualiza não precisa fazer nada: o site aplica o esquema ao iniciar ([ADR 0039](adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
+5. No commit, use `feat(banco)!:` para marcar que a estrutura mudou. Quem atualiza não precisa fazer nada: o site aplica o esquema ao iniciar ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
 
 Regras:
 - Nunca apague ou renomeie colunas em uso sem um bloco de transição.

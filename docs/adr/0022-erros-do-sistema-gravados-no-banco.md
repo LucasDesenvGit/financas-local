@@ -10,7 +10,7 @@ Para investigar uma falha (sincronização da Pluggy, cotações, câmbio, erro 
 
 Restrições:
 - tudo roda local, sem serviço externo;
-- os logs podem carregar dado sensível (o token da brapi vai em query string, as exceções trazem URLs e textos do extrato);
+- os logs podem carregar dado sensível (um token pode ir em query string, as exceções trazem URLs e textos do extrato);
 - o banco é um arquivo SQLite único, que não deve crescer sem controle;
 - o mesmo código roda em Windows e Linux.
 
@@ -40,10 +40,10 @@ Restrições:
 
 Usamos um `ILoggerProvider` próprio (`Servicos/Diagnostico/RegistroErrosLoggerProvider`) que captura **avisos, erros e críticos**:
 - do código do sistema (categorias `Financas.*`);
-- do tratador de exceções não tratadas da API (categoria `Erro`, em `Program.cs`);
+- do tratador de exceções não tratadas da API (categoria `Erro`, no servidor do Go; no .NET era o `Program.cs`);
 - da queda de serviços em segundo plano (`Microsoft.Extensions.Hosting`).
 
-O resto do framework (EF Core, Kestrel) fica de fora. Os registros passam por uma fila em memória com limite (`FilaErros`) e são gravados na tabela `ErroSistema` pelo `GravadorErrosHostedService`. Antes de gravar, o `Sanitizador` troca por `[removido]`:
+O resto fica de fora. Os registros passam por uma fila em memória com limite e são gravados na tabela `ErroSistema` por um gravador em segundo plano (no Go, um handler do `slog`, ADR 0049). Antes de gravar, o `Sanitizador` troca por `[removido]`:
 - query strings de URLs;
 - pares `token=`/`senha=`/`client_secret:`…;
 - tokens Bearer e JWT;
@@ -75,7 +75,6 @@ O porquê principal: o usuário passa a ver e resolver as falhas no próprio sit
   - Erros antes de o contêiner de serviços existir, ou com o banco inacessível, não chegam à tabela. Ficam só no log do sistema.
   - Com a fila cheia (1000), os registros novos são descartados. Isso também fica só no log do sistema.
   - O banco cresce com os erros. O limite vem da retenção e do agrupamento, e a tabela fica pequena no uso normal.
-  - Em ambiente de desenvolvimento, a página de exceções do ASP.NET trata o erro antes do tratador da categoria `Erro`. Por isso, exceções não tratadas da API só são gravadas em produção.
   - Código próprio de log para manter (provedor, fila, gravador, limpeza).
 - **Na prática:**
   - basta logar com `ILogger` como já se faz: `LogWarning`/`LogError` em classes `Financas.*` aparecem na tela;

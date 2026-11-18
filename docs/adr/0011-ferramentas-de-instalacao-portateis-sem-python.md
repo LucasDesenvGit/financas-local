@@ -36,7 +36,7 @@ Para instalar em um passo, `scripts/instalar.sh` roda as três etapas em sequên
 
 ## Consequências
 
-- **Positivas:** num Windows novo basta o Git for Windows; o primeiro script instala o resto e confere tudo no final (`dotnet`, `go`, `node`, `npm`, `sqlite3`). O mesmo vale para Linux sem `sqlite3` (x64).
+- **Positivas:** num Windows novo basta o Git for Windows; o primeiro script instala o resto e confere tudo no final (`go`, `node`, `npm`, `sqlite3`; o `dotnet` saiu na #86). O mesmo vale para Linux sem `sqlite3` (x64).
 - **Negativas:**
   - novo domínio de download na instalação: `www.sqlite.org` (HTTPS, hash SHA3-256 publicado na própria página de download, que é lida para descobrir a versão — se o sqlite.org mudar o formato do bloco `PRODUCT,...`, o download automático quebra e é preciso instalar o `sqlite3` à mão);
   - o hash do sqlite3 vem da mesma origem que o arquivo (não há assinatura separada), proteção igual à do `SHASUMS256.txt` do Node;

@@ -30,7 +30,7 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
 
 - **`ci.yml` em jobs paralelos:** "o que mudou" (decide), "API e banco", "front-end: Jest" e "front-end: navegador" em **2 partes** (`--shard`). O tempo do PR passa a ser o do mais lento, não a soma.
 - **Um job final chamado `build`** junta os quatro: passa só se todos passaram ou foram pulados de propósito; falhou ou cancelou, falha. É o check que a proteção do `develop`/`main` exige pelo nome (o do job antigo): sem ele, o PR ficava esperando um `build` que não existia mais.
-- **No PR, só os testes afetados** (`scripts/ci/testes-afetados.py`):
+- **No PR, só os testes afetados** (`scripts/ci/front/testes-afetados.py`):
   - **navegador:** o arquivo que mudou em `src/app` afeta as telas (rotas do `app.routes.ts`) que o importam, direta ou indiretamente, pelo grafo de imports do próprio código. Rodam os arquivos de teste que abrem essas telas (`goto('/rota')`, `abrir(page, '/rota')`), as linhas do `telas.spec.ts` dessas rotas, o `celular.spec.ts` e os testes que mudaram (filtro `--grep` do Playwright, que confere o nome do arquivo e o título);
   - **Jest:** `--findRelatedTests` com os arquivos que mudaram (segue os imports, com `src/` nas `roots`), mais os testes que leem o código como texto (`readFileSync`/`readdirSync`, que o grafo não enxerga) e os testes que mudaram;
   - **tudo** quando muda arquivo global (`styles.css`, `core/`, `layout/`, rotas, `index.html`, configuração, apoio dos testes, a CSP do `Seguranca/`, a própria CI) ou arquivo do front-end sem regra. Na dúvida, tudo;
@@ -42,7 +42,7 @@ Medido no PR #271, antes desta mudança (o tempo de um PR é o do job mais lento
   - Cache do `setup-go`, com chave no `go.sum`: módulos e compilação, inclusive do `sqlc` e do `govulncheck`, que rodam por `go run` (ou `go install`, para a rodada com `GOOS=windows`) numa versão fixa.
 - *(Substituído pela [ADR 0050](0050-msi-gerado-no-merge-e-nao-no-pr.md): o .msi não roda mais no PR, só no merge para o develop, na tag e à mão.)* **.msi só quando o PR precisa** (`scripts/ci/precisa-msi.py`): instalador, gerenciador, inicialização da API, o próprio workflow, ou o `Directory.Build.props` **além da linha `<Version>`**. No push do `develop` e na tag, sempre.
 - **Caches:** módulos e compilação do Go (`setup-go`), `node_modules` (pula o `npm ci`), build do Angular (`angular.json`: `cli.cache.environment: "all"`, porque o padrão desliga na CI), Jest (`--cacheDirectory`), NuGet (também no job do .msi, que publica self-contained para win-x64), e o Chromium do Playwright, como antes.
-  - **Chave de cache só com o que muda o conteúdo** (#526): nada que mude em todo PR, como o `Directory.Build.props`, que só guarda a versão (ADR 0039). Com ele na chave do NuGet, cada PR criava um cache novo de ~700 MB, o repositório passou do limite de 10 GB do Actions, e o GitHub apagava os caches do Go, do Playwright e do CodeQL. A do NuGet leva os `.csproj` e a versão do SDK do .NET (que decide os pacotes do runtime do `.msi`).
+  - **Chave de cache só com o que muda o conteúdo** (#526): nada que mude em todo PR, como o `Directory.Build.props` era na ADR 0039, quando subia em todo PR. Com ele na chave do NuGet (do .NET, que saiu na #86), cada PR criava um cache novo de ~700 MB, o repositório passou do limite de 10 GB do Actions, e o GitHub apagava os caches do Go, do Playwright e do CodeQL. A do NuGet leva os `.csproj` e a versão do SDK do .NET (que decide os pacotes do runtime do `.msi`).
 
 ## Consequências
 

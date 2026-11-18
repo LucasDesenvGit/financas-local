@@ -210,7 +210,7 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 
 ## Testes do back-end (Go)
 
-O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração começou pelo contrato. **No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
+**No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
 
 | O que testar | Onde | Como |
 |---|---|---|
@@ -230,9 +230,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - **um esperado que já existe muda só de propósito**, com o motivo de cada um no PR (bug corrigido ou mudança pedida). Diferença que aparece sem querer é regressão: o código volta, e o esperado fica;
 - **caso novo** é gravado com `rodar.sh --atualizar`, e o `git diff` de `esperado/` tem de mostrar só ele. Endpoint novo: caso de contrato, inclusive os de erro (400, 401, 404, 409), mais o teste HTTP dos ramos de validação.
 
-**Uma etapa do #70 está pronta quando:**
-- cada regra da lista "Regras de negócio" do levantamento (a skill da migração, guardada na tag `v-ultimo-dotnet`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
-- cada ponto de risco de equivalência do levantamento (arredondamento, ordenação, texto, fuso, `null`, cascata) tem um teste: unitário, de integração ou de contrato;
+**Uma regra nova do Go está pronta quando:**
 - cada endpoint tem caso de contrato, inclusive os de erro;
 - cada consulta que grava, apaga em cascata, filtra texto ou ordena tem teste com o SQLite real;
 - os casos-limite que se aplicam estão na tabela (o PR diz quais não se aplicam):
@@ -243,7 +241,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
   - texto com acento e maiúsculas ("Ação" × "acao"), porque o `LIKE` do SQLite só ignora a caixa em ASCII ([sqlite.org](https://www.sqlite.org/lang_expr.html#the_like_glob_regexp_match_and_extract_operators));
 - `gofmt`, `go vet` e `go test -race` limpos, dentro dos pisos de cobertura e de tempo.
 
-A tabela regra → teste traz o nome do teste e do caso (*inferido: o formato*). O detalhe de cada etapa está num comentário do épico #70.
+A tabela regra → teste traz o nome do teste e do caso (*inferido: o formato*).
 
 **Teste novo prova que falha:** estrague o **código** (não o teste) de propósito (troque `RoundBank` por `Round`, tire um filtro, inverta uma comparação, devolva `nil` no lugar de `[]`), veja o teste falhar e desfaça. Liste as mutações no PR, com o teste que pegou cada uma, como no #360 (12 mutações, todas pegas): pelo menos uma por regra de cálculo (*inferido: a quantidade*). Teste que nenhuma mutação derruba é refeito; em geral, os dados dele não exercitam o caso. **Bug corrigido** ganha teste de regressão, com o número da issue no comentário, que falha antes da correção. **Bug do C# achado no porte** não se corrige em silêncio: o teste fixa o comportamento de hoje e aponta a issue aberta, e muda junto quando ela for decidida.
 

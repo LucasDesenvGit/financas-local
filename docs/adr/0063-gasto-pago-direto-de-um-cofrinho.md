@@ -1,6 +1,6 @@
 # 0063. Gasto pago direto de um cofrinho: um lançamento do app na conta, marcado com a reserva
 
-- **Status:** Proposta
+- **Status:** Aceita
 - **Data:** 2026-11-11 (issue #691)
 - **Relacionadas:** ajusta a [0010](0010-reservas-estimadas-pelo-extrato.md) e a [0037](0037-reservas-pelo-valor-do-open-finance.md) (cálculo das reservas), a [0043](0043-assinaturas-e-recorrentes-em-contas-a-pagar.md) (conciliação das contas a pagar) e conversa com a [0060](0060-cdbs-e-caixinhas-com-rendimento-e-a-regra-caixinha-x-reserva.md) (caixinha × reserva)
 
