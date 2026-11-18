@@ -6,6 +6,7 @@ Por onde começar: a [Arquitetura](ARQUITETURA.md), que vai da visão de cima at
 |---|---|
 | [ARQUITETURA.md](ARQUITETURA.md) | as partes do sistema, onde cada uma roda, o mapa de contextos e as pastas |
 | [arquitetura/](arquitetura/) | os [componentes do Go](arquitetura/componentes.md), os [fluxos](arquitetura/fluxos.md) e o [domínio](arquitetura/dominio.md) (estados e termos) |
+| [SIMPLICIDADE.md](SIMPLICIDADE.md) | a régua contra o over-engineering e o texto longo, com os casos reais (#689, #690, #769) |
 | [adr/](adr/README.md) | as decisões de arquitetura, com o porquê de cada uma |
 | [BANCO-DE-DADOS.md](BANCO-DE-DADOS.md) | o modelo de dados e como mudar a estrutura sem migrations |
 | [INSTALACAO-PELO-CODIGO.md](INSTALACAO-PELO-CODIGO.md) | instalar pelos scripts e desenvolver |
