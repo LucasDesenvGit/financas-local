@@ -59,10 +59,7 @@ As issues e o andamento ficam no Project **"ClaudioFinancas"** ([users/LucasDese
 
 Os merges que trazem a `main` ou uma `release/*` de volta não sobem. Para saber a versão de um commit: `go run ./cmd/versao` em `src/backend` (`-ref <commit>` para outro). Sem o histórico do git (uma cópia `.zip`), a versão sai como a base com o sufixo `-sem-git`.
 
-**CHANGELOG: um arquivo por PR**, em `changelog.d/<nome-da-branch>.md` (a `/` da branch vira `-`), com o título do tipo (`### Funcionalidades`, `### Correções` ou `### Publicação e documentação`) e a entrada. O formato e um modelo estão no [`changelog.d/LEIA-ME.md`](changelog.d/LEIA-ME.md).
-- **Obrigatório em `feat` e `fix`** (o que muda para quem usa); a CI confere. CI, testes, documentação interna e Dependabot podem não ter: as notas listam esses PRs pelo título.
-- **Não mexa no `CHANGELOG.md`**, que é montado na publicação. Dois PRs criam dois arquivos de nomes diferentes: não há conflito de versão nem de CHANGELOG, nem no botão do GitHub.
-- A entrada é lida por quem usa o app (notas do Release e janela "O que mudou" do gerenciador). A regra do tamanho e do sub-item "Técnico" vem da #722.
+**CHANGELOG: um arquivo por PR** em `changelog.d/<nome-da-branch>.md`, obrigatório em `feat` e `fix`. O formato, o limite de ~60 palavras para quem usa e o sub-item "Técnico" estão no [`changelog.d/LEIA-ME.md`](changelog.d/LEIA-ME.md). Não mexa no `CHANGELOG.md`: ele é montado na publicação.
 
 ### Publicar uma versão
 

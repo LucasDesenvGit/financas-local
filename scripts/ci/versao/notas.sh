@@ -142,7 +142,7 @@ if [[ "$modo" == "--desenvolvimento" ]]; then
 fi
 
 # As seções do CHANGELOG, um nível abaixo ("## [2.26.1] — data" vira "### 2.26.1 — data", e "### Correções",
-# "#### Correções"), do topo até a última versão publicada (a primeira sem "· desenvolvimento"), que fica de fora.
+# "#### Correções"; o sub-item "- Técnico: ..." de cada entrada fica de fora, #722), do topo até a última versão publicada (a primeira sem "· desenvolvimento"), que fica de fora.
 # --versao: começa na seção da versão (ou na "[Não publicado]"), a publicada entra, e tira o "· desenvolvimento" dos
 # títulos. --desenvolvimento: começa no topo, que já é de desenvolvimento, e mantém o título e as linhas em branco.
 # O awk lê o arquivo (e não um pipe): ele sai ao chegar na última versão publicada, e um cat que sobrasse escrevendo
@@ -170,6 +170,7 @@ LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
         if (versao != "") gsub(/ · desenvolvimento/, "")
         secao = $0 "\n"; next
     }
+    f && /^ +- Técnico:/ { next }
     f && /^### / { sub(/^### /, "#### ") }
     f { secao = secao $0 "\n" }
     END {
