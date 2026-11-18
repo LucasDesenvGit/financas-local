@@ -9,7 +9,7 @@ import { filter, forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import {
-  Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, ResultadoCategoriasEmLote, StatusTransacao,
+  Categoria, Conta, FiltroTransacoes, OpcaoCategoria, OrigemConta, PaginaTransacoes, Reserva, ResultadoCategoriasEmLote, StatusTransacao,
   TipoConta, TipoCorrespondencia, TipoLancamento, Transacao, TipoTransacao, OrdemTransacoes
 } from '../../core/modelos';
 import { AvisosService } from '../../core/avisos.service';
@@ -107,6 +107,10 @@ export class TransacoesComponent implements OnInit {
   private sugestoesAlteraram = false;
 
   readonly contasManuais = computed(() => this.contas().filter((c) => c.origem === OrigemConta.Manual));
+  /** #758: as do Open Finance, para o gasto pago por um cofrinho no "Novo lançamento". */
+  readonly contasOpenFinance = computed(() => this.contas().filter((c) => c.origem === OrigemConta.OpenFinance));
+  /** #758: as reservas (cofrinhos), lidas quando a janela do lançamento abre pela primeira vez (null = ainda não). */
+  readonly reservas = signal<Reserva[] | null>(null);
   readonly totalPaginas = computed(() => {
     const p = this.pagina();
     return p ? ultimaPagina(p.total, p.tamanhoPagina) : 1;
@@ -734,9 +738,17 @@ export class TransacoesComponent implements OnInit {
   novo(): void {
     this.form = formNovo(this.contasManuais()[0]?.id ?? null, dataIso());
     this.sugestoesForm.set([]);
+    this.carregarReservas();
+  }
+
+  /** #758: complementar; sem as reservas, a janela oferece só as contas manuais. */
+  private carregarReservas(): void {
+    if (this.reservas() !== null) return;
+    this.api.reservas().subscribe({ next: (r) => this.reservas.set(r), error: () => this.reservas.set([]) });
   }
 
   editar(t: Transacao): void {
+    if (!t.openFinance) this.carregarReservas();
     this.form = formDaTransacao(t);
     this.sugestoesForm.set([]);
     this.api.sugestoesDaTransacao(t.id).subscribe({ next: (s) => this.sugestoesForm.set(s), error: () => { /* opcional */ } });

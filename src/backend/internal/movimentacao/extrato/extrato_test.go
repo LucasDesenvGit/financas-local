@@ -285,7 +285,7 @@ func TestObter(t *testing.T) {
 		"contaId":%d,"contaNome":"Corrente","openFinance":true,"data":"2026-10-01","descricao":"PIX ENVIADO MERCADO",
 		"descricaoOriginal":null,"estabelecimento":null,"valor":-10.0,"tipo":1,"status":1,"categoriaId":%d,
 		"categoriaNome":"Mercado","categoriaCor":"#00ff00","parcelaNumero":2,"parcelaTotal":3,"ignorarRelatorios":false,
-		"observacao":null,"emergencia":false,"tipoLancamento":4,"regraDescricaoId":null}`, tr.Id, conta.Id, categoria.Id))
+		"observacao":null,"emergencia":false,"tipoLancamento":4,"regraDescricaoId":null,"reservaNome":null}`, tr.Id, conta.Id, categoria.Id))
 	inexistente := testeapoio.Chamar(t, mux, "GET", "/api/transacoes/999", "")
 	inexistente.ConferirStatus(t, http.StatusNotFound)
 	inexistente.ConferirJSON(t, `{"mensagem":"Registro não encontrado."}`)

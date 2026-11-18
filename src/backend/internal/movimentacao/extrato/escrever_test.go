@@ -60,7 +60,7 @@ func TestAtualizar(t *testing.T) {
 	resp.ConferirJSON(t, fmt.Sprintf(`{"id":%d,"contaId":%d,"contaNome":"Carteira","openFinance":false,"data":"2026-10-11",
 		"descricao":"Feira do sábado","descricaoOriginal":null,"estabelecimento":null,"valor":-65.5,"tipo":1,"status":1,
 		"categoriaId":%d,"categoriaNome":"Mercado","categoriaCor":"#64748b","parcelaNumero":null,"parcelaTotal":null,
-		"ignorarRelatorios":false,"observacao":"orgânicos","emergencia":true,"tipoLancamento":0,"regraDescricaoId":null}`,
+		"ignorarRelatorios":false,"observacao":"orgânicos","emergencia":true,"tipoLancamento":0,"regraDescricaoId":null,"reservaNome":null}`,
 		feira.Id, carteira.Id, mercado.Id))
 	if manual := coluna(t, db, feira.Id, "CategoriaManual"); manual != int64(0) {
 		t.Errorf("sem categoria, deixa de ser manual: %v", manual)

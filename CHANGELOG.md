@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.26.0] — 2026-11-18 · desenvolvimento
+
+### Funcionalidades
+- **Transações: compra paga direto de um cofrinho pelo "+ Lançamento"** (#758, ADR 0063). A lista "Conta" traz, além das contas manuais, as contas do Open Finance que têm cofrinho, no grupo "Gasto pago por um cofrinho". Escolhida uma delas, aparece o campo "Cofrinho" e o tipo fica só despesa: o gasto entra nos relatórios e orçamentos e baixa o saldo estimado do cofrinho, sem mudar o saldo da conta. Na lista, o lançamento leva a etiqueta "cofrinho …".
+  - Sem nenhuma conta para escolher, a lista fica desabilitada e o texto diz onde criar uma conta manual (antes, o clique não abria nada).
+  - Correção: o lançamento do cofrinho (das contas a pagar ou das Reservas) volta a ser editável em Transações; antes, a conta sumia da lista e salvar dava erro.
+  - API: `POST`/`PUT /api/transacoes` aceitam `reservaNome` (obrigatório em conta do Open Finance, só despesa, nunca o Méli Dólar), e o DTO da transação devolve `reservaNome`.
+
 ## [3.25.2] — 2026-11-18 · desenvolvimento
 
 ### Publicação e documentação

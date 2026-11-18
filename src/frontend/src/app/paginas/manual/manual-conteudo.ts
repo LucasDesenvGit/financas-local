@@ -491,15 +491,19 @@ export const MANUAL: CapituloManual[] = [
       {
         id: 'lancamento-manual',
         titulo: 'Lançamento manual e transferência',
-        paraQueServe: 'Registrar o que o banco não informa, como gastos em dinheiro.',
+        paraQueServe: 'Registrar o que o banco não informa, como gastos em dinheiro ou uma compra paga direto de um cofrinho.',
         passos: [
           'Crie antes uma conta manual (ex.: “Carteira”) em Contas e cartões.',
           'Em Transações, clique em “+ Lançamento”: tipo, conta, data, valor, descrição e categoria.',
+          'Compra paga direto de um cofrinho (ex.: no Mercado Livre, no débito de um cofrinho do Mercado Pago)? Em “Conta”, escolha a conta do banco no grupo “Gasto pago por um cofrinho” e o cofrinho no campo que aparece. Entra como despesa e baixa o saldo estimado do cofrinho; o saldo da conta não muda. Na lista, o lançamento leva a etiqueta “cofrinho …”.',
           'Marque “Pendente” para algo que ainda vai acontecer.',
           'Para dinheiro que passou de uma conta para outra, use “⇄ Transferência”: ela não conta como gasto nem como receita.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }, { rotulo: 'Criar uma conta manual', rota: '/contas' }],
-        dicas: ['A transferência é lançada só nas contas manuais; o lado do Open Finance chega pela sincronização.']
+        dicas: [
+          'A transferência é lançada só nas contas manuais; o lado do Open Finance chega pela sincronização.',
+          'Só aparecem no grupo do cofrinho as contas do Open Finance que têm cofrinho em Investimentos › Reservas.'
+        ]
       },
       {
         id: 'ignorar-e-emergencia',
@@ -1227,7 +1231,7 @@ export const MANUAL: CapituloManual[] = [
           'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
           'Sem nada informado pelo banco, o saldo de cada reserva é estimado pelos lançamentos “Dinheiro reservado” e “Dinheiro retirado” do extrato.',
           'Conta a pagar paga com o cofrinho (Contas a pagar › “Pago com o cofrinho”) também baixa a estimativa dele: a despesa conta como uma retirada.',
-          'Um gasto que saiu direto do cofrinho (uma compra paga com ele)? Use “registrar saída” na linha da reserva: descrição, valor, data e categoria. Ele entra nos relatórios e baixa a estimativa.',
+          'Um gasto que saiu direto do cofrinho (uma compra paga com ele)? Use “registrar saída” na linha da reserva, ou o “+ Lançamento” de Transações: descrição, valor, data e categoria. Ele entra nos relatórios e baixa a estimativa.',
           'Ao conferir com a data de hoje, se o saldo informado ficar abaixo da estimativa, dá para marcar “Registrar a diferença como gasto do cofrinho”: a diferença vira despesa, em vez de sumir.',
           'Na aba Reservas, informe o saldo real de vez em quando para corrigir a estimativa. Um valor muito diferente do esperado pede confirmação antes de salvar.',
           'Reservas marcadas “para conferir” geram aviso nas notificações (o sino da barra de cima).'

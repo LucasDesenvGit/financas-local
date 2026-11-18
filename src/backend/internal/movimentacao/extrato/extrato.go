@@ -110,6 +110,8 @@ type TransacaoDto struct {
 	Emergencia        bool                `json:"emergencia"`
 	TipoLancamento    tipolancamento.Tipo `json:"tipoLancamento"`
 	RegraDescricaoId  *int64              `json:"regraDescricaoId"`
+	// ReservaNome é o cofrinho de onde saiu o gasto (#691, #758; ADR 0063), ou null.
+	ReservaNome *string `json:"reservaNome"`
 }
 
 // PaginaDto é o PaginaTransacoesDto do C#.
@@ -130,7 +132,7 @@ const de = `FROM "Transacao" AS t INNER JOIN "Conta" AS co ON co."Id" = t."Conta
 const colunasDoDto = `t."Id", t."ContaId", co."Nome", t."PluggyTransactionId" IS NOT NULL, t."Data", t."Descricao",
 	t."DescricaoOriginal", t."Estabelecimento", t."Valor", t."Tipo", t."Status", t."CategoriaId", ca."Nome", ca."Cor",
 	t."ParcelaNumero", t."ParcelaTotal", t."IgnorarRelatorios", t."Observacao", t."Emergencia", t."MeioPagamento",
-	t."MesmaTitularidade", t."TransferenciaGrupo" IS NOT NULL, co."Tipo", t."RegraDescricaoId"`
+	t."MesmaTitularidade", t."TransferenciaGrupo" IS NOT NULL, co."Tipo", t."RegraDescricaoId", t."ReservaNome"`
 
 // lerDtos lê as transações da consulta com as colunas do DTO, e calcula o tipo de lançamento (ADR 0025) de cada uma.
 func lerDtos(ctx context.Context, q consultas.DBTX, resto string, argumentos ...any) ([]TransacaoDto, error) {
@@ -149,7 +151,7 @@ func lerDtos(ctx context.Context, q consultas.DBTX, resto string, argumentos ...
 		if err := linhas.Scan(&d.Id, &d.ContaId, &d.ContaNome, &d.OpenFinance, &d.Data, &d.Descricao, &d.DescricaoOriginal,
 			&d.Estabelecimento, &d.Valor, &d.Tipo, &d.Status, &d.CategoriaId, &d.CategoriaNome, &d.CategoriaCor,
 			&d.ParcelaNumero, &d.ParcelaTotal, &d.IgnorarRelatorios, &d.Observacao, &d.Emergencia, &meio,
-			&mesmaTitularidade, &doSistema, &tipoConta, &d.RegraDescricaoId); err != nil {
+			&mesmaTitularidade, &doSistema, &tipoConta, &d.RegraDescricaoId, &d.ReservaNome); err != nil {
 			return nil, fmt.Errorf("ler transação: %w", err)
 		}
 		d.TipoLancamento = tipolancamento.Classificar(d.Valor, d.Descricao, d.DescricaoOriginal, meio, mesmaTitularidade,
