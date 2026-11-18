@@ -1,0 +1,32 @@
+{
+  "descricao": "Módulo Notícias (#10, ADRs 0064 e 0067). Nasce desligado: as rotas respondem 409. Ligado, o módulo busca as fontes na hora (#697); o contrato não acessa a internet, então a lista e o \"Atualizar agora\" ficam de fora (estão nos testes do Go). Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "desligado: a lista responde 409",
+      "metodo": "GET",
+      "caminho": "/api/noticias"
+    },
+    {
+      "nome": "desligado: atualizar responde 409, sem buscar nada",
+      "metodo": "POST",
+      "caminho": "/api/noticias/atualizar"
+    },
+    {
+      "nome": "o módulo no catálogo, com os destinos",
+      "metodo": "GET",
+      "caminho": "/api/modulos"
+    },
+    {
+      "nome": "ligar as Notícias",
+      "metodo": "PUT",
+      "caminho": "/api/modulos/noticias",
+      "corpo": { "ligado": true }
+    },
+    {
+      "nome": "desligar de novo",
+      "metodo": "PUT",
+      "caminho": "/api/modulos/noticias",
+      "corpo": { "ligado": false }
+    }
+  ]
+}

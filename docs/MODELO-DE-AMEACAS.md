@@ -2,7 +2,7 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 09/11/2026, revisado no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
+> **Data:** 14/11/2026, revisado no módulo Notícias (#10, ADR 0067): três saídas de rede novas (G1, BBC News Brasil e TabNews), só com o módulo ligado, com o link das notícias filtrado pelo domínio da fonte. Antes, 09/11/2026, no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
 
 ## De quem o sistema se protege
 
@@ -46,12 +46,14 @@ flowchart TB
     subgraph internet["Serviços de fora"]
         pluggy["Pluggy"]
         cotacoes["Banco Central, Yahoo,<br/>brapi, Mercado Bitcoin"]
+        noticias["G1, BBC e TabNews<br/>(módulo Notícias ligado)"]
         github["GitHub"]
     end
 
     navegador -- "1. HTTPS, cookie e CSRF" --> api
     api -- "3. HTTPS" --> pluggy
     api -- "3. HTTPS" --> cotacoes
+    api -.->|"3. HTTPS, só com o módulo ligado"| noticias
     gerenciador -- "4. HTTPS" --> github
     api -- "5. arquivo" --> banco
     api -- "5. arquivo" --> chaves
@@ -73,8 +75,10 @@ flowchart TB
 | **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização) e limite por minuto (`internal/plataforma/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | Sair não invalida a sessão no servidor (#68, item 3). Política de senha (#68, item 8) |
 | **Adulteração** | Um site aberto no navegador manda um pedido em seu nome (CSRF), ou aponta um domínio para `127.0.0.1` (DNS rebinding) | Token antifalsificação em todo pedido que grava e `AllowedHosts` restrito | — |
 | **Repúdio** | Negar uma ação feita no site | `AuditoriaAcesso`: login, falhas, bloqueios, senha, parâmetros, credenciais, conexões, alterações em lote nas transações e conferências de investimentos, cada um com o desfazer | A auditoria fica no banco: quem tem o arquivo pode mudá-la |
+| **Vazamento** | O holerite em PDF (CPF, salário) ou a senha dele ficam no disco ou no log (#228) | O PDF e a senha só existem durante a leitura: não são gravados, e o erro e o log não levam texto do PDF; só os valores confirmados vão para o holerite ([ADR 0068](adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) | — |
 | **Vazamento** | Script de terceiros, cache ou erro detalhado expõem dados | CSP sem script de terceiros, `no-store` na `/api` e erro genérico ([ADR 0034](adr/0034-sem-sri-no-build-do-front-end.md)) | Certificado confiável para a máquina inteira, com a senha em texto puro (#68, item 5) |
 | **Negação de serviço** | Pedidos em excesso derrubam o site | Limite no login e corpo de até 1 MB (`servidor.LimiteDoCorpo`) | — |
+| **Negação de serviço** | Um PDF malformado trava a leitura do holerite ou estoura a memória do site (#228; na revisão do #706, um PDF de 200 bytes com a árvore de páginas em ciclo travou a leitura, e um de 143 KB abriu para 39 MB e levou o processo a 12 GB). Com o acesso pelo celular (ADR 0061), a rota fica na rede de casa, com login | Até 700 KB e 5 páginas, conferido pelo começo do arquivo (`%PDF-`); a árvore de páginas e o `Parent` com limite; o conteúdo e as fontes conferidos pelo tamanho aberto antes de ler (1 MB e 128 KB); no máximo 20 mil letras por página, conferido antes de traduzir; um PDF por vez, com prazo de 5 segundos; o pânico da biblioteca vira "o PDF não abriu" (`leitor/conteudo.go`, [ADR 0068](adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) | Um laço da biblioteca ao abrir o PDF (a tabela xref em ciclo) não para: a leitura desiste no prazo, mas a goroutine fica presa, ocupando uma CPU, e as próximas leituras dizem "o leitor está lendo outro PDF" até o site reiniciar (*julgamento*: é você que escolhe o arquivo, e a rota pede login; o processo à parte fica para quando o OCR, ADR 0069, trouxer um) |
 | **Aumento de privilégio** | Alguém usa uma rota sem login | Tudo exige login, menos as rotas anônimas do login (`Autenticacao.Proteger`, na frente de toda a `/api`) | A configuração inicial fica aberta até alguém usá-la (#68, item 4) |
 
 ### 2. API ↔ Go (saiu na #86)
@@ -85,12 +89,12 @@ Até a #86, a API em .NET ficava na frente e repassava ao Go, num processo filho
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Um servidor se passa pela Pluggy ou pela cotação | HTTPS, com host fixo no código. A URL da Pluggy é recusada se não for HTTPS | — |
+| **Falsificação** | Um servidor se passa pela Pluggy, pela cotação ou por uma fonte de notícias | HTTPS, com host fixo no código. A URL da Pluggy é recusada se não for HTTPS. As notícias só seguem redirecionamento para o mesmo host (até 2) | — |
 | **Adulteração** | Resposta alterada no caminho | HTTPS. A resposta é lida em tipos, com validação | — |
 | **Repúdio** | Não saber o que foi trazido | `SincronizacaoLog` | — |
-| **Vazamento** | O destino fica sabendo mais do que deve | Só o mínimo, por HTTPS ([tabela](SEGURANCA.md#o-que-sai-para-a-internet)). O Client Secret só vai para a Pluggy | Os códigos dos ativos, com as datas, mostram a carteira ao Yahoo e à brapi (#68, complemento) |
-| **Negação de serviço** | Um serviço de fora trava ou cai | Tempo limite em cada cliente, e a falha de cotação não para o resto | — |
-| **Aumento de privilégio** | Texto de fora vira código | O Angular escapa o texto, não há `innerHTML`, e as consultas são parametrizadas | — |
+| **Vazamento** | O destino fica sabendo mais do que deve | Só o mínimo, por HTTPS ([tabela](SEGURANCA.md#o-que-sai-para-a-internet)). O Client Secret só vai para a Pluggy. As fontes de notícias recebem só o pedido do feed, e só com o módulo ligado (desligado por padrão, ADR 0067) | Os códigos dos ativos, com as datas, mostram a carteira ao Yahoo e à brapi (#68, complemento) |
+| **Negação de serviço** | Um serviço de fora trava ou cai | Tempo limite em cada cliente, e a falha de cotação não para o resto. As notícias: 15 s e 2 MB por fonte, e uma fonte que falha não derruba as outras | — |
+| **Aumento de privilégio** | Texto de fora vira código | O Angular escapa o texto, não há `innerHTML`, e as consultas são parametrizadas. O link de uma notícia só é guardado se for `https://` no domínio da fonte (barra `javascript:`), e abre fora do site com `noopener noreferrer` (#10) | — |
 
 ### 4. Gerenciador ↔ GitHub
 

@@ -1,0 +1,44 @@
+{
+  "descricao": "Férias do módulo Trabalho (#213, ADR 0065). Usa o emprego 1 do 21-trabalho (admissão em 11/03/2024; 6000 de junho de 2026 em diante) e o holerite de outubro de 2026 do 22-holerite, que entra na média. Os períodos dependem do relógio do contrato. O 22-holerite deixa o módulo ligado. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "os períodos",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/ferias"
+    },
+    {
+      "nome": "simular 30 dias em dezembro de 2026",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/ferias/simular?inicio=2026-12-01&dias=30"
+    },
+    {
+      "nome": "simular 20 dias e vender 10, com o 13º junto",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/ferias/simular?inicio=2026-12-01&dias=20&vendidos=10&adiantar=true"
+    },
+    {
+      "nome": "agendar 20 dias e vender 10 do segundo período",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/ferias",
+      "corpo": { "periodoInicio": "2025-03-11", "inicio": "2026-12-01", "dias": 20, "diasVendidos": 10 }
+    },
+    {
+      "nome": "fração curta demais",
+      "metodo": "POST",
+      "caminho": "/api/trabalho/empregos/1/ferias",
+      "corpo": { "periodoInicio": "2024-03-11", "inicio": "2025-04-01", "dias": 4 }
+    },
+    {
+      "nome": "faltas no primeiro período",
+      "comentario": "10 faltas: 24 dias de direito (CLT, art. 130).",
+      "metodo": "PUT",
+      "caminho": "/api/trabalho/empregos/1/ferias/faltas",
+      "corpo": { "periodoInicio": "2024-03-11", "faltas": 10 }
+    },
+    {
+      "nome": "desmarcar o agendamento",
+      "metodo": "DELETE",
+      "caminho": "/api/trabalho/empregos/1/ferias/1"
+    }
+  ]
+}

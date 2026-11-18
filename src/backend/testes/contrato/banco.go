@@ -14,8 +14,9 @@ import (
 
 // TabelasIgnoradas ficam fora da comparação do banco: são gravadas por tarefas em segundo plano do .NET, em
 // momentos que não dependem dos casos. ErroSistema recebe os avisos do log (ADR 0022), como o do câmbio e o da
-// cripto, que tentam a internet 1 minuto depois de subir e falham, porque o servidor roda sem rede.
-var TabelasIgnoradas = []string{"ErroSistema"}
+// cripto, que tentam a internet 1 minuto depois de subir e falham, porque o servidor roda sem rede. Noticia e
+// NoticiaFonte: ligar o Notícias roda a busca na hora (#697), que falha sem rede num momento que não depende dos casos.
+var TabelasIgnoradas = []string{"ErroSistema", "Noticia", "NoticiaFonte"}
 
 // Foto é o conteúdo do banco num momento: tabela → linhas em ordem de chave primária.
 type Foto map[string]*fotoTabela

@@ -1,0 +1,33 @@
+{
+  "descricao": "13º salário do módulo Trabalho (#214, ADR 0065). Usa o emprego 1 do 21-trabalho (6000 de junho de 2026 em diante) e o holerite de outubro de 2026 do 22-holerite (horas extras, adicional noturno e DSR entram na média). O 22-holerite deixa o módulo ligado. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "casos": [
+    {
+      "nome": "o 13º de 2026",
+      "comentario": "12 avos; salário de dezembro (6000) mais a média das variáveis dos holerites do ano; 1ª metade até 30/11, 2ª até 20/12.",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/decimo-terceiro/2026"
+    },
+    {
+      "nome": "a 1ª parcela veio nas férias",
+      "metodo": "PUT",
+      "caminho": "/api/trabalho/empregos/1/decimo-terceiro/2026",
+      "corpo": { "primeiraParcelaEm": "2026-07-10", "primeiraParcelaValor": 2800 }
+    },
+    {
+      "nome": "a 1ª parcela em outro ano",
+      "metodo": "PUT",
+      "caminho": "/api/trabalho/empregos/1/decimo-terceiro/2026",
+      "corpo": { "primeiraParcelaEm": "2025-12-01" }
+    },
+    {
+      "nome": "o 13º de 2024 não tem tabela",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/decimo-terceiro/2024"
+    },
+    {
+      "nome": "ano antes da admissão",
+      "metodo": "GET",
+      "caminho": "/api/trabalho/empregos/1/decimo-terceiro/2023"
+    }
+  ]
+}

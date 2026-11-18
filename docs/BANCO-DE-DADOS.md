@@ -207,6 +207,96 @@ erDiagram
     }
 ```
 
+### Trabalho (módulo)
+
+```mermaid
+erDiagram
+    Emprego {
+        INTEGER Id PK
+        INTEGER ContaId FK
+    }
+    SalarioVigencia {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
+    InssVigencia {
+        TEXT Inicio PK
+    }
+    InssFaixa {
+        TEXT Inicio PK,FK
+        INTEGER Ordem PK
+    }
+    IrrfVigencia {
+        TEXT Inicio PK
+    }
+    IrrfFaixa {
+        TEXT Inicio PK,FK
+        INTEGER Ordem PK
+    }
+    Holerite {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
+    HoleriteLancamento {
+        INTEGER Id PK
+        INTEGER HoleriteId FK
+    }
+    DecimoTerceiro {
+        INTEGER EmpregoId PK,FK
+        INTEGER Ano PK
+    }
+    FeriasFaltas {
+        INTEGER EmpregoId PK,FK
+        TEXT PeriodoInicio PK
+    }
+    FeriasAgendamento {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
+    FgtsLancamento {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
+    HoleriteRecebimento {
+        INTEGER Id PK
+        INTEGER HoleriteId FK
+        INTEGER TransacaoId FK
+    }
+    Rescisao {
+        INTEGER EmpregoId PK,FK
+    }
+    HoleriteRubricaEscolha {
+        INTEGER Id PK
+        INTEGER EmpregoId FK
+    }
+    Conta |o--o{ Emprego : "ContaId: SET NULL"
+    Emprego ||--o{ SalarioVigencia : "EmpregoId: CASCADE"
+    InssVigencia ||--o{ InssFaixa : "Inicio: CASCADE"
+    IrrfVigencia ||--o{ IrrfFaixa : "Inicio: CASCADE"
+    Emprego ||--o{ Holerite : "EmpregoId: CASCADE"
+    Holerite ||--o{ HoleriteLancamento : "HoleriteId: CASCADE"
+    Emprego ||--o{ DecimoTerceiro : "EmpregoId: CASCADE"
+    Emprego ||--o{ FeriasFaltas : "EmpregoId: CASCADE"
+    Emprego ||--o{ FeriasAgendamento : "EmpregoId: CASCADE"
+    Emprego ||--o{ FgtsLancamento : "EmpregoId: CASCADE"
+    Holerite ||--o{ HoleriteRecebimento : "HoleriteId: CASCADE"
+    Transacao |o--o{ HoleriteRecebimento : "TransacaoId: SET NULL"
+    Emprego ||--o{ Rescisao : "EmpregoId: CASCADE"
+    Emprego ||--o{ HoleriteRubricaEscolha : "EmpregoId: CASCADE"
+```
+
+### Notícias (módulo)
+
+```mermaid
+erDiagram
+    Noticia {
+        INTEGER Id PK
+    }
+    NoticiaFonte {
+        TEXT Fonte PK
+    }
+```
+
 <!-- diagramas-do-banco: fim -->
 
 ## Como alterar a estrutura

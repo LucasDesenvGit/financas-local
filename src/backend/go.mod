@@ -3,6 +3,7 @@ module github.com/LucasDesenvGit/financas-local/src/backend
 go 1.27.4
 
 require (
+	github.com/ledongthuc/pdf v0.0.0-20261020125853-5e46805f718e
 	github.com/shopspring/decimal v1.6.0
 	golang.org/x/sys v0.50.0
 	golang.org/x/text v0.44.0
