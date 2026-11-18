@@ -225,7 +225,7 @@ func (s *Servico) definirHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	corpo, ok := respostas.LerCorpo(w, r, "dto")
+	corpo, ok := respostas.LerCorpo(w, r)
 	if !ok {
 		return
 	}

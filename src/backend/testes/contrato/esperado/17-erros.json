@@ -461,18 +461,17 @@
     "corpo": {
       "errors": {
         "Pagina": [
-          "The field Pagina must be between 1 and 2147483647."
+          "O campo Pagina tem de estar entre 1 e 2147483647."
         ],
         "Situacao": [
-          "The field Situacao must match the regular expression '^(abertos|resolvidos|todos)$'."
+          "O campo Situacao não está no formato esperado."
         ],
         "TamanhoPagina": [
-          "The field TamanhoPagina must be between 1 and 100."
+          "O campo TamanhoPagina tem de estar entre 1 e 100."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -484,18 +483,17 @@
     "corpo": {
       "errors": {
         "Inicio": [
-          "The value 'ontem' is not valid for Inicio."
+          "O valor 'ontem' não é válido para Inicio."
         ],
         "Nivel": [
-          "The value '7' is invalid."
+          "O valor '7' não é válido."
         ],
         "Pagina": [
-          "The value 'abc' is not valid for Pagina."
+          "O valor 'abc' não é válido para Pagina."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -507,12 +505,11 @@
     "corpo": {
       "errors": {
         "Origem": [
-          "The field Origem must be a string with a maximum length of 30."
+          "O campo Origem pode ter até 30 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -524,15 +521,14 @@
     "corpo": {
       "errors": {
         "Pagina": [
-          "The value '' is invalid."
+          "O valor '' não é válido."
         ],
         "TamanhoPagina": [
-          "The value '' is invalid."
+          "O valor '' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -754,12 +750,11 @@
     "corpo": {
       "errors": {
         "Situacao": [
-          "The field Situacao must match the regular expression '^(abertos|resolvidos|todos)$'."
+          "O campo Situacao não está no formato esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -840,15 +835,14 @@
     "corpo": {
       "errors": {
         "Nivel": [
-          "The value 'grave' is not valid for Nivel."
+          "O valor 'grave' não é válido para Nivel."
         ],
         "TamanhoPagina": [
           "The input was not valid."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -860,12 +854,11 @@
     "corpo": {
       "errors": {
         "Nivel": [
-          "The value 'Aviso,Erro' is invalid."
+          "O valor 'Aviso,Erro' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -877,15 +870,14 @@
     "corpo": {
       "errors": {
         "Inicio": [
-          "The value '2026-02-30' is not valid for Inicio."
+          "O valor '2026-02-30' não é válido para Inicio."
         ],
         "Pagina": [
-          "The value '99999999999' is not valid for Pagina."
+          "O valor '99999999999' não é válido para Pagina."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -980,8 +972,7 @@
     "tipo": "application/problem+json; charset=utf-8",
     "corpo": {
       "status": 400,
-      "title": "Bad Request",
-      "traceId": "<traceId>",
+      "title": "Pedido recusado: o token de segurança não veio ou não confere.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -998,12 +989,11 @@
     "corpo": {
       "errors": {
         "Mensagem": [
-          "The Mensagem field is required."
+          "O campo Mensagem é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1015,15 +1005,14 @@
     "corpo": {
       "errors": {
         "Mensagem": [
-          "The field Mensagem must be a string with a maximum length of 1000."
+          "O campo Mensagem pode ter até 1000 caracteres."
         ],
         "Rota": [
-          "The field Rota must be a string with a maximum length of 300."
+          "O campo Rota pode ter até 300 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1035,15 +1024,11 @@
     "corpo": {
       "errors": {
         "$.mensagem": [
-          "The JSON value could not be converted to Financas.Api.Dtos.ErroFrontEndDto. Path: $.mensagem | LineNumber: 0 | BytePositionInLine: 14."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de mensagem não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1059,8 +1044,7 @@
     "tipo": "application/problem+json; charset=utf-8",
     "corpo": {
       "status": 400,
-      "title": "Bad Request",
-      "traceId": "<traceId>",
+      "title": "Pedido recusado: o token de segurança não veio ou não confere.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1086,15 +1070,11 @@
     "corpo": {
       "errors": {
         "$.resolvido": [
-          "The JSON value could not be converted to Financas.Api.Dtos.SituacaoErroDto. Path: $.resolvido | LineNumber: 1 | BytePositionInLine: 26."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de resolvido não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1156,8 +1136,7 @@
     "tipo": "application/problem+json; charset=utf-8",
     "corpo": {
       "status": 400,
-      "title": "Bad Request",
-      "traceId": "<traceId>",
+      "title": "Pedido recusado: o token de segurança não veio ou não confere.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1178,12 +1157,11 @@
     "corpo": {
       "errors": {
         "TamanhoPagina": [
-          "The field TamanhoPagina must be between 1 and 100."
+          "O campo TamanhoPagina tem de estar entre 1 e 100."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

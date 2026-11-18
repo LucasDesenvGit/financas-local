@@ -60,8 +60,8 @@ func TestModelBindingDosNumeros(t *testing.T) {
 		{"int anulável em texto passa", `{"nome":"X","tipo":1,"cor":"#64748b","categoriaPaiId":"999"}`, 400, `Categoria pai inválida.`},
 		{"int anulável com casa decimal", `{"nome":"X","tipo":1,"cor":"#64748b","categoriaPaiId":7.5}`, 400, `"$.categoriaPaiId"`},
 		{"bool em texto é recusado", `{"nome":"X","tipo":1,"cor":"#64748b","ativa":"true"}`, 400, `"$.ativa"`},
-		{"cor só de espaços: obrigatória e fora do padrão", `{"nome":"X","tipo":1,"cor":"   "}`, 400, `"The Cor field is required.","The field Cor must match the regular expression '^#[0-9a-fA-F]{6}$'."`},
-		{"cor com o padrão no meio não vale", `{"nome":"X","tipo":1,"cor":"x#123456"}`, 400, `must match the regular expression`},
+		{"cor só de espaços: obrigatória e fora do padrão", `{"nome":"X","tipo":1,"cor":"   "}`, 400, `"O campo Cor é obrigatório.","O campo Cor não está no formato esperado."`},
+		{"cor com o padrão no meio não vale", `{"nome":"X","tipo":1,"cor":"x#123456"}`, 400, `"O campo Cor não está no formato esperado."`},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -160,15 +160,15 @@ func TestPreviaPelaRota(t *testing.T) {
 	mux, _, _ := rotasDeTeste(t)
 	resp := testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&TIPO=xyz&valorMaximo=1,0,0.x", "")
 	resp.ConferirStatus(t, http.StatusBadRequest)
-	if !strings.Contains(string(resp.Corpo), `"tipo":["The value 'xyz' is not valid."]`) ||
-		!strings.Contains(string(resp.Corpo), `"valorMaximo":["The value '1,0,0.x' is not valid."]`) {
+	if !strings.Contains(string(resp.Corpo), `"tipo":["O valor 'xyz' não é válido."]`) ||
+		!strings.Contains(string(resp.Corpo), `"valorMaximo":["O valor '1,0,0.x' não é válido."]`) {
 		t.Errorf("400 da prévia: %s", resp.Corpo)
 	}
 	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa", "").ConferirJSON(t, `{"quantidade":0,"exemplos":[]}`)
 	// O número que não existe no enum é o 400 do EnumTypeModelBinder (ele confere o Enum.IsDefined), e não passa.
 	fora := testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&tipo=9", "")
 	fora.ConferirStatus(t, http.StatusBadRequest)
-	if !strings.Contains(string(fora.Corpo), `"tipo":["The value '9' is invalid."]`) {
+	if !strings.Contains(string(fora.Corpo), `"tipo":["O valor '9' não é válido."]`) {
 		t.Errorf("400 do tipo fora do enum: %s", fora.Corpo)
 	}
 	testeapoio.Chamar(t, mux, "GET", "/api/regras-descricao/previa?texto=x&tipo=Igual", "").ConferirStatus(t, http.StatusOK)

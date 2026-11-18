@@ -147,7 +147,7 @@ func lerRegraDescricao(w http.ResponseWriter, r *http.Request) (RegraDescricaoDt
 	ativa := respostas.CampoBool{Propriedade: "Ativa", Valor: true}
 	minimo := respostas.CampoDecimalOpcional{Propriedade: "ValorMinimo", Faixa: faixa}
 	maximo := respostas.CampoDecimalOpcional{Propriedade: "ValorMaximo", Faixa: faixa}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarRegraDescricaoDto", &texto, &tipo, &nova, &ativa, &minimo, &maximo) {
+	if !respostas.LerObjeto(w, r, &texto, &tipo, &nova, &ativa, &minimo, &maximo) {
 		return RegraDescricaoDto{}, false
 	}
 	d := RegraDescricaoDto{Texto: strings.TrimSpace(*texto.Valor), TipoCorrespondencia: tipo.Ou(0),
@@ -229,8 +229,7 @@ func (s *Servico) atualizarRegraDescricao(w http.ResponseWriter, r *http.Request
 // depois do 400 dos atributos e antes do Invalida, como no C#.
 func lerAtributosDaRegraDescricao(w http.ResponseWriter, r *http.Request) (struct{}, bool) {
 	faixa := &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}
-	return struct{}{}, respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarRegraDescricaoDto",
-		&respostas.CampoTexto{Propriedade: "Texto", Minimo: 2, Maximo: 200},
+	return struct{}{}, respostas.LerObjeto(w, r, &respostas.CampoTexto{Propriedade: "Texto", Minimo: 2, Maximo: 200},
 		&respostas.CampoEnum{Propriedade: "TipoCorrespondencia"},
 		&respostas.CampoTexto{Propriedade: "NovaDescricao", Minimo: 1, Maximo: 300},
 		&respostas.CampoBool{Propriedade: "Ativa", Valor: true},

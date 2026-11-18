@@ -422,15 +422,14 @@
     "corpo": {
       "errors": {
         "Cor": [
-          "The field Cor must match the regular expression '^#[0-9a-fA-F]{6}$'."
+          "O campo Cor não está no formato esperado."
         ],
         "Nome": [
-          "The Nome field is required."
+          "O campo Nome é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -442,15 +441,14 @@
     "corpo": {
       "errors": {
         "Icone": [
-          "The field Icone must be a string with a maximum length of 40."
+          "O campo Icone pode ter até 40 caracteres."
         ],
         "Nome": [
-          "The field Nome must be a string with a maximum length of 80."
+          "O campo Nome pode ter até 80 caracteres."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -462,15 +460,14 @@
     "corpo": {
       "errors": {
         "Cor": [
-          "The Cor field is required."
+          "O campo Cor é obrigatório."
         ],
         "Nome": [
-          "The Nome field is required."
+          "O campo Nome é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -482,15 +479,11 @@
     "corpo": {
       "errors": {
         "$.tipo": [
-          "The JSON value could not be converted to Financas.Api.Dtos.SalvarCategoriaDto. Path: $.tipo | LineNumber: 0 | BytePositionInLine: 37."
-        ],
-        "dto": [
-          "The dto field is required."
+          "O valor de tipo não é do tipo esperado."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -534,15 +527,11 @@
     "corpo": {
       "errors": {
         "$": [
-          "Expected start of a property name or value, but instead reached end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 21."
-        ],
-        "dto": [
-          "The dto field is required."
+          "Os dados do pedido não estão num formato válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

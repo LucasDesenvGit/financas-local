@@ -56,8 +56,7 @@ func (s *Servico) conferir(w http.ResponseWriter, r *http.Request) {
 	moeda := respostas.CampoTexto{Propriedade: "Moeda", Maximo: math.MaxInt, Opcional: true, Padrao: padraoMoeda}
 	diferenca := respostas.CampoBool{Propriedade: "RegistrarDiferenca"}
 	categoria := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.ConferirReservaDto", &conta, &nome, &saldo, &data, &moeda,
-		&diferenca, &categoria) {
+	if !respostas.LerObjeto(w, r, &conta, &nome, &saldo, &data, &moeda, &diferenca, &categoria) {
 		return
 	}
 	hoje := relogio.Hoje(s.relogio)
@@ -102,7 +101,7 @@ func (s *Servico) registrarSaida(w http.ResponseWriter, r *http.Request) {
 	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}}
 	descricao := respostas.CampoTexto{Propriedade: "Descricao", Maximo: 300}
 	categoria := respostas.CampoInteiroOpcional{Propriedade: "CategoriaId"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SaidaReservaDto", &conta, &nome, &data, &valor, &descricao,
+	if !respostas.LerObjeto(w, r, &conta, &nome, &data, &valor, &descricao,
 		&categoria) {
 		return
 	}

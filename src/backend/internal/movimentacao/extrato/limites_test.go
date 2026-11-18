@@ -124,7 +124,7 @@ func TestRenomearNosLimites(t *testing.T) {
 
 	resp = testeapoio.Chamar(t, mux, "GET", fmt.Sprintf("/api/transacoes/%d/renomear/previa?tipo=", uma.Id), "")
 	resp.ConferirStatus(t, http.StatusBadRequest)
-	if !strings.Contains(string(resp.Corpo), `"tipo":["The value '' is invalid."]`) {
+	if !strings.Contains(string(resp.Corpo), `"tipo":["O valor '' não é válido."]`) {
 		t.Errorf("tipo vazio: %s", resp.Corpo)
 	}
 }

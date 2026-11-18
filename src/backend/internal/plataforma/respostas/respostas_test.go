@@ -9,8 +9,9 @@ import (
 	"testing"
 )
 
-// A validação do [ApiController]: as mensagens são as do ASP.NET (o contrato 00-auth grava as do .NET).
-func TestLerCorpoComoOAspNet(t *testing.T) {
+// Regra (#710): a validação do corpo responde em português, por campo, sem traceId; o JSON quebrado e o corpo vazio
+// têm uma mensagem só, na chave do pedido inteiro.
+func TestLerCorpo(t *testing.T) {
 	for _, c := range []struct {
 		nome, tipo, corpo string
 		status            int
@@ -22,19 +23,23 @@ func TestLerCorpoComoOAspNet(t *testing.T) {
 			corpo: `{"extra":{"a":[1,{"b":2}],"c":{}},"login":"ana.teste","lista":[[]],"senha":"x"}`, status: 0},
 		{nome: "senha com o tamanho máximo exato", corpo: `{"login":"ana.teste","senha":"` + strings.Repeat("x", 200) + `"}`, status: 0},
 		{nome: "login curto e sem senha", corpo: `{"login":"ab"}`, status: 400, erros: map[string][]string{
-			"Login": {"The field Login must be a string with a minimum length of 3 and a maximum length of 100."},
-			"Senha": {"The Senha field is required."}}},
+			"Login": {"O campo Login tem de ter de 3 a 100 caracteres."},
+			"Senha": {"O campo Senha é obrigatório."}}},
 		{nome: "vazio e só espaços são obrigatórios", corpo: `{"login":" ","senha":""}`, status: 400, erros: map[string][]string{
-			"Login": {"The Login field is required.", "The field Login must be a string with a minimum length of 3 and a maximum length of 100."},
-			"Senha": {"The Senha field is required."}}},
+			"Login": {"O campo Login é obrigatório.", "O campo Login tem de ter de 3 a 100 caracteres."},
+			"Senha": {"O campo Senha é obrigatório."}}},
 		{nome: "senha longa demais", corpo: `{"login":"ana","senha":"` + strings.Repeat("x", 201) + `"}`, status: 400, erros: map[string][]string{
-			"Senha": {"The field Senha must be a string with a maximum length of 200."}}},
+			"Senha": {"O campo Senha pode ter até 200 caracteres."}}},
 		{nome: "JSON que acaba no meio (o do contrato)", corpo: `{"senhaAtual": "Senha-Forte-123", `, status: 400, erros: map[string][]string{
-			"$":   {"Expected start of a property name or value, but instead reached end of data. Path: $ | LineNumber: 0 | BytePositionInLine: 34."},
-			"dto": {"The dto field is required."}}},
-		{nome: "corpo vazio", corpo: "", status: 400, erros: map[string][]string{
-			"":    {"A non-empty request body is required."},
-			"dto": {"The dto field is required."}}},
+			"$": {"Os dados do pedido não estão num formato válido."}}},
+		{nome: "texto depois do JSON", corpo: `{"login":"ana","senha":"x"} {}`, status: 400, erros: map[string][]string{
+			"$": {"Os dados do pedido não estão num formato válido."}}},
+		{nome: "corpo vazio", corpo: "", status: 400, erros: map[string][]string{"": {"O pedido veio sem dados."}}},
+		{nome: "corpo null", corpo: "null", status: 400, erros: map[string][]string{"": {"O pedido veio sem dados."}}},
+		{nome: "corpo que não é objeto", corpo: `[1]`, status: 400, erros: map[string][]string{
+			"$": {"Os dados do pedido não estão num formato válido."}}},
+		{nome: "campo de outro tipo", corpo: `{"login":5,"senha":"x"}`, status: 400, erros: map[string][]string{
+			"$.login": {"O valor de login não é do tipo esperado."}}},
 		{nome: "não é JSON", tipo: "text/plain", corpo: `{}`, status: 415},
 	} {
 		t.Run(c.nome, func(t *testing.T) {
@@ -47,7 +52,7 @@ func TestLerCorpoComoOAspNet(t *testing.T) {
 			w := httptest.NewRecorder()
 			login := &CampoTexto{Propriedade: "Login", Minimo: 3, Maximo: 100}
 			senha := &CampoTexto{Propriedade: "Senha", Maximo: 200}
-			ok := LerTextos(w, r, "dto", "Financas.Api.Dtos.CredenciaisDto", login, senha)
+			ok := LerTextos(w, r, login, senha)
 			if c.status == 0 {
 				if !ok || login.Valor == nil || *login.Valor != "ana.teste" {
 					t.Fatalf("recusou: %d %s", w.Code, w.Body)
@@ -58,24 +63,25 @@ func TestLerCorpoComoOAspNet(t *testing.T) {
 				t.Fatalf("status %d (%v), esperado %d", w.Code, ok, c.status)
 			}
 			if tipo := w.Header().Get("Content-Type"); tipo != ConteudoJSON {
-				t.Errorf("Content-Type %q, o .NET manda %q", tipo, ConteudoJSON)
+				t.Errorf("Content-Type %q, esperado %q", tipo, ConteudoJSON)
 			}
 			if c.erros == nil {
 				return
 			}
-			var corpo struct {
-				Errors  map[string][]string `json:"errors"`
-				Title   string              `json:"title"`
-				TraceID string              `json:"traceId"`
-			}
+			var corpo map[string]json.RawMessage
 			if err := json.Unmarshal(w.Body.Bytes(), &corpo); err != nil {
 				t.Fatal(err)
 			}
-			if !reflect.DeepEqual(corpo.Errors, c.erros) {
-				t.Errorf("errors:\n  %v\nesperado\n  %v", corpo.Errors, c.erros)
+			var erros map[string][]string
+			_ = json.Unmarshal(corpo["errors"], &erros)
+			if !reflect.DeepEqual(erros, c.erros) {
+				t.Errorf("errors:\n  %v\nesperado\n  %v", erros, c.erros)
 			}
-			if corpo.Title != tituloValidacao || !strings.HasPrefix(corpo.TraceID, "00-") {
-				t.Errorf("title %q, traceId %q", corpo.Title, corpo.TraceID)
+			if string(corpo["title"]) != `"`+tituloValidacao+`"` {
+				t.Errorf("title %s", corpo["title"])
+			}
+			if _, tem := corpo["traceId"]; tem {
+				t.Errorf("veio traceId: %s", w.Body)
 			}
 		})
 	}
@@ -98,7 +104,7 @@ func TestMensagemDoTamanho(t *testing.T) {
 			r.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 			texto := &CampoTexto{Propriedade: "TextoCobranca", Maximo: 100, Opcional: true, MensagemDoTamanho: mensagem}
-			ok := LerTextos(w, r, "dto", "Financas.Api.Dtos.SalvarContaAgendadaDto", texto)
+			ok := LerTextos(w, r, texto)
 			if c.esperado == nil {
 				if !ok {
 					t.Fatalf("recusou: %d %s", w.Code, w.Body)
@@ -115,5 +121,47 @@ func TestMensagemDoTamanho(t *testing.T) {
 				t.Errorf("%v: %v", ok, corpo.Errors)
 			}
 		})
+	}
+}
+
+// Regra (#710): o JSON quebrado em qualquer ponto (antes do objeto, no valor, numa propriedade a mais, no fim de uma
+// lista) é o mesmo erro, na chave "$" do pedido inteiro.
+func TestJSONQuebradoEmQualquerPonto(t *testing.T) {
+	novos := func() []Campo {
+		return []Campo{&CampoTexto{Propriedade: "A", Maximo: 10, Opcional: true},
+			&CampoLista{Propriedade: "N", Item: ItemInt, Opcional: true},
+			&CampoListaDeObjetos{Propriedade: "Itens", Novo: func() []Campo { return []Campo{&CampoLong{Propriedade: "Id"}} }}}
+	}
+	for _, corpo := range []string{
+		`x`,                   // antes do objeto
+		`{"a":}`,              // no valor de um campo
+		`{"outro":[1,}`,       // dentro de uma propriedade a mais
+		`{"n":[1}`,            // a lista de números fechada com "}"
+		`{"itens":[{"id":1}}`, // a lista de objetos fechada com "}"
+		`{"a":"x"} {}`,        // texto depois do objeto
+	} {
+		if _, erro := lerObjeto([]byte(corpo), novos()); erro == nil || erro.Caminho != "$" || erro.Mensagem != MensagemJSONInvalido {
+			t.Errorf("%s: %+v", corpo, erro)
+		}
+	}
+}
+
+// Regra: o corpo maior que o limite do servidor é o 413, sem corpo.
+func TestCorpoGrandeDemais(t *testing.T) {
+	r := httptest.NewRequest(http.MethodPost, "/x", strings.NewReader(`{"a":"`+strings.Repeat("x", 100)+`"}`))
+	r.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.Body = http.MaxBytesReader(w, r.Body, 10)
+	if _, ok := LerCorpo(w, r); ok || w.Code != http.StatusRequestEntityTooLarge || w.Body.Len() != 0 {
+		t.Errorf("%v %d %q", ok, w.Code, w.Body)
+	}
+}
+
+// Regra: a resposta que não vira JSON é o 500, sem o corpo pela metade.
+func TestRespostaQueNaoViraJSON(t *testing.T) {
+	w := httptest.NewRecorder()
+	JSON(w, http.StatusOK, ConteudoJSON, map[string]any{"canal": make(chan int)})
+	if w.Code != http.StatusInternalServerError || strings.Contains(w.Body.String(), "canal") {
+		t.Errorf("%d %q", w.Code, w.Body)
 	}
 }

@@ -50,7 +50,7 @@ func lerSalvarTransacao(w http.ResponseWriter, r *http.Request) (salvarTransacao
 	status := respostas.CampoEnum{Propriedade: "Status"}
 	emergencia := respostas.CampoBool{Propriedade: "Emergencia"}
 	reserva := respostas.CampoTexto{Propriedade: "ReservaNome", Maximo: tamanhoMaximoReserva, Opcional: true}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarTransacaoDto", &conta, &data, &descricao, &valor, &tipo,
+	if !respostas.LerObjeto(w, r, &conta, &data, &descricao, &valor, &tipo,
 		&categoria, &observacao, &ignorar, &status, &emergencia, &reserva) {
 		return salvarTransacaoDto{}, false
 	}

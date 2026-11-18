@@ -147,8 +147,7 @@ func lerCategoria(w http.ResponseWriter, r *http.Request) (*salvarCategoria, boo
 		ativa:          respostas.CampoBool{Propriedade: "Ativa", Valor: true},
 		natureza:       respostas.CampoEnum{Propriedade: "Natureza", Anulavel: true},
 	}
-	ok := respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarCategoriaDto",
-		&d.nome, &d.tipo, &d.cor, &d.icone, &d.categoriaPaiId, &d.ativa, &d.natureza)
+	ok := respostas.LerObjeto(w, r, &d.nome, &d.tipo, &d.cor, &d.icone, &d.categoriaPaiId, &d.ativa, &d.natureza)
 	return d, ok
 }
 

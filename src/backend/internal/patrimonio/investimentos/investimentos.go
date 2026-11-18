@@ -148,7 +148,7 @@ func (s *Servico) renomear(w http.ResponseWriter, r *http.Request) {
 	}
 	nome := respostas.CampoTexto{Propriedade: "Nome", Maximo: 120, Opcional: true,
 		MensagemDoTamanho: "O nome pode ter até 120 caracteres."}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.RenomearInvestimentoDto", &nome) {
+	if !respostas.LerObjeto(w, r, &nome) {
 		return
 	}
 	var novo *string

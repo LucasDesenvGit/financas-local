@@ -203,14 +203,14 @@ func TestObterConfiguracao(t *testing.T) {
 
 func TestSalvarConfiguracaoRecusa(t *testing.T) {
 	casos := []struct{ nome, corpo, erro string }{
-		{"sem o Client ID", `{}`, "The ClientId field is required."},
-		{"Client ID em branco", `{"clientId":"  "}`, "The ClientId field is required."},
-		{"Client ID longo", `{"clientId":"` + strings.Repeat("x", 101) + `"}`, "maximum length of 100"},
-		{"Client Secret longo", `{"clientId":"c","clientSecret":"` + strings.Repeat("x", 201) + `"}`, "maximum length of 200"},
-		{"intervalo abaixo", `{"clientId":"c","intervaloHoras":0}`, "The field IntervaloHoras must be between 1 and 48."},
-		{"intervalo acima", `{"clientId":"c","intervaloHoras":49}`, "The field IntervaloHoras must be between 1 and 48."},
-		{"dias abaixo", `{"clientId":"c","diasRetroativos":0}`, "The field DiasRetroativos must be between 1 and 365."},
-		{"dias acima", `{"clientId":"c","diasRetroativos":366}`, "The field DiasRetroativos must be between 1 and 365."},
+		{"sem o Client ID", `{}`, "O campo ClientId é obrigatório."},
+		{"Client ID em branco", `{"clientId":"  "}`, "O campo ClientId é obrigatório."},
+		{"Client ID longo", `{"clientId":"` + strings.Repeat("x", 101) + `"}`, "pode ter até 100 caracteres"},
+		{"Client Secret longo", `{"clientId":"c","clientSecret":"` + strings.Repeat("x", 201) + `"}`, "pode ter até 200 caracteres"},
+		{"intervalo abaixo", `{"clientId":"c","intervaloHoras":0}`, "O campo IntervaloHoras tem de estar entre 1 e 48."},
+		{"intervalo acima", `{"clientId":"c","intervaloHoras":49}`, "O campo IntervaloHoras tem de estar entre 1 e 48."},
+		{"dias abaixo", `{"clientId":"c","diasRetroativos":0}`, "O campo DiasRetroativos tem de estar entre 1 e 365."},
+		{"dias acima", `{"clientId":"c","diasRetroativos":366}`, "O campo DiasRetroativos tem de estar entre 1 e 365."},
 	}
 	for _, caso := range casos {
 		t.Run(caso.nome, func(t *testing.T) {
@@ -408,7 +408,7 @@ func TestAlterarAtiva(t *testing.T) {
 		{"desliga", "%d/ativa?ativa=false", 204, false, ""},
 		{"liga", "%d/ativa?ativa=true", 204, true, ""},
 		{"sem o parâmetro desliga", "%d/ativa", 204, false, ""},
-		{"valor que não é booleano", "%d/ativa?ativa=talvez", 400, true, "is not valid"},
+		{"valor que não é booleano", "%d/ativa?ativa=talvez", 400, true, "não é válido"},
 		{"conexão que não existe", "999999/ativa?ativa=true", 404, true, mensagemNaoEncontrado},
 		{"id que não é número", "abc/ativa?ativa=true", 404, true, ""},
 	}
@@ -702,7 +702,7 @@ func TestMapearCategoriaRecusa(t *testing.T) {
 		c.categoriaPluggy(t, "pluggy", "Pluggy", nil, nil, nil)
 		r := c.chamar(t, "PUT", "/api/open-finance/categorias/pluggy", `{"categoriaId":"x"}`)
 		conferirStatus(t, r, 400)
-		if !strings.Contains(string(r.Corpo), "could not be converted") {
+		if !strings.Contains(string(r.Corpo), "não é do tipo esperado") {
 			t.Errorf("corpo = %s", r.Corpo)
 		}
 	})
@@ -937,7 +937,7 @@ func TestAdicionarConexaoRecusa(t *testing.T) {
 		status      int
 		mensagem    string
 	}{
-		{"sem o item", `{}`, 400, "The ItemId field is required."},
+		{"sem o item", `{}`, 400, "O campo ItemId é obrigatório."},
 		{"item curto", `{"itemId":"abc"}`, 400, "Item ID inválido."},
 		{"item com letra fora do hexadecimal", `{"itemId":"z1b2c3d4-0000-4000-8000-000000000001"}`, 400, "Item ID inválido."},
 		{"item com espaço", `{"itemId":" ` + itemValido + `"}`, 400, "Item ID inválido."},

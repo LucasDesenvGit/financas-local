@@ -38,7 +38,7 @@ func TestRotasDasSugestoes(t *testing.T) {
 	if err := json.Unmarshal(r.Corpo, &problema); err != nil {
 		t.Fatal(err)
 	}
-	testeapoio.ConferirJSON(t, problema.Errors, `{"dias":["The value 'muitos' is not valid."],"somenteSemCategoria":["The value 'talvez' is not valid."]}`)
+	testeapoio.ConferirJSON(t, problema.Errors, `{"dias":["O valor 'muitos' não é válido."],"somenteSemCategoria":["O valor 'talvez' não é válido."]}`)
 
 	testeapoio.Chamar(t, mux, "GET", fmt.Sprintf("/api/transacoes/%d/sugestoes-categoria", semCategoria.Id), "").
 		ConferirJSON(t, fmt.Sprintf(`[{"categoriaId":%d,"nome":"Transporte","cor":"#64748b","motivo":"Palavra-chave \"UBER\""}]`, transporte.Id))

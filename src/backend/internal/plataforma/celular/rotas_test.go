@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
@@ -32,10 +31,8 @@ func TestRotas(t *testing.T) {
 	t.Run("pedido sem o IP", func(t *testing.T) {
 		r := testeapoio.Chamar(t, mux, "POST", "/api/celular/ligar", `{}`)
 		r.ConferirStatus(t, 400)
-		// O traceId é novo a cada resposta (o formato é conferido no pacote respostas).
-		corpo := regexp.MustCompile(`"traceId":"[^"]*"`).ReplaceAll(r.Corpo, []byte(`"traceId":"<traceId>"`))
-		testeapoio.ConferirJSON(t, corpo, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.",
-			"status":400,"errors":{"Ip":["The Ip field is required."]},"traceId":"<traceId>"}`)
+		testeapoio.ConferirJSON(t, r.Corpo, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"Há dados inválidos no pedido.",
+			"status":400,"errors":{"Ip":["O campo Ip é obrigatório."]}}`)
 	})
 	t.Run("IP que não é deste computador", func(t *testing.T) {
 		r := testeapoio.Chamar(t, mux, "POST", "/api/celular/ligar", `{"ip":"8.8.8.8"}`)

@@ -2,12 +2,10 @@ package cambio
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
@@ -74,17 +72,8 @@ func TestDataInvalidaEhO400DoModelBinding(t *testing.T) {
 	// A data é conferida antes da moeda (o model binding roda antes da ação): mesmo sem moeda, o erro é da data.
 	resposta := testeapoio.Chamar(t, mux, "GET", "/api/cambio/cotacao?data=abc", "")
 	resposta.ConferirStatus(t, http.StatusBadRequest)
-	var corpo map[string]any
-	if err := json.Unmarshal(resposta.Corpo, &corpo); err != nil {
-		t.Fatal(err)
-	}
-	if !regexp.MustCompile(`^00-[0-9a-f]{32}-[0-9a-f]{16}-00$`).MatchString(corpo["traceId"].(string)) {
-		t.Errorf("traceId %v fora do formato do Activity.Id do .NET", corpo["traceId"])
-	}
-	delete(corpo, "traceId")
-	semTrace, _ := json.Marshal(corpo)
-	testeapoio.ConferirJSON(t, semTrace, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1",`+
-		`"title":"One or more validation errors occurred.","status":400,"errors":{"data":["The value 'abc' is not valid."]}}`)
+	testeapoio.ConferirJSON(t, resposta.Corpo, `{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1",`+
+		`"title":"Há dados inválidos no pedido.","status":400,"errors":{"data":["O valor 'abc' não é válido."]}}`)
 }
 
 func TestRotasDoCambioSemLogin(t *testing.T) {

@@ -161,12 +161,11 @@
     "corpo": {
       "errors": {
         "data": [
-          "The value 'abc' is not valid."
+          "O valor 'abc' não é válido."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

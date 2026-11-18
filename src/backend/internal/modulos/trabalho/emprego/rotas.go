@@ -72,7 +72,7 @@ type salarioDto struct {
 
 // lerJSON lê o corpo (415 e 413 pelo respostas.LerCorpo) num destino; false se já respondeu.
 func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
-	corpo, ok := respostas.LerCorpo(w, r, "dto")
+	corpo, ok := respostas.LerCorpo(w, r)
 	if !ok {
 		return false
 	}

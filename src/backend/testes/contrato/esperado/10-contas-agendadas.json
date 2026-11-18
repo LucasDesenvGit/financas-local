@@ -333,12 +333,11 @@
     "corpo": {
       "errors": {
         "ProximoVencimento": [
-          "The ProximoVencimento field is required."
+          "O campo ProximoVencimento é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -440,12 +439,11 @@
     "corpo": {
       "errors": {
         "Descricao": [
-          "The Descricao field is required."
+          "O campo Descricao é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -457,12 +455,11 @@
     "corpo": {
       "errors": {
         "Descricao": [
-          "The Descricao field is required."
+          "O campo Descricao é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -474,12 +471,11 @@
     "corpo": {
       "errors": {
         "Valor": [
-          "The field Valor must be between 0,01 and 999999999."
+          "O campo Valor tem de estar entre 0,01 e 999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -495,8 +491,7 @@
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -641,12 +636,11 @@
     "corpo": {
       "errors": {
         "ChaveExtrato": [
-          "The ChaveExtrato field is required."
+          "O campo ChaveExtrato é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -658,12 +652,11 @@
     "corpo": {
       "errors": {
         "ChaveExtrato": [
-          "The ChaveExtrato field is required."
+          "O campo ChaveExtrato é obrigatório."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },
@@ -1059,12 +1052,11 @@
     "corpo": {
       "errors": {
         "Valor": [
-          "The field Valor must be between 0,01 and 999999999."
+          "O campo Valor tem de estar entre 0,01 e 999999999."
         ]
       },
       "status": 400,
-      "title": "One or more validation errors occurred.",
-      "traceId": "<traceId>",
+      "title": "Há dados inválidos no pedido.",
       "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1"
     }
   },

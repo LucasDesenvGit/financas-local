@@ -36,7 +36,7 @@ const (
 )
 
 func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
-	corpo, ok := respostas.LerCorpo(w, r, "dto")
+	corpo, ok := respostas.LerCorpo(w, r)
 	if !ok {
 		return false
 	}

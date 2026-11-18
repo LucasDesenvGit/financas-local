@@ -317,7 +317,7 @@ func lerSalvar(w http.ResponseWriter, r *http.Request) (salvarDto, bool) {
 	chave := respostas.CampoTexto{Propriedade: "ChaveExtrato", Maximo: 150, Opcional: true}
 	reserva := respostas.CampoTexto{Propriedade: "ReservaNome", Maximo: tamanhoMaximoReserva, Opcional: true,
 		MensagemDoTamanho: "O nome do cofrinho pode ter até 100 caracteres."}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.SalvarContaAgendadaDto", &descricao, &valor, &vencimento,
+	if !respostas.LerObjeto(w, r, &descricao, &valor, &vencimento,
 		&recorrencia, &categoria, &conta, &ativa, &limite, &forma, &textoCobranca, &observacao, &chave, &reserva) {
 		return salvarDto{}, false
 	}
@@ -558,7 +558,7 @@ func (s *Servico) ligarExtrato(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	chave := respostas.CampoTexto{Propriedade: "ChaveExtrato", Maximo: 150}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.LigarExtratoContaAgendadaDto", &chave) {
+	if !respostas.LerObjeto(w, r, &chave) {
 		return
 	}
 	// O "Informe a sugestão do extrato." do C# não chega a valer: o [Required] já recusa a chave só com espaços.
@@ -624,7 +624,7 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 	reserva := respostas.CampoTexto{Propriedade: "ReservaNome", Maximo: tamanhoMaximoReserva, Opcional: true,
 		MensagemDoTamanho: "O nome do cofrinho pode ter até 100 caracteres."}
 	guardar := respostas.CampoBool{Propriedade: "GuardarCofrinho"}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.PagarContaAgendadaDto", &lancar, &data, &reserva, &guardar) {
+	if !respostas.LerObjeto(w, r, &lancar, &data, &reserva, &guardar) {
 		return
 	}
 	ctx := r.Context()
@@ -722,7 +722,7 @@ func (s *Servico) ajustarPagamento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	valor := respostas.CampoDecimal{Propriedade: "Valor", Faixa: &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.AjustarPagamentoCofrinhoDto", &valor) {
+	if !respostas.LerObjeto(w, r, &valor) {
 		return
 	}
 	err := cobrancas.AjustarPagamento(r.Context(), s.db, id, valor.Valor, s.agora())

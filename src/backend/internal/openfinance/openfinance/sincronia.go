@@ -41,7 +41,7 @@ func (s *Servico) testar(w http.ResponseWriter, r *http.Request) {
 // adicionarConexao cadastra um item do Meu Pluggy (valida na Pluggy antes) e já faz a primeira sincronização.
 func (s *Servico) adicionarConexao(w http.ResponseWriter, r *http.Request) {
 	campo := respostas.CampoTexto{Propriedade: "ItemId", Maximo: math.MaxInt32, Padrao: padraoDoItem}
-	if !respostas.LerObjeto(w, r, "dto", "Financas.Api.Dtos.AdicionarConexaoDto", &campo) {
+	if !respostas.LerObjeto(w, r, &campo) {
 		return
 	}
 	ctx := r.Context()

@@ -373,7 +373,7 @@ func idDe(r *http.Request, nome string) int64 {
 }
 
 func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
-	corpo, ok := respostas.LerCorpo(w, r, "dto")
+	corpo, ok := respostas.LerCorpo(w, r)
 	if !ok {
 		return false
 	}

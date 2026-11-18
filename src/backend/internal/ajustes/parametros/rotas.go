@@ -31,17 +31,17 @@ func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
 
 // salvar é o Salvar do controller: valida tudo antes e grava os valores e a auditoria juntos, ou nada.
 func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
-	corpo, ok := respostas.LerCorpo(w, r, "dto")
+	corpo, ok := respostas.LerCorpo(w, r)
 	if !ok {
 		return
 	}
 	dto, erroJSON := lerSalvar(corpo)
 	switch {
 	case erroJSON != nil:
-		respostas.Validacao(w, map[string][]string{erroJSON.Caminho: {erroJSON.Mensagem}, "dto": {respostas.Obrigatorio("dto")}})
+		respostas.Validacao(w, map[string][]string{erroJSON.Caminho: {erroJSON.Mensagem}})
 		return
 	case dto.nulo:
-		respostas.CorpoVazio(w, "dto")
+		respostas.CorpoVazio(w)
 		return
 	case dto.valores == nil:
 		respostas.Validacao(w, map[string][]string{"Valores": {respostas.Obrigatorio("Valores")}})

@@ -44,7 +44,7 @@ var (
 
 // lerFiltro é o model binding do FiltroTransacoesDto: cada propriedade pelo nome (sem diferença de maiúsculas), as
 // listas repetidas ou com índice, e os atributos de validação. O erro de conversão de uma propriedade cita o nome dela
-// ("…is not valid for Pagina."); o de um item de lista, não ("…is not valid.", na chave da lista). A propriedade que não
+// ("…não é válido para Pagina."); o de um item de lista, não ("…não é válido.", na chave da lista). A propriedade que não
 // converte fica com o padrão e não passa pela validação.
 func lerFiltro(r *http.Request) (filtro, map[string][]string) {
 	f := filtro{Pagina: 1, TamanhoPagina: 50}
@@ -171,8 +171,7 @@ func lerFiltro(r *http.Request) (filtro, map[string][]string) {
 		}
 	}
 	maximoDaLista := func(propriedade string, n, maximo int) {
-		validar(propriedade, n > maximo, "The field "+propriedade+" must be a string or array type with a maximum length of '"+
-			strconv.Itoa(maximo)+"'.")
+		validar(propriedade, n > maximo, "O campo "+propriedade+" pode ter até "+strconv.Itoa(maximo)+" itens.")
 	}
 	maximoDaLista("CategoriaIds", len(f.CategoriaIds), 200)
 	maximoDaLista("Naturezas", len(f.Naturezas), 2)
@@ -186,13 +185,13 @@ func lerFiltro(r *http.Request) (filtro, map[string][]string) {
 	padrao("Ordem", f.Ordem, padraoOrdem)
 	padrao("Direcao", f.Direcao, padraoDirecao)
 	if f.Busca != nil {
-		validar("Busca", respostas.TamanhoUtf16(*f.Busca) > 100, "The field Busca must be a string with a maximum length of 100.")
+		validar("Busca", respostas.TamanhoUtf16(*f.Busca) > 100, "O campo Busca pode ter até 100 caracteres.")
 	}
 	if validarPagina {
-		validar("Pagina", f.Pagina < 1, "The field Pagina must be between 1 and 2147483647.")
+		validar("Pagina", f.Pagina < 1, "O campo Pagina tem de estar entre 1 e 2147483647.")
 	}
 	if validarTamanho {
-		validar("TamanhoPagina", f.TamanhoPagina < 1 || f.TamanhoPagina > 500, "The field TamanhoPagina must be between 1 and 500.")
+		validar("TamanhoPagina", f.TamanhoPagina < 1 || f.TamanhoPagina > 500, "O campo TamanhoPagina tem de estar entre 1 e 500.")
 	}
 	return f, erros
 }
