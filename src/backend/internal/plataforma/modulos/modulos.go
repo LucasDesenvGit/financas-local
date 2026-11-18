@@ -163,7 +163,12 @@ func (c *Catalogo) Definir(ctx context.Context, r *http.Request, id string, liga
 		evento = EventoLigado
 	}
 	valor := strconv.FormatBool(ligado)
+	var estava bool // antes do pedido: só a passagem de desligado para ligado acorda a tarefa (#750)
 	err := banco.EmTransacao(ctx, c.db, func(tx *sql.Tx) error {
+		var err error
+		if estava, err = c.conf.ComTx(tx).ObterBool(ctx, Chave(id), c.porID[id].Info().LigadoPorPadrao); err != nil {
+			return err
+		}
 		q := c.q.WithTx(tx)
 		login, err := auditoria.Login(ctx, q)
 		if err != nil {
@@ -177,7 +182,7 @@ func (c *Catalogo) Definir(ctx context.Context, r *http.Request, id string, liga
 	if err != nil {
 		return Situacao{}, fmt.Errorf("gravar o módulo %s: %w", id, err)
 	}
-	if ligado {
+	if ligado && !estava { // ligar de novo o que já está ligado não roda outra busca na internet
 		c.acordar(id)
 	}
 	lista, err := c.Listar(ctx)

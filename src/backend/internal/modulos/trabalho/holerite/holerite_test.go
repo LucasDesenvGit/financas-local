@@ -2,6 +2,7 @@ package holerite
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -318,17 +319,17 @@ func TestHoleriteSemSalarioOuForaDoEmprego(t *testing.T) {
 		t.Fatalf("lista = %+v", lista)
 	}
 	h := decodificar[Holerite](t, a.chamar("GET", fmt.Sprintf("/api/trabalho/holerites/%d", bom.Id), ""))
-	if h.Calculo != nil || h.Aviso == nil || *h.Aviso != avisos[ErrSemSalario] {
+	if h.Calculo != nil || h.Aviso == nil || *h.Aviso != avisoDoErro(ErrSemSalario) {
 		t.Fatalf("sem salário = %+v", h)
 	}
 	h = decodificar[Holerite](t, a.chamar("GET", fmt.Sprintf("/api/trabalho/holerites/%d", fora.Id), ""))
-	if h.Calculo != nil || h.Aviso == nil || *h.Aviso != avisos[ErrForaDoEmprego] {
+	if h.Calculo != nil || h.Aviso == nil || *h.Aviso != avisoDoErro(ErrForaDoEmprego) {
 		t.Fatalf("fora do emprego = %+v", h)
 	}
 	for id, err := range map[int64]error{bom.Id: ErrSemSalario, fora.Id: ErrForaDoEmprego} {
 		r = a.chamar("POST", fmt.Sprintf("/api/trabalho/holerites/%d/fechar", id), "")
 		r.ConferirStatus(t, http.StatusConflict)
-		r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, "Não dá para fechar: "+avisos[err]))
+		r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, "Não dá para fechar: "+avisoDoErro(err)))
 	}
 	// Abrir um mês sem salário recusa e não grava nada.
 	r = a.chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", empregoId), `{"mes":"2026-09"}`)
@@ -336,5 +337,77 @@ func TestHoleriteSemSalarioOuForaDoEmprego(t *testing.T) {
 	r.ConferirJSON(t, `{"mensagem":"Não há salário para esse mês: cadastre em Trabalho › Salário antes de abrir o holerite."}`)
 	if lista, _ := a.s.Listar(ctx, empregoId); len(lista) != 2 {
 		t.Fatalf("gravou o holerite recusado: %+v", lista)
+	}
+}
+
+func avisoDoErro(err error) string {
+	aviso, _, _ := avisoDe(err)
+	return aviso
+}
+
+// Regressão (#750): reabrir um mês que, pelo cálculo de agora, ficaria sem salário ou fora do emprego apagava o cálculo
+// congelado, e o Fechar recusava congelar de novo. Cenário da revisão: outubro fechado e a saída corrigida para setembro
+// (à mão, no banco: mudar a saída confere os salários, não os holerites). Agora recusa, com o porquê, e o congelado fica.
+func TestReabrirRecusaQuandoOCalculoSumiria(t *testing.T) {
+	t.Parallel()
+	a := novo(t)
+	empregoId := a.empregoDe5500()
+	h := a.criar(empregoId, "2026-10")
+	caminho := fmt.Sprintf("/api/trabalho/holerites/%d", h.Id)
+	a.chamar("PUT", caminho, lancamentosDeOutubro).ConferirStatus(t, http.StatusOK)
+	a.chamar("POST", caminho+"/fechar", "").ConferirStatus(t, http.StatusOK)
+	var inicio string
+	if err := a.s.db.QueryRowContext(t.Context(), `SELECT "Inicio" FROM "SalarioVigencia" WHERE "EmpregoId" = ?`, empregoId).Scan(&inicio); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		nome, sql, desfaz string
+		err               error
+	}{
+		{"saída antes do mês", `UPDATE "Emprego" SET "Saida" = '2026-09-30' WHERE "Id" = ?`,
+			`UPDATE "Emprego" SET "Saida" = NULL WHERE "Id" = ?`, ErrForaDoEmprego},
+		{"sem salário no mês", `UPDATE "SalarioVigencia" SET "Inicio" = '2026-11-01' WHERE "EmpregoId" = ?`,
+			`UPDATE "SalarioVigencia" SET "Inicio" = '` + inicio + `' WHERE "EmpregoId" = ?`, ErrSemSalario},
+	} {
+		t.Run(c.nome, func(t *testing.T) {
+			if _, err := a.s.db.ExecContext(t.Context(), c.sql, empregoId); err != nil {
+				t.Fatal(err)
+			}
+			defer func() {
+				if _, err := a.s.db.ExecContext(t.Context(), c.desfaz, empregoId); err != nil {
+					t.Fatal(err)
+				}
+			}()
+			_, motivo, _ := avisoDe(c.err)
+			r := a.chamar("POST", caminho+"/reabrir", "")
+			r.ConferirStatus(t, http.StatusConflict)
+			r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, "Não dá para reabrir: o cálculo guardado se perderia, porque "+motivo))
+			depois := decodificar[Holerite](t, a.chamar("GET", caminho, ""))
+			if depois.Situacao != Fechado || depois.Calculo == nil || depois.Calculo.Liquido.String() != "5053.13" {
+				t.Fatalf("o congelado devia ficar: %+v", depois)
+			}
+		})
+	}
+	var n int
+	if err := a.s.db.QueryRowContext(t.Context(), `SELECT COUNT(*) FROM "AuditoriaAcesso"`).Scan(&n); err != nil || n != 0 {
+		t.Fatalf("reabrir recusado não vai para a auditoria: %d (%v)", n, err)
+	}
+	// Corrigido o emprego (o defer de cada caso), reabre.
+	a.chamar("POST", caminho+"/reabrir", "").ConferirStatus(t, http.StatusOK)
+}
+
+// avisoDe acha o erro embrulhado, que a chave de mapa não achava (#750).
+func TestAvisoDeComErroEmbrulhado(t *testing.T) {
+	t.Parallel()
+	for _, err := range []error{ErrSemTabela, ErrSemSalario, ErrForaDoEmprego} {
+		if aviso, motivo, ok := avisoDe(fmt.Errorf("contexto: %w", err)); !ok || aviso == "" || motivo == "" {
+			t.Errorf("%v embrulhado: %q %q %v", err, aviso, motivo, ok)
+		}
+	}
+	if _, _, ok := avisoDe(errors.New("outro")); ok {
+		t.Error("erro qualquer não é aviso")
+	}
+	if _, _, ok := avisoDe(nil); ok {
+		t.Error("nil não é aviso")
 	}
 }
