@@ -1,8 +1,10 @@
 # 0039. A versão sobe a cada pull request, pelo tipo do commit
 
-- **Status:** Aceita
+- **Status:** Substituída por [0070](0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md) (a tabela de tipos continua valendo; o número deixa de subir em cada PR e passa a ser calculado no build)
 - **Data:** 2026-10-20 (issue #187)
-- **Relacionadas:** substitui em parte a [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (quando a versão muda); [0003](0003-esquema-por-scripts-sql-idempotentes.md) (o esquema só acrescenta)
+- **Relacionadas:** substituída pela [0070](0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md); substitui em parte a [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (quando a versão muda); [0003](0003-esquema-por-scripts-sql-idempotentes.md) (o esquema só acrescenta)
+
+> **Substituída em 2026-11-16 (#721).** O que a 0070 manteve: a tabela de tipos abaixo (`feat` sobe o do meio, o resto o último, a quebra de verdade o primeiro) e o `feat(banco)!` sem subir o primeiro número. O que saiu: o PR subir o número no `Directory.Build.props`, o check "versão subiu", o `atualizar-pr.sh` e a seção do `CHANGELOG.md` por PR. O texto abaixo é o histórico da decisão, com o que foi dito na época.
 
 ## Contexto
 

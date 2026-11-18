@@ -44,7 +44,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # Histórico inteiro: o instalar.sh calcula a versão pelos merges do git (ADR 0070).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Preparar PATH sem dotnet, node, go, sqlite3 e python
         run: |
@@ -143,7 +146,9 @@ jobs:
           grep -qF "Exec=\"$exe\" --bandeja" "$HOME/.config/autostart/financaslocal-gerenciador.desktop" || { echo "::error::o iniciar com o sistema nao passou para o em Go"; cat "$HOME/.config/autostart/financaslocal-gerenciador.desktop"; exit 1; }
           "$exe" --situacao | tee "$RUNNER_TEMP/situacao-go.txt"
           grep -q 'O site está no ar' "$RUNNER_TEMP/situacao-go.txt" || { echo "::error::o gerenciador em Go nao viu o site no ar"; exit 1; }
-          grep -q "Gerenciador: $(grep -o '<Version>[^<]*' Directory.Build.props | head -n1 | cut -d'>' -f2)" "$RUNNER_TEMP/situacao-go.txt" || { echo "::error::versao do gerenciador"; exit 1; }
+          # ADR 0070: a versao e a calculada pelo Go (o instalar.sh baixou o Go em ferramentas/go).
+          versao="$(cd src/backend && GOTOOLCHAIN=local "$OLDPWD/ferramentas/go/bin/go" run ./cmd/versao)"
+          grep -q "Gerenciador: $versao" "$RUNNER_TEMP/situacao-go.txt" || { echo "::error::versao do gerenciador (esperada $versao)"; exit 1; }
 
       - name: Atualizacao (instalar.sh --pular-build)
         run: |

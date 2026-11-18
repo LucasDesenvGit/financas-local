@@ -57,7 +57,10 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     steps:
+      # Historico inteiro: o instalar-windows.ps1 calcula a versao pelos merges do git (ADR 0070).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Instalacao do zero (instalar-windows.ps1)
         shell: powershell

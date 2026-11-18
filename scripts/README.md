@@ -31,8 +31,8 @@ caminho do `geral/4-backup.sh`.
 | `geral/4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar (`--agendar`). | Pessoa; o crontab ou o Agendador de Tarefas; a CI |
 | `geral/atualizar.sh` | Só na instalação de desenvolvimento (clone na branch `develop`, [ADR 0040](../docs/adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): traz o `develop` (só avança, recusa com alteração local ou outra branch) e reinstala. | Gerenciador (botão "Atualizar para a última do develop") |
 | `geral/parar.sh` | Para o serviço, o site fora dele e o `npm start`; no Git Bash, repassa para o `windows/parar-windows.ps1`. | Pessoa |
-| `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, repasse para o PowerShell e caminho nativo no Windows, extração de `.zip`, conferência de hash, ajudantes de coluna do banco). | Os outros scripts de `geral/` (`source`) |
-| `windows/comum.ps1` | Pastas e `Etapa`/`Ok`/`Aviso`/`ErroSai` dos `.ps1` de `windows/` (#655). O `instalador/configurar.ps1` (`.msi`) não o usa. | Os outros `.ps1` de `windows/` (dot-source) |
+| `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, repasse para o PowerShell e caminho nativo no Windows, extração de `.zip`, conferência de hash, ajudantes de coluna do banco, a versão do sistema pelo `go run ./cmd/versao`, ADR 0070). | Os outros scripts de `geral/` (`source`) |
+| `windows/comum.ps1` | Pastas, `Etapa`/`Ok`/`Aviso`/`ErroSai` e `VersaoDoSistema` (o `go run ./cmd/versao`, ADR 0070) dos `.ps1` de `windows/` (#655). O `instalador/configurar.ps1` (`.msi`) não o usa. | Os outros `.ps1` de `windows/` (dot-source) |
 | `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash: a única implementação das etapas 1 e 3 no Windows. Lê a lista de colunas novas do `geral/2-criar-banco.sh`. | Pessoa, pelo `instalar-windows.cmd` (que pede elevação) ou pelo `instalar.sh` e o `3-publicar-atualizar.sh` no Git Bash; o `atualizar-windows.ps1` |
 | `windows/parar-windows.ps1` | O `parar.sh` em PowerShell. | Pessoa, pelo `parar-windows.cmd` ou pelo `parar.sh` no Git Bash |
 | `windows/atualizar-windows.ps1` | O `atualizar.sh` no Windows (instalação de desenvolvimento). | Gerenciador |
@@ -54,8 +54,7 @@ caminho do `geral/4-backup.sh`.
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `dev/atualizar-pr.sh` | Traz o `develop` para a branch do PR e resolve sozinho o conflito de versão e de CHANGELOG (#587, ADR 0039). | Pessoa |
-| `dev/atualizar-versao-do-pr.py` | A conta por baixo do `atualizar-pr.sh`: a versão nova a partir da do `develop` e a seção do PR no topo do CHANGELOG. O teste é o `dev/test_atualizar_versao_do_pr.py`. | O `atualizar-pr.sh`; a CI (o teste) |
+| `dev/lancar-versao.sh` | Na `release/X.Y.Z`: junta os arquivos de `changelog.d/` numa seção `## [X.Y.Z] — data` do `CHANGELOG.md`, apaga os arquivos e faz o commit `chore: versão X.Y.Z`, depois de conferir a branch, a árvore limpa e que o número calculado é o `X.Y.Z` (ADR 0070). O trabalho é do `src/backend/cmd/versao` (`-publicar`), que tem os testes. | Pessoa (publicar uma versão) |
 | `dev/gerar-diagrama-banco.py` | Gera os diagramas do banco de `docs/BANCO-DE-DADOS.md` a partir de `banco/01-estrutura.sql`; com `--conferir`, só confere que estão em dia. | Pessoa (mudou a estrutura); a CI (`--conferir`) |
 | `dev/medir-desempenho.py` | Mede a partida e o tempo das telas contra uma pasta publicada (`--api <pasta>`), para os requisitos de [docs/REQUISITOS-NAO-FUNCIONAIS.md](../docs/REQUISITOS-NAO-FUNCIONAIS.md). | Pessoa |
 
@@ -65,16 +64,15 @@ Na raiz de `ci/`:
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `ci/comum.py` | Código dividido pelos scripts de `ci/` e `dev/`: ler o `<Version>` do `Directory.Build.props`, a regra "`feat` sobe o do meio, o resto sobe o último" e a lista de arquivos que o PR mudou. Os scripts o importam, e os que estão em `dev/` ou numa subpasta põem `scripts/ci` no `sys.path`. | Os outros scripts (importado) |
+| `ci/comum.py` | Código dividido pelos scripts de `ci/`: a lista de arquivos que o PR mudou. Os scripts o importam, e os que estão em subpastas põem a pasta `scripts/ci` no `sys.path` antes (explicado no docstring dele). | Importado pelos scripts de `ci/` |
 | `ci/ligar-api.sh` | Liga o site compilado como a publicação o monta e confere que `GET /api/auth/estado` responde (#309). | CI (`ci.yml`, job API e banco); pessoa |
 
-`ci/versao/` (versão e CHANGELOG, [ADR 0039](../docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)):
+`ci/versao/` (CHANGELOG e notas dos Releases; a versão em si é calculada pelo `src/backend/cmd/versao`, [ADR 0070](../docs/adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md)):
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `verificar-versao.py` | Falha o PR se a versão do `Directory.Build.props` não subiu o que o tipo do título pede. | CI; `dev/atualizar-pr.sh` |
-| `verificar-changelog.py` | Confere uma seção por versão e um título de cada tipo dentro dela; `--corrigir` junta os repetidos (#294). | CI; pessoa (`--corrigir`) |
-| `notas.sh` | Notas dos Releases do GitHub, no limite de 125 mil caracteres: `--versao` (tag `vX.Y.Z`, #641) e `--desenvolvimento` (pré-lançamento, #294 e #600). O teste é o `test_notas.py`, que cobre os dois modos. | CI (workflow "Versão") |
+| `verificar-changelog.py` | Confere o formato de cada arquivo de `changelog.d/` (um título de tipo, entradas, sem versão), exige o arquivo em PR `feat` e `fix` (com `BASE` e `TITULO_PR`) e confere o `CHANGELOG.md`: um título de cada tipo por versão, sem versão repetida e em ordem; `--corrigir` junta os títulos repetidos (#294). O teste é o `test_verificar_changelog.py`. | CI (job "manual do site e changelog.d"); pessoa |
+| `notas.sh` | Notas dos Releases do GitHub, no limite de 125 mil caracteres: `--versao` (tag `vX.Y.Z`, #641, do `CHANGELOG.md`) e `--desenvolvimento` (pré-lançamento, #294 e #600; antes do `CHANGELOG.md`, as seções do que ainda não foi publicado, que o `go run ./cmd/versao -changelog` monta de `changelog.d/`). O teste é o `test_notas.py`, que cobre os dois modos. | CI (workflow "Versão") |
 
 `ci/go/` (back-end e gerenciador em Go, [ADR 0051](../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)):
 

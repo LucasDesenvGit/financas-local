@@ -1,10 +1,10 @@
 # 0070. Versão calculada no build pelos merges do develop, e o CHANGELOG com um arquivo por PR
 
-- **Status:** Proposta
+- **Status:** Aceita (aval de Felipe em 16/11/2026, na #721; implementada na mesma PR)
 - **Data:** 2026-11-16 (issue #721, item 1 da #689; anda junto com a #722, grupo 5 da #690)
-- **Relacionadas:** substituirá a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) quando for aceita; ajustará a [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) (o número de cada merge passa a ser calculado); [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o `.msi` só no merge e na tag); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi` na CI); [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) (sem Python na instalação)
+- **Relacionadas:** substitui a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) quando for aceita; ajusta a [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) (o número de cada merge passa a ser calculado); [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o `.msi` só no merge e na tag); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi` na CI); [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) (sem Python na instalação)
 
-Enquanto for Proposta, a 0039 continua valendo: todo PR sobe a versão, inclusive o desta ADR.
+Vale desde o merge da PR que a implementou (#721): a partir dali, nenhum PR sobe o número nem escreve no `CHANGELOG.md`. As PRs que estavam abertas na hora tiraram a subida de versão e moveram a entrada para `changelog.d/`.
 
 ## Contexto
 
@@ -51,22 +51,23 @@ Conferido em 16/11: aplicando a regra da (c2) aos 36 merges desde a `v3.3.14`, s
 | **O que lembrar em cada PR** | subir pelo tipo, criar a seção, rodar o `atualizar-pr.sh` a cada merge de outro PR | o título no tipo certo e a entrada | o título no tipo certo e um arquivo em `changelog.d/` |
 | **Quebra de verdade** | quem faz o PR sobe o primeiro número, depois de perguntar ao usuário | precisa de um sinal que o bot leia (rótulo ou título) | o PR troca a base para `X+1.0.0`, depois de perguntar ao usuário; o cálculo recomeça dela |
 
-## Decisão (proposta)
+## Decisão
 
 **O número da versão é calculado no build: parte da base do `Directory.Build.props` e sobe a cada merge na linha principal do `develop`, pelo tipo do título do PR, com a tabela da 0039. Nenhum PR mexe no número, salvo a quebra de verdade. A entrada do CHANGELOG vai num arquivo próprio em `changelog.d/`, juntado no `CHANGELOG.md` quando a versão é publicada.**
 
 A regra do cálculo:
 
-1. **A base** é o `<VersaoBase>` do `Directory.Build.props`, no último merge da linha principal que mudou esse arquivo (`git log --first-parent -1 -- Directory.Build.props`). O nome da propriedade muda (era `<Version>`) para que quem ainda lê o número antigo falhe na hora, em vez de ler uma base como se fosse a versão (*inferido*).
-2. **Cada merge depois dele**, na ordem, sobe a versão pelo tipo do título (que está no corpo do merge commit; num squash, no assunto): `feat` sobe o do meio e zera o último; os outros tipos, ou um título fora do padrão, sobem o último.
-3. **Não sobem** os merges que trazem a `main` ou uma `release/*` de volta (o conteúdo já está contado) (*inferido*).
-4. **Quebra de verdade:** o PR muda a `<VersaoBase>` para `X+1.0.0`, como hoje, depois de perguntar ao usuário. Só dois PRs de quebra ao mesmo tempo conflitam, e o projeto teve três versões maiores na história toda.
+1. **A base** é o `<VersaoBase>` do `Directory.Build.props`, no último commit da linha principal que mudou o **valor** desse elemento (`git log --first-parent -1 -G"<VersaoBase>…</VersaoBase>" -- Directory.Build.props`). Mexer só no comentário do arquivo não recomeça a conta. O nome da propriedade muda (era `<Version>`) para que quem ainda lê o número antigo falhe na hora, em vez de ler uma base como se fosse a versão (*inferido*).
+2. **Cada merge depois dele**, na ordem, sobe a versão pelo tipo do título (que está no corpo do merge commit; num squash, no assunto, que termina em `(#N)`): `feat` sobe o do meio e zera o último; os outros tipos, ou um título fora do padrão, sobem o último. Commit direto (sem ser merge nem squash de PR), como o `chore: versão X.Y.Z` da publicação, não sobe.
+3. **Não sobem** os merges que trazem a `main` ou uma `release/*` de volta (o conteúdo já está contado).
+4. **Quebra de verdade:** o PR muda a `<VersaoBase>` para `X+1.0.0`, como hoje, depois de perguntar ao usuário. Só dois PRs de quebra ao mesmo tempo conflitam, e o projeto teve três versões maiores na história toda. O `feat(banco)!` continua como na 0039: marca esquema novo e não sobe o primeiro número.
 5. **O rótulo** continua `X.Y.Z-dev.<execução>` fora da tag, e `X.Y.Z` na tag (0053 e 0029 sem mudança no formato).
-6. **Sem o histórico do git** (uma cópia baixada em `.zip`), o número é a base, com o sufixo `-sem-git` (*inferido*).
+6. **Sem o histórico do git** (uma cópia baixada em `.zip`, ou um clone raso, ou sem o `git` instalado), o número é a base, com o sufixo `-sem-git`.
+7. **Na tag**, o commit é o merge da `release/X.Y.Z` na `main`, que não está na linha do `develop`: o número conferido é o do commit da release (o segundo pai do merge, `-publicada`), que saiu do `develop`. O `chore: versão X.Y.Z` que a release traz não sobe (regra 2).
 
-### Passos, depois do aval
+### Passos (feitos na #721)
 
-Na ordem, depois que a pilha #697–#707 entrar:
+O que a ADR mandava, na ordem. A PR da implementação ficou em rascunho até a pilha #698–#707 entrar, para ela não ter de se adaptar no meio do caminho.
 
 1. **O cálculo, em Go:** `src/backend/cmd/versao` (um programa só, sem dependência nova), com teste em tabela (lista de merges → número) e no git de verdade, num repositório temporário. Em Go porque roda no Linux, no Windows (sem Python, 0011) e na CI. Ele também imprime as seções do CHANGELOG por versão (`-changelog`), juntando `changelog.d/` com o número de cada merge. Pacote novo: tabela do teste de arquitetura e `docs/arquitetura/componentes.md`.
 2. **`Directory.Build.props`:** `<Version>` vira `<VersaoBase>`, com a base acima da maior versão do `develop` e das PRs abertas na hora (subindo o do meio), e o comentário explicando a regra.
@@ -93,17 +94,30 @@ Na ordem, depois que a pilha #697–#707 entrar:
   - **Na publicação, uma seção por versão publicada** (*inferido*): quem estava numa versão de desenvolvimento e instala a publicada vê, no "O que mudou", também o que já tinha.
   - **A troca exige mexer no gerenciador e no instalador** de uma vez, com o `.msi` rodado à mão, e as PRs abertas na hora precisam tirar a subida de versão e mover a entrada para `changelog.d/`.
   - **O `go run` do cálculo** soma alguns segundos aos scripts de instalação (*inferido*; medir no PR).
-- **Na prática (depois de aceita):**
-  - no PR: o título no tipo certo e um arquivo em `changelog.d/<nome-da-branch>.md`; não mexer no `Directory.Build.props`;
+- **Na prática:**
+  - no PR: o título no tipo certo e, em `feat` e `fix`, um arquivo em `changelog.d/<nome-da-branch>.md` (a `/` da branch vira `-`); não mexer no `Directory.Build.props`;
   - quebra de verdade: perguntar ao usuário e mudar a `<VersaoBase>` no PR;
   - para saber a versão de um commit: `go run ./cmd/versao` em `src/backend`.
 
-## Perguntas para o aval
+## Aval (Felipe, 16/11/2026, na #721)
 
-1. **A quebra de verdade pela base no `Directory.Build.props`**, ou pelo `!` no título, como no Conventional Commits? O `!` exigiria trocar a convenção do `feat(banco)!`, que hoje marca mudança de esquema sem subir o primeiro número.
-2. **`changelog.d/` no lugar da seção "Não lançado"** que o aval citou: a "Não lançado" ainda conflita no GitHub, e o `merge=union` não ajuda lá (*não confirmado*).
-3. **Toda PR precisa de um arquivo em `changelog.d/`?** Ou só as que mudam algo para quem usa, com o Dependabot e as de CI de fora (as notas listam os PRs sem entrada pelo título)?
-4. **Na publicação, uma seção por versão publicada** ou uma por versão de desenvolvimento, como hoje?
-5. **O `.zip` sem git** sai com a base e o `-sem-git`, ou a instalação pelos scripts passa a exigir o clone?
-6. **Os merges da `main` e das `release/*` de volta ao `develop`** ficam fora da contagem?
-7. **O cálculo em Go** (`src/backend/cmd/versao`), ou outra linguagem? O Python não está na instalação do Windows (0011), e bash mais PowerShell seria a mesma regra em dois lugares, o que o item 2 da #689 está tirando.
+As sete perguntas da proposta, com a resposta de cada uma:
+
+| # | Pergunta | Decisão |
+|---|---|---|
+| 1 | Quebra de verdade pela base ou pelo `!` no título? | **Pela base:** o PR troca a `<VersaoBase>` para `X+1.0.0`, depois de perguntar ao usuário. O `feat(banco)!` continua como hoje (esquema novo sem subir o primeiro número). |
+| 2 | `changelog.d/` ou a seção "Não lançado"? | **`changelog.d/`**, um arquivo por PR, juntado no `CHANGELOG.md` ao publicar. |
+| 3 | Toda PR precisa de um arquivo? | **Só `feat` e `fix`** (o que muda para quem usa). CI, testes, documentação interna e Dependabot podem não ter; as notas listam essas PRs pelo título. |
+| 4 | Seção na publicação | Uma por **versão publicada**. |
+| 5 | `.zip` sem git | Sai com a base e o sufixo **`-sem-git`**. |
+| 6 | Merges da `main` e das `release/*` de volta | **Não sobem** a versão. |
+| 7 | Linguagem do cálculo | **Go**, em `src/backend/cmd/versao`. |
+
+## Como ficou (na implementação)
+
+- **O programa** (`src/backend/cmd/versao`): sem argumento, o número do `HEAD`; `-ref` para outro commit; `-publicada` para o commit de uma tag; `-changelog` para as seções do que ainda não foi publicado; `-publicar X.Y.Z -data AAAA-MM-DD` para juntar `changelog.d/` numa seção do `CHANGELOG.md`, apagando os arquivos. Só a biblioteca padrão e o `git` do sistema.
+- **A base** foi para `3.27.0`: acima da maior versão do `develop` (3.26.0) e das PRs abertas na hora (a #711, com 3.26.1), subindo o do meio.
+- **O `-changelog`** põe cada arquivo na seção da versão do merge que o trouxe (`## [X.Y.Z] — data · desenvolvimento`, o formato que o `notas.sh` e o gerenciador já liam). O que veio antes da base entra na seção da base.
+- **A publicação** é o `scripts/dev/lancar-versao.sh X.Y.Z`, na `release/X.Y.Z`: confere a branch, a árvore limpa e que o número calculado é o `X.Y.Z`, junta os arquivos e faz o commit `chore: versão X.Y.Z`. Sem nenhum arquivo em `changelog.d/`, o programa recusa (a seção ficaria vazia).
+- **O gerenciador** (`Atualizar para a última do develop`) pede ao clone o número e as seções (`go run ./cmd/versao`, com o Go do projeto em `ferramentas/go` ou o do PATH), e a versão de antes é a do site instalado. Ainda lê o `CHANGELOG.md` do clone, depois das seções novas, para quem atualiza de uma versão anterior à troca ver as entradas que ficaram lá (*julgamento*, fora do que a ADR mandava).
+- **Os testes:** a tabela de commits → número (`regra_test.go`) e o git de verdade num repositório temporário (`git_test.go`: sobe merge a merge, a `main` de volta, o comentário do `props` sem recomeçar, a quebra, o clone raso, a tag, o `-changelog` e o `-publicar`); o script de publicação roda inteiro num repositório temporário (`lancar_test.go`).

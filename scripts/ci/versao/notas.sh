@@ -13,15 +13,19 @@
 #
 # --desenvolvimento (#294): notas do pré-lançamento "desenvolvimento".
 #   Além de "tudo desde a última versão publicada" (as seções
-#   "· desenvolvimento" do CHANGELOG, uma por versão, ADR 0039), traz um
-#   bloco por versão de desenvolvimento com os PRs que entraram nela
+#   "· desenvolvimento": primeiro as do que ainda não foi publicado, montadas
+#   de changelog.d/ pelo `go run ./cmd/versao -changelog`, uma por versão, ADR
+#   0070; depois as que o CHANGELOG.md ainda tem de antes dela, ADR 0039),
+#   traz um bloco por versão de desenvolvimento com os PRs que entraram nela
 #   (título e número). Os blocos se acumulam de uma versão para a outra
 #   (os 20 mais novos), entre os marcadores <!-- por-versao:inicio --> e
 #   <!-- por-versao:fim -->: o gerenciador mostra primeiro só os blocos
 #   mais novos que a versão instalada (FormNotas).
 #   Ambiente: ROTULO (ex.: 2.26.1-dev.180), GITHUB_SHA, GITHUB_REPOSITORY,
-#   GH_TOKEN. Precisa do histórico do git (checkout com fetch-depth: 0).
-#   Para testar sem o GitHub: NOTAS_ANTERIORES=<arquivo com as notas antigas>.
+#   GH_TOKEN. Precisa do histórico do git (checkout com fetch-depth: 0) e do
+#   Go. Para testar sem o GitHub e sem o Go: NOTAS_ANTERIORES=<arquivo com as
+#   notas antigas> e CHANGELOG_NAO_PUBLICADO=<arquivo com as seções de
+#   changelog.d/>.
 #
 # O GitHub recusa notas com mais de 125 mil caracteres (#600, #641), e
 # entre duas versões publicadas cabem muitas de desenvolvimento (da 2.17.0
@@ -124,10 +128,26 @@ printf '%s\n\n' "$cabecalho"
 
 resto=$(( LIMITE_NOTAS - $(printf '%s\n\n' "$cabecalho" | LC_ALL=C wc -c) ))
 
+# O que ainda não foi publicado (changelog.d/, ADR 0070) vem na frente das seções do CHANGELOG.md, no mesmo formato
+# ("## [X.Y.Z] — data · desenvolvimento"), uma por versão, a mais nova primeiro: só o --desenvolvimento usa. O --versao
+# lê o CHANGELOG.md, onde o lancar-versao.sh já juntou a seção da versão publicada.
+nao_publicado=""
+if [[ "$modo" == "--desenvolvimento" ]]; then
+    if [[ -n "${CHANGELOG_NAO_PUBLICADO:-}" ]]; then
+        nao_publicado="$(cat "$CHANGELOG_NAO_PUBLICADO")"
+    else
+        raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+        nao_publicado="$(cd "$raiz/src/backend" && go run ./cmd/versao -ref "$GITHUB_SHA" -changelog)"
+    fi
+fi
+
 # As seções do CHANGELOG, um nível abaixo ("## [2.26.1] — data" vira "### 2.26.1 — data", e "### Correções",
 # "#### Correções"), do topo até a última versão publicada (a primeira sem "· desenvolvimento"), que fica de fora.
 # --versao: começa na seção da versão (ou na "[Não publicado]"), a publicada entra, e tira o "· desenvolvimento" dos
 # títulos. --desenvolvimento: começa no topo, que já é de desenvolvimento, e mantém o título e as linhas em branco.
+# O awk lê o arquivo (e não um pipe): ele sai ao chegar na última versão publicada, e um cat que sobrasse escrevendo
+# num pipe fechado derrubaria o script (SIGPIPE com pipefail). Do CHANGELOG.md vai só o que começa na primeira versão:
+# o título e a explicação do formato, lá em cima, ficariam grudados na última seção que veio de changelog.d/.
 LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
     # Junta a seção que acabou, se ela couber inteira com o link; se não, para ali.
     function fechar() {
@@ -162,4 +182,4 @@ LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
             printf "%s", saida
             if (cortou) print "\n" link
         }
-    }' CHANGELOG.md
+    }' <(printf '%s\n\n' "$nao_publicado"; sed -n '/^## \[/,$p' CHANGELOG.md)

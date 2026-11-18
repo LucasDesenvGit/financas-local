@@ -2,11 +2,6 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.26.2] — 2026-11-18 · desenvolvimento
-
-### Publicação e documentação
-- **CI: o teste de instalação no Linux volta a rodar** (#760). Desde 16/11 ele falhava antes de instalar, ao montar o PATH sem as ferramentas: um link quebrado da imagem do runner (`grub-ntldr-img`) aparecia duas vezes, por `/usr/bin` e por `/bin`, e o segundo `ln` dava "Already exists". O link já criado passa a contar mesmo quebrado.
-
 ## [3.26.1] — 2026-11-18 · desenvolvimento
 
 ### Correções

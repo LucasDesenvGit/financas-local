@@ -45,16 +45,3 @@ func TestSecoesDoChangelogNasBordas(t *testing.T) {
 		t.Errorf("sem novidade: %q", nada)
 	}
 }
-
-// Regra: a versão vem do <Version> do Directory.Build.props.
-func TestVersaoDoProjeto(t *testing.T) {
-	t.Parallel()
-	if v, ok := VersaoDoProjeto("<Project>\n  <PropertyGroup>\n    <Version> 2.46.0 </Version>\n"); !ok || v.String() != "2.46.0" {
-		t.Errorf("%v %v", v, ok)
-	}
-	for _, ruim := range []string{"<Project/>", "<Version></Version>", "<Version>abc</Version>"} {
-		if _, ok := VersaoDoProjeto(ruim); ok {
-			t.Errorf("%q lida", ruim)
-		}
-	}
-}

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -10,55 +8,75 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
 )
 
-func cloneComVersao(t *testing.T, versao, changelog string) string {
+// O que o `go run ./cmd/versao -changelog` imprime (uma seção por versão, a mais nova primeiro), seguido do CHANGELOG.md
+// do clone, que ainda tem as seções de antes da troca (ADR 0070).
+const changelogDoClone = "## [2.46.0] — 2026-10-28 · d\n### Funcionalidades\n- nova\n\n## [2.45.0] — 2026-10-28 · d\n- outra\n\n" +
+	"# Changelog\n\n## [2.44.1] — 2026-10-28 · d\n- antiga\n\n## [2.44.0] — 2026-10-27\n- mais antiga"
+
+func lerVersao(t *testing.T, texto string) atualizacao.Versao {
 	t.Helper()
-	raiz := t.TempDir()
-	if versao != "" {
-		props := "<Project><PropertyGroup><Version>" + versao + "</Version></PropertyGroup></Project>"
-		if err := os.WriteFile(filepath.Join(raiz, "Directory.Build.props"), []byte(props), 0o600); err != nil {
-			t.Fatal(err)
-		}
+	v, ok := atualizacao.LerVersao(texto)
+	if !ok {
+		t.Fatalf("versão %q", texto)
 	}
-	if changelog != "" {
-		if err := os.WriteFile(filepath.Join(raiz, "CHANGELOG.md"), []byte(changelog), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	return raiz
+	return v
 }
 
-const changelogDoClone = "# Changelog\n\n## [2.46.0] — 2026-10-28 · d\n### Funcionalidades\n- nova\n\n## [2.45.0] — 2026-10-28 · d\n- outra\n\n## [2.44.1] — 2026-10-28 · d\n- antiga"
-
-// Regra: depois de trazer o develop, "O que mudou desde a <de antes>" com as seções do CHANGELOG.md do clone, e o
-// link para o CHANGELOG no GitHub.
+// Regra: depois de trazer o develop, "O que mudou desde a <de antes>" com as seções mais novas que a versão do site
+// instalado, e o link para o CHANGELOG no GitHub.
 func TestNotasDoDevelop(t *testing.T) {
 	t.Parallel()
-	raiz := cloneComVersao(t, "2.46.0", changelogDoClone)
-	antes, _ := atualizacao.LerVersao("2.44.1")
-	n := notasDoDevelop(raiz, antes, true)
+	n := notasDoDevelop(lerVersao(t, "2.46.0"), true, changelogDoClone, lerVersao(t, "2.44.1"), true)
 	if n == nil || n.Titulo != "O que mudou desde a 2.44.1" || !strings.Contains(string(n.Novidades), "nova") ||
 		!strings.Contains(string(n.Novidades), "outra") || strings.Contains(string(n.Novidades), "antiga") ||
 		n.Pagina != "https://github.com/LucasDesenvGit/financas-local/blob/develop/CHANGELOG.md" || n.TextoPagina != "Ver o CHANGELOG no GitHub" {
 		t.Errorf("%+v", n)
 	}
 	// Sem a versão de antes: só a da versão nova.
-	if so := notasDoDevelop(raiz, atualizacao.Versao{}, false); so == nil || so.Titulo != "O que mudou na versão 2.46.0" ||
-		strings.Contains(string(so.Novidades), "outra") {
+	if so := notasDoDevelop(lerVersao(t, "2.46.0"), true, changelogDoClone, atualizacao.Versao{}, false); so == nil ||
+		so.Titulo != "O que mudou na versão 2.46.0" || strings.Contains(string(so.Novidades), "outra") {
 		t.Errorf("sem a de antes: %+v", so)
+	}
+	// Quem atualiza de uma versão sem git (a base e o sufixo -sem-git) conta pelo X.Y.Z.
+	semGit := notasDoDevelop(lerVersao(t, "2.46.0"), true, changelogDoClone, lerVersao(t, "2.45.0-sem-git"), true)
+	if semGit == nil || semGit.Titulo != "O que mudou desde a 2.45.0" || !strings.Contains(string(semGit.Novidades), "nova") ||
+		strings.Contains(string(semGit.Novidades), "outra") {
+		t.Errorf("de uma sem-git: %+v", semGit)
 	}
 }
 
-// Regra: sem versão nova, sem CHANGELOG, sem Directory.Build.props ou sem seção, não há "O que mudou".
+// Regra: do CHANGELOG.md do clone vai só o que começa na primeira versão, para o título e a explicação do formato não
+// ficarem grudados na última seção que veio do -changelog.
+func TestDesdeAPrimeiraVersao(t *testing.T) {
+	t.Parallel()
+	casos := map[string]string{
+		"com o título": "# Changelog\n\nFormato.\n\n## [2.0.0] — x\n- a\n\n## [1.0.0] — y\n- b\n",
+		"sem o título": "## [2.0.0] — x\n- a\n\n## [1.0.0] — y\n- b\n",
+		"com CRLF":     "# Changelog\r\n\r\n## [2.0.0] — x\r\n- a\r\n\r\n## [1.0.0] — y\r\n- b\r\n",
+	}
+	for nome, texto := range casos {
+		if obtido := desdeAPrimeiraVersao(texto); obtido != "## [2.0.0] — x\n- a\n\n## [1.0.0] — y\n- b\n" {
+			t.Errorf("%s: %q", nome, obtido)
+		}
+	}
+	if obtido := desdeAPrimeiraVersao("# Changelog\n\nainda sem versão\n"); obtido != "" {
+		t.Errorf("sem versão nenhuma: %q", obtido)
+	}
+}
+
+// Regra: sem versão nova, sem novidade ou sem seção, não há "O que mudou".
 func TestNotasDoDevelopSemNada(t *testing.T) {
 	t.Parallel()
-	mesma, _ := atualizacao.LerVersao("2.46.0")
-	casos := map[string]string{
-		"sem novidade":  cloneComVersao(t, "2.46.0", changelogDoClone),
-		"sem changelog": cloneComVersao(t, "2.46.0", ""),
-		"sem props":     cloneComVersao(t, "", changelogDoClone),
+	mesma := lerVersao(t, "2.46.0")
+	casos := map[string]*tela.Notas{
+		"sem novidade":        notasDoDevelop(mesma, true, changelogDoClone, mesma, true),
+		"sem changelog":       notasDoDevelop(mesma, true, "", lerVersao(t, "2.40.0"), true),
+		"sem versão nova":     notasDoDevelop(atualizacao.Versao{}, false, changelogDoClone, lerVersao(t, "2.40.0"), true),
+		"sem seção da nova":   notasDoDevelop(lerVersao(t, "2.50.0"), true, "# Changelog\n", atualizacao.Versao{}, false),
+		"só de antes da nova": notasDoDevelop(lerVersao(t, "2.47.0"), true, changelogDoClone, lerVersao(t, "2.46.0"), true),
 	}
-	for nome, raiz := range casos {
-		if n := notasDoDevelop(raiz, mesma, true); n != nil {
+	for nome, n := range casos {
+		if n != nil {
 			t.Errorf("%s: %+v", nome, n)
 		}
 	}

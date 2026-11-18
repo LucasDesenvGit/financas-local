@@ -62,6 +62,15 @@ erro_sai() {
     exit 1
 }
 
+# ---------------------------------------------------------------- Versao do sistema (ADR 0070)
+# O numero e calculado pelo Go (src/backend/cmd/versao) a partir da base do Directory.Build.props e dos merges do git;
+# sem o historico do git (copia baixada em .zip), sai a base com o sufixo -sem-git. Precisa do Go no PATH.
+versao_do_sistema() {
+    local versao
+    versao="$(cd "$Raiz/src/backend" && go run ./cmd/versao)" || erro_sai 'Nao consegui calcular a versao (go run ./cmd/versao, em src/backend).'
+    printf '%s' "$versao"
+}
+
 # ---------------------------------------------------------------- Utilitarios de pasta/arquivo
 garantir_pasta() {
     mkdir -p "$1"

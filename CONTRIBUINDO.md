@@ -24,7 +24,7 @@ Fluxo do dia a dia, com a branch criada pela issue:
 git switch develop
 git pull
 gh issue develop <número> --base develop --name feature/minha-melhoria --checkout   # ou fix/<assunto>
-# ... trabalho e commits; suba a versão no Directory.Build.props (ver abaixo) ...
+# ... trabalho e commits; um arquivo em changelog.d/ para feat e fix (ver "CHANGELOG", abaixo) ...
 git push
 gh pr create --base develop --fill    # na descrição: Closes #<número>
 ```
@@ -47,18 +47,27 @@ As issues e o andamento ficam no Project **"ClaudioFinancas"** ([users/LucasDese
 - **Campos:** **Status** (Backlog, In progress, In review, Done, Epic), **Priority** (P0–P2) e **Size** (XS–XL). Na prática, a prioridade vai na etiqueta `prioridade: alta|média|baixa`.
 - **Pelo `gh`** (a conta precisa do escopo `project`): `gh project item-list 2 --owner LucasDesenvGit`, `gh project field-list 2 --owner LucasDesenvGit` e `gh project item-edit`.
 
-**Todo PR para o `develop` sobe a versão** no `Directory.Build.props`, pelo tipo do título ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)). O check "versão subiu" da CI confere.
+### Versão e CHANGELOG ([ADR 0070](docs/adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md))
+
+**Nenhum PR sobe a versão.** O número é calculado no build: parte da `<VersaoBase>` do `Directory.Build.props` e sobe a cada merge na linha principal do `develop`, pelo **tipo do título do PR**. Por isso o título no tipo certo é o que importa (um `fix` que era `feat` sai com o número errado, e depois do merge só a base conserta):
 
 | Tipo do PR | Sobe | Exemplo |
 |---|---|---|
 | `feat` (inclusive `feat(banco)!` que só acrescenta tabela ou coluna) | o número do meio | 2.2.0 → 2.3.0 |
-| `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style` | o último | 2.2.0 → 2.2.1 |
-| Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) | o primeiro | 2.2.0 → 3.0.0 |
+| `fix`, `docs`, `build`, `ci`, `refactor`, `perf`, `test`, `chore`, `style`, ou título fora do padrão | o último | 2.2.0 → 2.2.1 |
+| Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior) | a `<VersaoBase>` vira `X+1.0.0` no PR, **depois de perguntar ao usuário** | 2.2.0 → 3.0.0 |
 
-Outro PR subiu a versão antes do seu entrar e o seu ficou em conflito no `Directory.Build.props` e no `CHANGELOG.md`? Rode `scripts/dev/atualizar-pr.sh <número do PR>` (#587). Ele traz o `develop` numa pasta temporária, sobe a versão a partir da do `develop` no mesmo nível que o PR tinha subido (nunca menos do que o tipo do título pede), põe a seção do PR no topo do CHANGELOG com o número novo e a data de hoje, confere e envia. Com `--sem-enviar`, só mostra. Conflito em outro arquivo, ele desfaz e lista: aí é `git merge origin/develop` e resolver à mão. O Dependabot não precisa subir: comente `@dependabot rebase` no PR.
+Os merges que trazem a `main` ou uma `release/*` de volta não sobem. Para saber a versão de um commit: `go run ./cmd/versao` em `src/backend` (`-ref <commit>` para outro). Sem o histórico do git (uma cópia `.zip`), a versão sai como a base com o sufixo `-sem-git`.
+
+**CHANGELOG: um arquivo por PR**, em `changelog.d/<nome-da-branch>.md` (a `/` da branch vira `-`), com o título do tipo (`### Funcionalidades`, `### Correções` ou `### Publicação e documentação`) e a entrada. O formato e um modelo estão no [`changelog.d/LEIA-ME.md`](changelog.d/LEIA-ME.md).
+- **Obrigatório em `feat` e `fix`** (o que muda para quem usa); a CI confere. CI, testes, documentação interna e Dependabot podem não ter: as notas listam esses PRs pelo título.
+- **Não mexa no `CHANGELOG.md`**, que é montado na publicação. Dois PRs criam dois arquivos de nomes diferentes: não há conflito de versão nem de CHANGELOG, nem no botão do GitHub.
+- A entrada é lida por quem usa o app (notas do Release e janela "O que mudou" do gerenciador). A regra do tamanho e do sub-item "Técnico" vem da #722.
+
+### Publicar uma versão
 
 Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)):
-1. Numa branch `release/X.Y.Z`, criada do `develop`, tire o ` · desenvolvimento` do título da versão do topo do `CHANGELOG.md`, com a data de hoje (ex.: `## [2.27.0] — 2026-10-21 · desenvolvimento` vira `## [2.27.0] — 2026-10-21`) (#294), num commit `chore: versão X.Y.Z`. O número já vem certo dos PRs, e as versões de desenvolvimento abaixo dela continuam com o rótulo. As notas do Release juntam todas, até a última publicada, e cortam no limite de 125 mil caracteres do GitHub, com um link para o resto (#641).
+1. Numa branch `release/X.Y.Z`, criada do `develop` (o `X.Y.Z` é o que o `go run ./cmd/versao` dá no commit do `develop` de onde ela sai), rode `scripts/dev/lancar-versao.sh X.Y.Z`. Ele confere a branch, a árvore limpa e o número, junta os arquivos de `changelog.d/` numa seção `## [X.Y.Z] — data` do `CHANGELOG.md`, por tipo (uma seção por versão publicada), apaga os arquivos e faz o commit `chore: versão X.Y.Z`. Sem nenhum arquivo em `changelog.d/`, ele recusa: escreva uma entrada antes. As notas do Release juntam a seção da versão e as seções antigas "· desenvolvimento" abaixo dela, até a última publicada, e cortam no limite de 125 mil caracteres do GitHub, com um link para o resto (#641).
 2. PR de `release/X.Y.Z` para `main` e merge. Antes, confira que `main` e `develop` continuam protegidas contra apagar: em 2026-10-18, o merge de um PR para a `main` apagou o `develop`.
    Para conferir, `gh api repos/LucasDesenvGit/financas-local/branches/develop/protection` (precisa ser dono do repositório). Para reaplicar, em `main` e em `develop` (eram do `configurar-github.ps1`, que saiu na #655):
    ```bash
@@ -73,13 +82,13 @@ Para publicar uma versão ([ADR 0029](docs/adr/0029-instalador-msi-com-wix-gerad
    done
    ```
    O `required_conversation_resolution` faz o merge esperar que toda conversa da revisão esteja resolvida.
-3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao `Directory.Build.props`, senão o workflow para.
+3. Tag na `main`: `git tag v2.2.0; git push --tags`. A tag tem de ser igual ao número calculado no commit da release (o segundo pai do merge na `main`), senão o workflow para.
 4. O workflow **Versão (instalador .msi)**:
    - gera o `.msi`;
    - testa instalar, atualizar, desinstalar e migrar;
    - publica `FinancasLocal-2.2.0.msi` e `SHA256SUMS.txt` no Release **"Finanças Local 2.2.0"**, com "Como instalar ou atualizar" e, do CHANGELOG, a seção da versão e as de desenvolvimento abaixo dela até a última publicada. Se alguém criou o Release à mão antes, o título e as notas são acertados.
 5. O gerenciador de quem já tem o site instalado passa a oferecer "Atualizar para 2.2.0".
-6. **Traga a `main` de volta para o `develop`:** PR de `main` para `develop` e merge. O check "versão subiu" não roda nele, porque a versão é a mesma (#641). Assim, o `CHANGELOG` do `develop` fica igual ao publicado: na 2.17.0, isso não foi feito, e o `develop` ficou sem a seção dela.
+6. **Traga a `main` de volta para o `develop`:** PR de `main` para `develop` e merge. Esse merge não sobe a versão, porque o conteúdo já foi contado (ADR 0070). Assim, o `CHANGELOG` do `develop` fica igual ao publicado e a `changelog.d/` esvazia: na 2.17.0, isso não foi feito, e o `develop` ficou sem a seção dela.
 
 Quem instala pelos scripts continua atualizando com `git pull` e `scripts/geral/instalar.sh` (no Windows, ele repassa para o `instalar-windows.ps1`, o mesmo do `instalar-windows.cmd`). Só o `3-publicar-atualizar.sh` não basta quando o `go.mod` pede um Go mais novo: quem o baixa é a etapa 1 ([Atualizar](docs/INSTALACAO-PELO-CODIGO.md#atualizar)).
 
@@ -99,7 +108,7 @@ Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos
 Exemplos:
 - `feat(investimentos): comparar cada compra de FII com a cotação atual`
 - `fix(open-finance): não duplicar transações ao renovar o consentimento`
-- `feat(banco)!: nova coluna Transacao.Emergencia` (o `!` marca que a estrutura do banco mudou; não sobe o primeiro número da versão nem pede nada de quem atualiza, porque a API aplica o esquema sozinha ao iniciar, [ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md))
+- `feat(banco)!: nova coluna Transacao.Emergencia` (o `!` marca que a estrutura do banco mudou; não sobe o primeiro número da versão nem pede nada de quem atualiza, porque a API aplica o esquema sozinha ao iniciar, [ADR 0070](docs/adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md))
 
 ## O que a CI roda
 
@@ -109,7 +118,7 @@ Além do build e dos testes do back-end e do front-end, a CI confere o que dá p
 python3 scripts/ci/banco/verificar-sql.py                           # banco/01-estrutura.sql é idempotente (e é aplicado a um SQLite descartável)
 python3 scripts/dev/gerar-diagrama-banco.py --conferir         # os diagramas de docs/BANCO-DE-DADOS.md estão em dia
 python3 scripts/ci/front/testes-afetados.py --base origin/develop   # no PR, só os testes afetados (ADR 0047): mostra quais
-python3 scripts/ci/versao/verificar-changelog.py                     # CHANGELOG: uma seção por versão, sem tipo repetido (#294)
+python3 scripts/ci/versao/verificar-changelog.py                     # changelog.d/ no formato (e o CHANGELOG.md em ordem); no PR, o arquivo em feat e fix (ADR 0070)
 ```
 
 | Workflow ou job | Quando | O que faz |
@@ -121,8 +130,7 @@ python3 scripts/ci/versao/verificar-changelog.py                     # CHANGELOG
 | **CI › Go (Windows)** (#459) | como o job Go | `go vet` e `go test` no `windows-latest`, para os `_windows.go` (DPAPI, serviço) |
 | **CI › gerenciador em Go** e **(Linux)** (#418, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)) | PR que mexe em `src/gerenciador-go/`; todo push | `go vet`, `go test`, a compilação e o govulncheck, no Windows (com `gofmt` e o ícone do `.exe`) e no Linux (com GTK e WebKitGTK) |
 | **CI › contrato** (#72) | PR que mexe no back-end ou no esquema; todo push | o contrato contra o Go sozinho, sem rede e com a Pluggy falsa (`testes/contrato/rodar.sh`); os esperados são a regressão do Go (ADR 0051) |
-| **CI › manual do site** (#177) | todo PR | avisa quando o PR muda telas ou endpoints sem mexer no Manual; não bloqueia |
-| **CI › versão subiu** ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)) | PR para o `develop` | a versão do `Directory.Build.props` subiu pelo tipo do título, e o CHANGELOG está em ordem (#294) |
+| **CI › manual do site e changelog.d** (#177, [ADR 0070](docs/adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md)) | todo PR | avisa quando o PR muda telas ou endpoints sem mexer no Manual (não bloqueia); confere o formato de `changelog.d/` e, em PR `feat` e `fix`, que o arquivo existe; roda os testes das notas dos Releases |
 | **CI › build** | sempre | junta os resultados (abaixo, em "Testes rápidos") |
 | **Teste de mutação (Go)** (#373, #456) | PR que mexe no Go ou no gerenciador em Go, toda segunda e à mão | no PR, os pacotes de `scripts/ci/go/mutacao-go.txt` (e os do gerenciador, em `mutacao-gerenciador-go.txt`) que ele mudou, com piso; no agendamento, as listas inteiras. Um job por grupo (a área do pacote), em paralelo (#673) |
 | **Fuzz do Go** (#372) | toda segunda e à mão | o `-fuzz` dos alvos `FuzzXxx`; não roda no PR |
@@ -322,7 +330,7 @@ Exceção que deixou de acontecer, pacote que sumiu e pacote novo sem grupo tamb
 
 ## Checklist do pull request
 
-- [ ] Versão subiu no `Directory.Build.props`, pelo tipo do PR ([ADR 0039](docs/adr/0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md)).
+- [ ] Título no tipo certo, que decide a versão ([ADR 0070](docs/adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md)); não mexa no `Directory.Build.props` (só a quebra de verdade, depois de perguntar).
 - [ ] Compila: `go build ./...` em `src/backend` e `npm run build` em `src/frontend`.
 - [ ] Testes no navegador passam: `NAVEGADOR=chromium npm run test:afetados` em `src/frontend`, que roda o Jest e o navegador só no que mudou (#286; a suíte inteira roda na CI, no merge; [ADR 0041](docs/adr/0041-testes-no-navegador-com-playwright.md)). Tela nova no menu entra em `TELAS` (`testes/navegador/base.ts`); endpoint novo, em `testes/navegador/api-falsa.ts`. Mudou o visual? Olhe os prints (`FOTOS=rota npx playwright test fotos`).
 - [ ] Testes do front-end passam: `npm run test:tipos` e `npm test` em `src/frontend` (a CI roda os dois; o `npm test` sozinho não confere tipos). Bug corrigido ganha teste em `testes/jest/regressao/`; padrão novo de UI/UX, em `testes/jest/usabilidade/` ([ADR 0013](docs/adr/0013-testes-do-front-end-com-jest.md)).
@@ -331,7 +339,7 @@ Exceção que deixou de acontecer, pacote que sumiu e pacote novo sem grupo tamb
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.
 - [ ] Consultas ao banco só parametrizadas (`sqlc` ou `?`), sem SQL montado com texto do usuário.
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
-- [ ] README/CHANGELOG atualizados quando a mudança afeta o uso. No `CHANGELOG.md` (#294), a entrada vai na seção da **versão do seu PR** (a do `Directory.Build.props`): `## [X.Y.Z] — AAAA-MM-DD · desenvolvimento`, criada no topo se ainda não existe, e **dentro** do título do tipo que já existe nela (`### Funcionalidades`, `### Correções`, `### Publicação e documentação`…). Outro PR subiu a versão antes? Depois do `git merge origin/develop`, a sua entrada muda para a seção da versão nova. A CI confere (`scripts/ci/versao/verificar-changelog.py`: tipo repetido, versão repetida ou fora de ordem, versão acima da do `Directory.Build.props`; `--corrigir` junta tipos repetidos), porque as notas das versões e a janela "O que mudou" do gerenciador saem dele.
+- [ ] README atualizado quando a mudança afeta o uso. **CHANGELOG:** em `feat` e `fix`, um arquivo `changelog.d/<nome-da-branch>.md` (modelo no `changelog.d/LEIA-ME.md`; a CI confere em `scripts/ci/versao/verificar-changelog.py`), porque as notas das versões e a janela "O que mudou" do gerenciador saem dele. Não mexa no `CHANGELOG.md`.
 - [ ] **Manual do site** (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.
 - [ ] Mudou o jeito de usar uma tela (botão, campo, filtro, passo)? Atualize a seção do **Manual** em `src/frontend/src/app/paginas/manual/manual-conteudo.ts`; tela nova no menu entra também em `AJUDA_POR_ROTA` ([ADR 0026](docs/adr/0026-manual-do-site-como-dados-no-front-end.md)).
 

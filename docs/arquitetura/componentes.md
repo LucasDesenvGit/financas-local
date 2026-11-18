@@ -72,6 +72,7 @@ Os pacotes de `src/backend`, cada um em um componente só. O componente é o pap
 | Componente | Pacotes | O que fazem | Grupo no teste |
 |---|---|---|---|
 | Ponto de entrada | `cmd/financas` | As opções (`-aplicar-esquema`, `-rotinas-de-partida`), a ligação das peças e o subcomando `gerar-certificado`. | montador |
+| Cálculo da versão | `cmd/versao` | O programa que dá o número da versão (ADR 0070): parte do `<VersaoBase>` do `Directory.Build.props` e sobe a cada merge do `develop` pelo tipo do título do PR; monta o CHANGELOG do que ainda não foi publicado a partir de `changelog.d/` e a seção da publicação. Fica fora do site: só a biblioteca padrão e o `git`; quem o chama são os scripts de instalação, o `gerar-msi.ps1`, o workflow do `.msi`, o contrato e o gerenciador. | montador |
 | Serviço do sistema | `internal/plataforma/servicosistema` | Roda como Serviço do Windows ou systemd e para com o sinal. | base |
 | Servidor | `internal/plataforma/servidor` | HTTPS local, filtro de hosts, cabeçalhos de segurança (a CSP), pânico, limite de 1 MB no corpo, os arquivos do site e o certificado. | base |
 | Autenticação | `internal/plataforma/autenticacao`, `internal/plataforma/sessao` | Login, sessão, CSRF e limite de tentativas (#75); o `sessao` guarda o usuário logado no contexto do pedido. | assunto (`autenticacao`), base (`sessao`) |
@@ -115,7 +116,7 @@ Quem pode importar quem. As setas vão de quem importa para quem é importado.
 
 ```mermaid
 flowchart TB
-    montadores["Montadores<br/>cmd/financas, api, testes/contrato"]
+    montadores["Montadores<br/>cmd/financas, cmd/versao, api, testes/contrato"]
     modulos["Módulos (#190, ADR 0064)<br/>internal/modulos/&lt;id&gt;: trabalho, noticias"]
     assuntos["Assuntos<br/>com rotas, regras, sincronização,<br/>partida e clientes de fora"]
     transversais["Transversais<br/>auditoria, configuracao, erros,<br/>segredos, tarefas, versao e modulos"]
