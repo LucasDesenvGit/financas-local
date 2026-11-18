@@ -58,7 +58,8 @@ jobs:
             case "$nome" in
               dotnet|node|nodejs|npm|npx|corepack|go|gofmt|sqlite3|python|python3|python3.*|jq) continue ;;
             esac
-            [[ -e "$limpo/$nome" ]] || ln -s "$arq" "$limpo/$nome"
+            # /bin aponta para /usr/bin: cada nome vem duas vezes. O -L conta o link já criado mesmo quebrado (#760).
+            [[ -e "$limpo/$nome" || -L "$limpo/$nome" ]] || ln -s "$arq" "$limpo/$nome"
           done
           echo "PATH_LIMPO=$limpo" >> "$GITHUB_ENV"
           for cmd in dotnet node go sqlite3 python3 jq; do
