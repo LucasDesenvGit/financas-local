@@ -99,9 +99,16 @@ func TestPeriodicaOuAoSinal(t *testing.T) {
 		time.Sleep(time.Minute)
 		sinal <- struct{}{} // no intervalo: roda aos 2 min
 		synctest.Wait()
-		time.Sleep(time.Hour) // e o ticker segue: 1 h depois do primeiro ciclo
+		// #750: o ticker recomeça no ciclo do sinal. Antes, ele seguia do primeiro ciclo e rodava de novo à 1 h 1 min,
+		// 59 minutos depois do ciclo do sinal; agora, 1 h depois dele.
+		time.Sleep(time.Hour - time.Second)
 		synctest.Wait()
-		esperado := []time.Duration{time.Minute, 2 * time.Minute, time.Hour + time.Minute}
+		if n := len(vezes()); n != 2 {
+			t.Fatalf("rodou de novo antes de 1 h depois do ciclo do sinal: %v", vezes())
+		}
+		time.Sleep(time.Second)
+		synctest.Wait()
+		esperado := []time.Duration{time.Minute, 2 * time.Minute, time.Hour + 2*time.Minute}
 		if obtido := vezes(); len(obtido) != len(esperado) || obtido[0] != esperado[0] || obtido[1] != esperado[1] || obtido[2] != esperado[2] {
 			t.Fatalf("rodou em %v, esperado %v", obtido, esperado)
 		}

@@ -12,17 +12,23 @@ export class ModulosService {
   private readonly api = inject(ApiService);
   /** null enquanto não chegou; [] também quando a leitura falhou (aí todo módulo conta como desligado). */
   readonly lista = signal<Modulo[] | null>(null);
-  /** A última leitura falhou (o serviço reiniciando numa atualização, por exemplo): as telas mostram "Tentar de novo". */
+  /**
+   * A última leitura falhou (o serviço reiniciando numa atualização, por exemplo): o menu e as telas dos módulos mostram
+   * "Tentar de novo" (#750: o menu também, para quem não abre nenhuma das duas telas).
+   */
   readonly falhou = signal(false);
+  /** A leitura está a caminho: o "Tentar de novo" fica desligado e diz "Tentando…" (Nielsen 1, #750). */
+  readonly carregando = signal(false);
   private pedido = false;
 
   /** Lê a lista na primeira vez e, depois de uma falha, de novo: a próxima tela que pedir tenta outra vez. */
   carregar(): void {
     if (this.pedido) return;
     this.pedido = true;
+    this.carregando.set(true);
     this.api.modulos().subscribe({
-      next: (l) => { this.falhou.set(false); this.lista.set(l); },
-      error: () => { this.pedido = false; this.falhou.set(true); this.lista.set([]); }
+      next: (l) => { this.carregando.set(false); this.falhou.set(false); this.lista.set(l); },
+      error: () => { this.pedido = false; this.carregando.set(false); this.falhou.set(true); this.lista.set([]); }
     });
   }
 
