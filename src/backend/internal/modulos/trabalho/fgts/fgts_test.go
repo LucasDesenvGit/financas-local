@@ -334,3 +334,120 @@ func TestParaRescisaoComSaques(t *testing.T) {
 		t.Fatalf("saldo negativo: %+v", zerado)
 	}
 }
+
+// Regressão (#751): até a competência 02/2024 o depósito vencia no dia 7 do mês seguinte, e não no 20 (FGTS Digital,
+// desde a 03/2024). Numa conferência em 15/05/2023 o app já mostrava o depósito de abril: antes, ele contava como
+// pendente, e o saldo ficava um depósito acima até a próxima conferência. Pendente é o que soma ao informado.
+func TestEstimarComOVencimentoDeAntesDoFgtsDigital(t *testing.T) {
+	t.Parallel()
+	d := testeapoio.Dia
+	casos := []struct {
+		nome                string
+		inicio, ate, quando tipos.Data
+		pendente            string
+	}{
+		{"15/05/2023: abril já venceu (dia 7); falta só maio", d(2023, 3, 1), d(2023, 5, 1), d(2023, 5, 15), "480.00"},
+		{"05/05/2023: antes do dia 7, faltam abril e maio", d(2023, 3, 1), d(2023, 5, 1), d(2023, 5, 5), "960.00"},
+		{"10/03/2024: fevereiro, a última competência do dia 7, já venceu", d(2024, 1, 1), d(2024, 3, 1), d(2024, 3, 10), "480.00"},
+		{"10/04/2024: março, a 1ª do FGTS Digital, vence no dia 20", d(2024, 2, 1), d(2024, 4, 1), d(2024, 4, 10), "960.00"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			dep := map[string]decimal.Decimal{}
+			for m := c.inicio; !m.Depois(c.ate); m = m.SomarMeses(1) {
+				dep[m.String()] = decimal.NewFromInt(480)
+			}
+			r := Estimar(c.inicio, c.ate, dep, []Lancamento{{Data: c.quando, Tipo: TipoConferencia, Valor: v("3000.00")}})
+			if len(r.Conferencias) != 1 || r.Conferencias[0].Pendente.String() != c.pendente {
+				t.Fatalf("conferências = %+v; quer pendente %s", r.Conferencias, c.pendente)
+			}
+			if quer := v("3000.00").Decimal().Add(decimal.RequireFromString(c.pendente)); !r.Saldo.Decimal().Equal(quer) {
+				t.Fatalf("saldo = %s; quer o informado + o pendente (%s)", r.Saldo, quer)
+			}
+		})
+	}
+}
+
+// Regressão (#751): a dobra das férias (CLT, art. 137) fica fora do FGTS, como fica do INSS (Lei 8.036, art. 15, § 6º,
+// e Lei 8.212, art. 28, § 9º, "d"). Admissão em 11/03/2024, 3000, férias de 30 dias em 01/03/2026: 20 caem depois do
+// fim do concessivo (10/03/2026). Março: 8% de 4000 (as férias e o 1/3, sem a dobra) = 320; antes, 8% de 6666,67 = 533,33.
+func TestFeriasEmDobroForaDoFgts(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
+	s := NovoServico(db, empregos, holerites, decimoterceiro.NovoServico(db, empregos, holerites, rel, log), asFerias, rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	ferias.Registrar(m, asFerias)
+	Registrar(m, s)
+	var e emprego.Emprego
+	_ = json.Unmarshal(testeapoio.Chamar(t, m, "POST", "/api/trabalho/empregos", `{"empregador":"E","admissao":"2024-03-11","salarioBruto":3000}`).Corpo, &e)
+	testeapoio.Chamar(t, m, "POST", fmt.Sprintf("/api/trabalho/empregos/%d/ferias", e.Id),
+		`{"periodoInicio":"2024-03-11","inicio":"2026-03-01","dias":30}`).ConferirStatus(t, http.StatusOK)
+	r, err := s.Obter(t.Context(), e.Id, testeapoio.Dia(2026, 4, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	marco := ""
+	for _, mes := range r.Meses {
+		if mes.Mes.String() == "2026-03-01" {
+			marco = mes.Deposito.String()
+		}
+	}
+	if marco != "320.00" {
+		t.Fatalf("março = %q; quer 320.00 (sem a dobra)", marco)
+	}
+}
+
+// Regressão (#751): a conferência do app no mês da saída era ignorada pela rescisão, que ficava só com a estimativa.
+// Emprego de 6000 desde 2024, saída em 15/10/2026: conferência de 20000 em 05/10 (o app ainda não mostra o depósito de
+// setembro, 480, que vence em 20/10), um saque de 500 antes dela e um de 1000 depois.
+func TestParaRescisaoComConferenciaNoMesDaSaida(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
+	s := NovoServico(db, empregos, holerites, decimo, ferias.NovoServico(db, empregos, holerites, rel, log), rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	Registrar(m, s)
+	var e emprego.Emprego
+	_ = json.Unmarshal(testeapoio.Chamar(t, m, "POST", "/api/trabalho/empregos", `{"empregador":"E","admissao":"2024-03-11","salarioBruto":6000}`).Corpo, &e)
+	lancar := func(corpo string) {
+		t.Helper()
+		testeapoio.Chamar(t, m, "POST", fmt.Sprintf("/api/trabalho/empregos/%d/fgts/lancamentos", e.Id), corpo).ConferirStatus(t, http.StatusOK)
+	}
+	naSaida := func() NaSaida {
+		t.Helper()
+		r, err := s.ParaRescisao(t.Context(), e.Id, testeapoio.Dia(2026, 10, 15))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return r
+	}
+	lancar(`{"data":"2026-10-20","tipo":1,"valor":1}`) // depois da saída: não conta
+	semConferencia := naSaida()
+	if semConferencia.Saldo.String() == "20480.00" {
+		t.Fatalf("sem conferência até a saída, a estimativa = %+v", semConferencia)
+	}
+	lancar(`{"data":"2026-10-03","tipo":2,"valor":500,"motivo":4}`)
+	lancar(`{"data":"2026-10-05","tipo":1,"valor":20000}`)
+	lancar(`{"data":"2026-10-08","tipo":2,"valor":1000,"motivo":4}`)
+	// O saldo: 20000 + 480 (setembro) - 1000 (o saque depois); a base da multa: 20480 + 500 (o saque que o app já tirou).
+	if r := naSaida(); r.Saldo.String() != "19480.00" || r.BaseDaMulta.String() != "20980.00" {
+		t.Fatalf("com a conferência de 05/10 = %+v", r)
+	}
+	// Uma conferência depois do dia 20 do mês da saída não somaria setembro, mas a saída é em 15/10: a de 05/10 vale.
+	lancar(`{"data":"2026-10-12","tipo":1,"valor":19000}`) // a última até a saída: 19000 + 480, sem saque depois
+	if r := naSaida(); r.Saldo.String() != "19480.00" || r.BaseDaMulta.String() != "20980.00" {
+		t.Fatalf("com a conferência de 12/10 = %+v", r)
+	}
+}

@@ -9,7 +9,7 @@ const emprego = { id: 1, empregador: 'Empresa Fictícia Ltda', cnpj: null, admis
 const meses = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((m, i) => ({
   mes: `2026-${m}-01`, correcao: i ? 1.5 : 0, deposito: i ? 240 : 168, distribuicao: 0, saques: 0, saldo: 168 + i * 241.5, conferido: m === '11' }));
 const fgts = { saldo: 3000, ate: '2026-11-01', meses,
-  conferencias: [{ data: '2026-11-10', informado: 3000, estimado: 2598.99, diferenca: 401.01 }],
+  conferencias: [{ data: '2026-11-10', informado: 3000, estimado: 2598.99, diferenca: 401.01, pendente: 480 }],
   lancamentos: [{ id: 1, data: '2026-11-10', tipo: 1, valor: 3000, motivo: null }] };
 
 test('Trabalho › FGTS: o saldo, a conferência e um saque', async ({ page }) => {
@@ -28,6 +28,8 @@ test('Trabalho › FGTS: o saldo, a conferência e um saque', async ({ page }) =
   const saldo = page.locator('section', { has: page.getByRole('heading', { name: 'Empresa Fictícia Ltda' }) });
   await expect(saldo.locator('.saldo')).toHaveText('R$ 3.000,00');
   await expect(saldo).toContainText('a mais R$ 401,01');
+  // #751: o saldo passa do que foi digitado porque soma os depósitos que o app ainda não mostrava.
+  await expect(saldo).toContainText('O saldo parte desses R$ 3.000,00 do app e soma R$ 480,00 de depósitos');
   await expect(page.locator('table tbody tr')).toHaveCount(11);
   await expect(page.locator('table tbody tr').first()).toContainText('conferido');
 
@@ -69,4 +71,30 @@ test('Trabalho › FGTS: escolher o emprego', async ({ page }) => {
   await escolha.selectOption({ label: 'Empresa Antiga (saiu em 06/2025)' });
   await expect(page.getByRole('heading', { name: 'Empresa Antiga' })).toBeVisible();
   expect(pedidos).toEqual(['/api/trabalho/empregos/4/fgts', '/api/trabalho/empregos/3/fgts']);
+});
+
+// #751: trocar de emprego rápido não mostra o saldo do outro: a resposta do emprego que saiu da tela é descartada.
+test('Trabalho › FGTS: a resposta do emprego anterior, que chega depois, não troca o saldo', async ({ page }) => {
+  const json = (corpo: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(corpo) });
+  const outro = { ...emprego, id: 4, empregador: 'Outra Empresa' };
+  const antigo = { ...emprego, id: 3, empregador: 'Empresa Antiga', admissao: '2020-01-02', saida: '2025-06-30' };
+  await page.route('**/api/modulos', (r) => r.fulfill(json([trabalho])));
+  await page.route('**/api/trabalho/empregos', (r) => r.fulfill(json([outro, antigo])));
+  let soltar: (() => void) | null = null;
+  let chegou = false;
+  await page.route('**/api/trabalho/empregos/4/fgts', async (r) => {
+    await new Promise<void>((ok) => (soltar = ok)); // a do emprego 4 demora
+    await r.fulfill(json({ ...fgts, saldo: 1111 }));
+    chegou = true;
+  });
+  await page.route('**/api/trabalho/empregos/3/fgts', (r) => r.fulfill(json({ ...fgts, saldo: 3333 })));
+  await page.goto('/trabalho/fgts');
+  await expect.poll(() => soltar !== null).toBe(true);
+  await page.locator('.escolha-emprego select').selectOption({ label: 'Empresa Antiga (saiu em 06/2025)' });
+  const saldo = page.locator('section', { has: page.getByRole('heading', { name: 'Empresa Antiga' }) }).locator('.saldo');
+  await expect(saldo).toHaveText('R$ 3.333,00');
+  soltar!();
+  await expect.poll(() => chegou).toBe(true);
+  await page.waitForTimeout(200); // o tempo de a resposta velha ser aplicada, se fosse
+  await expect(saldo).toHaveText('R$ 3.333,00');
 });

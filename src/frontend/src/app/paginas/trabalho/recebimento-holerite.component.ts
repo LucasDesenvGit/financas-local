@@ -28,7 +28,9 @@ import { situacaoDoRecebimento } from './recebimento';
               <li><span>{{ c.data | date: 'dd/MM' }} · {{ c.descricao }}@if (c.conta) { <span class="texto-suave">({{ c.conta }})</span> }
                   @if (c.sumiu) { <span class="aviso-linha">A transação sumiu na sincronização (o banco pode ter trocado o código dela): o site religa
                     quando a nova aparecer. Se não voltar, desligue.</span> }
-                  @if (c.debito) { <span class="aviso-linha">Virou débito: não conta como recebido. Desligue.</span> }</span>
+                  @if (c.debito) { <span class="aviso-linha">Virou débito: não conta como recebido. Desligue.</span> }
+                  @if (c.valorMudou) { <span class="aviso-linha">O banco mudou o valor desta transação para {{ c.valor | currency }}, abaixo da
+                    parte ligada: conta só ele. Desligue e ligue de novo.</span> }</span>
                 <span class="valor">{{ c.valorLigado | currency }}@if (c.valorLigado !== c.valor) { <span class="texto-suave"> de {{ c.valor | currency }}</span> }</span>
                 <button type="button" class="botao botao-pequeno" [disabled]="ocupado()" (click)="desligar(c.id)">Desligar<span class="so-leitor"> o crédito de {{ c.data | date: 'dd/MM' }}</span></button></li>
             }

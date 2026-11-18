@@ -53,6 +53,11 @@ import { MOTIVOS, TIPOS, descreverLancamento, empregoDoFgts, empregosComFgts, to
             <p>Na última conferência ({{ c.data | date: 'dd/MM/yyyy' }}), o app disse {{ c.informado | currency }} e o site estimava
               {{ c.estimado | currency }}: <strong>{{ c.diferenca >= 0 ? 'a mais' : 'a menos' }} {{ (c.diferenca < 0 ? -c.diferenca : c.diferenca) | currency }}</strong>
               no app. Diferença grande pode ser depósito que a empresa não fez.</p>
+            <!-- #751: o saldo passa do que a pessoa digitou porque soma os depósitos que o app ainda não mostrava. -->
+            @if (c.pendente > 0) {
+              <p class="texto-suave">O saldo parte desses {{ c.informado | currency }} do app e soma {{ c.pendente | currency }} de
+                depósitos que ainda não apareciam lá naquele dia (a empresa deposita até o dia 20 do mês seguinte).</p>
+            }
           }
           <h3>Lançamentos</h3>
           @if (f.lancamentos.length) {
@@ -166,13 +171,19 @@ export class TrabalhoFgtsComponent implements OnInit {
   trocar(id: number): void {
     this.emprego.set(this.empregos().find((e) => e.id === Number(id)) ?? null);
     this.fgts.set(null);
+    this.erro.set(null); // #751: o erro do emprego de antes não fica no outro
     this.carregar();
   }
 
+  /** #751: a resposta de um emprego que já não está na tela (trocou rápido) é descartada, para não mostrar o saldo dele. */
   private carregar(): void {
     const e = this.emprego();
     if (!e) return;
-    this.api.fgts(e.id).subscribe({ next: (f) => { this.fgts.set(f); this.erro.set(null); }, error: (err) => this.erro.set(mensagemDeErro(err)) });
+    const daTela = () => this.emprego()?.id === e.id;
+    this.api.fgts(e.id).subscribe({
+      next: (f) => { if (daTela()) { this.fgts.set(f); this.erro.set(null); } },
+      error: (err) => { if (daTela()) this.erro.set(mensagemDeErro(err)); }
+    });
   }
 
   lancar(): void {
