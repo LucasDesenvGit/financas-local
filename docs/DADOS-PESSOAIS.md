@@ -29,9 +29,9 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 
 | | |
 |---|---|
-| **O que é** | `Configuracao`: o Client ID da Pluggy, em texto, e o Client Secret da Pluggy e o token da brapi, criptografados com as chaves de `dados/chaves` |
-| **De onde vem** | De você: as da Pluggy em **Configurações › Open Finance**; o token da brapi em **Investimentos › Renda variável › fonte das cotações** |
-| **Sai do computador?** | Sim: as credenciais da Pluggy vão para `api.pluggy.ai`, e o token, para `brapi.dev` (no cabeçalho `Authorization`), por HTTPS |
+| **O que é** | `Configuracao`: o Client ID da Pluggy, em texto, e o Client Secret da Pluggy, criptografado com as chaves de `dados/chaves`. O token da brapi saiu na #763 (ADR 0072): a linha antiga é apagada pela rotina de partida (`internal/partida`) |
+| **De onde vem** | De você, em **Configurações › Open Finance** |
+| **Sai do computador?** | Sim: as credenciais da Pluggy vão para `api.pluggy.ai`, por HTTPS |
 | **Por quanto tempo** | Até você trocar ou remover |
 | **Como apagar** | Remova no mesmo lugar em que informou. A API nunca devolve o segredo |
 
@@ -82,7 +82,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | | |
 |---|---|
 | **O que é** | `Ativo`, `OperacaoAtivo`, `ProventoAtivo` e `PrecoMensalAtivo`: o que você tem, as quantidades e os preços |
-| **De onde vem** | De você, do extrato e do Open Finance. As cotações e os proventos vêm do Yahoo Finance e da brapi |
+| **De onde vem** | De você, do extrato e do Open Finance. As cotações e os proventos vêm do Yahoo Finance |
 | **Sai do computador?** | Só o código do ativo, para buscar a cotação. Quantidades e valores não saem |
 | **Por quanto tempo** | Até você apagar |
 | **Como apagar** | Em **Investimentos**: excluir a operação ou o ativo |
@@ -122,7 +122,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | | |
 |---|---|
 | **O que é** | `CotacaoMoeda` (PTAX), `CotacaoCripto`, `TaxaSelicDiaria`, `IndiceMensal` (como o IFIX) e `CategoriaPluggy` (as categorias que a Pluggy usa e a sua categoria para cada uma). Não são dados seus, a não ser a escolha da categoria |
-| **De onde vem** | Do Banco Central, do Mercado Bitcoin, do Yahoo Finance e da brapi, e da Pluggy |
+| **De onde vem** | Do Banco Central, do Mercado Bitcoin, do Yahoo Finance e da Pluggy |
 | **Sai do computador?** | Não: só entram. O que sai para buscá-los está na [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet) |
 | **Por quanto tempo** | Sem prazo |
 | **Como apagar** | Só apagando tudo |

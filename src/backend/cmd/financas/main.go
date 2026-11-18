@@ -108,7 +108,7 @@ func rodar(ctx context.Context) error {
 		temporario  = flag.Bool("certificado-temporario", false, "usar um certificado só em memória, sem o .pfx (desenvolvimento)")
 		caminhoDB   = flag.String("banco", "", "caminho do banco, no lugar do Banco:Caminho")
 		aplicar     = flag.Bool("aplicar-esquema", false, "criar e atualizar o banco antes de atender (a linha do serviço instalado sempre liga)")
-		partidaSo   = flag.Bool("rotinas-de-partida", false, "rodar as seis rotinas que acertam dados ao subir (#444), depois do esquema; use junto de -aplicar-esquema")
+		partidaSo   = flag.Bool("rotinas-de-partida", false, "rodar as sete rotinas que acertam dados ao subir (#444), depois do esquema; use junto de -aplicar-esquema")
 		pastaChaves = flag.String("chaves", "", "pasta da chave da sessão, no lugar do Seguranca:PastaChaves (padrão: dados/chaves, ao lado do banco)")
 		inicioRel   = flag.String("inicio-do-relogio", "", "só para teste (#363): o relógio começa neste instante e anda dali (RFC 3339 com fuso, ex.: 2026-10-15T01:00:00Z); vazio é o relógio do sistema")
 		ambienteEnv = os.Getenv("DOTNET_ENVIRONMENT")

@@ -33,8 +33,6 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("POST /api/carteira/conferencia/desfazer/{chave}", s.desfazerConferencia)
 	mux.HandleFunc("POST /api/carteira/conferencia/trocos-automaticos/desfazer", s.desfazerTrocos)
 	mux.HandleFunc("POST /api/carteira/conferencia/trocos-automaticos/dispensar", s.dispensarTrocos)
-	mux.HandleFunc("GET /api/carteira/configuracao", s.obterConfiguracao)
-	mux.HandleFunc("PUT /api/carteira/configuracao", s.salvarConfiguracao)
 }
 
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {

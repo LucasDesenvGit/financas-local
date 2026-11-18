@@ -25,7 +25,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 | `internal/plataforma/desfazer` | o estado de antes de uma alteração em lote, na memória e por 10 minutos, para o "Desfazer" (#78); reiniciar o serviço perde o Desfazer |
 | `internal/patrimonio/reservas` | as reservas (#82, ADRs 0010, 0037 e 0038), com as 3 rotas de `/api/reservas`: as reservas pelo extrato, pela conferência e pelo que o banco informa, e o Méli Dólar pela PTAX; as metas (#79), o painel (#80) e a carteira usam |
 | `internal/patrimonio/carteira` | a carteira de investimentos (#82): preço médio, posições, proventos, comparação com a Selic e os investimentos do Open Finance; as 18 rotas de `/api/carteira` (a carteira, os ativos e as operações, a configuração, os FIIs, a importação do extrato, a atualização das cotações e a conferência, #299) |
-| `internal/patrimonio/cotacoes` | as cotações (#82): cotações, proventos e históricos mensais pelo Yahoo Finance e pela brapi, e o IFIX |
+| `internal/patrimonio/cotacoes` | as cotações (#82): cotações, proventos e históricos mensais pelo Yahoo Finance (ADR 0072), e o IFIX |
 | `internal/patrimonio/selic` | a Selic (#82): a Selic diária e a meta pelo Banco Central, guardadas no banco, e o fator para comparar rentabilidades (em `float64`: é um fator, não dinheiro); a carteira usa |
 | `internal/movimentacao/transferencias` | as transferências (#77, ADR 0031): transferência entre contas suas fica fora dos relatórios; pagamento de fatura pareado no cartão |
 | `internal/movimentacao/tipolancamento` | o tipo de lançamento (#77, ADR 0025): como o dinheiro entrou ou saiu (Pix, fatura, estorno…) |
@@ -38,7 +38,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 | `internal/analises/relatorios` | a base dos relatórios (#447, ADRs 0031 e 0036): as transações que entram nos relatórios, o total por categoria, o orçamento do mês contra o gasto, as contas a pagar e o próximo vencimento, a janela dos últimos meses completos e a renda; sem rota, a #79 e a #80 usam |
 | `internal/patrimonio/emprestimos` | os totais dos empréstimos (#447, ADR 0014): saldo devedor e parcela mensal de financiamentos e de empréstimos; sem rota |
 | `internal/plataforma/texto` | as normalizações de texto das regras (sem acento, maiúsculas, palavras inteiras) e a ordem alfabética do pt-BR, conferidas por gabaritos |
-| `internal/partida` | as seis rotinas que acertam dados ao subir (#444): só a ordem, a transação de cada uma e o que fazer quando falha; a regra de cada uma fica no pacote do assunto. Ligadas por `-rotinas-de-partida`, na linha do serviço |
+| `internal/partida` | as sete rotinas que acertam dados ao subir (#444): só a ordem, a transação de cada uma e o que fazer quando falha; a regra de cada uma fica no pacote do assunto. Ligadas por `-rotinas-de-partida`, na linha do serviço |
 | `internal/openfinance/pluggy` | o cliente HTTP da Pluggy, sem SDK (#83, ADR 0006): sessão, paginação, novas tentativas e os modelos das respostas |
 | `internal/openfinance/openfinance` | as rotas do Open Finance (#83): credenciais, conexões, status, histórico e o mapa de categorias; quem traz os dados é o `internal/openfinance/sincronizacao` |
 | `internal/openfinance/sincronizacao` | a sincronização e a tarefa periódica (#83): contas, faturas, transações, investimentos, empréstimos e carteira, uma rodada por vez; sem rota |
@@ -107,7 +107,7 @@ go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financa
 - O `-certificado-temporario` cria um certificado só em memória, e o navegador vai avisar que não confia nele.
 - Para usar o `.pfx` e os caminhos de uma instalação, aponte `-pasta` para a pasta da publicação (onde está o `appsettings.Production.json`).
 - O `-aplicar-esquema` cria e atualiza o banco antes de atender (#297). A linha do serviço instalado sempre liga; em desenvolvimento, só com uma cópia do banco.
-- O `-rotinas-de-partida` roda as seis rotinas que acertam dados ao subir (`internal/partida`, #444): regras padrão novas, entradas nos cartões, compras parceladas estornadas, transferências, contas a pagar cobradas sozinhas e trocos sem dúvida, nesta ordem, uma transação por rotina. Use junto de `-aplicar-esquema` e só com uma cópia do banco. Erro numa rotina vira aviso (Configurações › Erros), a partida segue para as seguintes e o site sobe do mesmo jeito.
+- O `-rotinas-de-partida` roda as sete rotinas que acertam dados ao subir (`internal/partida`, #444): regras padrão novas, entradas nos cartões, compras parceladas estornadas, transferências, contas a pagar cobradas sozinhas, trocos sem dúvida e o token antigo da brapi (#763), nesta ordem, uma transação por rotina. Use junto de `-aplicar-esquema` e só com uma cópia do banco. Erro numa rotina vira aviso (Configurações › Erros), a partida segue para as seguintes e o site sobe do mesmo jeito.
 - O `-inicio-do-relogio 2026-10-15T01:00:00Z` é **só para teste** (#363): o relógio começa nesse instante e anda dali; o contrato usa. Sem ele, o relógio do sistema. Ligado, o Go deixa um aviso no log (Configurações › Erros).
 
 ## Antes de subir (push)

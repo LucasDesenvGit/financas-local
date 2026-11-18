@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/segredos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -26,29 +25,29 @@ type cena struct {
 	saida *bytes.Buffer
 }
 
-// novaCena é o serviço num banco vazio, hoje 30/10/2026 às 15h em Brasília, com o Yahoo e a brapi no serviço falso, onde
-// o que não tem rota é 404.
+// novaCena é o serviço num banco vazio, hoje 30/10/2026 às 15h em Brasília, com o Yahoo no serviço falso, onde o que não tem
+// rota é 404.
 func novaCena(t *testing.T) cena {
 	t.Helper()
 	db := testeapoio.NovoBancoVazio(t)
 	r := testeapoio.AgoraEmBrasilia(2026, 10, 30, 15, 0)
 	srv := testeapoio.NovoServicoDeFora(t, "Authorization")
 	srv.Em("GET", "*", testeapoio.RespostaDeFora{Status: http.StatusNotFound, Corpo: "{}"})
-	cliente, err := NovoCliente(srv.URL()+"/yahoo", srv.URL()+"/brapi", srv.Cliente())
+	cliente, err := NovoCliente(srv.URL()+"/yahoo", srv.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
 	var saida bytes.Buffer
-	s := NovoServico(db, cliente, semHistorico{}, cofreFalso{}, r, slog.New(slog.NewTextHandler(&saida, nil)))
+	s := NovoServico(db, cliente, semHistorico{}, r, slog.New(slog.NewTextHandler(&saida, nil)))
 	s.esperar = func(context.Context, time.Duration) error { return nil }
 	return cena{s: s, db: db, fab: testeapoio.NovaFabrica(t, db, r), srv: srv, saida: &saida}
 }
 
 const precoDez = `{"chart":{"result":[{"meta":{"regularMarketPrice":10}}]}}`
 
-// Regra: o que o CotacaoService faz com cada resposta estranha do Yahoo e da brapi (testdata/formatos-gabarito.json): o
-// que vira falha, o que vira aviso (as exceções do C#), o que passa sem nada, e o erro na segunda consulta, que perde o
-// preço da primeira.
+// Regra: o que o CotacaoService faz com cada resposta estranha do Yahoo (testdata/formatos-gabarito.json): o que vira
+// falha, o que vira aviso (as exceções do C#), o que passa sem nada, e o erro na segunda consulta, que perde o preço da
+// primeira. Os casos da brapi saíram com ela (#763).
 func TestFormatosIguaisAoCSharp(t *testing.T) {
 	bruto, err := os.ReadFile("testdata/formatos.json")
 	if err != nil {
@@ -58,7 +57,6 @@ func TestFormatosIguaisAoCSharp(t *testing.T) {
 		Nome      string `json:"nome"`
 		Dia       string `json:"dia"`
 		Mes       string `json:"mes"`
-		Brapi     string `json:"brapi"`
 		StatusDia int    `json:"statusDia"`
 		StatusMes int    `json:"statusMes"`
 	}
@@ -85,13 +83,10 @@ func TestFormatosIguaisAoCSharp(t *testing.T) {
 	if err := json.Unmarshal(bruto, &g); err != nil {
 		t.Fatal(err)
 	}
-	if len(casos) != len(g.Casos) || len(casos) < 100 {
+	if len(casos) != len(g.Casos) || len(casos) < 90 {
 		t.Fatalf("%d casos, %d no gabarito", len(casos), len(g.Casos))
 	}
 	c := novaCena(t)
-	if _, err := c.db.Exec(`INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES (?, 'token', 1, '2026-01-01 00:00:00')`, ChaveTokenBrapi); err != nil {
-		t.Fatal(err)
-	}
 	vazioOu := func(s string) string {
 		if s == "" {
 			return "{}"
@@ -106,11 +101,6 @@ func TestFormatosIguaisAoCSharp(t *testing.T) {
 		}
 		c.srv.Em("GET", "/yahoo/v8/finance/chart/ZZZZ3.SA", testeapoio.RespostaDeFora{Status: x.StatusDia, Corpo: vazioOu(x.Dia)},
 			testeapoio.RespostaDeFora{Status: x.StatusMes, Corpo: vazioOu(x.Mes)})
-		brapi := testeapoio.RespostaDeFora{Status: http.StatusNotFound, Corpo: "{}"}
-		if x.Brapi != "" {
-			brapi = testeapoio.RespostaDeFora{Corpo: x.Brapi}
-		}
-		c.srv.Em("GET", "/brapi/api/quote/ZZZZ3", brapi)
 		c.saida.Reset()
 		r, err := c.s.Atualizar(t.Context(), nil)
 		if err != nil {
@@ -181,22 +171,19 @@ func TestTipoDoJSON(t *testing.T) {
 // Regra: só HTTPS; a URL base ganha a barra do fim, como o BaseAddress; o cliente padrão tem os 20 s do Program.cs.
 func TestNovoCliente(t *testing.T) {
 	t.Parallel()
-	if _, err := NovoCliente("http://exemplo.test/", URLPadraoBrapi, nil); err == nil {
+	if _, err := NovoCliente("http://exemplo.test/", nil); err == nil {
 		t.Error("Yahoo sem HTTPS")
 	}
-	if _, err := NovoCliente(URLPadraoYahoo, "http://exemplo.test/", nil); err == nil {
-		t.Error("brapi sem HTTPS")
-	}
-	if _, err := NovoCliente("://quebrada", URLPadraoBrapi, nil); err == nil {
+	if _, err := NovoCliente("://quebrada", nil); err == nil {
 		t.Error("URL quebrada")
 	}
 	c := ClientePadrao()
-	if c.yahoo.String() != URLPadraoYahoo || c.brapi.String() != URLPadraoBrapi || c.http.Timeout != 20*time.Second {
-		t.Errorf("%s %s %s", c.yahoo, c.brapi, c.http.Timeout)
+	if c.yahoo.String() != URLPadraoYahoo || c.http.Timeout != 20*time.Second {
+		t.Errorf("%s %s", c.yahoo, c.http.Timeout)
 	}
-	c, err := NovoCliente("https://exemplo.test/y", "https://exemplo.test/b/", http.DefaultClient)
-	if err != nil || c.yahoo.Path != "/y/" || c.brapi.Path != "/b/" || c.http != http.DefaultClient {
-		t.Errorf("%s %s, %v", c.yahoo.Path, c.brapi.Path, err)
+	c, err := NovoCliente("https://exemplo.test/y", http.DefaultClient)
+	if err != nil || c.yahoo.Path != "/y/" || c.http != http.DefaultClient {
+		t.Errorf("%s, %v", c.yahoo.Path, err)
 	}
 }
 
@@ -209,7 +196,7 @@ func TestFaixaDoHistorico(t *testing.T) {
 	}{{2026, "5y"}, {2023, "5y"}, {2022, "10y"}, {2018, "10y"}, {2017, "max"}, {2000, "max"}}
 	for _, x := range casos {
 		c := novaCena(t)
-		cliente, err := NovoCliente(c.srv.URL(), c.srv.URL(), c.srv.Cliente())
+		cliente, err := NovoCliente(c.srv.URL(), c.srv.Cliente())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -247,93 +234,32 @@ func TestEscapar(t *testing.T) {
 	}
 }
 
-// Regra: o token vai só no cabeçalho, para a brapi, e não fica em lugar nenhum; o Yahoo vai com o agente de navegador.
+// Regra: o Yahoo vai com o agente de navegador, sem cabeçalho de autorização, e só a ele saem pedidos (a brapi saiu na
+// #763, mesmo com o token antigo ainda no banco).
 func TestCabecalhosDasFontes(t *testing.T) {
 	t.Parallel()
 	c := novaCena(t)
 	c.fab.Ativo(func(a *testeapoio.Ativo) { a.Ticker = "ABCD3" })
-	if _, err := c.db.Exec(`INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES (?, 'token-secreto', 1, '2026-01-01 00:00:00')`, ChaveTokenBrapi); err != nil {
+	if _, err := c.db.Exec(`INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES ('Cotacao.BrapiToken', 'token-antigo', 1, '2026-01-01 00:00:00')`); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := c.s.Atualizar(t.Context(), nil); err != nil {
 		t.Fatal(err)
 	}
-	var yahoo, brapi *testeapoio.Pedido
 	pedidos := c.srv.Pedidos()
-	for i := range pedidos {
-		p := &pedidos[i]
-		if strings.HasPrefix(p.Caminho, "/brapi/") {
-			brapi = p
-		} else if strings.Contains(p.Caminho, "ABCD3") {
-			yahoo = p
+	if len(pedidos) == 0 {
+		t.Fatal("nenhum pedido")
+	}
+	for _, p := range pedidos {
+		if !strings.HasPrefix(p.Caminho, "/yahoo/") {
+			t.Errorf("pedido fora do Yahoo: %s", p.URI)
+		}
+		if p.TemSegredo("Authorization") || p.Cabecalhos.Get("User-Agent") != agenteNavegador || p.Cabecalhos.Get("Accept") != "application/json" {
+			t.Errorf("%s: %v", p.URI, p.Cabecalhos)
 		}
 	}
-	if yahoo == nil || brapi == nil {
-		t.Fatalf("pedidos %v", pedidos)
-	}
-	if yahoo.TemSegredo("Authorization") || yahoo.Cabecalhos.Get("User-Agent") != agenteNavegador || yahoo.Cabecalhos.Get("Accept") != "application/json" {
-		t.Errorf("Yahoo: %v", yahoo.Cabecalhos)
-	}
-	if !brapi.TemSegredo("Authorization") || brapi.Cabecalhos.Get("User-Agent") != agenteDoCliente || brapi.URI != "/brapi/api/quote/ABCD3" {
-		t.Errorf("brapi: %+v", brapi)
-	}
-}
-
-// cofreQueFalha só decifra com o erro que o teste escolher.
-type cofreQueFalha struct{ erro error }
-
-func (c cofreQueFalha) Cifrar(_, s string) (string, error)   { return s, nil }
-func (c cofreQueFalha) Decifrar(_, _ string) (string, error) { return "", c.erro }
-
-// Regra: sem o cofre, ou sem token, ou com ele em branco, não há brapi; o token do .NET, que o Go não lê até a #85, é só
-// um aviso; outro erro do cofre para a atualização.
-func TestToken(t *testing.T) {
-	t.Parallel()
-	const quebrado = "quebrou"
-	casos := []struct {
-		nome  string
-		valor *string
-		cofre any
-		brapi bool
-		erro  bool
-		aviso bool
-	}{
-		{nome: "com token", valor: new("abc"), cofre: cofreFalso{}, brapi: true},
-		{nome: "sem o cofre", valor: new("abc")},
-		{nome: "sem a configuração", cofre: cofreFalso{}},
-		{nome: "em branco", valor: new("   "), cofre: cofreFalso{}},
-		{nome: "gravado pelo .NET", valor: new("abc"), cofre: cofreQueFalha{segredos.ErrInformarDeNovo}, aviso: true},
-		{nome: "cofre com erro", valor: new("abc"), cofre: cofreQueFalha{errors.New(quebrado)}, erro: true},
-	}
-	for _, x := range casos {
-		t.Run(x.nome, func(t *testing.T) {
-			t.Parallel()
-			c := novaCena(t)
-			c.fab.Ativo(func(a *testeapoio.Ativo) { a.Ticker = "ABCD3" })
-			c.s.cofre = nil
-			if f, ok := x.cofre.(cofreFalso); ok {
-				c.s.cofre = f
-			}
-			if f, ok := x.cofre.(cofreQueFalha); ok {
-				c.s.cofre = f
-			}
-			if x.valor != nil {
-				if _, err := c.db.Exec(`INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES (?, ?, 1, '2026-01-01 00:00:00')`, ChaveTokenBrapi, *x.valor); err != nil {
-					t.Fatal(err)
-				}
-			}
-			_, err := c.s.Atualizar(t.Context(), nil)
-			if (err != nil) != x.erro {
-				t.Fatalf("erro %v", err)
-			}
-			usouBrapi := false
-			for _, p := range c.srv.Pedidos() {
-				usouBrapi = usouBrapi || strings.HasPrefix(p.Caminho, "/brapi/")
-			}
-			if usouBrapi != x.brapi || strings.Contains(c.saida.String(), "informado de novo") != x.aviso {
-				t.Errorf("brapi %v, log %q", usouBrapi, c.saida.String())
-			}
-		})
+	if strings.Contains(c.saida.String(), "brapi") {
+		t.Errorf("log fala da brapi: %s", c.saida.String())
 	}
 }
 

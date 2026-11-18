@@ -96,18 +96,6 @@
     {"nome":"mês, só um dividendo","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[{"DataCom":"2026-03-30","ValorPorCota":"1.0"}],"mensais":[]},
     {"nome":"dia com status de erro","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
     {"nome":"mês com status de erro","resultado":{"atualizados":1,"falhas":0},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":"10.0","PrecoAnterior":null,"FonteCotacao":"Yahoo Finance"}],"proventos":[],"mensais":[]},
-    {"nome":"o último status de sucesso","resultado":{"atualizados":1,"falhas":0},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":"10.0","PrecoAnterior":null,"FonteCotacao":"Yahoo Finance"}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: objeto vazio","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: lista na raiz","resultado":{"atualizados":0,"falhas":1},"avisos":1,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: nulo na raiz","resultado":{"atualizados":0,"falhas":1},"avisos":1,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: JSON quebrado","resultado":{"atualizados":0,"falhas":1},"avisos":1,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: results número","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: results vazio","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: item número","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: item nulo","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: sem preço","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: preço em texto","resultado":{"atualizados":0,"falhas":1},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":null,"PrecoAnterior":null,"FonteCotacao":null}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: com tudo","resultado":{"atualizados":1,"falhas":0},"avisos":0,"ativo":[{"Nome":"Longo","PrecoAtual":"5.0","PrecoAnterior":"4.0","FonteCotacao":"brapi.dev"}],"proventos":[],"mensais":[]},
-    {"nome":"brapi: anterior nulo","resultado":{"atualizados":1,"falhas":0},"avisos":0,"ativo":[{"Nome":"Curto","PrecoAtual":"5.0","PrecoAnterior":null,"FonteCotacao":"brapi.dev"}],"proventos":[],"mensais":[]}
+    {"nome":"o último status de sucesso","resultado":{"atualizados":1,"falhas":0},"avisos":0,"ativo":[{"Nome":null,"PrecoAtual":"10.0","PrecoAnterior":null,"FonteCotacao":"Yahoo Finance"}],"proventos":[],"mensais":[]}
   ]
 }

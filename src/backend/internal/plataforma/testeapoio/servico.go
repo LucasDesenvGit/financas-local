@@ -47,7 +47,7 @@ type Pedido struct {
 	Corpo      string
 }
 
-// ServicoDeFora é um serviço de fora (a PTAX, o Mercado Bitcoin, o Yahoo, a brapi, o BCB, a Pluggy) num servidor HTTPS
+// ServicoDeFora é um serviço de fora (a PTAX, o Mercado Bitcoin, o Yahoo, o BCB, a Pluggy) num servidor HTTPS
 // de teste: responde a cada pedido pela rota cadastrada (o método e o caminho, sem a query) e guarda o que recebeu para
 // o teste conferir. Pedido sem rota é erro do teste, e o serviço responde 404. Nada sai para a rede (ADR 0051).
 //

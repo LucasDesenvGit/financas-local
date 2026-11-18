@@ -38,7 +38,7 @@ const posicao = (id: number, ticker: string, resultado: number, selic: number) =
   precoAtualEmReais: 105, precoAnterior: 104, variacaoDia: 0.5, valorMercado: 1050, valorizacao: 50, valorizacaoPercentual: 5,
   lucroRealizado: 0, proventosRecebidos: 30, proventos12Meses: 30, dividendYield12Meses: 9, resultadoTotal: 80,
   resultadoTotalPercentual: resultado, valorSeFosseSelic: 1060, diferencaSelic: 20, resultadoSelicPercentual: selic,
-  primeiraCompra: '2025-01-10', ultimoProvento: null, precoManual: false, precoAtualizadoEm: null, fonteCotacao: 'brapi',
+  primeiraCompra: '2025-01-10', ultimoProvento: null, precoManual: false, precoAtualizadoEm: null, fonteCotacao: 'Yahoo Finance',
   semCotacao: false, segmento: null
 });
 

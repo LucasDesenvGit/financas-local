@@ -45,7 +45,7 @@ flowchart TB
 
     subgraph internet["Serviços de fora"]
         pluggy["Pluggy"]
-        cotacoes["Banco Central, Yahoo,<br/>brapi, Mercado Bitcoin"]
+        cotacoes["Banco Central, Yahoo,<br/>Mercado Bitcoin"]
         noticias["G1, BBC e TabNews<br/>(módulo Notícias ligado)"]
         github["GitHub"]
     end
@@ -92,7 +92,7 @@ Até a #86, a API em .NET ficava na frente e repassava ao Go, num processo filho
 | **Falsificação** | Um servidor se passa pela Pluggy, pela cotação ou por uma fonte de notícias | HTTPS, com host fixo no código. A URL da Pluggy é recusada se não for HTTPS. As notícias só seguem redirecionamento para o mesmo host (até 2) | — |
 | **Adulteração** | Resposta alterada no caminho | HTTPS. A resposta é lida em tipos, com validação | — |
 | **Repúdio** | Não saber o que foi trazido | `SincronizacaoLog` | — |
-| **Vazamento** | O destino fica sabendo mais do que deve | Só o mínimo, por HTTPS ([tabela](SEGURANCA.md#o-que-sai-para-a-internet)). O Client Secret só vai para a Pluggy. As fontes de notícias recebem só o pedido do feed, e só com o módulo ligado (desligado por padrão, ADR 0067) | Os códigos dos ativos, com as datas, mostram a carteira ao Yahoo e à brapi (#68, complemento) |
+| **Vazamento** | O destino fica sabendo mais do que deve | Só o mínimo, por HTTPS ([tabela](SEGURANCA.md#o-que-sai-para-a-internet)). O Client Secret só vai para a Pluggy. As fontes de notícias recebem só o pedido do feed, e só com o módulo ligado (desligado por padrão, ADR 0067) | Os códigos dos ativos, com as datas, mostram a carteira ao Yahoo (#68, complemento) |
 | **Negação de serviço** | Um serviço de fora trava ou cai | Tempo limite em cada cliente, e a falha de cotação não para o resto. As notícias: 15 s e 2 MB por fonte, e uma fonte que falha não derruba as outras | — |
 | **Aumento de privilégio** | Texto de fora vira código | O Angular escapa o texto, não há `innerHTML`, e as consultas são parametrizadas. O link de uma notícia só é guardado se for `https://` no domínio da fonte (barra `javascript:`), e abre fora do site com `noopener noreferrer` (#10) | — |
 

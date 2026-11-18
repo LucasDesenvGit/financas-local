@@ -93,12 +93,12 @@ A pasta `dados\chaves` guarda as chaves que protegem os segredos gravados no ban
 
 | Deixa de abrir | Continua funcionando |
 |---|---|
-| Client Secret da Pluggy e token da brapi | Todas as transações, contas, metas e investimentos, que não usam essas chaves |
+| Client Secret da Pluggy | Todas as transações, contas, metas e investimentos, que não usam essas chaves |
 | A sessão aberta no navegador: entre de novo | A senha do site, que fica no banco |
 | Com o acesso pelo celular ligado, a autoridade do celular: o site cria outra ao subir, e o celular precisa instalá-la de novo | O endereço do celular, que fica no banco |
 | — | O botão do gerenciador que liga e desliga o acesso pelo celular: o segredo dele (`gerenciador-celular.chave`, #684) é criado de novo ao subir, sem nada a fazer |
 
-**O que fazer:** informe o Client Secret da Pluggy e o token da brapi de novo em **Configurações**. O sistema cria chaves novas sozinho. Usa o acesso pelo celular? No celular, remova o certificado antigo "Finanças Local (celular)" e instale o novo, como no Manual (Configurações › Segurança).
+**O que fazer:** informe o Client Secret da Pluggy de novo em **Configurações**. O sistema cria chaves novas sozinho. Usa o acesso pelo celular? No celular, remova o certificado antigo "Finanças Local (celular)" e instale o novo, como no Manual (Configurações › Segurança).
 
 **Instalou pelos scripts?** O certificado do site também fica nessa pasta (`dados/chaves/financaslocal.pfx`). Rode `scripts/geral/3-publicar-atualizar.sh` para criar outro. No `.msi`, ele fica em `dados\certificado`.
 
@@ -137,6 +137,6 @@ Os erros mais comuns do instalador estão em [Problemas comuns](PROBLEMAS-COMUNS
 
 ### Voltar à última versão com o .NET
 
-O back-end é só o Go desde a #86. Como último recurso, a última versão com o .NET está na tag `v-ultimo-dotnet`: `git checkout v-ultimo-dotnet` e o `instalar.sh` (no Windows sem bash, o `instalar-windows.cmd`). O banco é o mesmo, mas o Client Secret da Pluggy e o token da brapi gravados pelo Go não abrem no .NET e precisam ser informados de novo.
+O back-end é só o Go desde a #86. Como último recurso, a última versão com o .NET está na tag `v-ultimo-dotnet`: `git checkout v-ultimo-dotnet` e o `instalar.sh` (no Windows sem bash, o `instalar-windows.cmd`). O banco é o mesmo, mas o Client Secret da Pluggy gravado pelo Go não abre no .NET e precisa ser informado de novo (o .NET ainda usava a brapi, que saiu na #763).
 
 A mesma tag tem a ferramenta que trazia uma instalação antiga com IIS e SQL Server Express para o SQLite (`Financas.MigrarSqlite`), com o passo a passo no guia de instalação daquela versão.

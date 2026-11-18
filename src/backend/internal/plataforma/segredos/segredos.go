@@ -1,4 +1,4 @@
-// Pacote segredos é o esquema novo dos segredos da tabela Configuracao (Client Secret da Pluggy, token da brapi),
+// Pacote segredos é o esquema novo dos segredos da tabela Configuracao (o Client Secret da Pluggy; o token da brapi saiu na #763),
 // que substitui o ASP.NET Data Protection na inversão (#85, ADR 0049; a 0005 fica substituída).
 //
 //   - Cifra: AES-256-GCM com nonce aleatório de 96 bits, novo a cada gravação (cipher.NewGCMWithRandomNonce: quem

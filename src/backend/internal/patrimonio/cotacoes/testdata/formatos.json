@@ -3,7 +3,6 @@
   "nome": "dia: objeto vazio",
   "dia": "{}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -11,7 +10,6 @@
   "nome": "mês: objeto vazio",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -19,7 +17,6 @@
   "nome": "dia: chart nulo",
   "dia": "{\"chart\":null}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -27,7 +24,6 @@
   "nome": "mês: chart nulo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":null}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -35,7 +31,6 @@
   "nome": "dia: chart número",
   "dia": "{\"chart\":5}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -43,7 +38,6 @@
   "nome": "mês: chart número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":5}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -51,7 +45,6 @@
   "nome": "dia: sem result",
   "dia": "{\"chart\":{}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -59,7 +52,6 @@
   "nome": "mês: sem result",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":{}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -67,7 +59,6 @@
   "nome": "dia: result nulo",
   "dia": "{\"chart\":{\"result\":null}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -75,7 +66,6 @@
   "nome": "mês: result nulo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":{\"result\":null}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -83,7 +73,6 @@
   "nome": "dia: result objeto",
   "dia": "{\"chart\":{\"result\":{}}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -91,7 +80,6 @@
   "nome": "mês: result objeto",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":{\"result\":{}}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -99,7 +87,6 @@
   "nome": "dia: result vazio",
   "dia": "{\"chart\":{\"result\":[]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -107,7 +94,6 @@
   "nome": "mês: result vazio",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":{\"result\":[]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -115,7 +101,6 @@
   "nome": "dia: lista na raiz",
   "dia": "[]",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -123,7 +108,6 @@
   "nome": "mês: lista na raiz",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "[]",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -131,7 +115,6 @@
   "nome": "dia: nulo na raiz",
   "dia": "null",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -139,7 +122,6 @@
   "nome": "mês: nulo na raiz",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "null",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -147,7 +129,6 @@
   "nome": "dia: número na raiz",
   "dia": "5",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -155,7 +136,6 @@
   "nome": "mês: número na raiz",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "5",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -163,7 +143,6 @@
   "nome": "dia: texto na raiz",
   "dia": "\"x\"",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -171,7 +150,6 @@
   "nome": "mês: texto na raiz",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "\"x\"",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -179,7 +157,6 @@
   "nome": "dia: item nulo",
   "dia": "{\"chart\":{\"result\":[null]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -187,7 +164,6 @@
   "nome": "mês: item nulo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":{\"result\":[null]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -195,7 +171,6 @@
   "nome": "dia: item número",
   "dia": "{\"chart\":{\"result\":[5]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -203,7 +178,6 @@
   "nome": "mês: item número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":{\"result\":[5]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -211,7 +185,6 @@
   "nome": "dia: item sem nada",
   "dia": "{\"chart\": {\"result\": [{}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -219,7 +192,6 @@
   "nome": "mês: item sem nada",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\": {\"result\": [{}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -227,7 +199,6 @@
   "nome": "dia: JSON quebrado",
   "dia": "{\"chart\":",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -235,7 +206,6 @@
   "nome": "mês: JSON quebrado",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\":",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -243,7 +213,6 @@
   "nome": "dia: vazio",
   "dia": "",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -251,7 +220,6 @@
   "nome": "mês: vazio",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -259,7 +227,6 @@
   "nome": "meta número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": 5}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -267,7 +234,6 @@
   "nome": "meta nulo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": null}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -275,7 +241,6 @@
   "nome": "preço em texto",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": \"10\"}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -283,7 +248,6 @@
   "nome": "preço nulo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": null}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -291,7 +255,6 @@
   "nome": "preço com expoente",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 150.0}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -299,7 +262,6 @@
   "nome": "preço negativo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": -5}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -307,7 +269,6 @@
   "nome": "preço enorme",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 1e+30}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -315,7 +276,6 @@
   "nome": "preço pequeníssimo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 1e-40}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -323,7 +283,6 @@
   "nome": "nome em número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"longName\": 5, \"shortName\": \"Curto\"}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -331,7 +290,6 @@
   "nome": "nome vazio",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"longName\": \"\", \"shortName\": \"Curto\"}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -339,7 +297,6 @@
   "nome": "nome só com espaços",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"longName\": \"   \"}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -347,7 +304,6 @@
   "nome": "moeda em número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"currency\": 5}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -355,7 +311,6 @@
   "nome": "anterior em texto",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": \"9\", \"chartPreviousClose\": 8}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -363,7 +318,6 @@
   "nome": "anterior negativo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": -9}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -371,7 +325,6 @@
   "nome": "preço, indicators número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": 5}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -379,7 +332,6 @@
   "nome": "preço, sem quote",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -387,7 +339,6 @@
   "nome": "preço, quote número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": 5}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -395,7 +346,6 @@
   "nome": "preço, quote vazio",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": []}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -403,7 +353,6 @@
   "nome": "preço, quote com número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": [5]}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -411,7 +360,6 @@
   "nome": "preço, quote com nulo",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": [null]}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -419,7 +367,6 @@
   "nome": "preço, sem close",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": [{}]}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -427,7 +374,6 @@
   "nome": "preço, close número",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": [{\"close\": 5}]}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -435,7 +381,6 @@
   "nome": "preço, close com dois",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": [{\"close\": [8, 9]}]}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -443,7 +388,6 @@
   "nome": "preço, close com nulos",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": [{\"close\": [null, 8, null, 9, null]}]}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -451,7 +395,6 @@
   "nome": "preço, close com texto",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10, \"previousClose\": 3}, \"indicators\": {\"quote\": [{\"close\": [\"8\", 7, 9]}]}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -459,7 +402,6 @@
   "nome": "mês, sem timestamp",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"indicators\": {\"quote\": [{\"close\": [5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -467,7 +409,6 @@
   "nome": "mês, timestamp número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": 5, \"indicators\": {\"quote\": [{\"close\": [5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -475,7 +416,6 @@
   "nome": "mês, sem indicators",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000]}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -483,7 +423,6 @@
   "nome": "mês, indicators número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": 5}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -491,7 +430,6 @@
   "nome": "mês, sem quote",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -499,7 +437,6 @@
   "nome": "mês, quote número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": 5}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -507,7 +444,6 @@
   "nome": "mês, quote vazio",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": []}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -515,7 +451,6 @@
   "nome": "mês, quote com número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": [5]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -523,7 +458,6 @@
   "nome": "mês, sem close",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": [{}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -531,7 +465,6 @@
   "nome": "mês, close número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": [{\"close\": 5}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -539,7 +472,6 @@
   "nome": "mês, data nula",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [null], \"indicators\": {\"quote\": [{\"close\": [5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -547,7 +479,6 @@
   "nome": "mês, data em texto",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [\"1\"], \"indicators\": {\"quote\": [{\"close\": [5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -555,7 +486,6 @@
   "nome": "mês, data não inteira",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1.5, 1774962000], \"indicators\": {\"quote\": [{\"close\": [5, 6]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -563,7 +493,6 @@
   "nome": "mês, menos fechamentos que datas",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000, 1774962100], \"indicators\": {\"quote\": [{\"close\": [5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -571,7 +500,6 @@
   "nome": "mês, menos datas que fechamentos",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": [{\"close\": [5, 6]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -579,7 +507,6 @@
   "nome": "mês, fechamento negativo",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": [{\"close\": [-5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -587,7 +514,6 @@
   "nome": "mês, só o histórico",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": [{\"close\": [5.5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -595,7 +521,6 @@
   "nome": "dia: sem meta, indicators número",
   "dia": "{\"chart\": {\"result\": [{\"indicators\": 5}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -603,7 +528,6 @@
   "nome": "dia: sem meta, com fechamentos",
   "dia": "{\"chart\": {\"result\": [{\"indicators\": {\"quote\": [{\"close\": [8, 9]}]}}]}}",
   "mes": "{\"chart\": {\"result\": [{\"timestamp\": [1774962000], \"indicators\": {\"quote\": [{\"close\": [5]}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -611,7 +535,6 @@
   "nome": "mês, events número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": 5}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -619,7 +542,6 @@
   "nome": "mês, events nulo",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": null}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -627,7 +549,6 @@
   "nome": "mês, sem dividends",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -635,7 +556,6 @@
   "nome": "mês, dividends número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": 5}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -643,7 +563,6 @@
   "nome": "mês, dividends lista",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": []}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -651,7 +570,6 @@
   "nome": "mês, dividends lista com item",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": [{\"amount\": 1, \"date\": 1774962000}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -659,7 +577,6 @@
   "nome": "mês, dividends lista enganosa",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": [\"x\", {\"amount\": 1, \"date\": 1774962000}]}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -667,7 +584,6 @@
   "nome": "mês, dividendo número",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": 5}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -675,7 +591,6 @@
   "nome": "mês, valor em texto",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": \"1\", \"date\": 1774962000}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -683,7 +598,6 @@
   "nome": "mês, sem data",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": 1}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -691,7 +605,6 @@
   "nome": "mês, data em texto",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": 1, \"date\": \"1\"}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -699,7 +612,6 @@
   "nome": "mês, data nula",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": 1, \"date\": null}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -707,7 +619,6 @@
   "nome": "mês, data não inteira",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": 1, \"date\": 1.5}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -715,7 +626,6 @@
   "nome": "mês, valor negativo",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": -1, \"date\": 1774962000}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -723,7 +633,6 @@
   "nome": "mês, só um dividendo",
   "dia": "",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": 1, \"date\": 1774962000}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 200
  },
@@ -731,7 +640,6 @@
   "nome": "dia com status de erro",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 500,
   "statusMes": 200
  },
@@ -739,7 +647,6 @@
   "nome": "mês com status de erro",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "{\"chart\": {\"result\": [{\"events\": {\"dividends\": {\"a\": {\"amount\": 1, \"date\": 1774962000}}}}]}}",
-  "brapi": "",
   "statusDia": 200,
   "statusMes": 500
  },
@@ -747,104 +654,7 @@
   "nome": "o último status de sucesso",
   "dia": "{\"chart\": {\"result\": [{\"meta\": {\"regularMarketPrice\": 10}}]}}",
   "mes": "",
-  "brapi": "",
   "statusDia": 299,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: objeto vazio",
-  "dia": "",
-  "mes": "",
-  "brapi": "{}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: lista na raiz",
-  "dia": "",
-  "mes": "",
-  "brapi": "[]",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: nulo na raiz",
-  "dia": "",
-  "mes": "",
-  "brapi": "null",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: JSON quebrado",
-  "dia": "",
-  "mes": "",
-  "brapi": "{",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: results número",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":5}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: results vazio",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":[]}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: item número",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":[5]}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: item nulo",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":[null]}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: sem preço",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":[{\"longName\":\"X\"}]}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: preço em texto",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":[{\"regularMarketPrice\":\"5\"}]}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: com tudo",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":[{\"regularMarketPrice\":5,\"regularMarketPreviousClose\":4,\"longName\":\"Longo\",\"shortName\":\"Curto\"}]}",
-  "statusDia": 200,
-  "statusMes": 200
- },
- {
-  "nome": "brapi: anterior nulo",
-  "dia": "",
-  "mes": "",
-  "brapi": "{\"results\":[{\"regularMarketPrice\":5,\"regularMarketPreviousClose\":null,\"shortName\":\"Curto\"}]}",
-  "statusDia": 200,
   "statusMes": 200
  }
 ]

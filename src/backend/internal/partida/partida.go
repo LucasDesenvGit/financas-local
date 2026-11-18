@@ -1,5 +1,5 @@
 // Pacote partida são as rotinas que acertam dados toda vez que a API sobe (Program.cs do .NET, logo depois do
-// EsquemaBanco.Aplicar): seis, sempre nesta ordem, que importa (#444).
+// EsquemaBanco.Aplicar): sete, sempre nesta ordem, que importa (#444). As seis primeiras vêm do .NET.
 //
 //  1. regras padrão novas, uma vez por banco, com marca em Configuracao (ADR 0038, #172);
 //  2. entrada no cartão é estorno ou pagamento de fatura, nunca receita (ADR 0036, #166);
@@ -7,7 +7,8 @@
 //     estorno (despesa positiva) a entrada que o banco mandou como receita;
 //  4. transferência só fica fora dos relatórios entre contas suas (ADR 0031);
 //  5. cobrança automática que chegou dá baixa na conta a pagar (#158);
-//  6. troco "sem dúvida" das compras de renda variável vai para a categoria da compra (ADR 0044, #173).
+//  6. troco "sem dúvida" das compras de renda variável vai para a categoria da compra (ADR 0044, #173);
+//  7. o token da brapi que ficou guardado é apagado: a fonte saiu (ADR 0072, #763).
 //
 // A regra de cada uma mora no pacote do assunto dela (categorizacao, transferencias, cobrancas, carteira), numa função
 // só: a sincronização (#83) chama as mesmas depois de cada rodada. Aqui só ficam a ordem, a transação de cada rotina e o
@@ -54,6 +55,7 @@ const (
 	Transferencias              = "transferências"
 	ContasAPagar                = "contas a pagar cobradas sozinhas"
 	TrocosSemDuvida             = "trocos sem dúvida"
+	TokenDaBrapi                = "token antigo da brapi"
 )
 
 // rotina é um passo da partida. Cada uma grava o que acertou (a própria transação) antes de a próxima começar.
@@ -62,7 +64,7 @@ type rotina struct {
 	executar func(ctx context.Context) (int, error)
 }
 
-// Executar roda as seis rotinas, na ordem do .NET, e devolve o que cada uma fez (só as que rodaram). Erro numa rotina não
+// Executar roda as sete rotinas, na ordem do .NET (a sétima é do Go), e devolve o que cada uma fez (só as que rodaram). Erro numa rotina não
 // derruba a subida: é registrado como aviso (que vai para Configurações › Erros) e a partida segue para a próxima (#444);
 // a que falhou desfez o que fez e roda de novo na próxima partida. Diferente do try/catch único do Program.cs, que para
 // na primeira: cada rotina tem a transação dela, então seguir não deixa nada pela metade, e uma rotina quebrada não
@@ -71,8 +73,8 @@ func Executar(ctx context.Context, o Opcoes) []Resultado {
 	return executar(ctx, o.Log, rotinas(o))
 }
 
-// rotinas são as seis, na ordem. As cinco primeiras gravam numa transação cada uma (o SaveChanges do .NET entre uma e
-// outra); a última tem a transação dela, como o ClassificarTrocosSemDuvidaAsync, que grava sozinho.
+// rotinas são as sete, na ordem. As cinco primeiras e a sétima gravam numa transação cada uma (o SaveChanges do .NET entre
+// uma e outra); a sexta tem a transação dela, como o ClassificarTrocosSemDuvidaAsync, que grava sozinho.
 func rotinas(o Opcoes) []rotina {
 	emTransacao := func(fn func(ctx context.Context, tx *sql.Tx) (int, error)) func(context.Context) (int, error) {
 		return func(ctx context.Context) (int, error) {
@@ -106,6 +108,7 @@ func rotinas(o Opcoes) []rotina {
 			return cobrancas.Conciliar(ctx, tx, relogio.Hoje(o.Relogio), agora())
 		})},
 		{TrocosSemDuvida, trocos.ClassificarTrocosSemDuvida},
+		{TokenDaBrapi, emTransacao(carteira.ApagarTokenDaBrapi)},
 	}
 }
 

@@ -103,7 +103,6 @@ export class InvestimentosComponent implements OnInit {
   readonly ativoAberto = signal<PosicaoAtivo | null>(null);
   readonly operacoes = signal<OperacaoAtivo[]>([]);
   readonly configAberta = signal(false);
-  readonly tokenConfigurado = signal(false);
   readonly versaoCarteira = signal(0);
   readonly importacaoAberta = signal(false);
   readonly conferenciaAberta = signal(false);
@@ -125,7 +124,6 @@ export class InvestimentosComponent implements OnInit {
   readonly ativoEditado = signal<PosicaoAtivo | null>(null);
   formConferencia: FormConferencia | null = null;
   formNome: { investimento: InvestimentoComparado; nome: string } | null = null;
-  tokenBrapi = '';
   private atualizouAutomatico = false;
   private importouAutomatico = false;
   readonly importandoOpenFinance = signal(false);
@@ -526,20 +524,6 @@ export class InvestimentosComponent implements OnInit {
   /* ------------------------------ configuração ------------------------------ */
 
   abrirConfiguracao(): void {
-    this.tokenBrapi = '';
     this.configAberta.set(true);
-    this.api.configuracaoCotacao().subscribe((c) => this.tokenConfigurado.set(c.tokenBrapiConfigurado));
-  }
-
-  salvarToken(remover: boolean): void {
-    if (!remover && !this.tokenBrapi.trim()) return;
-    this.api.salvarConfiguracaoCotacao(remover ? null : this.tokenBrapi.trim(), remover).subscribe({
-      next: () => {
-        this.tokenBrapi = '';
-        this.tokenConfigurado.set(!remover);
-        this.avisos.sucesso(remover ? 'Token removido.' : 'Token salvo.');
-      },
-      error: (e) => this.avisos.erro(mensagemDeErro(e))
-    });
   }
 }
