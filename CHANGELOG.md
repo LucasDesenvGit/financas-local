@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.25.2] — 2026-11-18 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0071 (proposta): Manual do site com prints gerados das telas** (#752, revê a ADR 0026). Responde aos três motivos da 0026 contra prints com medidas: prints gerados pelo Playwright com a API falsa (dados inventados), cortados no trecho da tela, que saem iguais byte a byte quando a tela não muda; ~13 KiB por print em WebP, contra ~37 KiB em PNG e ~8 KiB em AVIF, ou seja, de 0,75 a 1,5 MiB para 30 a 60 tópicos nos dois temas, num build de 1,9 MiB; e o texto alternativo obrigatório no dado da seção. Propõe um print por tema, só do computador, guardado no git e regerado antes de cada versão estável, sem comparação de pixels na CI. Traz as perguntas para a equipe. Só a ADR: nada muda no site nem no Manual até ela ser aceita.
+
 ## [3.25.1] — 2026-11-18 · desenvolvimento
 
 ### Publicação e documentação
