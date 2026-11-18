@@ -32,7 +32,7 @@ func TestCriar(t *testing.T) {
 	resp.ConferirJSON(t, fmt.Sprintf(`{"id":%d,"contaId":%d,"contaNome":"Carteira","openFinance":false,"data":"2026-10-10",
 		"descricao":"Feira do bairro","descricaoOriginal":null,"estabelecimento":null,"valor":-120.35,"tipo":1,"status":1,
 		"categoriaId":%d,"categoriaNome":"Mercado","categoriaCor":"#64748b","parcelaNumero":null,"parcelaTotal":null,
-		"ignorarRelatorios":true,"observacao":null,"emergencia":true,"tipoLancamento":0,"regraDescricaoId":null}`,
+		"ignorarRelatorios":true,"observacao":null,"emergencia":true,"tipoLancamento":0,"regraDescricaoId":null,"reservaNome":null}`,
 		criada.Id, conta.Id, mercado.Id))
 	var manual, emergencia int64
 	var valor, criadoEm string

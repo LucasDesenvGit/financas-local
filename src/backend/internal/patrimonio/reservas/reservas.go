@@ -132,7 +132,7 @@ func (s *Servico) pagosPeloCofrinho(ctx context.Context) ([]movimento, error) {
 			return nil, fmt.Errorf("ler lançamento pago pelo cofrinho: %w", err)
 		}
 		m.nome = strings.TrimFunc(m.nome, unicode.IsSpace)
-		if m.nome == "" || ehNomeMeliDolar(m.nome) {
+		if m.nome == "" || EhNomeMeliDolar(m.nome) {
 			continue
 		}
 		m.valor, m.doApp = tipos.DeDecimal(m.valor.Decimal().Neg()), true
@@ -290,7 +290,7 @@ func (s *Servico) Listar(ctx context.Context) ([]ReservaDto, error) {
 		grupos[k] = append(grupos[k], m)
 	}
 	for _, c := range conferidas {
-		if k := (chave{c.conta, texto.MaiusculasInvariantes(c.nome)}); !ehNomeMeliDolar(c.nome) && !slices.Contains(chaves, k) {
+		if k := (chave{c.conta, texto.MaiusculasInvariantes(c.nome)}); !EhNomeMeliDolar(c.nome) && !slices.Contains(chaves, k) {
 			chaves = append(chaves, k)
 		}
 	}
@@ -394,7 +394,7 @@ func (s *Servico) meliDolar(ctx context.Context) ([]ReservaDto, error) {
 	}
 	var conferidas []conferida
 	for _, c := range todas {
-		if ehNomeMeliDolar(c.nome) {
+		if EhNomeMeliDolar(c.nome) {
 			conferidas = append(conferidas, c)
 		}
 	}
@@ -638,7 +638,7 @@ func (s *Servico) gravarConferencia(ctx context.Context, q consultas.DBTX, conta
 	}
 	nome = strings.TrimFunc(nome, unicode.IsSpace)
 	casas := int32(2)
-	if ehNomeMeliDolar(nome) {
+	if EhNomeMeliDolar(nome) {
 		nome, casas = NomeMeliDolar, 8
 		if moedaInformada != nil && *moedaInformada == cambio.MoedaBase {
 			cotacao, err := s.cambio.ObterCotacao(ctx, MoedaMeliDolar, &data)

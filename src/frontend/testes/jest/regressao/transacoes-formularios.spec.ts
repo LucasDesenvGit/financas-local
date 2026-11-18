@@ -1,7 +1,9 @@
 import { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Conta, TipoTransacao } from '../../../src/app/core/modelos';
-import { FormTransacao, FormTransferencia, formNovo } from '../../../src/app/paginas/movimentacao/transacoes';
+import { Conta, OrigemConta, Reserva, TipoTransacao } from '../../../src/app/core/modelos';
+import {
+  FormTransacao, FormTransferencia, contasComCofrinho, formNovo, trocarContaDoLancamento, transacaoDoForm
+} from '../../../src/app/paginas/movimentacao/transacoes';
 import { TransacoesLancamentoComponent } from '../../../src/app/paginas/movimentacao/transacoes-lancamento.component';
 import { TransacoesTransferenciaComponent } from '../../../src/app/paginas/movimentacao/transacoes-transferencia.component';
 
@@ -100,14 +102,89 @@ describe('Regressão: janela do lançamento em Transações (#475)', () => {
     expect(t.componente.dados()!.categoriaId).toBe(21);
   });
 
-  it('sem conta manual, diz onde criar uma', async () => {
-    const t = await abrir(manual({ contaId: null }), { contasManuais: [] });
+  it('sem conta manual nem cofrinho, a lista fica desabilitada e diz onde criar uma (#758)', async () => {
+    const t = await abrir(manual({ contaId: null }), { contasManuais: [], reservas: [] });
     expect(t.raiz.querySelector('.erro')!.textContent).toContain('Crie uma conta manual');
+    expect(t.raiz.querySelector<HTMLSelectElement>('select[name=conta]')!.disabled).toBe(true);
+    expect(t.botao('Salvar')!.disabled).toBe(true);
+  });
+
+  it('com as reservas ainda carregando, não avisa que falta conta (o aviso não pisca)', async () => {
+    const t = await abrir(manual({ contaId: null }), { contasManuais: [] });
+    expect(t.raiz.querySelector('.erro')).toBeNull();
   });
 
   it('fechada (null), não mostra o formulário', async () => {
     const t = await abrir(null);
     expect(t.raiz.querySelector('form')).toBeNull();
+  });
+});
+
+/** #758 (ADR 0063): o gasto pago direto de um cofrinho, lançado pelo "Novo lançamento". */
+const MP = { id: 7, nome: 'Mercado Pago', origem: OrigemConta.OpenFinance } as Conta;
+const SEM_COFRINHO = { id: 8, nome: 'Nubank', origem: OrigemConta.OpenFinance } as Conta;
+const reserva = (contaId: number, nome: string, campos: Partial<Reserva> = {}) =>
+  ({ contaId, nome, saldo: 100, moeda: 'BRL', restanteDoBanco: false, ...campos }) as Reserva;
+const RESERVAS = [reserva(7, 'Viagem'), reserva(7, 'Casa'), reserva(7, 'Méli Dólar', { moeda: 'USD' }),
+  reserva(8, 'Restante', { restanteDoBanco: true })];
+
+describe('Regressão: lançamento pelo cofrinho (#758)', () => {
+  const abrir = (lancamento: FormTransacao | null, extras: Record<string, unknown> = {}) =>
+    montar(TransacoesLancamentoComponent, { lancamento, contasManuais: CONTAS, contasOpenFinance: [MP, SEM_COFRINHO],
+      reservas: RESERVAS, categorias: CATEGORIAS, ...extras });
+  const escolher = async (t: Awaited<ReturnType<typeof abrir>>, nome: string, texto: string) => {
+    const select = t.raiz.querySelector<HTMLSelectElement>(`select[name=${nome}]`)!;
+    select.selectedIndex = [...select.options].findIndex((o) => o.textContent!.trim() === texto);
+    select.dispatchEvent(new Event('change'));
+    await t.assentar();
+  };
+
+  it('contas: só as do Open Finance com cofrinho em reais; a do lançamento aberto fica', () => {
+    expect(contasComCofrinho([...CONTAS, MP, SEM_COFRINHO], RESERVAS, null).map((c) => c.id)).toEqual([7]);
+    expect(contasComCofrinho([MP, SEM_COFRINHO], RESERVAS, 8).map((c) => c.id)).toEqual([7, 8]);
+    expect(contasComCofrinho([MP], [], null)).toEqual([]);
+  });
+
+  it('trocar a conta: na do cofrinho, só despesa e o cofrinho de outra conta sai; na manual, sem cofrinho', () => {
+    const receita = manual({ tipo: TipoTransacao.Receita, reservaNome: 'Outro' });
+    expect(trocarContaDoLancamento(receita, 7, true, RESERVAS)).toMatchObject({ contaId: 7, tipo: TipoTransacao.Despesa, reservaNome: null });
+    expect(trocarContaDoLancamento(manual({ contaId: 7, reservaNome: 'Viagem' }), 7, true, RESERVAS).reservaNome).toBe('Viagem');
+    expect(trocarContaDoLancamento(manual({ contaId: 7, reservaNome: 'Viagem' }), 3, false, RESERVAS))
+      .toMatchObject({ contaId: 3, reservaNome: null });
+  });
+
+  it('o cofrinho vai aparado para a API, e o vazio vai nulo', () => {
+    expect(transacaoDoForm(manual({ contaId: 7, reservaNome: ' Viagem ' })).reservaNome).toBe('Viagem');
+    expect(transacaoDoForm(manual({ reservaNome: '  ' })).reservaNome).toBeNull();
+  });
+
+  it('a lista de contas separa as manuais das do cofrinho; escolhida a do cofrinho, aparece o campo e a receita fica de fora', async () => {
+    const t = await abrir(manual({ tipo: TipoTransacao.Receita }));
+    const grupos = [...t.raiz.querySelectorAll('select[name=conta] optgroup')].map((g) => g.getAttribute('label'));
+    expect(grupos).toEqual(['Contas manuais', 'Gasto pago por um cofrinho']);
+    expect(t.raiz.querySelector('select[name=cofrinho]')).toBeNull();
+
+    await escolher(t, 'conta', 'Mercado Pago');
+    const opcoes = [...t.raiz.querySelectorAll('select[name=cofrinho] option')].map((o) => o.textContent!.trim());
+    expect(opcoes).toEqual(['Casa', 'Viagem']);
+    expect(t.componente.dados()).toMatchObject({ contaId: 7, tipo: TipoTransacao.Despesa, reservaNome: null });
+    expect(t.raiz.querySelector<HTMLOptionElement>('select[name=tipo] option:nth-child(2)')!.disabled).toBe(true);
+    expect(t.raiz.textContent).toContain('O saldo da conta não');
+    expect(t.botao('Salvar')!.disabled).toBe(true);
+
+    const salvos: FormTransacao[] = [];
+    t.componente.salvar.subscribe((f) => salvos.push(f));
+    await escolher(t, 'cofrinho', 'Viagem');
+    t.botao('Salvar')!.click();
+    await t.assentar();
+    expect(salvos).toEqual([expect.objectContaining({ contaId: 7, reservaNome: 'Viagem', tipo: TipoTransacao.Despesa })]);
+  });
+
+  it('editar um lançamento do cofrinho: a conta e o cofrinho continuam escolhidos (antes, a conta sumia da lista)', async () => {
+    const t = await abrir(manual({ id: 40, contaId: 7, reservaNome: 'Viagem' }), { contasManuais: [] });
+    expect(t.raiz.querySelector('.erro')).toBeNull();
+    expect(t.raiz.querySelector<HTMLSelectElement>('select[name=conta]')!.selectedOptions[0].textContent!.trim()).toBe('Mercado Pago');
+    expect(t.raiz.querySelector<HTMLSelectElement>('select[name=cofrinho]')!.selectedOptions[0].textContent!.trim()).toBe('Viagem');
   });
 });
 

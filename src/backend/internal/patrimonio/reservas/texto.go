@@ -77,7 +77,8 @@ func EhMeliDolar(descricao string) bool {
 	return strings.Contains(texto.ParaRegras(descricao), "MELI DOLAR")
 }
 
-func ehNomeMeliDolar(nome string) bool { return texto.ParaRegras(nome) == "MELI DOLAR" }
+// EhNomeMeliDolar diz se a reserva é o Méli Dólar (em dólar: não tem saída em reais pelo site).
+func EhNomeMeliDolar(nome string) bool { return texto.ParaRegras(nome) == "MELI DOLAR" }
 
 // quantidadeMusd é o Regex "MUSD\s*(\d(?:[\d.,]*\d)?)" do C#, com IgnoreCase e CultureInvariant. O \d e o \s do .NET
 // são de Unicode, e o (?i) do RE2 iria além (o "ſ" casaria com o "s"): as classes e as letras ficam escritas por

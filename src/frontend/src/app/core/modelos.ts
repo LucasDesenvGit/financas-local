@@ -93,6 +93,8 @@ export interface Transacao {
   tipoLancamento: TipoLancamento;
   /** #123: o nome mostrado veio de uma regra de descrição (null = do banco ou escolhido à mão). */
   regraDescricaoId?: number | null;
+  /** #691/#758 (ADR 0063): gasto pago direto deste cofrinho da conta do Open Finance (null = não saiu de cofrinho). */
+  reservaNome?: string | null;
 }
 
 /** #123: prévia de "usar também nas outras" (quantas transações de nome automático batem com o texto). */
@@ -167,6 +169,8 @@ export interface PaginaTransacoes {
 export interface SalvarTransacao {
   contaId: number; data: string; descricao: string; valor: number; tipo: TipoTransacao; categoriaId: number | null;
   observacao: string | null; ignorarRelatorios: boolean; status: StatusTransacao; emergencia: boolean;
+  /** #758: o cofrinho de onde saiu o gasto; só em conta do Open Finance (null = conta manual). */
+  reservaNome: string | null;
 }
 
 export interface AjusteTransacao {
