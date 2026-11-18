@@ -1,6 +1,19 @@
 # Estilo do Go no projeto
 
-O que se espera de Go idiomático aqui, com a fonte de cada ponto. O que é regra de ouro do projeto (dinheiro, SQL, relógio, bibliotecas) está na ADR 0049 ("Convenções do código Go" e a tabela de bibliotecas) e, o dinheiro, também no `CLAUDE.md`; não se repete aqui.
+O que se espera de Go idiomático aqui, com a fonte de cada ponto. As bibliotecas permitidas estão na tabela da [ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md); dependência fora dela pede atualizar a ADR.
+
+## Regras de ouro
+
+Esta lista é a fonte (até a #729, era a "Convenções do código Go" da ADR 0049); o `CLAUDE.md` guarda só a do dinheiro. O "como" de cada uma está nas tabelas abaixo ou no lugar indicado.
+
+- nomes em português;
+- erro como valor, embrulhado com `%w`;
+- `context.Context` como primeiro parâmetro de quem faz I/O;
+- dependências pelo construtor, sem container;
+- relógio injetável no fuso de Brasília, nunca o `time.Now()`;
+- SQL só pelo `sqlc` ou com `?`, nunca com texto do usuário concatenado ([README do banco](../../../../src/backend/internal/plataforma/banco/README.md));
+- dinheiro só em decimal, e nada de `SUM`, `ORDER BY` ou `<`/`>` no SQL em coluna de dinheiro (o porquê nas "Armadilhas" do README do banco);
+- `gofmt`, `go vet` e `go test -race` limpos (o "Antes de subir" do [README do Go](../../../../src/backend/README.md); o `verificar-regras-go.py` da CI confere `float64` e `time.Now()`).
 
 ## O que seguimos
 
@@ -14,7 +27,7 @@ O que se espera de Go idiomático aqui, com a fonte de cada ponto. O que é regr
 | Dependências | pelo construtor (`NovoServico(db, relogio, log)`), sem container de injeção | ADR 0056 |
 | Interface | pequena, declarada por quem usa, só com duas implementações de verdade (a real e a falsa do teste) | [CodeReviewComments: interfaces](https://go.dev/wiki/CodeReviewComments#interfaces), ADR 0056 |
 | Goroutine | só com motivo, com dono que a encerra pelo `context`, e `go test -race` limpo; tarefa em segundo plano pelo `internal/plataforma/tarefas` | [CodeReviewComments: goroutine lifetimes](https://go.dev/wiki/CodeReviewComments#goroutine-lifetimes), [race detector](https://go.dev/doc/articles/race_detector) |
-| Hora | `relogio.Relogio` injetado; `relogio.Hoje(r)` e `relogio.AgoraLocal(r)` para data de negócio em Brasília; carimbo (`CriadoEm`) em UTC | ADR 0049, `internal/plataforma/relogio/relogio.go` |
+| Hora | `relogio.Relogio` injetado; `relogio.Hoje(r)` e `relogio.AgoraLocal(r)` para data de negócio em Brasília; carimbo (`CriadoEm`) em UTC | Regras de ouro, `internal/plataforma/relogio/relogio.go` |
 | Tipos do banco | `tipos.Decimal`, `Data`, `DataHora`, `Guid`: `sql.Scanner`, `driver.Valuer` e JSON, com teste de ida e volta e fuzz. Objeto de valor novo (`Dinheiro`, `Mes`, `Ticker`) só quando um assunto precisar | ADR 0056 ("DDD tático, só onde paga") |
 | Ordem que é contrato | `slices.SortStableFunc` com o desempate explícito (`sort.Slice` não é estável) | [pacote slices](https://pkg.go.dev/slices) |
 | Log | `log/slog` em JSON, com o atributo `"origem"` pelas constantes de `internal/plataforma/erros` (`erros.OrigemAPI`…), para cair no lugar certo de Configurações › Erros | README do Go, "Como roda no site" |
@@ -33,6 +46,7 @@ O banco e o JSON continuam no formato do .NET (ADR 0049), e estas pegadinhas vie
 | Dividir e as outras contas | `tipos.Dividir` (devolve `ErrDivisaoPorZero` e `ErrEstouro`), `Multiplicar`, `Somar`, `Subtrair`, `Maior`, `Menor` | guardam a escala como o C# (gabarito em `internal/plataforma/tipos/testdata`); a biblioteca divide com 16 casas |
 | Ordem e busca em texto | a ordem pt-BR e as normalizações do `internal/plataforma/texto`; teste com "Ação" e "acao" | Go compara bytes, e o `LIKE` do SQLite só ignora caixa em ASCII |
 | Data | `time.Time` sempre com local explícito; `tipos.Data` só com ano, mês e dia | fuso trocado muda o mês do lançamento |
+| Expressão regular | o `regexp` do Go é RE2: sem lookbehind nem lookahead (`(?<!...)`), e o `\b` e o `\d` só conhecem ASCII; confira as pontas no código, como em `internal/patrimonio/carteira/extrato.go` | o C# aceitava os dois e conhece Unicode; o mesmo padrão copiado casa outra coisa ou nem compila |
 | `enum` | tipo `int` nomeado, que sai **número** no JSON; não trocar por texto | é o contrato com o front-end |
 | Validação de entrada | na entrada, com o 400 e o `ValidationProblemDetails` do `internal/plataforma/respostas` (`LerObjeto`, `LerClasse`, `Validacao`) | a mesma mensagem e o mesmo status em todas as rotas |
 | Apagar com dependentes | o que o `ON DELETE` de `banco/01-estrutura.sql` não apaga, o Go apaga explícito, em `banco.EmTransacao` | parte da cascata era feita pelo EF Core, não pela chave, e há tabela que nenhum dos dois apagava (o `HistoricoInvestimento`, #575) |
