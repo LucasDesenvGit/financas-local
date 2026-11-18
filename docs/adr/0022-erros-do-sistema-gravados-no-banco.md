@@ -10,7 +10,7 @@ Para investigar uma falha (sincronização da Pluggy, cotações, câmbio, erro 
 
 Restrições:
 - tudo roda local, sem serviço externo;
-- os logs podem carregar dado sensível (o token da brapi vai em query string, as exceções trazem URLs e textos do extrato);
+- os logs podem carregar dado sensível (as exceções trazem URLs e textos do extrato; antes da #763, o token da brapi ia em query string, [ADR 0072](0072-cotacoes-de-acoes-e-fiis-so-pelo-yahoo-sem-a-brapi.md));
 - o banco é um arquivo SQLite único, que não deve crescer sem controle;
 - o mesmo código roda em Windows e Linux.
 
@@ -40,10 +40,10 @@ Restrições:
 
 Usamos um `ILoggerProvider` próprio (`Servicos/Diagnostico/RegistroErrosLoggerProvider`) que captura **avisos, erros e críticos**:
 - do código do sistema (categorias `Financas.*`);
-- do tratador de exceções não tratadas da API (categoria `Erro`, em `Program.cs`);
+- do tratador de exceções não tratadas da API (categoria `Erro`, em `recuperarPanico`, `src/backend/internal/plataforma/servidor/intermediarios.go`);
 - da queda de serviços em segundo plano (`Microsoft.Extensions.Hosting`).
 
-O resto do framework (EF Core, Kestrel) fica de fora. Os registros passam por uma fila em memória com limite (`FilaErros`) e são gravados na tabela `ErroSistema` pelo `GravadorErrosHostedService`. Antes de gravar, o `Sanitizador` troca por `[removido]`:
+O resto do framework (EF Core, Kestrel) fica de fora. Os registros passam por uma fila em memória com limite (`Fila`, em `src/backend/internal/plataforma/erros`) e são gravados na tabela `ErroSistema` pelo `Gravador`. Antes de gravar, a limpeza do `sanitizador.go` troca por `[removido]`:
 - query strings de URLs;
 - pares `token=`/`senha=`/`client_secret:`…;
 - tokens Bearer e JWT;

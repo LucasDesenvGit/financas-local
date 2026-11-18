@@ -2,7 +2,7 @@
 
 - **Status:** Aceita (aval de Felipe em 16/11/2026, na #721; implementada na mesma PR)
 - **Data:** 2026-11-16 (issue #721, item 1 da #689; anda junto com a #722, grupo 5 da #690)
-- **Relacionadas:** substitui a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md) quando for aceita; ajusta a [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) (o número de cada merge passa a ser calculado); [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o `.msi` só no merge e na tag); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi` na CI); [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) (sem Python na instalação)
+- **Relacionadas:** substitui a [0039](0039-versao-sobe-a-cada-pr-pelo-tipo-do-commit.md); ajusta a [0053](0053-receber-versoes-de-desenvolvimento-por-escolha.md) (o número de cada merge passa a ser calculado); [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o `.msi` só no merge e na tag); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi` na CI); [0011](0011-ferramentas-de-instalacao-portateis-sem-python.md) (sem Python na instalação)
 
 Vale desde o merge da PR que a implementou (#721): a partir dali, nenhum PR sobe o número nem escreve no `CHANGELOG.md`. As PRs que estavam abertas na hora tiraram a subida de versão e moveram a entrada para `changelog.d/`.
 

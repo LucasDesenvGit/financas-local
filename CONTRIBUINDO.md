@@ -210,7 +210,7 @@ Não repita no Jest o que o navegador já confere, e vice-versa.
 
 ## Testes do back-end (Go)
 
-O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração começou pelo contrato. **No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
+O C# chegou a 128 rotas sem nenhum teste automatizado, e por isso a migração (épico #70, já encerrado) começou pelo contrato. **No Go, toda regra nasce com teste**, além do caso de contrato ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)). Um comportamento é testado num lugar só, na camada mais barata que o alcança:
 
 | O que testar | Onde | Como |
 |---|---|---|
@@ -230,7 +230,7 @@ O banco temporário, a fábrica de dados inventados, o relógio parado em Brasí
 - **um esperado que já existe muda só de propósito**, com o motivo de cada um no PR (bug corrigido ou mudança pedida). Diferença que aparece sem querer é regressão: o código volta, e o esperado fica;
 - **caso novo** é gravado com `rodar.sh --atualizar`, e o `git diff` de `esperado/` tem de mostrar só ele. Endpoint novo: caso de contrato, inclusive os de erro (400, 401, 404, 409), mais o teste HTTP dos ramos de validação.
 
-**Uma etapa do #70 está pronta quando:**
+**Critério que as etapas do #70 seguiam** (o épico da migração para Go, já encerrado; a migração terminou na #86). Uma etapa estava pronta quando:
 - cada regra da lista "Regras de negócio" do levantamento (a skill da migração, guardada na tag `v-ultimo-dotnet`, seção 2) tem pelo menos uma linha na tabela de um teste unitário, e o PR traz a tabela **regra → teste**;
 - cada ponto de risco de equivalência do levantamento (arredondamento, ordenação, texto, fuso, `null`, cascata) tem um teste: unitário, de integração ou de contrato;
 - cada endpoint tem caso de contrato, inclusive os de erro;

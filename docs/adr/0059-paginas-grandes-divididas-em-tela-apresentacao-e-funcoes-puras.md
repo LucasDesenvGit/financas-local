@@ -52,5 +52,5 @@ Página grande se divide em três partes.
   - **pré-requisito do `templateUrl`** (3.3.10):
     - teste que lê o código de um componente como texto usa o `testes/jest/apoio/codigo.ts` (`codigo(caminho)` ou `codigosDoApp(...pastas)`), que junta ao `.ts` o template e o CSS apontados. Já usam: `campo-valor`, `campo-data`, `clique-com-teclado`, `lista-suspensa-aberta`, `animacoes`, `reserva-informada-pelo-banco` e `contraste-tema`;
     - o `codigo-dos-componentes.spec.ts` falha se um `.html` ou `.css` de `src/app` não é apontado por nenhum componente (ficaria invisível para esses testes);
-    - o `scripts/ci/testes-afetados.py` conta o `.html`/`.css` como o `.ts` do componente que o aponta, e reconhece pelo `apoio/codigo` os testes que leem o código;
+    - o `scripts/ci/front/testes-afetados.py` conta o `.html`/`.css` como o `.ts` do componente que o aponta, e reconhece pelo `apoio/codigo` os testes que leem o código;
   - acompanhamento das telas: [#475](https://github.com/LucasDesenvGit/financas-local/issues/475).

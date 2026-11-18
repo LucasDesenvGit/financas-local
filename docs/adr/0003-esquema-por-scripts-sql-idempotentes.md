@@ -18,14 +18,14 @@ O banco é criado e atualizado na máquina do usuário, pelos scripts de instala
 
 ## Decisão
 
-Não usamos EF Core Migrations. O esquema vive em scripts SQL idempotentes, e o `FinancasDbContext` é mantido em sincronia manual com eles.
+Não usamos EF Core Migrations. O esquema vive em scripts SQL idempotentes, e a cópia embutida no executável e o esquema do `sqlc` são gerados deles por `go generate ./...` em `src/backend`.
 
 ## Consequências
 
 - **Positivas:** um único caminho para criar e atualizar; o script pode ser rodado quantas vezes for preciso; o esquema é lido direto em SQL.
 - **Negativas:**
   - entidade, `FinancasDbContext` e SQL podem divergir sem nenhum erro de compilação — a divergência só aparece em tempo de execução;
-  - coluna nova em tabela existente não é idempotente em SQL puro no SQLite: a checagem fica no bash (`adicionar_coluna_se_ausente` em `scripts/comum.sh`, via `PRAGMA table_info`);
+  - coluna nova em tabela existente não é idempotente em SQL puro no SQLite: a checagem fica no bash (`adicionar_coluna_se_ausente` em `scripts/geral/comum.sh`, via `PRAGMA table_info`);
   - não há histórico automático de qual versão do esquema cada banco tem.
 - **Atualização de 2026-10-17 (#119, instalador .msi):** a própria API aplica os mesmos scripts ao iniciar (`Data/EsquemaBanco.cs`), para que a instalação pelo .msi não precise de `sqlite3` nem de bash.
   - **Fontes, embutidas no build:** `01-estrutura.sql`, as colunas novas das linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh` (o mesmo formato que o `instalar-windows.ps1` lê; a lista continua num lugar só) e `02-dados-iniciais.sql`. Este último só entra no banco novo, porque rodá-lo de novo recriaria categorias apagadas.
@@ -33,4 +33,4 @@ Não usamos EF Core Migrations. O esquema vive em scripts SQL idempotentes, e o 
   - Continua sem histórico de versões; esse número diz só "mesmos scripts da última vez".
   - Os scripts de instalação seguem funcionando como antes: rodar os dois caminhos não atrapalha, porque tudo é idempotente.
   - Custo aceito: um erro de SQL nos scripts agora também impede a API de subir, com o erro no log. É melhor do que atender com o esquema pela metade.
-- **Na prática:** toda mudança de estrutura atualiza `Entidades/`, `FinancasDbContext.cs` e `banco/01-estrutura.sql` juntos, roda `scripts/ci/verificar-sql.py` e usa `feat(banco)!:` no commit. Passo a passo em [BANCO-DE-DADOS.md](../BANCO-DE-DADOS.md).
+- **Na prática:** toda mudança de estrutura atualiza `banco/01-estrutura.sql` (e o `2-criar-banco.sh`, no caso de coluna nova), roda `go generate ./...` em `src/backend` e `scripts/ci/banco/verificar-sql.py` e usa `feat(banco)!:` no commit. Passo a passo em [BANCO-DE-DADOS.md](../BANCO-DE-DADOS.md).

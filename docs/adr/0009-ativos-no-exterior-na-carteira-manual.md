@@ -26,7 +26,7 @@ Usamos **moeda no ativo e câmbio em cada operação**:
 - **Custo, preço médio em reais, lucro realizado e comparação com a Selic** usam o valor de cada operação convertido pelo seu próprio câmbio.
 - **Valor atual** = quantidade × cotação na moeda do ativo × a última PTAX de compra guardada (`ConversorMoeda`). A valorização em reais inclui a variação do câmbio.
 - **Proventos** são convertidos pela PTAX de compra da data-com (último dia útil anterior, até 7 dias), com o histórico guardado na `CotacaoMoeda`. Na falta dele, usa a última cotação guardada.
-- **A cotação automática** usa o Yahoo com o código sem `.SA`. A cotação é recusada se a moeda informada pelo Yahoo for diferente da do ativo. A brapi só atende a B3.
+- **A cotação automática** usa o Yahoo com o código sem `.SA`. A cotação é recusada se a moeda informada pelo Yahoo for diferente da do ativo. A brapi, que atendia só a B3 como reserva, saiu na #763 (ADR 0072).
 - **O histórico de câmbio** necessário é baixado quando as cotações são atualizadas, desde a primeira operação do ativo.
 
 ## Consequências

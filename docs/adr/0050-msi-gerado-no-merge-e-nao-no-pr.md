@@ -38,4 +38,4 @@ O `.msi` é gerado e testado **no push do `develop`** (o merge de um PR), **na t
     à mão na branch (Actions → Run workflow) antes do merge, e diga no PR que rodou;
   - o job "API e banco" continua ligando a API em todo PR de back-end (`ligar-api.sh`, #309), o que pega boa parte dos
     erros de inicialização sem o `.msi`;
-  - o título `ci:` (#307) deixa de importar para o `.msi`; continua sendo o tipo certo para mudança só de CI (ADR 0039).
+  - o título `ci:` (#307) deixa de importar para o `.msi`; continua sendo o tipo certo para mudança só de CI (ADR 0070).
