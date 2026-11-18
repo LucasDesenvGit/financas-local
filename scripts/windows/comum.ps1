@@ -21,6 +21,22 @@ $script:EtapaAtual = "inicio"
 function Etapa([string]$texto) { $script:EtapaAtual = $texto; Write-Host ""; Write-Host "==> $texto" -ForegroundColor Cyan }
 function Ok([string]$texto) { Write-Host "    OK  $texto" -ForegroundColor Green }
 function Aviso([string]$texto) { Write-Host "    !!  $texto" -ForegroundColor Yellow }
+# Versao do sistema (ADR 0070): calculada pelo Go (src\backend\cmd\versao) a partir da base do Directory.Build.props e
+# dos merges do git; sem o historico do git (copia baixada em .zip), sai a base com o sufixo -sem-git. Como o
+# versao_do_sistema do comum.sh. $go: o go.exe, se nao estiver no PATH. No 5.1, stderr redirecionado com
+# ErrorActionPreference=Stop vira excecao, entao a funcao roda em Continue (o valor volta ao fim dela).
+function VersaoDoSistema([string]$go = "go") {
+    $ErrorActionPreference = "Continue"
+    Push-Location (Join-Path $Raiz "src\backend")
+    try {
+        $saida = @(& $go run ./cmd/versao 2>&1)
+        $codigo = $LASTEXITCODE
+    } finally { Pop-Location }
+    $linhas = @($saida | ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message } else { "$_" } })
+    if ($codigo -ne 0) { ErroSai ("Nao consegui calcular a versao (go run ./cmd/versao, em src\backend): " + ($linhas -join " ")) }
+    return ($linhas -join "").Trim()
+}
+
 # Erros previstos (com mensagem pronta) sao marcados para o catch final nao mostrar a linha do
 # script; os inesperados mostram, para achar a causa.
 function ErroSai([string]$texto) {

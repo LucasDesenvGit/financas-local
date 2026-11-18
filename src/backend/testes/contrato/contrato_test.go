@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +24,7 @@ var (
 	alvo      = flag.String("alvo", "", "endereço do servidor sob teste (ex.: https://127.0.0.1:5451); vazio pula o contrato")
 	banco     = flag.String("banco", "", "arquivo SQLite que o servidor sob teste usa (para comparar o banco)")
 	inicio    = flag.String("inicio", InicioPadrao, "instante em que o relógio do servidor começou (RFC 3339)")
+	versao    = flag.String("versao", "", "a versão gravada no executável sob teste (go run ./cmd/versao, ADR 0070)")
 	atualizar = flag.Bool("atualizar", false, "grava os esperados a partir do servidor (confira a diferença e diga o motivo no PR, ADR 0051)")
 	// #75: o Go sozinho (com o login dele) atende só os assuntos já portados; os outros arquivos ficam de fora.
 	somente = flag.String("somente", "", "arquivos de casos a rodar, separados por vírgula (ex.: 00-auth); vazio roda todos")
@@ -68,11 +68,10 @@ func TestContrato(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	versao, err := lerVersao(filepath.Join("..", "..", "..", "..", "Directory.Build.props"))
-	if err != nil {
-		t.Fatal(err)
+	if *versao == "" {
+		t.Fatal("-versao é obrigatório com -alvo: o contrato troca a versão por <versao> (o rodar.sh passa a do executável)")
 	}
-	n := Normalizador{Inicio: instanteInicio, Versao: versao, PastaDados: filepath.Dir(filepath.Dir(caminhoBanco))}
+	n := Normalizador{Inicio: instanteInicio, Versao: *versao, PastaDados: filepath.Dir(filepath.Dir(caminhoBanco))}
 
 	nomes, arquivos, err := lerCasos("casos")
 	if err != nil {
@@ -298,19 +297,4 @@ func (ex *execucao) capturar(caso Caso, corpo any) error {
 		ex.variaveis[nome] = texto
 	}
 	return nil
-}
-
-var versaoNoProps = regexp.MustCompile(`<Version>([^<]+)</Version>`)
-
-// lerVersao lê a versão do sistema no Directory.Build.props (a mesma que o .NET e o Go devolvem).
-func lerVersao(caminho string) (string, error) {
-	dados, err := os.ReadFile(caminho)
-	if err != nil {
-		return "", fmt.Errorf("ler a versão: %w", err)
-	}
-	m := versaoNoProps.FindSubmatch(dados)
-	if m == nil {
-		return "", fmt.Errorf("%s sem <Version>", caminho)
-	}
-	return strings.TrimSpace(string(m[1])), nil
 }

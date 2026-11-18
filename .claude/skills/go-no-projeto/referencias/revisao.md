@@ -4,7 +4,7 @@ Use ao revisar um PR com Go e no fim do seu próprio trabalho. Cada achado sai c
 
 ## O que a CI já pega (não gaste a revisão nisso)
 
-`gofmt`, `go vet`, `go test -race` (e `go test` no Windows), as regras de ouro do `verificar-regras-go.py` (#457: `float64`, `time.Now()` fora do `relogio`, `time.Sleep` em teste fora do `synctest`), piso de cobertura (80% para pacote novo), pacote novo sem lugar nas listas de mutação, trava de tempo, mutação nos pacotes mudados, `go generate` em dia, build do Windows, govulncheck, CodeQL (`go/sql-injection`), contrato dos assuntos ligados, versão subiu, CHANGELOG, aviso do Manual. Se um destes falhou na CI, a revisão aponta o job; não reexplica a regra.
+`gofmt`, `go vet`, `go test -race` (e `go test` no Windows), as regras de ouro do `verificar-regras-go.py` (#457: `float64`, `time.Now()` fora do `relogio`, `time.Sleep` em teste fora do `synctest`), piso de cobertura (80% para pacote novo), pacote novo sem lugar nas listas de mutação, trava de tempo, mutação nos pacotes mudados, `go generate` em dia, build do Windows, govulncheck, CodeQL (`go/sql-injection`), contrato dos assuntos ligados, o arquivo de `changelog.d/` em `feat` e `fix`, aviso do Manual. Se um destes falhou na CI, a revisão aponta o job; não reexplica a regra.
 
 ## O que só a revisão pega
 

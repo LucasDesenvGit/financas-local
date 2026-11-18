@@ -140,6 +140,7 @@ financas-local/
 | Windows: o `instalar-windows.cmd` falhou | Veja a linha `ERRO` na janela e o log completo em `instaladores/instalacao-windows.log` |
 | Windows: `npm error EPERM ... esbuild.exe` | Um `npm start` aberto está usando o arquivo: feche-o e rode de novo |
 | Windows: `$'\r': command not found` | Os `.sh` foram baixados com quebra de linha do Windows (CRLF). Clone o repositório com o Git (o `.gitattributes` força LF) em vez de baixar o zip, ou rode `git rm --cached -r . && git reset --hard` |
+| A versão aparece como `3.27.0-sem-git` | A versão é calculada pelos merges do git ([ADR 0070](adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md)). Sem o histórico (cópia baixada em `.zip`, clone raso `--depth` ou o `git` fora do PATH), sai só a base, com o sufixo. O site funciona igual; para o número certo, clone o repositório inteiro com o Git |
 | Windows: o serviço não é registrado/iniciado | Rode o `instalar-windows.cmd` (ele pede Administrador); pelo Git Bash, abra-o como Administrador |
 | Navegador alerta sobre o certificado | Veja [O navegador alerta sobre o certificado](#o-navegador-alerta-sobre-o-certificado), abaixo |
 | O site não sobe e a instalação diz que a porta 5443 está em uso | Outro programa está na porta: a instalação diz qual e o PID. Feche esse programa (ou pare o serviço dele) e rode de novo. No Windows pelo PowerShell, a instalação para antes de trocar a versão, sem mudar nada |

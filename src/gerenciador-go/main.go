@@ -23,7 +23,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
 )
 
-// versao vem do Directory.Build.props na compilação (-ldflags "-X main.versao=...").
+// versao vem do cálculo de src/backend/cmd/versao (ADR 0070) na compilação (-ldflags "-X main.versao=...").
 var versao = "0.0.0-dev.0"
 
 // Situações de exemplo do -mostrar, com os textos do Situacao.cs, para comparar a janela com a do C# sem mexer no

@@ -62,9 +62,8 @@ New-Item -ItemType Directory -Path $Destino -Force | Out-Null
 
 # Um .exe so, com o mesmo nome do em C#: os atalhos e a entrada "Iniciar com o Windows" continuam valendo. Como o
 # README do modulo: sem F12 nem menu do botao direito (-tags production), sem console (windowsgui). A versao e a do
-# Directory.Build.props, como a do site.
-$props = [xml](Get-Content -LiteralPath (Join-Path $Raiz "Directory.Build.props") -Raw)
-$versao = ($props.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
+# site, calculada pelo Go (ADR 0070).
+$versao = VersaoDoSistema $go
 Etapa "Compilando o gerenciador em $Destino"
 Push-Location (Join-Path $Raiz "src\gerenciador-go")
 try {

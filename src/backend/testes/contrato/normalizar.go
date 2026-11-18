@@ -19,7 +19,7 @@ import (
 //     relógio anda, e cada execução cai em outra fração de segundo. Vira "<relógio +N min, formato>", com N os
 //     minutos desde Inicio: um horário em outro fuso (3 h antes) fica fora da janela e aparece cru na diferença;
 //   - GUID gerado na hora (carimbo de segurança): "<GUID>" ou "<guid>", guardando se veio em maiúsculas;
-//   - a versão do sistema (sobe a cada PR, ADR 0039): "<versao>";
+//   - a versão do sistema (calculada a cada merge, ADR 0070): "<versao>";
 //   - a pasta temporária dos dados: "<dados>", com o resto do caminho com "/" (no Windows o .NET e o Go usam "\\", e o
 //     esperado gravado no Linux vale nos dois);
 //   - o hash da senha (sal aleatório): "<hash v3 ...>" com os parâmetros, que têm de ser os mesmos;
@@ -27,7 +27,7 @@ import (
 //   - o valor dos cookies (cifrado pelo Data Protection): "<valor>".
 type Normalizador struct {
 	Inicio     time.Time // instante em que o relógio do servidor começou
-	Versao     string    // a do Directory.Build.props
+	Versao     string    // a do executável sob teste (-versao)
 	PastaDados string    // pasta com sql/ e chaves/ do servidor sob teste
 }
 
