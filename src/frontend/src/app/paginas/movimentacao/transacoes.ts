@@ -5,9 +5,10 @@
  */
 import type { OpcaoMultipla } from '../../compartilhado/ui/seletor-multiplo.component';
 import {
-  AjusteTransacao, Categoria, Conta, FiltroTransacoes, NaturezaGasto, OrdemTransacoes, SalvarTransacao, StatusTransacao,
-  SugestaoCategoria, TipoTransacao, Transacao
+  AjusteTransacao, Categoria, Conta, FiltroTransacoes, NaturezaGasto, OrdemTransacoes, OrigemConta, Reserva, SalvarTransacao,
+  StatusTransacao, SugestaoCategoria, TipoTransacao, Transacao
 } from '../../core/modelos';
+import { opcoesCofrinho } from './pago-com-cofrinho';
 import {
   ContextoTransacoes, NOMES_MESES, NaturezaUrl, ORIGENS_IDS, OrigemIdsUrl, dataIsoValida, idsDaUrl, paraData,
   paramsTransacoes, primeiroDiaMes, ultimoDiaMes
@@ -33,6 +34,8 @@ export interface FormTransacao {
   pendente: boolean;
   descricaoOriginal: string | null;
   emergencia: boolean;
+  /** #758: o cofrinho de onde saiu o gasto (conta do Open Finance); null = conta manual. */
+  reservaNome: string | null;
 }
 
 export interface FormTransferencia {
@@ -580,7 +583,8 @@ export function comMudanca(linhas: readonly LinhaSugestao[], chave: string, muda
 export function formNovo(contaId: number | null, hoje: string): FormTransacao {
   return {
     id: null, openFinance: false, contaId, data: hoje, descricao: '', valor: null, tipo: TipoTransacao.Despesa,
-    categoriaId: null, observacao: '', ignorarRelatorios: false, pendente: false, descricaoOriginal: null, emergencia: false
+    categoriaId: null, observacao: '', ignorarRelatorios: false, pendente: false, descricaoOriginal: null, emergencia: false,
+    reservaNome: null
   };
 }
 
@@ -590,7 +594,8 @@ export function formDaTransacao(t: Transacao): FormTransacao {
     id: t.id, openFinance: t.openFinance, contaId: t.contaId, data: t.data, descricao: t.descricao,
     valor: Math.abs(t.valor), tipo: t.valor > 0 ? TipoTransacao.Receita : TipoTransacao.Despesa,
     categoriaId: t.categoriaId, observacao: t.observacao ?? '', ignorarRelatorios: t.ignorarRelatorios,
-    pendente: t.status === StatusTransacao.Pendente, descricaoOriginal: t.descricaoOriginal, emergencia: t.emergencia
+    pendente: t.status === StatusTransacao.Pendente, descricaoOriginal: t.descricaoOriginal, emergencia: t.emergencia,
+    reservaNome: t.reservaNome ?? null
   };
 }
 
@@ -608,6 +613,28 @@ export function transacaoDoForm(f: FormTransacao): SalvarTransacao {
     contaId: f.contaId ?? 0, data: f.data, descricao: f.descricao, valor: Number(f.valor), tipo: f.tipo,
     categoriaId: f.categoriaId, observacao: f.observacao || null, ignorarRelatorios: f.ignorarRelatorios,
     status: f.pendente ? StatusTransacao.Pendente : StatusTransacao.Efetivada,
-    emergencia: f.emergencia && f.tipo === TipoTransacao.Despesa
+    emergencia: f.emergencia && f.tipo === TipoTransacao.Despesa, reservaNome: f.reservaNome?.trim() || null
   };
+}
+
+/**
+ * #758 (ADR 0063): as contas do Open Finance em que dá para lançar à mão o gasto pago direto de um cofrinho: as que têm
+ * cofrinho em reais nas reservas. A conta do lançamento aberto (`contaAtual`) fica, mesmo sem cofrinho na lista, para a
+ * edição não perder a conta.
+ */
+export function contasComCofrinho(contas: Conta[], reservas: Reserva[], contaAtual: number | null): Conta[] {
+  return contas.filter((c) => c.origem === OrigemConta.OpenFinance
+    && (c.id === contaAtual || opcoesCofrinho(reservas, c.id, null).length > 0));
+}
+
+/**
+ * #758: trocar a conta do lançamento. Na conta do cofrinho, só despesa, e o cofrinho escolhido só fica se for desta
+ * conta (escolher de novo, sem herdar o da outra conta: Nielsen 5, prevenir erro); na conta manual, sem cofrinho.
+ */
+export function trocarContaDoLancamento(f: FormTransacao, contaId: number | null, doCofrinho: boolean,
+  reservas: Reserva[]): FormTransacao {
+  if (!doCofrinho) return { ...f, contaId, reservaNome: null };
+  const fica = f.reservaNome !== null && contaId !== null
+    && opcoesCofrinho(reservas, contaId, null).some((o) => o.nome === f.reservaNome);
+  return { ...f, contaId, tipo: TipoTransacao.Despesa, reservaNome: fica ? f.reservaNome : null };
 }

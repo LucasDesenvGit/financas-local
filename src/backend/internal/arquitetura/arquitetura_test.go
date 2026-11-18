@@ -60,6 +60,7 @@ var regraSemHTTP = []string{
 	"internal/plataforma/desfazer", "internal/patrimonio/emprestimos", "internal/movimentacao/faturas", "internal/movimentacao/parcelas", "internal/movimentacao/poucoinformativa",
 	"internal/ajustes/regrasdescricao", "internal/analises/relatorios", "internal/plataforma/relogio", "internal/plataforma/segredos", "internal/movimentacao/sugestoes",
 	"internal/plataforma/texto", "internal/movimentacao/tipolancamento", "internal/plataforma/tipos", "internal/movimentacao/transacoes",
+	"internal/modulos/trabalho/encargos", "internal/modulos/trabalho/leitor", "internal/modulos/trabalho/leitor/ficticios",
 }
 
 // Regra de pacote que ainda chega ao HTTP por outro pacote. Quando deixar de chegar, o teste avisa para tirar daqui.
@@ -136,7 +137,8 @@ var dependencias = []struct {
 	{"internal/patrimonio/emprestimos", nil, "totais de empréstimos (#447)"},
 	{"internal/movimentacao/extrato", []string{"internal/ajustes/categorizacao", "internal/plataforma/desfazer", "internal/movimentacao/poucoinformativa",
 		"internal/ajustes/regrasdescricao", "internal/movimentacao/sugestoes", "internal/movimentacao/tipolancamento", "internal/movimentacao/transacoes",
-		"internal/movimentacao/transferencias"}, "a tela de transações junta as regras, as sugestões e o desfazer (#78)"},
+		"internal/movimentacao/transferencias", "internal/patrimonio/reservas"},
+		"a tela de transações junta as regras, as sugestões e o desfazer (#78); o gasto pelo cofrinho recusa o Méli Dólar pela regra das reservas (#758)"},
 	{"internal/movimentacao/faturas", []string{"internal/movimentacao/bancos", "internal/movimentacao/parcelas"}, "a fatura soma as parcelas do cartão"},
 	{"internal/patrimonio/investimentos", []string{"internal/patrimonio/cambio", "internal/patrimonio/carteira"},
 		"o saldo em reais pelo câmbio e o nome de exibição da carteira (#170)"},

@@ -58,7 +58,7 @@ func (s *Servico) RegistrarSaida(ctx context.Context, q consultas.DBTX, d Saida)
 		return 0, ErrSoOpenFinance
 	}
 	nome := strings.TrimFunc(d.Nome, unicode.IsSpace)
-	if ehNomeMeliDolar(nome) {
+	if EhNomeMeliDolar(nome) {
 		return 0, ErrSaidaMeliDolar
 	}
 	if d.CategoriaId != nil {

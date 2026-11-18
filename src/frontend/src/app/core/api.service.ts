@@ -12,7 +12,7 @@ import {
   PainelAnual, Projecao, ResultadoAplicacao, ResultadoSincronizacao, SalvarCategoria, SalvarConfiguracaoPluggy, SalvarConta,
   SaidaReserva, SalvarContaAgendada, SalvarMeta, SugestaoContaAgendada, SugestaoOrcamento, SalvarRegra, SalvarTransacao, SincronizacaoLog, Transacao, Transferencia,
   TipoTransacao, ValorCategoria, PainelEmprestimos, Parametro, InfoSistema, StatusSincronizacao, Reserva, PlanoMetas,
-  ErroFrontEnd, ErroSistemaDetalhe, Modulo, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
+  ErroFrontEnd, ErroSistemaDetalhe, Modulo, ListaNoticias, Emprego, SalvarEmprego, EstimativaSalario, TabelasTrabalho, Holerite, ResumoHolerite, LancamentoHolerite, PreviaHoleritePdf, ConfirmarHoleritePdf, HoleritePdfGravado, DecimoTerceiro, PeriodoFerias, AgendarFerias, CalculoFerias, Fgts, TipoLancamentoFgts, MotivoSaqueFgts, RecebimentosHolerite, CalculoRescisao, ComparacaoRescisao, TipoRescisao, AvisoRescisao, FiltroErros, PaginaErros, AlterarCategoriasEmLote, ResultadoCategoriasEmLote, Banco, HistoricoInvestimentos } from './modelos';
 
 /** Todas as chamadas usam URLs relativas: mesma origem do IIS (sem CORS) e o Angular anexa o token CSRF. */
 @Injectable({ providedIn: 'root' })
@@ -358,6 +358,114 @@ export class ApiService {
   definirModulo(id: string, ligado: boolean): Observable<Modulo> {
     return this.http.put<Modulo>(`${this.base}/modulos/${encodeURIComponent(id)}`, { ligado });
   }
+
+  /** #210 (ADR 0065): o módulo Trabalho. Desligado, a API responde 409 (a tela nem chama: o portão do módulo). */
+  empregos(): Observable<Emprego[]> { return this.http.get<Emprego[]>(`${this.base}/trabalho/empregos`); }
+  criarEmprego(e: SalvarEmprego): Observable<Emprego> { return this.http.post<Emprego>(`${this.base}/trabalho/empregos`, e); }
+  atualizarEmprego(id: number, e: SalvarEmprego): Observable<Emprego> {
+    return this.http.put<Emprego>(`${this.base}/trabalho/empregos/${id}`, e);
+  }
+  excluirEmprego(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/trabalho/empregos/${id}`); }
+  definirSalario(empregoId: number, inicio: string, salarioBruto: number): Observable<Emprego> {
+    return this.http.post<Emprego>(`${this.base}/trabalho/empregos/${empregoId}/salarios`, { inicio, salarioBruto });
+  }
+  excluirSalario(empregoId: number, salarioId: number): Observable<Emprego> {
+    return this.http.delete<Emprego>(`${this.base}/trabalho/empregos/${empregoId}/salarios/${salarioId}`);
+  }
+  /** mes: "AAAA-MM". */
+  estimativaSalario(empregoId: number, mes: string): Observable<EstimativaSalario> {
+    return this.http.get<EstimativaSalario>(`${this.base}/trabalho/empregos/${empregoId}/estimativa`, { params: this.params({ mes }) });
+  }
+  /** #211: os holerites do mês. */
+  holerites(empregoId: number): Observable<ResumoHolerite[]> {
+    return this.http.get<ResumoHolerite[]>(`${this.base}/trabalho/empregos/${empregoId}/holerites`);
+  }
+  /** mes: "AAAA-MM". */
+  criarHolerite(empregoId: number, mes: string): Observable<Holerite> {
+    return this.http.post<Holerite>(`${this.base}/trabalho/empregos/${empregoId}/holerites`, { mes });
+  }
+  holerite(id: number): Observable<Holerite> { return this.http.get<Holerite>(`${this.base}/trabalho/holerites/${id}`); }
+  salvarHolerite(id: number, diasUteis: number, diasDescanso: number, lancamentos: LancamentoHolerite[]): Observable<Holerite> {
+    return this.http.put<Holerite>(`${this.base}/trabalho/holerites/${id}`, { diasUteis, diasDescanso, lancamentos });
+  }
+  fecharHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/fechar`, {}); }
+  reabrirHolerite(id: number): Observable<Holerite> { return this.http.post<Holerite>(`${this.base}/trabalho/holerites/${id}/reabrir`, {}); }
+  excluirHolerite(id: number): Observable<void> { return this.http.delete<void>(`${this.base}/trabalho/holerites/${id}`); }
+  /** #228: lê o PDF (em base64) e devolve a prévia; nada é gravado. A senha só abre o arquivo. */
+  lerHoleritePdf(empregoId: number, arquivo: string, senha: string): Observable<PreviaHoleritePdf> {
+    return this.http.post<PreviaHoleritePdf>(`${this.base}/trabalho/empregos/${empregoId}/holerites/pdf`, { arquivo, senha });
+  }
+  confirmarHoleritePdf(empregoId: number, dto: ConfirmarHoleritePdf): Observable<HoleritePdfGravado> {
+    return this.http.post<HoleritePdfGravado>(`${this.base}/trabalho/empregos/${empregoId}/holerites/pdf/confirmar`, dto);
+  }
+  desfazerHoleritePdf(empregoId: number, chave: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/trabalho/empregos/${empregoId}/holerites/pdf/desfazer/${encodeURIComponent(chave)}`, {});
+  }
+  /** #214: o 13º salário do ano. */
+  decimoTerceiro(empregoId: number, ano: number): Observable<DecimoTerceiro> {
+    return this.http.get<DecimoTerceiro>(`${this.base}/trabalho/empregos/${empregoId}/decimo-terceiro/${ano}`);
+  }
+  /** A 1ª parcela recebida (quando e quanto); os dois nulos voltam ao padrão. */
+  definirPrimeiraParcela(empregoId: number, ano: number, em: string | null, valor: number | null): Observable<DecimoTerceiro> {
+    return this.http.put<DecimoTerceiro>(`${this.base}/trabalho/empregos/${empregoId}/decimo-terceiro/${ano}`,
+      { primeiraParcelaEm: em, primeiraParcelaValor: valor });
+  }
+  /** #213: as férias. */
+  ferias(empregoId: number): Observable<PeriodoFerias[]> {
+    return this.http.get<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias`);
+  }
+  agendarFerias(empregoId: number, a: AgendarFerias): Observable<PeriodoFerias[]> {
+    return this.http.post<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias`, a);
+  }
+  desmarcarFerias(empregoId: number, id: number): Observable<PeriodoFerias[]> {
+    return this.http.delete<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias/${id}`);
+  }
+  definirFaltas(empregoId: number, periodoInicio: string, faltas: number): Observable<PeriodoFerias[]> {
+    return this.http.put<PeriodoFerias[]>(`${this.base}/trabalho/empregos/${empregoId}/ferias/faltas`, { periodoInicio, faltas });
+  }
+  /** Com o período, os dias depois do concessivo dele saem em dobro, como no agendado. */
+  simularFerias(empregoId: number, periodo: string | null, inicio: string, dias: number, vendidos: number, adiantar: boolean): Observable<CalculoFerias> {
+    return this.http.get<CalculoFerias>(`${this.base}/trabalho/empregos/${empregoId}/ferias/simular`,
+      { params: this.params({ periodo, inicio, dias, vendidos, adiantar }) });
+  }
+  /** #216: o FGTS. */
+  fgts(empregoId: number): Observable<Fgts> { return this.http.get<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts`); }
+  lancarFgts(empregoId: number, l: { data: string; tipo: TipoLancamentoFgts; valor: number; motivo: MotivoSaqueFgts | null }): Observable<Fgts> {
+    return this.http.post<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts/lancamentos`, l);
+  }
+  excluirLancamentoFgts(empregoId: number, id: number): Observable<Fgts> {
+    return this.http.delete<Fgts>(`${this.base}/trabalho/empregos/${empregoId}/fgts/lancamentos/${id}`);
+  }
+  /** #212: o crédito do salário ligado ao holerite. */
+  recebimentosHolerite(holeriteId: number): Observable<RecebimentosHolerite> {
+    return this.http.get<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos`);
+  }
+  ligarRecebimento(holeriteId: number, transacaoId: number, valor: number | null): Observable<RecebimentosHolerite> {
+    return this.http.post<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos`, { transacaoId, valor });
+  }
+  desligarRecebimento(holeriteId: number, id: number): Observable<RecebimentosHolerite> {
+    return this.http.delete<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos/${id}`);
+  }
+  /** #215: a rescisão (saida: "AAAA-MM-DD"). */
+  simularRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string): Observable<CalculoRescisao> {
+    return this.http.get<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/simular`, { params: this.params({ tipo, aviso, saida }) });
+  }
+  compararRescisao(empregoId: number, saida: string): Observable<ComparacaoRescisao[]> {
+    return this.http.get<ComparacaoRescisao[]>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/comparar`, { params: this.params({ saida }) });
+  }
+  rescisaoRegistrada(empregoId: number): Observable<{ registrada: CalculoRescisao | null }> {
+    return this.http.get<{ registrada: CalculoRescisao | null }>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`);
+  }
+  registrarRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string): Observable<CalculoRescisao> {
+    return this.http.post<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`, { tipo, aviso, saida });
+  }
+  desfazerRescisao(empregoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`);
+  }
+  tabelasTrabalho(): Observable<TabelasTrabalho> { return this.http.get<TabelasTrabalho>(`${this.base}/trabalho/tabelas`); }
+  /** #10 (ADR 0067): as notícias guardadas e o "Atualizar agora" (no máximo a cada 5 minutos). */
+  noticias(): Observable<ListaNoticias> { return this.http.get<ListaNoticias>(`${this.base}/noticias`); }
+  atualizarNoticias(): Observable<ListaNoticias> { return this.http.post<ListaNoticias>(`${this.base}/noticias/atualizar`, {}); }
 
   /** #328: o acesso pelo celular na rede de casa. */
   situacaoCelular(): Observable<SituacaoCelular> { return this.http.get<SituacaoCelular>(`${this.base}/celular`); }

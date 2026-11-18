@@ -49,6 +49,7 @@ type Transacao struct {
 	ParcelaNumero       *int64
 	ParcelaTotal        *int64
 	Observacao          *string
+	ReservaNome         *string // pago direto deste cofrinho (#691, ADR 0063); nil = do saldo da conta
 	AtualizadoEm        tipos.DataHora
 
 	antes *Transacao // como estava no banco, para Gravar mandar só o que mudou
@@ -57,7 +58,7 @@ type Transacao struct {
 const colunas = `"Id", "ContaId", "PluggyTransactionId", "Data", "Descricao", "DescricaoOriginal", "Valor", "Tipo",
 	"Status", "CategoriaId", "CategoriaManual", "PluggyCategoriaId", "IgnorarRelatorios", "Emergencia", "MeioPagamento",
 	"MesmaTitularidade", "RegraDescricaoId", "DescricaoManual", "TransferenciaGrupo", "ParcelaNumero", "ParcelaTotal",
-	"Observacao", "AtualizadoEm", "Estabelecimento", "FaturaCartaoId"`
+	"Observacao", "AtualizadoEm", "Estabelecimento", "FaturaCartaoId", "ReservaNome"`
 
 // Listar lê as transações de uma consulta. onde é um trecho de SQL escrito no código (nunca texto de quem usa), com os
 // valores em argumentos "?": "WHERE "CategoriaId" = ?".
@@ -74,7 +75,8 @@ func Listar(ctx context.Context, q consultas.DBTX, onde string, argumentos ...an
 		if err := linhas.Scan(&t.Id, &t.ContaId, &t.PluggyTransactionId, &t.Data, &t.Descricao, &t.DescricaoOriginal,
 			&t.Valor, &t.Tipo, &t.Status, &t.CategoriaId, &t.CategoriaManual, &t.PluggyCategoriaId, &t.IgnorarRelatorios,
 			&t.Emergencia, &t.MeioPagamento, &t.MesmaTitularidade, &t.RegraDescricaoId, &t.DescricaoManual, &guid,
-			&t.ParcelaNumero, &t.ParcelaTotal, &t.Observacao, &t.AtualizadoEm, &t.Estabelecimento, &t.FaturaCartaoId); err != nil {
+			&t.ParcelaNumero, &t.ParcelaTotal, &t.Observacao, &t.AtualizadoEm, &t.Estabelecimento, &t.FaturaCartaoId,
+			&t.ReservaNome); err != nil {
 			return nil, fmt.Errorf("ler transação: %w", err)
 		}
 		if guid.Valid {
@@ -143,6 +145,9 @@ func (t *Transacao) mudancas() []mudanca {
 	if !textosIguais(t.Observacao, a.Observacao) {
 		lista = append(lista, mudanca{"Observacao", t.Observacao})
 	}
+	if !textosIguais(t.ReservaNome, a.ReservaNome) {
+		lista = append(lista, mudanca{"ReservaNome", t.ReservaNome})
+	}
 	// Os campos abaixo só a sincronização muda (#83).
 	if !textosIguais(t.Estabelecimento, a.Estabelecimento) {
 		lista = append(lista, mudanca{"Estabelecimento", t.Estabelecimento})
@@ -198,11 +203,13 @@ func Inserir(ctx context.Context, q consultas.DBTX, t *Transacao, criadoEm tipos
 	res, err := q.ExecContext(ctx, `INSERT INTO "Transacao" ("ContaId", "PluggyTransactionId", "Data", "Descricao",
 		"DescricaoOriginal", "Estabelecimento", "Valor", "Tipo", "Status", "CategoriaId", "CategoriaManual", "PluggyCategoriaId",
 		"FaturaCartaoId", "ParcelaNumero", "ParcelaTotal", "IgnorarRelatorios", "Emergencia", "DescricaoRevisada", "MeioPagamento",
-		"MesmaTitularidade", "RegraDescricaoId", "DescricaoManual", "TransferenciaGrupo", "Observacao", "CriadoEm", "AtualizadoEm")
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		"MesmaTitularidade", "RegraDescricaoId", "DescricaoManual", "TransferenciaGrupo", "Observacao", "ReservaNome", "CriadoEm",
+		"AtualizadoEm")
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		t.ContaId, t.PluggyTransactionId, t.Data, t.Descricao, t.DescricaoOriginal, t.Estabelecimento, t.Valor, t.Tipo, t.Status,
 		t.CategoriaId, t.CategoriaManual, t.PluggyCategoriaId, t.FaturaCartaoId, t.ParcelaNumero, t.ParcelaTotal, t.IgnorarRelatorios,
-		t.Emergencia, t.MeioPagamento, t.MesmaTitularidade, t.RegraDescricaoId, t.DescricaoManual, guid, t.Observacao, criadoEm, t.AtualizadoEm)
+		t.Emergencia, t.MeioPagamento, t.MesmaTitularidade, t.RegraDescricaoId, t.DescricaoManual, guid, t.Observacao, t.ReservaNome,
+		criadoEm, t.AtualizadoEm)
 	if err != nil {
 		return fmt.Errorf("gravar a transação nova: %w", err)
 	}

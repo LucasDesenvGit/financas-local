@@ -116,7 +116,7 @@ As sete perguntas da proposta, com a resposta de cada uma:
 ## Como ficou (na implementação)
 
 - **O programa** (`src/backend/cmd/versao`): sem argumento, o número do `HEAD`; `-ref` para outro commit; `-publicada` para o commit de uma tag; `-changelog` para as seções do que ainda não foi publicado; `-publicar X.Y.Z -data AAAA-MM-DD` para juntar `changelog.d/` numa seção do `CHANGELOG.md`, apagando os arquivos. Só a biblioteca padrão e o `git` do sistema.
-- **A base** foi para `3.24.0`: acima da maior versão do `develop` (3.16.0) e das PRs abertas na hora (até a 3.23.0), subindo o do meio.
+- **A base** foi para `3.27.0`: acima da maior versão do `develop` (3.26.0) e das PRs abertas na hora (a #711, com 3.26.1), subindo o do meio.
 - **O `-changelog`** põe cada arquivo na seção da versão do merge que o trouxe (`## [X.Y.Z] — data · desenvolvimento`, o formato que o `notas.sh` e o gerenciador já liam). O que veio antes da base entra na seção da base.
 - **A publicação** é o `scripts/dev/lancar-versao.sh X.Y.Z`, na `release/X.Y.Z`: confere a branch, a árvore limpa e que o número calculado é o `X.Y.Z`, junta os arquivos e faz o commit `chore: versão X.Y.Z`. Sem nenhum arquivo em `changelog.d/`, o programa recusa (a seção ficaria vazia).
 - **O gerenciador** (`Atualizar para a última do develop`) pede ao clone o número e as seções (`go run ./cmd/versao`, com o Go do projeto em `ferramentas/go` ou o do PATH), e a versão de antes é a do site instalado. Ainda lê o `CHANGELOG.md` do clone, depois das seções novas, para quem atualiza de uma versão anterior à troca ver as entradas que ficaram lá (*julgamento*, fora do que a ADR mandava).

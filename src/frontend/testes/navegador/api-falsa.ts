@@ -399,8 +399,10 @@ const respostas: Record<string, unknown> = {
     { id: 1, dataHora: '2026-10-19T17:20:00', evento: 'CredencialPluggyAlterada', login: 'teste', ip: '127.0.0.1', userAgent: null }
   ],
   '/api/erros': { itens: [], total: 0, pagina: 1, tamanhoPagina: 50, abertos: 0, origens: [] },
-  // #191: nenhum módulo por padrão; o teste dos módulos põe os dele.
-  '/api/modulos': [],
+  // #191: os módulos desligados (não aparecem no menu); o teste dos módulos põe os dele. O Notícias desligado deixa a
+  // regressão das telas abrir /noticias no portão do módulo (revisão do #705).
+  '/api/modulos': [{ id: 'noticias', nome: 'Notícias', descricao: 'As notícias do dia.', acessaInternet: true,
+    destinos: ['g1.globo.com', 'feeds.bbci.co.uk', 'www.tabnews.com.br'], ligado: false }],
   // #328: o acesso pelo celular, desligado, com dois IPs fictícios da rede de casa para escolher.
   '/api/celular': { ligado: false, ip: null, endereco: null, ipIndisponivel: false, impressaoDigital: null, avisos: [],
     enderecos: [{ ip: '192.168.0.10', interface: 'Wi-Fi', rede: '192.168.0.0/24' },
