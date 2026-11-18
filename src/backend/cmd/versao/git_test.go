@@ -381,6 +381,72 @@ func TestGitPublicar(t *testing.T) {
 	g.falha("-publicar", "3.26.1", "-data", "2026-11-21") // sem entradas, não publica
 }
 
+// publicarNaMain faz a publicação inteira de uma versão: a release/X.Y.Z com o "chore: versão" (que junta e apaga as
+// entradas), o merge dela na main e a tag. Devolve o nome da tag.
+func (g *repoDeTeste) publicarNaMain(versao string) string {
+	g.t.Helper()
+	g.git("switch", "-q", "-c", "release/"+versao)
+	g.dia++
+	g.versao("-publicar", versao, "-data", g.data())
+	g.git("commit", "-q", "-m", "chore: versão "+versao)
+	g.git("switch", "-q", "main")
+	g.dia++
+	g.git("merge", "-q", "--no-ff", "-m", "Merge pull request #9"+fmt.Sprint(g.dia)+" from dono/release/"+versao, "-m", "chore: versão "+versao, "release/"+versao)
+	g.git("tag", "v"+versao)
+	g.git("switch", "-q", "develop")
+	return "v" + versao
+}
+
+// Regra (#757, ADR 0070): as notas da versão publicada listam pelo título os PRs que não trouxeram arquivo para
+// changelog.d/. O -sem-changelog, na tag (-publicada), dá os PRs desde a tag anterior: fica de fora o que trouxe entrada
+// (já está no CHANGELOG), a volta da main e o commit direto; o squash não repete o número.
+func TestGitSemChangelog(t *testing.T) {
+	g := novoRepo(t, "3.24.0")
+	g.escrever("changelog.d/LEIA-ME.md", "x")
+	g.escrever("CHANGELOG.md", "# Changelog\n\n## [3.3.14] — 2026-11-05\n\n### Correções\n- antiga\n")
+	g.git("add", "-A")
+	g.git("commit", "-q", "-m", "docs: leia-me")
+	g.git("branch", "main")
+	g.mesclar("feature/a", "feat: a", map[string]string{"changelog.d/feature-a.md": entradaA})
+	g.mesclar("ci/x", "ci: x sem arquivo", nil)
+	g.mesclar("fix/leia-me", "docs: só o LEIA-ME", map[string]string{"changelog.d/LEIA-ME.md": "y"})
+	primeira := g.publicarNaMain("3.25.2")
+
+	g.dia++
+	g.git("merge", "-q", "--no-ff", "-m", "Merge pull request #50 from dono/main", "-m", "chore: traz a main de volta", "main")
+	g.mesclar("fix/c", "fix: c", map[string]string{"changelog.d/fix-c.md": entradaC})
+	// Antes da ADR 0070, o PR escrevia direto no CHANGELOG.md: a nota dele já está lá.
+	antes, err := os.ReadFile(filepath.Join(g.raiz, "CHANGELOG.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.mesclar("fix/antiga", "fix: do jeito antigo", map[string]string{"CHANGELOG.md": strings.Replace(string(antes),
+		"## [", "## [3.25.3] — 2026-11-10 · desenvolvimento\n\n### Correções\n- antiga (#4).\n\n## [", 1)})
+	g.mesclar("dependabot/npm/x", "build(deps): sobe x de 1.0 para 1.1", nil)
+	g.dia++
+	g.escrever("squash.txt", "s")
+	g.git("add", "-A")
+	g.git("commit", "-q", "-m", "test: squash (#77)")
+	g.git("commit", "-q", "--allow-empty", "-m", "chore: direto no develop")
+	segunda := g.publicarNaMain("3.25.6")
+
+	n := func(titulo string) string { // o número que o mesclar deu ao merge do PR
+		assunto := strings.Fields(g.git("log", "--first-parent", "develop", "--format=%s", "--grep", titulo, "-n1"))
+		return strings.TrimPrefix(assunto[3], "#") // "Merge pull request #N from ..."
+	}
+	quer := "- test: squash (#77)\n- build(deps): sobe x de 1.0 para 1.1 (#" + n("build(deps)") + ")"
+	if obtido := g.versao("-ref", segunda, "-publicada", "-sem-changelog", "-desde", primeira); obtido != quer {
+		t.Errorf("-sem-changelog da segunda versão:\n%s\nquer:\n%s", obtido, quer)
+	}
+	quer = "- docs: só o LEIA-ME (#" + n("LEIA-ME") + ")\n- ci: x sem arquivo (#" + n("ci: x") + ")"
+	if obtido := g.versao("-ref", primeira, "-publicada", "-sem-changelog"); obtido != quer {
+		t.Errorf("-sem-changelog da primeira versão, desde a base:\n%s\nquer:\n%s", obtido, quer)
+	}
+	if err := g.falha("-ref", segunda, "-publicada", "-sem-changelog", "-desde", "v9.9.9"); !strings.Contains(err.Error(), "-desde") {
+		t.Errorf("-desde inexistente: %v", err)
+	}
+}
+
 // Regra: a seção entra antes da primeira versão do CHANGELOG, e no fim se ele ainda não tem nenhuma.
 func TestInserirSecao(t *testing.T) {
 	casos := []struct{ nome, changelog, quer string }{
