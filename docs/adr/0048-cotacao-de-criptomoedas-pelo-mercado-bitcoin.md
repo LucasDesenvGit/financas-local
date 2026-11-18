@@ -18,11 +18,11 @@ Testado em 21/10/2026, sem enviar dado nenhum além dos códigos das moedas:
 |---|---|---|---|
 | **Mercado Bitcoin**, API v4 pública (`GET /tickers?symbols=BTC-BRL,…`) | não precisa | 1 requisição por segundo nesse endpoint; 500 por minuto no total ([especificação](https://api.mercadobitcoin.net/api/v4/docs)) | respondeu, com BTC, ETH, SOL, USDT e XRP em reais numa chamada |
 | CoinGecko (`/simple/price`) | sem chave: limite por IP, sem número publicado; o plano Demo pede chave e dá 100 por minuto ([limites](https://docs.coingecko.com/docs/common-errors-rate-limit)) | | respondeu sem chave |
-| brapi (`/api/v2/crypto`), que o site já usa para ações | exige token | o plano gratuito tem 15 mil por mês e não lista cripto; ela aparece nos planos pagos, a partir de R$ 99,99 por mês ([planos](https://brapi.dev/pricing)) | 401 sem token |
+| brapi (`/api/v2/crypto`), que o site usava para ações (saiu na #764) | exige token | o plano gratuito tem 15 mil por mês e não lista cripto; ela aparece nos planos pagos, a partir de R$ 99,99 por mês ([planos](https://brapi.dev/pricing)) | 401 sem token |
 
 ## Alternativas consideradas
 
-- **brapi.** Não abriria domínio novo, porque o site já fala com ela. Contra: cripto parece estar só nos planos pagos (*inferido* da página de planos; não deu para testar o token, que fica criptografado no banco), e o plano gratuito se descreve como "cotações básicas e sandbox".
+- **brapi.** Não abriria domínio novo, porque o site falava com ela na época (saiu na #764). Contra: cripto parece estar só nos planos pagos (*inferido* da página de planos; não deu para testar o token, que fica criptografado no banco), e o plano gratuito se descreve como "cotações básicas e sandbox".
 - **CoinGecko.** É uma média de várias corretoras, com variação em 24 h pronta. Contra: o modo sem chave tem limite por IP sem número publicado, e o caminho documentado pede cadastro e chave, que precisaria ficar criptografada como os outros segredos.
 - **Mercado Bitcoin**, API pública. Corretora brasileira, preço direto em reais, sem chave, limite publicado, uma chamada para todas as moedas. Contra: é o preço de **uma** corretora, não uma média.
 - **Binance** (`api.binance.com`): não testada. A cotação em reais tem menos pares, e a disponibilidade do domínio varia por país (*inferido*, não conferido).

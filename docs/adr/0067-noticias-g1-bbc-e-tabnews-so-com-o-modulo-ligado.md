@@ -1,6 +1,6 @@
 # 0067. Notícias: G1, BBC News Brasil e TabNews pelo site, só com o módulo ligado
 
-- **Status:** Proposta
+- **Status:** Aceita
 - **Data:** 2026-11-14
 - **Relacionadas:** [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md), [0048](0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md)
 

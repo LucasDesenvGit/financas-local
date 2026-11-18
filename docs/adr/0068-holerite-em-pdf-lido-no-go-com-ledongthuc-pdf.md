@@ -1,6 +1,6 @@
 # 0068. Holerite em PDF lido no Go, com a `ledongthuc/pdf`, sem guardar o arquivo
 
-- **Status:** Proposta
+- **Status:** Aceita
 - **Data:** 2026-11-14
 - **Relacionadas:** [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (bibliotecas do Go), [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md) (módulos), [0065](0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md) (Trabalho), [0026](0026-manual-do-site-como-dados-no-front-end.md) (dado no código), [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) (prévia e desfazer), [0030](0030-regras-de-descricao-em-tabela-propria.md) (texto normalizado e a escolha lembrada)
 

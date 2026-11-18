@@ -1,6 +1,6 @@
-# Pacote `banco`: o SQLite do jeito que o .NET usa
+# Pacote `banco`: o SQLite no formato que o .NET deixou
 
-O banco de quem já usa o site foi criado e gravado pelo .NET, com o EF Core ([ADR 0049](../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O Go lê e grava **no mesmo formato**, para os bancos que já existem continuarem os mesmos (e para a tag `v-ultimo-dotnet` ainda abrir um banco gravado pelo Go).
+O banco de quem já usa o site foi criado e gravado pelo .NET, com o EF Core ([ADR 0049](../../../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O Go lê e grava **no mesmo formato**, para os bancos que já existem continuarem os mesmos (e para a tag `v-ultimo-dotnet` ainda abrir um banco gravado pelo Go).
 
 | O quê | Onde |
 |---|---|
@@ -41,7 +41,7 @@ A sonda `internal/plataforma/tipos/testdata/sonda-efcore` gravou valores pelo me
 
 ## Esquema ao iniciar: `AplicarEsquema` (#297)
 
-O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../docs/adr/0003-esquema-por-scripts-sql-idempotentes.md)), passo a passo igual:
+O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../../docs/adr/0003-esquema-por-scripts-sql-idempotentes.md)), passo a passo igual:
 
 1. Lê as linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh` com a mesma expressão (com o `\s` do .NET, que pega mais espaços que o do Go) e calcula a **mesma assinatura** do .NET.
 2. Banco que já existe com a mesma assinatura no `PRAGMA user_version`: não faz nada, nem cópia.

@@ -1,6 +1,6 @@
 # 0065. Trabalho: emprego, salário com vigência e as tabelas do INSS e do IRRF no banco
 
-- **Status:** Proposta
+- **Status:** Aceita
 - **Data:** 2026-11-13
 - **Relacionadas:** [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md), [0015](0015-parametros-do-sistema-no-banco-editaveis-pelo-site.md), [0025](0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md), [0031](0031-transferencia-fora-dos-relatorios-so-entre-contas-suas.md)
 

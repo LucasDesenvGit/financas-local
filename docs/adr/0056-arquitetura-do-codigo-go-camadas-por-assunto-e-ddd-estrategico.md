@@ -6,7 +6,7 @@
 
 ## Contexto
 
-O back-end em Go já tem 48 pacotes, escritos por três pessoas e por agentes, ao mesmo tempo. A forma do código existia só no `src/backend-go/internal/README.md` (o padrão da #77) e na prática:
+O back-end em Go já tem 48 pacotes, escritos por três pessoas e por agentes, ao mesmo tempo. A forma do código existia só no `src/backend/internal/README.md` (o padrão da #77) e na prática:
 - um pacote por assunto, com HTTP, regra e banco dentro;
 - a regra vai para um pacote próprio quando outro assunto também a usa;
 - interface só onde há duas implementações de verdade.

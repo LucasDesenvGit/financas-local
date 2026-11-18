@@ -1,6 +1,6 @@
 # 0066. FGTS fora do patrimônio: estimado no Trabalho e conferido com o app
 
-- **Status:** Proposta
+- **Status:** Aceita
 - **Data:** 2026-11-14
 - **Relacionadas:** [0065](0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md), [0010](0010-reservas-estimadas-pelo-extrato.md), [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)
 

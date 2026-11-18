@@ -1,6 +1,6 @@
 # 0064. Módulos compilados no executável, ligados e desligados no banco (micro-kernel)
 
-- **Status:** Proposta
+- **Status:** Aceita
 - **Data:** 2026-11-13
 - **Relacionadas:** [0015](0015-parametros-do-sistema-no-banco-editaveis-pelo-site.md), [0017](0017-preferencias-de-exibicao-no-navegador.md), [0026](0026-manual-do-site-como-dados-no-front-end.md), [0032](0032-controles-padrao-interruptor-e-campo-de-valor.md), [0046](0046-menu-lateral-em-grupos-que-abrem-e-fecham.md), [0056](0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md), [0058](0058-pastas-do-front-end-por-grupo-do-menu-e-por-assunto.md)
 

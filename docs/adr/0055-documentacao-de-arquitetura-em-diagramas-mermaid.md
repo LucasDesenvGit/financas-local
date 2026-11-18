@@ -38,11 +38,11 @@ Usamos **diagramas Mermaid em `flowchart`, com a notação do C4 escrita nas cai
 - **Negativas:**
   - a disposição é do Mermaid: em diagrama com muitas setas, é preciso agrupar. O mapa de contextos usa setas para a moldura, que dizem menos que uma seta por assunto;
   - o desenho só fica em dia se a regra for seguida. O único teste é o de arquitetura, que é local (#476): ele confere se todo pacote está na tabela dos Componentes e se a tabela não cita pacote que saiu (#464). As setas e os outros diagramas não são conferidos;
-  - os diagramas de Contêineres e de implantação mudam quando o .NET sair (#86).
+  - os diagramas de Contêineres e de implantação mudaram quando o .NET saiu (#86).
 - **Na prática:**
   - use `flowchart`, sem cor fixa nas caixas, para acompanhar o tema (o tracejado por `classDef` vale nos dois);
   - confira o desenho nos temas claro e escuro antes do PR;
   - as setas do mapa de contextos vêm do código: `go list -f '{{.ImportPath}} {{.Imports}}' ./internal/...` no Go e os construtores no C#;
-  - o [modelo de ameaças](../MODELO-DE-AMEACAS.md) é revisado quando muda uma fronteira: saída de rede nova, processo, porta, pasta `dados`, login e a remoção do .NET (#86);
+  - o [modelo de ameaças](../MODELO-DE-AMEACAS.md) é revisado quando muda uma fronteira: saída de rede nova, processo, porta, pasta `dados`, login e foi revisado na remoção do .NET (#86);
   - a regra está no `CLAUDE.md` e na skill `go-no-projeto` (que o agente `dev-go` usa);
   - nos Componentes, as setas que todo pacote tem (para a base e os transversais) ficam fora do desenho e são ditas em texto, e o "quem pode importar quem" vem do teste de arquitetura (`internal/arquitetura`), não do olho.

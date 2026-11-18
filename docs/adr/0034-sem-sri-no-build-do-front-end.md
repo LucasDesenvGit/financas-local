@@ -6,7 +6,7 @@
 
 ## Contexto
 
-A API manda a CSP `script-src 'self'`, sem `'unsafe-inline'` (`CabecalhosSegurancaMiddleware`, em `Seguranca/Seguranca.cs`). Isso só é possível porque o site e a API têm a mesma origem e nada vem de fora (ADR 0004).
+A API manda a CSP `script-src 'self'`, sem `'unsafe-inline'` (`internal/plataforma/servidor/intermediarios.go`). Isso só é possível porque o site e a API têm a mesma origem e nada vem de fora (ADR 0004).
 
 O build de produção do Angular tinha `"subresourceIntegrity": true` desde o projeto Angular 20. O SRI põe o hash `sha384` de cada arquivo no `index.html`, para o navegador recusar um arquivo adulterado. Com o `@angular/build` 22, o hash dos chunks carregados sob demanda (as páginas lazy) passou a ir num `<script type="importmap">` escrito dentro do `index.html` publicado (#157). A CSP bloqueia esse script inline:
 
@@ -15,7 +15,7 @@ O build de produção do Angular tinha `"subresourceIntegrity": true` desde o pr
 
 O site continuava funcionando, porque os chunks são da mesma origem.
 
-O SRI protege contra arquivo trocado no caminho entre outro servidor (uma CDN) e o navegador. Aqui não há outro servidor: o `index.html` e os chunks saem do mesmo Kestrel local, da mesma pasta `wwwroot`. Quem conseguisse trocar um chunk no disco trocaria o `index.html` junto, com os hashes novos.
+O SRI protege contra arquivo trocado no caminho entre outro servidor (uma CDN) e o navegador. Aqui não há outro servidor: o `index.html` e os chunks saem do mesmo servidor local (o executável do Go), da mesma pasta `wwwroot`. Quem conseguisse trocar um chunk no disco trocaria o `index.html` junto, com os hashes novos.
 
 ## Alternativas consideradas
 

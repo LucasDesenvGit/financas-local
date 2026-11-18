@@ -80,7 +80,7 @@ O código é o pacote `internal/plataforma/celular` do back-end em Go.
 **Ficou de fora desta vez** (issues à parte, se fizer falta):
 - o **QR code** do endereço: pede um gerador de QR (dependência nova no front-end ou no Go, que pediria ADR); a tela mostra o endereço por escrito;
 - o aviso de **"novo aparelho entrou"**: a auditoria já mostra o IP de cada login;
-- a conferência, nos workflows de instalação, de que desligado a porta não escuta fora do `127.0.0.1`: é mudança só de CI, que vai num PR `ci:` (ADR 0039). O teste do Go já confere que, desligado, o site não abre nada na rede.
+- a conferência, nos workflows de instalação, de que desligado a porta não escuta fora do `127.0.0.1`: é mudança só de CI, que vai num PR `ci:` (ADR 0070). O teste do Go já confere que, desligado, o site não abre nada na rede.
 
 ## Consequências
 
