@@ -25,6 +25,8 @@ Separe o que viu no print do que leu no código, e diga o que não deu para ver 
 
 ## Revisar o código
 
+- **Simples e enxuto** ([docs/SIMPLICIDADE.md](../../../../docs/SIMPLICIDADE.md), #769): abstração, interface, pacote ou camada nova sem segundo uso; código que repete o que já existe em outro pacote (procure antes); texto novo acima dos limites ou copiado de outro lugar em vez de um link.
+
 **Forma**
 - [ ] Componente novo com `ChangeDetectionStrategy.Eager` (ou OnPush com **todo** o estado em signal). Sem ele, a tela para de atualizar sem erro: a CI não pega.
 - [ ] HTTP só pelo `ApiService`; erro mostrado com `mensagemDeErro`.
