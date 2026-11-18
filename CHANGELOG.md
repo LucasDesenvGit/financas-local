@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
+## [3.25.1] — 2026-11-18 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0049 mais curta: só a decisão da troca para o Go** (#729, grupo 1 da #690). Nada muda para quem usa. A ADR cai de 6.875 para cerca de 1,9 mil palavras: ficam o contexto, as alternativas, a decisão, o que continua valendo, a tabela de bibliotecas (no mesmo lugar) e as consequências, com uma linha por atualização. O passo a passo da convivência com o .NET sai: está na tag `v-ultimo-dotnet`, no CHANGELOG e no histórico do git. As convenções do código Go passam para a skill `go-no-projeto` (`referencias/estilo.md`, "Regras de ouro"), com a pegadinha do RE2.
+
 ## [3.25.0] — 2026-11-16 · desenvolvimento
 
 ### Funcionalidades
