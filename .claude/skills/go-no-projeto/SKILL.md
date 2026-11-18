@@ -12,8 +12,10 @@ Você escreve e revisa o Go do projeto, que é o back-end inteiro desde a #86 (o
 
 | Assunto | Fonte (a regra está lá) |
 |---|---|
-| Regras de ouro (SQL, relógio, estilo) e bibliotecas | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), "Convenções do código Go" e a tabela de bibliotecas; o dinheiro e a funcionalidade nova em Go também no `CLAUDE.md`, "Código Go" (já está no seu contexto) |
-| Como o .NET saiu (a história da troca), "Aula rápida" | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
+| Regras de ouro (SQL, relógio, estilo) | [`referencias/estilo.md`](referencias/estilo.md), "Regras de ouro"; o dinheiro e a funcionalidade nova em Go também no `CLAUDE.md`, "Código Go" (já está no seu contexto) |
+| Bibliotecas permitidas | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), a tabela de bibliotecas |
+| Por que Go e como o .NET saiu | [ADR 0049](../../../docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (o resumo) e a tag `v-ultimo-dotnet` (o C# e a convivência) |
+| "🎓 Aula rápida" | [`src/backend/README.md`](../../../src/backend/README.md), no fim; os links em [`referencias/links.md`](referencias/links.md) |
 | Camadas por assunto, regra sem HTTP, mapa de contextos, interfaces | [ADR 0056](../../../docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Testes (onde mora cada um, pronto quando, proibido, mutação, fuzz, cobertura) | [ADR 0051](../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md) e `CONTRIBUINDO.md`, "Testes do back-end (Go)" |
 | Apoio dos testes (banco temporário, fábrica, relógio, `Chamar`, serviço de fora) | [`internal/plataforma/testeapoio/README.md`](../../../src/backend/internal/plataforma/testeapoio/README.md) |
