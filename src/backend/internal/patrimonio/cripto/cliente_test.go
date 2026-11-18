@@ -92,16 +92,24 @@ func TestUltimosNegociosIgnoraOQueOdotnetIgnora(t *testing.T) {
 
 func TestUltimosNegociosComFalha(t *testing.T) {
 	t.Parallel()
+	// #762: a página do Cloudflare que o Mercado Bitcoin devolve desde 14/11/2026, a todo pedido.
+	cloudflare := testeapoio.RespostaDeFora{Status: http.StatusForbidden, TipoConteudo: "text/html; charset=UTF-8",
+		Corpo: `<!DOCTYPE html><html><head><title>Attention Required! | Cloudflare</title></head></html>`}
 	casos := []struct {
 		nome     string
 		resposta testeapoio.RespostaDeFora
 		deRede   bool // a HttpRequestException do .NET: a tarefa avisa e tenta de novo
+		recusa   bool // a fonte recusou (4xx): a tarefa registra o erro uma vez
 	}{
-		{"erro 503", testeapoio.RespostaDeFora{Status: http.StatusServiceUnavailable}, true},
-		{"muitos pedidos", testeapoio.MuitosPedidos, true},
-		{"objeto em vez de lista", testeapoio.RespostaDeFora{Corpo: `{"erro":"x"}`}, false},
-		{"não é JSON", testeapoio.RespostaDeFora{Corpo: `<html>`, TipoConteudo: "text/html"}, false},
-		{"JSON quebrado", testeapoio.JSONQuebrado, false},
+		{"erro 503", testeapoio.RespostaDeFora{Status: http.StatusServiceUnavailable}, true, false},
+		{"muitos pedidos", testeapoio.MuitosPedidos, true, false},
+		{"tempo esgotado do lado de lá (408)", testeapoio.RespostaDeFora{Status: http.StatusRequestTimeout}, true, false},
+		{"403 do Cloudflare", cloudflare, false, true},
+		{"caminho que sumiu (404)", testeapoio.RespostaDeFora{Status: http.StatusNotFound}, false, true},
+		{"passou a pedir chave (401)", testeapoio.RespostaDeFora{Status: http.StatusUnauthorized}, false, true},
+		{"objeto em vez de lista", testeapoio.RespostaDeFora{Corpo: `{"erro":"x"}`}, false, false},
+		{"não é JSON", testeapoio.RespostaDeFora{Corpo: `<html>`, TipoConteudo: "text/html"}, false, false},
+		{"JSON quebrado", testeapoio.JSONQuebrado, false, false},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -113,6 +121,9 @@ func TestUltimosNegociosComFalha(t *testing.T) {
 			}
 			if errors.Is(err, ErrRede) != c.deRede {
 				t.Errorf("erro de rede: %v, esperado %v (%v)", errors.Is(err, ErrRede), c.deRede, err)
+			}
+			if errors.Is(err, ErrRecusa) != c.recusa {
+				t.Errorf("recusa: %v, esperado %v (%v)", errors.Is(err, ErrRecusa), c.recusa, err)
 			}
 		})
 	}

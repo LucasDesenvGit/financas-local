@@ -26,9 +26,20 @@ const (
 	tamanhoMaximo   = 1 << 20 // 1 MB: a resposta dos 4 pares tem menos de 1 KB
 )
 
-// ErrRede é a HttpRequestException do .NET: sem internet, fonte fora do ar ou status de erro. A tarefa a trata como
-// aviso (tenta de novo no próximo ciclo); o resto é erro.
-var ErrRede = errors.New("falha ao consultar o Mercado Bitcoin")
+var (
+	// ErrRede é a HttpRequestException do .NET: sem internet, fonte fora do ar (5xx), tempo esgotado ou limite de
+	// pedidos (408 e 429). A tarefa a trata como aviso (tenta de novo no próximo ciclo); o resto é erro.
+	ErrRede = errors.New("falha ao consultar o Mercado Bitcoin")
+	// ErrRecusa é a fonte que respondeu e recusou o pedido (os outros 4xx): o 403 do Cloudflare desde 14/11/2026
+	// (#762), um caminho que mudou, uma chave que passou a ser exigida. Não é falta de internet e não passa sozinho no
+	// próximo ciclo, então a tarefa a registra como erro, uma vez.
+	ErrRecusa = errors.New("o Mercado Bitcoin recusou o pedido")
+)
+
+// ehRecusa: um 4xx que não é passageiro (o 408 e o 429 são).
+func ehRecusa(status int) bool {
+	return status >= 400 && status < 500 && status != http.StatusRequestTimeout && status != http.StatusTooManyRequests
+}
 
 // Cliente consulta o Mercado Bitcoin. Só HTTPS: a URL base é configurável para os testes.
 type Cliente struct {
@@ -82,6 +93,9 @@ func (c *Cliente) UltimosNegocios(ctx context.Context, moedas []string) (map[str
 		return nil, fmt.Errorf("%w: %w", ErrRede, err)
 	}
 	defer resp.Body.Close()
+	if ehRecusa(resp.StatusCode) {
+		return nil, fmt.Errorf("%w: status %d", ErrRecusa, resp.StatusCode)
+	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("%w: status %d", ErrRede, resp.StatusCode)
 	}

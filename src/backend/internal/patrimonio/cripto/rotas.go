@@ -3,6 +3,7 @@ package cripto
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -59,6 +60,9 @@ const (
 type Tarefa struct {
 	servico *Servico
 	log     *slog.Logger
+	// recusa é a última recusa da fonte já registrada ("status 403"), para não registrar a mesma 48 vezes por dia
+	// (#762); volta a "" quando a cotação atualiza. Só a goroutine da tarefa lê e escreve.
+	recusa string
 }
 
 // NovaTarefa cria a tarefa.
@@ -70,15 +74,32 @@ func (t *Tarefa) Rodar(ctx context.Context) {
 }
 
 // Ciclo atualiza uma vez. Sem internet ou fonte fora do ar é aviso (tenta de novo no próximo ciclo; a tela mostra a
-// última guardada); o resto volta como erro, que o tarefas.Periodica registra.
+// última guardada). A fonte que recusa o pedido (#762) é erro, registrado uma vez enquanto a recusa for a mesma, com o
+// aviso de quando voltar. O resto volta como erro, que o tarefas.Periodica registra.
 func (t *Tarefa) Ciclo(ctx context.Context) error {
 	resultado, err := t.servico.Atualizar(ctx)
 	if err != nil {
-		if ehDeRede(err) && ctx.Err() == nil {
+		if ctx.Err() != nil {
+			return err
+		}
+		if errors.Is(err, ErrRecusa) {
+			if err.Error() != t.recusa {
+				t.recusa = err.Error()
+				t.log.Error("O Mercado Bitcoin recusou a consulta da cotação de criptomoedas: não é falta de internet. "+
+					"A cotação fica parada na última guardada; o site tenta de novo a cada 30 minutos e só registra outra vez se a resposta mudar.",
+					"origem", erros.OrigemCripto, "erro", err)
+			}
+			return nil
+		}
+		if ehDeRede(err) {
 			t.log.Warn("Não foi possível consultar a cotação de criptomoedas no Mercado Bitcoin.", "origem", erros.OrigemCripto, "erro", err)
 			return nil
 		}
 		return err
+	}
+	if t.recusa != "" {
+		t.recusa = ""
+		t.log.Info("O Mercado Bitcoin voltou a aceitar a consulta: a cotação de criptomoedas voltou a atualizar.", "origem", erros.OrigemCripto)
 	}
 	t.log.Info("Cotação de criptomoedas atualizada.", "origem", erros.OrigemCripto, "novas", resultado.Novas)
 	return nil
