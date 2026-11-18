@@ -44,6 +44,7 @@ test('Configurações › Módulos: ligar e desligar pelo interruptor', async ({
 });
 
 test('Configurações › Módulos: sem módulo nesta versão', async ({ page }) => {
+  await page.route('**/api/modulos', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.goto('/configuracoes?aba=modulos');
   await expect(page.getByText('Nenhum módulo nesta versão do site.')).toBeVisible();
 });

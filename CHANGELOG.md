@@ -2,10 +2,110 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e [versionamento semântico](https://semver.org/lang/pt-BR/).
 
-## [3.16.1] — 2026-11-16 · desenvolvimento
+## [3.25.1] — 2026-11-18 · desenvolvimento
 
 ### Publicação e documentação
 - **ADR 0049 mais curta: só a decisão da troca para o Go** (#729, grupo 1 da #690). Nada muda para quem usa. A ADR cai de 6.875 para cerca de 1,9 mil palavras: ficam o contexto, as alternativas, a decisão, o que continua valendo, a tabela de bibliotecas (no mesmo lugar) e as consequências, com uma linha por atualização. O passo a passo da convivência com o .NET sai: está na tag `v-ultimo-dotnet`, no CHANGELOG e no histórico do git. As convenções do código Go passam para a skill `go-no-projeto` (`referencias/estilo.md`, "Regras de ouro"), com a pegadinha do RE2.
+
+## [3.25.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Notícias, um módulo** (#10, ADR 0067, Proposta). Ligado em Configurações › Módulos (vem desligado, porque acessa a internet), aparece "Notícias" no menu:
+  - as notícias do dia do G1, da BBC News Brasil e do TabNews: o título (abre no site da notícia, em outra aba), a fonte e quando saiu, com o filtro por fonte;
+  - o site busca as fontes a cada 45 minutos e guarda as 20 mais novas de cada uma; "Atualizar agora" busca na hora (no máximo a cada 5 minutos);
+  - a situação de cada fonte: uma que falha mostra o aviso e não derruba as outras;
+  - na revisão: o erro do banco no "Atualizar agora" aparece (antes, a tela dizia "Notícias atualizadas"), a busca não para se a aba fechar nem espera a de 45 minutos, a leitura que falha tem "Tentar de novo", e os links do G1 para outros sites da Globo (ge, valor) passam a aparecer.
+  - Saídas de rede novas, só com o módulo ligado: `g1.globo.com`, `feeds.bbci.co.uk` e `www.tabnews.com.br`, só com o pedido do feed. Banco: as tabelas `Noticia` e `NoticiaFonte`.
+
+## [3.24.1] — 2026-11-16 · desenvolvimento
+
+### Publicação e documentação
+- **ADR 0069 (Proposta): OCR do holerite escaneado ou foto** (#229). Compara o Tesseract como programa à parte, o tesseract.js no navegador (que pediria afrouxar a CSP), o OCR do Windows e os de nuvem (rejeitados), e propõe o Tesseract chamado pela API, opcional. De onde ele vem (instalado à parte ou no `.msi`), onde se liga e o modelo esperam a decisão; a implementação vem depois dela. Na revisão: a foto reduzida no navegador e a imagem conferida em bytes e em pixels antes de abrir; o Tesseract por um caminho fixo ou configurado, nunca pelo `PATH`; prazo e limite de memória do processo, e o que entra no modelo de ameaças.
+
+## [3.24.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › Holerites: ler o holerite em PDF** (#228, ADR 0068, Proposta):
+  - "Ler holerite em PDF" aceita um ou vários PDFs (o ano de uma vez) e pede a senha quando o PDF tem; a senha só abre o arquivo;
+  - a prévia mostra cada linha com o tipo (salário, horas extras, DSR, INSS, IRRF, vale-transporte, plano de saúde, adiantamento…), o valor e o trecho do PDF, e dá para trocar o tipo, corrigir o valor ou deixar a linha de fora;
+  - a prova real confere a soma de cada coluna e o líquido com o que o PDF imprime, e diz qual total não bateu e por quanto; o INSS, o IRRF e o líquido lidos aparecem ao lado dos calculados, com aviso quando o CNPJ, o salário base ou o mês não conferem;
+  - a rubrica que o site não conhece se escolhe uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida;
+  - nada é gravado sem "Confirmar e gravar"; o holerite lido entra fechado e marcado "Lido do PDF" (o 13º, as férias, o FGTS e a rescisão usam esses números), com "Desfazer" no aviso, e "Reabrir" volta para a estimativa.
+  - Tudo lido no computador, sem serviço de fora, e o PDF não fica guardado. Biblioteca nova no Go: `github.com/ledongthuc/pdf` (BSD-3). Banco: a tabela `HoleriteRubricaEscolha` e a coluna `Holerite.Origem`.
+  - A leitura tem limites (revisão): um PDF por vez, com prazo, e o PDF malformado (árvore de páginas em ciclo, conteúdo que abre para dezenas de MB) para com uma mensagem, sem travar o site; a rubrica desconhecida vem sem tipo até você escolher, e o rodapé do PDF é conferido.
+
+## [3.23.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › Rescisão** (#215):
+  - simula quanto se recebe ao sair do emprego: dispensa sem justa causa, pedido de demissão, acordo (art. 484-A), justa causa e fim do contrato de experiência, com o aviso trabalhado ou indenizado e a data de saída;
+  - as verbas (saldo de salário, aviso proporcional de 30 a 90 dias, 13º e férias proporcionais, férias vencidas em dobro quando o prazo passou, com o 1/3) e os descontos (INSS e IRRF do saldo e do 13º, a 1ª parcela do 13º que já veio, o aviso não cumprido);
+  - o FGTS (o saldo estimado até o mês antes da saída, o depósito da rescisão, a multa de 40% ou 20% sobre todos os depósitos, sem descontar os saques, e quanto dá para sacar: só a multa para quem optou pelo saque-aniversário) e se pode haver seguro-desemprego;
+  - o aviso indenizado que passa do ano traz o 13º do ano seguinte; saindo depois de 20/12, o 13º do ano já veio inteiro; no acordo, o aviso paga o meio dia;
+  - "Comparar os tipos" lado a lado na mesma data; "Registrar esta rescisão" guarda a conta e fecha o emprego (dá para desfazer, e o desfazer devolve a saída que o emprego já tinha).
+  - Banco: a tabela `Rescisao`, criada sozinha ao iniciar. Não é receita.
+
+## [3.22.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho: o crédito do salário ligado ao holerite** (#212). Em Trabalho › Holerites, "Recebido na conta":
+  - o site sugere os créditos que parecem o salário, com um motivo forte (valor perto do líquido, o banco marcou como salário, cita o empregador), dizendo por quê; o PIX pequeno e a transferência entre contas suas não são sugeridos, mas os outros créditos do período também podem ser ligados;
+  - um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite;
+  - a tela mostra quanto foi recebido e a diferença para o líquido estimado; a transação sem categoria vai para "Salário";
+  - a ligação não se perde quando o banco troca o código do crédito na sincronização: o site religa sozinho; o crédito que virou débito aparece com o aviso e dá para desligar.
+  - **A receita não conta duas vezes:** ela continua sendo a transação; ligar só explica. Banco: a tabela `HoleriteRecebimento`.
+
+## [3.21.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › FGTS** (#216, ADR 0066, Proposta):
+  - o saldo estimado mês a mês: 8% do bruto (do holerite, ou do salário, sem os dias de férias), do 13º (a 1ª parcela no mês em que foi paga) e das férias, corrigido a 3% ao ano; depois da saída, o saldo segue corrigido e os saques contam;
+  - "Saldo que vi no app do FGTS": a estimativa recomeça do saldo do app, mais os depósitos que o app ainda não mostrava (a empresa deposita até o dia 20 do mês seguinte), e a tela mostra a diferença (depósito que a empresa não fez, por exemplo);
+  - com mais de um emprego CLT, a escolha do emprego no alto da tela;
+  - saques (rescisão, saque-aniversário, imóvel, outro) e a distribuição de resultados; os últimos meses com a correção, o depósito e o saldo.
+  - O FGTS fica fora do patrimônio do Painel e dos relatórios. Banco: a tabela `FgtsLancamento`, criada sozinha ao iniciar.
+
+## [3.20.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › Férias** (#213):
+  - os períodos aquisitivos (de 12 em 12 meses desde a admissão), com os dias de direito pelas faltas, o que foi agendado, o que sobra e até quando tirar, com o aviso de férias vencidas (pagas em dobro) ou vencendo;
+  - agendar em até 3 frações (uma de 14 dias ou mais, ou um bloco só com menos de 14 de direito), sem cruzar uma com a outra, vendendo até 1/3 dos dias e, se quiser, com a 1ª parcela do 13º junto (uma vez por ano, e não em dezembro), que já aparece no 13º;
+  - "Ver a conta": férias + 1/3 com INSS e IRRF, o abono e o 1/3 dele sem desconto, e o que cai na conta até 2 dias antes; os dias depois do prazo em dobro; "Comparar" tirar tudo × vender 1/3, pelo direito do período, lado a lado.
+  - Banco: as tabelas `FeriasFaltas` e `FeriasAgendamento`, criadas sozinhas ao iniciar. Não é receita.
+
+## [3.19.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › 13º salário** (#214). O 13º do ano, estimado:
+  - proporcional aos meses com 15 dias ou mais de trabalho (os avos), pelo salário de dezembro (ou o da saída) mais a média das horas extras dos holerites do ano, com as horas pelo salário de agora (Súmula 347 do TST) e o aviso dos meses sem holerite;
+  - a 1ª parcela (metade, sem desconto, até 30/11) e a 2ª (até 20/12), com o INSS e o IRRF sobre o total e a redução da Lei 15.270/2025;
+  - "A 1ª parcela que veio": quando e quanto veio (adiantada nas férias, por exemplo), e a 2ª é recalculada, nunca abaixo de zero (a 1ª maior que o líquido vira aviso);
+  - "Como calculei" com cada passo; quem saiu no ano é avisado de que o proporcional vem na rescisão.
+  - Banco: a tabela `DecimoTerceiro`, criada sozinha ao iniciar. Não é receita.
+
+## [3.18.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho › Holerites: o holerite de cada mês** (#211). Pelo salário bruto do Trabalho › Salário:
+  - horas extras (horas e percentual), adicional noturno, o DSR sobre eles (os dias de descanso já contam os domingos e os feriados nacionais de data fixa), e outros proventos (bônus, PLR, comissão), dizendo se têm INSS e IRRF;
+  - descontos: vale-transporte (até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outros;
+  - o cálculo linha a linha, com o INSS, o IRRF, o líquido e o FGTS do mês; salário proporcional no mês da admissão e no da saída;
+  - "Fechar o mês" congela os números (um aumento ou uma tabela nova depois não mudam o mês); "Reabrir" fica nos acessos recentes;
+  - os lançamentos marcados "repetir" (plano de saúde, pensão) passam para o mês seguinte;
+  - o mês sem salário ou fora do emprego fica com o aviso e sem o cálculo, sem derrubar a lista dos holerites.
+  - Banco: as tabelas `Holerite` e `HoleriteLancamento`, criadas sozinhas ao iniciar. Não é receita: nada entra nos relatórios.
+
+## [3.17.0] — 2026-11-16 · desenvolvimento
+
+### Funcionalidades
+- **Trabalho, o primeiro módulo: o salário pelo bruto** (#210, épico #209). Com o Trabalho ligado em Configurações › Módulos, o grupo "Trabalho" aparece no menu com a tela **Salário**:
+  - o emprego (empregador, CNPJ, admissão e saída, regime, jornada, dependentes e a conta do salário);
+  - "O mês": o salário bruto, o INSS, o IRRF e o líquido estimado, com "Como calculei" linha a linha e a fonte de cada tabela;
+  - o histórico de salários com "Aumento a partir de" (o mês, sem proporção pelos dias): os meses antes do aumento continuam com o salário de antes; o primeiro salário, o da admissão, não sai, e corrigir a admissão para antes leva ele junto.
+  - As tabelas do INSS (2025 e 2026, Portaria MPS/MF 13/2026) e do IRRF (desde maio de 2025, e a redução da Lei 15.270/2025 de 2026 em diante) vêm com o site, por vigência (ADR 0065, Proposta).
+  - É estimativa, não holerite, e nada do Trabalho entra nos relatórios: a receita continua sendo a transação do salário.
+  - Banco: as tabelas `Emprego`, `SalarioVigencia`, `InssVigencia`, `InssFaixa`, `IrrfVigencia` e `IrrfFaixa`, criadas sozinhas ao iniciar.
 
 ## [3.16.0] — 2026-11-16 · desenvolvimento
 

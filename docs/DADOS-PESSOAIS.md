@@ -87,6 +87,36 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | **Por quanto tempo** | Até você apagar |
 | **Como apagar** | Em **Investimentos**: excluir a operação ou o ativo |
 
+### Trabalho: emprego e salário (módulo)
+
+| | |
+|---|---|
+| **O que é** | `Emprego`: empregador, CNPJ, admissão e saída, regime, jornada, dependentes para o IR e a conta onde o salário cai. `SalarioVigencia`: o salário bruto de cada período. `Holerite` e `HoleriteLancamento`: o holerite de cada mês (horas extras, bônus, descontos como plano de saúde e pensão alimentícia) e, fechado, o cálculo guardado. `DecimoTerceiro`: quando e quanto veio a 1ª parcela do 13º. `FeriasFaltas` e `FeriasAgendamento`: as faltas sem justificativa de cada período e as férias agendadas (datas, dias, dias vendidos). `FgtsLancamento`: o saldo do FGTS visto no app, os saques (com o motivo) e a distribuição de resultados. `HoleriteRecebimento`: qual transação pagou qual holerite (só a ligação e a parte do valor). `Rescisao`: a rescisão registrada (o tipo, a data de saída e a conta guardada) ([ADR 0065](adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). As tabelas do INSS e do IRRF (`InssVigencia`, `InssFaixa`, `IrrfVigencia`, `IrrfFaixa`) são públicas, não pessoais |
+| **De onde vem** | De você, nas telas do grupo **Trabalho** (Salário, Holerites, 13º salário e as outras que vierem), com o módulo Trabalho ligado (Configurações › Módulos) |
+| **Sai do computador?** | Não. O módulo não acessa a internet |
+| **Por quanto tempo** | Até você apagar. Desligar o módulo esconde a tela, mas guarda os dados |
+| **Como apagar** | Em **Trabalho › Salário**, **Editar emprego** › **Excluir emprego** apaga o emprego e tudo o que é dele (salários, holerites, férias, FGTS, rescisão); **Apagar** tira um salário do histórico. Em **Trabalho › Holerites**, **Excluir** apaga o holerite aberto (o fechado, reabra antes) |
+
+### Holerite em PDF (módulo Trabalho)
+
+| | |
+|---|---|
+| **O que é** | O PDF do holerite que a pessoa manda (#228): ele tem o CPF, o salário e o empregador. A senha, se houver. E `HoleriteRubricaEscolha`: o código, a descrição e o tipo das rubricas que a pessoa classificou, por emprego |
+| **De onde vem** | Da pessoa, em Trabalho › Holerites › “Ler holerite em PDF” ([ADR 0068](adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) |
+| **Sai do computador?** | Não. O PDF é lido no site, sem nenhum serviço de fora |
+| **Por quanto tempo** | O PDF e a senha, só enquanto a leitura dura: não são gravados nem vão para o log (o erro não leva texto do PDF). Só os valores confirmados ficam, no holerite do mês (`Holerite.Calculo`, com `Origem` = 2). As escolhas das rubricas ficam até apagar o emprego |
+| **Como apagar** | Reabrir e excluir o holerite do mês; apagar o emprego apaga as escolhas |
+
+### Notícias (módulo)
+
+| | |
+|---|---|
+| **O que é** | `Noticia` e `NoticiaFonte`: as notícias públicas do G1, da BBC News Brasil e do TabNews (título, link, data) e quando cada fonte foi atualizada. Não é dado pessoal |
+| **De onde vem** | Das fontes, com o módulo Notícias ligado ([ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) |
+| **Sai do computador?** | Só o pedido do feed, a cada 45 minutos, sem nada seu (as fontes veem o endereço de internet da sua casa, como em qualquer site) |
+| **Por quanto tempo** | As 20 mais novas de cada fonte, trocadas a cada busca |
+| **Como apagar** | Desligar o módulo para de buscar. As guardadas ficam no banco, sem aparecer, até o módulo ser ligado de novo e cada fonte ser buscada (a busca troca as dela). Não há botão para apagar antes: são notícias públicas, sem nada seu (revisão do #705) |
+
 ### Cotações, índices e categorias públicas
 
 | | |
