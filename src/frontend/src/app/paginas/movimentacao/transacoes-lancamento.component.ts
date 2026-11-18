@@ -1,17 +1,19 @@
-import { Component, ChangeDetectionStrategy, input, linkedSignal, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, input, linkedSignal, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Conta, OpcaoCategoria, TipoTransacao } from '../../core/modelos';
+import { Conta, OpcaoCategoria, Reserva, TipoTransacao } from '../../core/modelos';
 import { ModalComponent } from '../../compartilhado/ui/modal.component';
 import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component';
 import { CampoValorComponent } from '../../compartilhado/ui/campo-valor.component';
 import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
-import { CategoriaRotulada, FormTransacao } from './transacoes';
+import { CategoriaRotulada, FormTransacao, contasComCofrinho, trocarContaDoLancamento } from './transacoes';
+import { OpcaoCofrinho, opcoesCofrinho, textoOpcaoCofrinho } from './pago-com-cofrinho';
 
 /**
  * Janela "Novo lançamento" / "Editar transação" da tela de Transações. Componente de apresentação (#475, ADR 0059):
  * recebe o lançamento e as listas, edita uma cópia e avisa em `salvar` com ela; não chama a API. Fechar sem salvar
  * não muda nada (Nielsen 3). Transação do Open Finance só ajusta o que não vem do banco (valor, data e conta ficam
- * de fora, com o porquê em texto; Nielsen 1).
+ * de fora, com o porquê em texto; Nielsen 1). #758 (ADR 0063): numa conta do Open Finance com cofrinho, o lançamento é o
+ * gasto pago direto do cofrinho, com o campo "Cofrinho" (divulgação progressiva: só aparece nessa conta).
  */
 @Component({
   selector: 'app-transacoes-lancamento',
@@ -31,19 +33,45 @@ import { CategoriaRotulada, FormTransacao } from './transacoes';
               <label>Tipo
                 <select name="tipo" [(ngModel)]="fm.tipo">
                   <option [ngValue]="TipoTransacao.Despesa">Despesa</option>
-                  <option [ngValue]="TipoTransacao.Receita">Receita</option>
+                  <!-- #758: do cofrinho só sai despesa (Nielsen 5: a opção que daria erro nem fica disponível). -->
+                  <option [ngValue]="TipoTransacao.Receita" [disabled]="doCofrinho(fm)">Receita</option>
                 </select>
               </label>
               <label>Conta
-                <select name="conta" [(ngModel)]="fm.contaId" required>
-                  @for (c of contasManuais(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
+                <select name="conta" [ngModel]="fm.contaId" (ngModelChange)="trocarConta(fm, $event)" required
+                  [disabled]="semContas()" [attr.aria-describedby]="semContas() ? 'sem-contas' : null">
+                  @if (contasCofrinho().length) {
+                    <optgroup label="Contas manuais">
+                      @for (c of contasManuais(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
+                    </optgroup>
+                    <optgroup label="Gasto pago por um cofrinho">
+                      @for (c of contasCofrinho(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
+                    </optgroup>
+                  } @else {
+                    @for (c of contasManuais(); track c.id) { <option [ngValue]="c.id">{{ c.nome }}</option> }
+                  }
                 </select>
               </label>
               <label>Data <app-campo-data name="data" [(ngModel)]="fm.data" obrigatorio /></label>
               <label>Valor <app-campo-valor name="valor" [(ngModel)]="fm.valor" obrigatorio [minimo]="0.01" /></label>
+              @if (doCofrinho(fm)) {
+                <label>Cofrinho
+                  <select name="cofrinho" [(ngModel)]="fm.reservaNome" required aria-describedby="ajuda-cofrinho-lancamento">
+                    @for (o of cofrinhos(fm); track o.nome) { <option [ngValue]="o.nome">{{ textoOpcaoCofrinho(o) }}</option> }
+                  </select>
+                </label>
+              }
             </div>
-            @if (!contasManuais().length) {
-              <p class="erro">Crie uma conta manual (ex.: "Carteira") em Contas e cartões para lançar manualmente.</p>
+            @if (doCofrinho(fm)) {
+              <p class="texto-suave pequeno-texto" id="ajuda-cofrinho-lancamento">
+                Sai direto do cofrinho, sem passar pela conta: entra como despesa e baixa a reserva. O saldo da conta não
+                muda, porque é o que o banco informa.
+              </p>
+            }
+            @if (semContas()) {
+              <p class="erro" id="sem-contas">Não há conta para lançar. Crie uma conta manual (ex.: "Carteira") em Contas e
+                cartões; um gasto pago direto de um cofrinho aparece aqui quando a conta do Open Finance tem cofrinhos em
+                Investimentos › Reservas.</p>
             }
           }
           <label>Descrição <input name="descricao" [(ngModel)]="fm.descricao" required maxlength="300"></label>
@@ -79,7 +107,7 @@ import { CategoriaRotulada, FormTransacao } from './transacoes';
             }
             <span class="cresce"></span>
             <button type="button" class="botao" (click)="fechar.emit()">Cancelar</button>
-            <button class="botao botao-primario" [disabled]="f.invalid || salvando()">Salvar</button>
+            <button class="botao botao-primario" [disabled]="f.invalid || salvando() || (!fm.openFinance && semContas())">Salvar</button>
           </div>
         </form>
       }
@@ -90,6 +118,10 @@ export class TransacoesLancamentoComponent {
   /** O lançamento da janela (null = fechada). */
   readonly lancamento = input<FormTransacao | null>(null);
   readonly contasManuais = input<Conta[]>([]);
+  /** #758: as contas do Open Finance (a janela escolhe as que têm cofrinho). */
+  readonly contasOpenFinance = input<Conta[]>([]);
+  /** #758: as reservas das contas, para os cofrinhos (null = ainda carregando). */
+  readonly reservas = input<Reserva[] | null>(null);
   readonly categorias = input<CategoriaRotulada[]>([]);
   /** Categorias sugeridas para esta transação; um clique escolhe. */
   readonly sugestoes = input<OpcaoCategoria[]>([]);
@@ -101,9 +133,32 @@ export class TransacoesLancamentoComponent {
   readonly fechar = output<void>();
 
   readonly TipoTransacao = TipoTransacao;
+  readonly textoOpcaoCofrinho = textoOpcaoCofrinho;
   /** A cópia que a janela edita: refeita a cada lançamento novo que chega. */
   readonly dados = linkedSignal(() => {
     const l = this.lancamento();
     return l ? { ...l } : null;
   });
+
+  /** #758: contas do Open Finance com cofrinho; a do lançamento do cofrinho aberto fica, para editar. */
+  readonly contasCofrinho = computed(() => {
+    const l = this.lancamento();
+    return contasComCofrinho(this.contasOpenFinance(), this.reservas() ?? [], l?.reservaNome ? l.contaId : null);
+  });
+  /** Sem conta nenhuma para escolher (só depois de as reservas chegarem, para o aviso não piscar). */
+  readonly semContas = computed(() =>
+    this.reservas() !== null && !this.contasManuais().length && !this.contasCofrinho().length);
+
+  doCofrinho(fm: FormTransacao): boolean {
+    return fm.contaId !== null && this.contasCofrinho().some((c) => c.id === fm.contaId);
+  }
+
+  cofrinhos(fm: FormTransacao): OpcaoCofrinho[] {
+    return opcoesCofrinho(this.reservas() ?? [], fm.contaId, fm.reservaNome);
+  }
+
+  trocarConta(fm: FormTransacao, contaId: number | null): void {
+    const doCofrinho = contaId !== null && this.contasCofrinho().some((c) => c.id === contaId);
+    this.dados.set(trocarContaDoLancamento(fm, contaId, doCofrinho, this.reservas() ?? []));
+  }
 }

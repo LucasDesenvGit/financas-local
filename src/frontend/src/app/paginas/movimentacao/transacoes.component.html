@@ -163,6 +163,7 @@
                 @if (t.status === StatusTransacao.Pendente) { <span class="etiqueta etiqueta-alerta">pendente</span> }
                 @if (t.emergencia) { <span class="etiqueta etiqueta-emergencia">emergência</span> }
                 @if (t.openFinance) { <span class="etiqueta">open finance</span> }
+                @if (t.reservaNome) { <span class="etiqueta">cofrinho {{ t.reservaNome }}</span> }
                 @if (t.observacao) { <span class="texto-suave truncar">{{ t.observacao }}</span> }
                 @if (filtroAplicado().poucoInformativa) {
                   <button type="button" class="link botao-revisada" (click)="$event.stopPropagation(); marcarRevisadas([t.id])"
@@ -214,7 +215,8 @@
 <app-renomear-transacao [transacao]="renomeando()" (fechar)="renomeando.set(null)" (renomeada)="aoRenomear()" />
 <app-renomear-em-lote [transacoes]="renomeandoLote()" (fechar)="renomeandoLote.set(null)" (renomeada)="aoRenomearLote()" />
 
-<app-transacoes-lancamento [lancamento]="form" [contasManuais]="contasManuais()" [categorias]="categoriasRotuladas()"
+<app-transacoes-lancamento [lancamento]="form" [contasManuais]="contasManuais()" [contasOpenFinance]="contasOpenFinance()"
+  [reservas]="reservas()" [categorias]="categoriasRotuladas()"
   [sugestoes]="sugestoesForm()" [salvando]="salvando()" (salvar)="salvar($event)" (excluir)="excluir()" (fechar)="form = null" />
 
 <app-transacoes-sugestoes [aberta]="sugestoesAbertas()" [carregando]="carregandoSugestoes()"
