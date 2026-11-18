@@ -14,7 +14,6 @@ import (
 	"unicode"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -566,49 +565,4 @@ func (s *Servico) excluirAtivo(w http.ResponseWriter, r *http.Request) {
 	default:
 		respostas.SemCorpo(w, http.StatusNoContent)
 	}
-}
-
-// configuracaoDaCotacao é o ConfiguracaoCotacaoDto.
-type configuracaoDaCotacao struct {
-	TokenBrapiConfigurado bool `json:"tokenBrapiConfigurado"`
-}
-
-// obterConfiguracao é o GET /api/carteira/configuracao: só diz se há token, nunca o valor.
-func (s *Servico) obterConfiguracao(w http.ResponseWriter, r *http.Request) {
-	existe, err := s.config.Existe(r.Context(), cotacoes.ChaveTokenBrapi)
-	if err != nil {
-		s.erroInterno(w, r, "ler a configuração", err)
-		return
-	}
-	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, configuracaoDaCotacao{existe})
-}
-
-// tokenValido: sem espaço nem caractere de controle, que iriam parar no cabeçalho da consulta.
-func tokenValido(token string) bool {
-	return !strings.ContainsFunc(token, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) })
-}
-
-// salvarConfiguracao é o PUT /api/carteira/configuracao: grava ou tira o token da brapi; em branco, nada muda.
-func (s *Servico) salvarConfiguracao(w http.ResponseWriter, r *http.Request) {
-	token := respostas.CampoTexto{Propriedade: "TokenBrapi", Maximo: 200, Opcional: true}
-	remover := respostas.CampoBool{Propriedade: "Remover"}
-	if !respostas.LerObjeto(w, r, &token, &remover) {
-		return
-	}
-	var err error
-	switch aparado := aparadoOuNulo(token.Valor); {
-	case remover.Valor:
-		err = s.config.Definir(r.Context(), cotacoes.ChaveTokenBrapi, nil)
-	case aparado == nil:
-	case !tokenValido(*aparado):
-		erroNaEntrada(w, "Token inválido.")
-		return
-	default:
-		err = s.config.DefinirSegredo(r.Context(), s.cofre, cotacoes.ChaveTokenBrapi, aparado)
-	}
-	if err != nil {
-		s.erroInterno(w, r, "gravar a configuração", err)
-		return
-	}
-	respostas.SemCorpo(w, http.StatusNoContent)
 }

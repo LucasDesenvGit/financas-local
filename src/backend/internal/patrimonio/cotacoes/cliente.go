@@ -1,6 +1,6 @@
-// Pacote cotacoes é o CotacaoService do C# (#82): as cotações e os proventos dos ativos. A fonte principal é o Yahoo Finance
-// (pública, sem chave, não oficial); a alternativa, a brapi.dev, com token. Ativos no exterior usam o código como no Yahoo,
-// sem ".SA", e a brapi só atende a B3. Só o código do ativo sai do computador: nenhuma quantidade, valor ou dado pessoal.
+// Pacote cotacoes é o CotacaoService do C# (#82): as cotações e os proventos dos ativos, pelo Yahoo Finance (pública, sem
+// chave, não oficial; a brapi.dev saiu na #763, ADR 0072). Ativos no exterior usam o código como no Yahoo, sem ".SA". Só o
+// código do ativo sai do computador: nenhuma quantidade, valor ou dado pessoal.
 package cotacoes
 
 import (
@@ -23,10 +23,8 @@ import (
 // Os endereços e os limites são os dos AddHttpClient do Program.cs, mais um teto para o tamanho da resposta.
 const (
 	URLPadraoYahoo  = "https://query1.finance.yahoo.com/"
-	URLPadraoBrapi  = "https://brapi.dev/"
 	tempoLimite     = 20 * time.Second
 	agenteNavegador = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
-	agenteDoCliente = "FinancasLocal/1.0"
 	tamanhoMaximo   = 20 << 20 // 20 MB: o histórico mensal do maior ativo tem poucos KB
 	// A faixa do histórico mensal cresce com a idade da primeira operação.
 	anosParaTudo    = 9
@@ -37,10 +35,10 @@ const (
 // errFormato é a resposta que não tem a forma esperada (as exceções do JsonElement no C#).
 var errFormato = errors.New("resposta fora do formato")
 
-// Cliente consulta o Yahoo e a brapi. Faz só HTTPS: as URLs base são configuráveis para os testes.
+// Cliente consulta o Yahoo. Faz só HTTPS: a URL base é configurável para os testes.
 type Cliente struct {
-	yahoo, brapi *url.URL
-	http         *http.Client
+	yahoo *url.URL
+	http  *http.Client
 }
 
 func baseHTTPS(endereco string) (*url.URL, error) {
@@ -58,45 +56,38 @@ func baseHTTPS(endereco string) (*url.URL, error) {
 }
 
 // NovoCliente cria o cliente. http nil usa um com o tempo limite de 20 s; nos testes, o do testeapoio.ServicoDeFora.
-func NovoCliente(urlYahoo, urlBrapi string, cliente *http.Client) (*Cliente, error) {
+func NovoCliente(urlYahoo string, cliente *http.Client) (*Cliente, error) {
 	yahoo, err := baseHTTPS(urlYahoo)
-	if err != nil {
-		return nil, err
-	}
-	brapi, err := baseHTTPS(urlBrapi)
 	if err != nil {
 		return nil, err
 	}
 	if cliente == nil {
 		cliente = &http.Client{Timeout: tempoLimite}
 	}
-	return &Cliente{yahoo: yahoo, brapi: brapi, http: cliente}, nil
+	return &Cliente{yahoo: yahoo, http: cliente}, nil
 }
 
 // ClientePadrao é o cliente de produção.
 func ClientePadrao() *Cliente {
-	c, err := NovoCliente(URLPadraoYahoo, URLPadraoBrapi, nil)
+	c, err := NovoCliente(URLPadraoYahoo, nil)
 	if err != nil {
 		panic(err) // as URLs são constantes: erro aqui é bug
 	}
 	return c
 }
 
-// obter faz o GET e devolve o corpo, ou nil quando o status não é de sucesso.
-func (c *Cliente) obter(ctx context.Context, base *url.URL, caminho, agente, token string) ([]byte, error) {
+// obter faz o GET no Yahoo, com o agente de navegador, e devolve o corpo, ou nil quando o status não é de sucesso.
+func (c *Cliente) obter(ctx context.Context, caminho string) ([]byte, error) {
 	relativo, err := url.Parse(caminho)
 	if err != nil {
 		return nil, fmt.Errorf("montar o endereço da cotação: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base.ResolveReference(relativo).String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.yahoo.ResolveReference(relativo).String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("montar o pedido da cotação: %w", err)
 	}
-	req.Header.Set("User-Agent", agente)
+	req.Header.Set("User-Agent", agenteNavegador)
 	req.Header.Set("Accept", "application/json")
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token) // no cabeçalho: não fica em log de URL
-	}
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("consultar a cotação: %w", err)
@@ -350,7 +341,7 @@ func pregaoAnterior(d tipos.Data) tipos.Data {
 func escapar(s string) string { return strings.ReplaceAll(url.QueryEscape(s), "+", "%20") }
 
 func (c *Cliente) graficoYahoo(ctx context.Context, simbolo, consulta string) (json.RawMessage, error) {
-	corpo, err := c.obter(ctx, c.yahoo, "v8/finance/chart/"+escapar(simbolo)+"?"+consulta, agenteNavegador, "")
+	corpo, err := c.obter(ctx, "v8/finance/chart/"+escapar(simbolo)+"?"+consulta)
 	if err != nil || corpo == nil {
 		return nil, err
 	}
@@ -461,34 +452,6 @@ func (c *Cliente) Yahoo(ctx context.Context, simbolo string, primeiraOperacao ti
 	}
 	if o.Preco == nil && len(o.Proventos) == 0 && len(o.Mensais) == 0 {
 		return nil, nil
-	}
-	return &o, nil
-}
-
-// Brapi é o BrapiAsync: o preço pela brapi.dev, com o token; nil se ela não tiver.
-func (c *Cliente) Brapi(ctx context.Context, ticker, token string) (*Obtida, error) {
-	corpo, err := c.obter(ctx, c.brapi, "api/quote/"+escapar(ticker), agenteDoCliente, token)
-	if err != nil || corpo == nil {
-		return nil, err
-	}
-	if !json.Valid(corpo) {
-		return nil, fmt.Errorf("%w: JSON quebrado", errFormato)
-	}
-	cru, _, err := campo(corpo, "results")
-	if err != nil {
-		return nil, err
-	}
-	itens, ok := lista(cru)
-	if !ok || len(itens) == 0 {
-		return nil, nil
-	}
-	r := itens[0]
-	o := Obtida{Preco: numero(r, "regularMarketPrice"), PrecoAnterior: numero(r, "regularMarketPreviousClose"), Fonte: "brapi.dev"}
-	if o.Preco == nil {
-		return nil, nil
-	}
-	if o.Nome = textoDoCampo(r, "longName"); o.Nome == nil {
-		o.Nome = textoDoCampo(r, "shortName")
 	}
 	return &o, nil
 }

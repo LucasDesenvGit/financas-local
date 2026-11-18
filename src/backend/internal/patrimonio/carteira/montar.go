@@ -72,19 +72,18 @@ type Servico struct {
 	selic    taxaSelic
 	cotacoes atualizacao
 	config   *configuracao.Servico
-	cofre    configuracao.Cofre
 	desfazer *desfazer.Memoria[estadoAnterior]
 	relogio  relogio.Relogio
 	log      *slog.Logger
 }
 
 // NovoServico monta o serviço com as dependências.
-func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atualizacao, cofre configuracao.Cofre, rel relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, config: configuracao.Novo(db, rel), cofre: cofre, desfazer: desfazer.Nova[estadoAnterior](rel), relogio: rel, log: log}
+func NovoServico(db *sql.DB, c conversao, r listaDeReservas, s taxaSelic, a atualizacao, rel relogio.Relogio, log *slog.Logger) *Servico {
+	return &Servico{db: db, cambio: c, reservas: r, selic: s, cotacoes: a, config: configuracao.Novo(db, rel), desfazer: desfazer.Nova[estadoAnterior](rel), relogio: rel, log: log}
 }
 
 // NovoServicoDeAcertos monta o serviço só com o que o ClassificarTrocosSemDuvida usa (o banco, a configuração, o relógio e o
-// log), para a partida da API (#444): ela não precisa de câmbio, reservas, Selic, cotações nem do cofre. Qualquer outro
+// log), para a partida da API (#444): ela não precisa de câmbio, reservas, Selic nem cotações. Qualquer outro
 // método do serviço feito assim entra em pânico, por falta de dependência: para ele, use o NovoServico.
 func NovoServicoDeAcertos(db *sql.DB, rel relogio.Relogio, log *slog.Logger) *Servico {
 	return &Servico{db: db, config: configuracao.Novo(db, rel), relogio: rel, log: log}

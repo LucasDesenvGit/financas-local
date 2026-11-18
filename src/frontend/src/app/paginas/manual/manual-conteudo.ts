@@ -1155,7 +1155,7 @@ export const MANUAL: CapituloManual[] = [
           'Valorização: o valor atual menos o que você pagou, em R$ e em % sobre o investido, com o sinal (+ ou −);',
           '“ao mês”, no yield on cost: a renda do mês sobre o investido;',
           'Renda/mês: a soma da renda estimada de cada fundo (último rendimento × suas cotas). O peso do total é 100%.',
-          'Fundo sem cotação (o Yahoo Finance e a brapi não responderam ou não conhecem o código): ele entra no investido e na renda, mas fica fora do valor atual e da valorização, e o total avisa (“1 fundo sem cotação, fora do valor atual”).'
+          'Fundo sem cotação (o Yahoo Finance não respondeu ou não conhece o código): ele entra no investido e na renda, mas fica fora do valor atual e da valorização, e o total avisa (“1 fundo sem cotação, fora do valor atual”).'
         ],
         abrir: [{ rotulo: 'Abrir Meus FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
         dicas: [
@@ -1166,16 +1166,14 @@ export const MANUAL: CapituloManual[] = [
       },
       {
         id: 'fonte-das-cotacoes',
-        titulo: 'Fonte das cotações e token da brapi',
-        paraQueServe: 'Saber de onde vêm as cotações e, se quiser, informar o token da brapi para quando o Yahoo Finance não responder.',
+        titulo: 'Fonte das cotações',
+        paraQueServe: 'Saber de onde vêm as cotações dos seus ativos e o que sai do seu computador para buscá-las.',
         passos: [
           'Abra Investimentos, na aba Renda variável, e clique em “fonte das cotações”, ao lado de “Mostrar encerradas”.',
-          'As cotações e os proventos vêm do Yahoo Finance (gratuito, sem cadastro e não oficial), e a Selic, do Banco Central. Só o código do ativo é enviado.',
-          'Opcional: crie um token gratuito na brapi.dev, cole em “Token da brapi.dev” e clique em “Salvar”. Ele só é usado quando o Yahoo não responde.',
-          'O token fica criptografado no banco do seu computador e não aparece de novo na tela: o campo mostra só “configurado”. Para trocar, cole o novo e salve; para tirar, use “Remover token”.'
+          'As cotações e os proventos vêm do Yahoo Finance (gratuito, sem cadastro e não oficial), e a Selic, do Banco Central. Só o código do ativo é enviado.'
         ],
         abrir: [{ rotulo: 'Abrir a Renda variável', rota: '/investimentos', params: { aba: 'rv' } }],
-        dicas: ['O token vai para a brapi junto com o código do ativo, a cada cotação buscada lá. Valores e quantidades não saem.']
+        dicas: ['Se o Yahoo Finance não responder, o ativo fica com a última cotação guardada, e a próxima atualização tenta de novo.']
       },
       {
         id: 'mes-a-mes',
@@ -1563,7 +1561,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber exatamente para onde vão os seus dados.',
         passos: [
           'Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.',
-          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance e brapi, que recebe também o seu token, se você informou um); e o pedido das cotações de criptomoedas ao Mercado Bitcoin, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
+          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance); e o pedido das cotações de criptomoedas ao Mercado Bitcoin, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
           'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
           'Não sai: valores, quantidades e dados pessoais.',
           'Com o acesso pelo celular ligado (Configurações › Segurança), o site também atende os aparelhos da sua rede de casa, que chegam à tela de entrar. Nada vai para a internet por causa disso, e fora de casa o celular não chega ao site.',

@@ -72,8 +72,7 @@ O núcleo não importa módulo, e um módulo não importa outro. O teste de arqu
 **Interface pequena, declarada por quem usa**, quando há duas implementações de verdade: a real e a falsa dos testes.
 - É o que a `carteira`, a `conferenciabanco` e o `cambio` (`fonteDeCotacoes`) já fazem.
 - **Fonte de cotação:**
-  - hoje, só as ações e os FIIs têm duas fontes: o Yahoo e, se ele falhar, a brapi (`internal/patrimonio/cotacoes`). A troca já existe dentro do pacote;
-  - o câmbio (PTAX) e a cripto (Mercado Bitcoin) têm uma fonte cada. Quando ganharem uma segunda, a fonte vira uma interface declarada pelo `cambio` ou pelo `cripto`, com a troca quando uma falha;
+  - hoje, cada assunto tem uma fonte só: as ações e os FIIs, o Yahoo (a brapi, que era a reserva, saiu na #763, ADR 0072); o câmbio, a PTAX; a cripto, o Mercado Bitcoin. Quando um deles ganhar uma segunda, a fonte vira uma interface declarada pelo `cotacoes`, pelo `cambio` ou pelo `cripto`, com a troca quando uma falha;
   - uma interface comum entre as três não entra: elas dão dados diferentes (moeda, cripto, ativo da B3).
 - **A Pluggy não ganha interface** enquanto for a única fonte de transações.
 

@@ -13,7 +13,7 @@ A rede de segurança do back-end ([#72](https://github.com/LucasDesenvGit/financ
 | `rodar.sh` | monta o banco, sobe o Go como o serviço instalado, sem rede e com o relógio controlado, e roda o comparador |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (134), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (64, #83), `17-erros` (52) e `90-go` (4, o diagnóstico `/api/go/saude`).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (138), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (64, #83), `17-erros` (52) e `90-go` (4, o diagnóstico `/api/go/saude`).
 
 ## Rodar
 
@@ -167,7 +167,7 @@ Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são s
 
 ## O que ficou de fora
 
-- **Integrações externas** (Yahoo/brapi, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go, nos pacotes delas, com respostas gravadas. A **Pluggy** entra pela Pluggy falsa.
+- **Integrações externas** (Yahoo, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go, nos pacotes delas, com respostas gravadas. A **Pluggy** entra pela Pluggy falsa.
 - **Cabeçalhos de segurança, cache e arquivos do front-end:** testes do pacote `internal/plataforma/servidor` (`TestCabecalhosDeSeguranca`, `TestRespostasComoODotnet`).
 - **O que só existe no Windows** (serviço, instalador): continua com o teste do `.msi`.
 - **Relação entre GUIDs:** todo GUID vira o mesmo marcador, então o contrato não confere que duas transações têm o mesmo `TransferenciaGrupo` pelo valor (confere pela contagem e pelos outros campos).

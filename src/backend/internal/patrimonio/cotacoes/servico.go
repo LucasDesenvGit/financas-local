@@ -3,7 +3,6 @@ package cotacoes
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -15,14 +14,11 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/segredos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 const (
-	// ChaveTokenBrapi é o token da brapi na Configuracao.
-	ChaveTokenBrapi = "Cotacao.BrapiToken"
 	// CodigoIfix é o índice dos FIIs.
 	CodigoIfix = "IFIX"
 
@@ -43,7 +39,6 @@ var simbolosDoIfix = []string{"IFIX.SA", "^IFIX"}
 // fonte é o que o serviço usa das fontes. A interface é de quem usa: a de verdade é o Cliente.
 type fonte interface {
 	Yahoo(ctx context.Context, simbolo string, primeiraOperacao tipos.Data, anoDeHoje int) (*Obtida, error)
-	Brapi(ctx context.Context, ticker, token string) (*Obtida, error)
 	MensaisDoIndice(ctx context.Context, simbolo string) ([]Fechamento, error)
 	FechamentosDiarios(ctx context.Context, ticker string, inicio, fim int64) ([]Fechamento, error)
 }
@@ -53,22 +48,20 @@ type historico interface {
 	GarantirHistorico(ctx context.Context, moeda string, desde tipos.Data) error
 }
 
-// Servico é o CotacaoService. O cofre é nil até a troca dos segredos (#85, ADR 0049): sem ele, não há token, e a brapi fica
-// de fora.
+// Servico é o CotacaoService.
 type Servico struct {
 	db      *sql.DB
 	config  *configuracao.Servico
 	fonte   fonte
 	cambio  historico
-	cofre   configuracao.Cofre
 	relogio relogio.Relogio
 	log     *slog.Logger
 	esperar func(ctx context.Context, d time.Duration) error // a pausa entre ativos; nos testes, nada
 }
 
 // NovoServico monta o serviço com as dependências.
-func NovoServico(db *sql.DB, f fonte, c historico, cofre configuracao.Cofre, r relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, config: configuracao.Novo(db, r), fonte: f, cambio: c, cofre: cofre, relogio: r, log: log, esperar: esperarComContexto}
+func NovoServico(db *sql.DB, f fonte, c historico, r relogio.Relogio, log *slog.Logger) *Servico {
+	return &Servico{db: db, config: configuracao.Novo(db, r), fonte: f, cambio: c, relogio: r, log: log, esperar: esperarComContexto}
 }
 
 func esperarComContexto(ctx context.Context, d time.Duration) error {
@@ -139,25 +132,9 @@ func (s *Servico) lerAtivos(ctx context.Context, somente []int64) ([]ativo, erro
 	return ativos, linhas.Err()
 }
 
-// token é o token da brapi. O gravado pelo .NET não se lê até a troca dos segredos: sem ele, só não há brapi.
-func (s *Servico) token(ctx context.Context) (string, error) {
-	if s.cofre == nil {
-		return "", nil
-	}
-	t, err := s.config.ObterSegredo(ctx, s.cofre, ChaveTokenBrapi)
-	if errors.Is(err, segredos.ErrInformarDeNovo) {
-		s.avisar("O token da brapi precisa ser informado de novo.")
-		return "", nil
-	}
-	if err != nil || t == nil || strings.TrimFunc(*t, unicode.IsSpace) == "" {
-		return "", err
-	}
-	return *t, nil
-}
-
-// consultar pede a cotação às fontes: o Yahoo; se ele vier na moeda errada, nada (comparação exata de propósito: o "GBp",
-// em pence, não pode passar como GBP); na B3, sem preço, a brapi.
-func (s *Servico) consultar(ctx context.Context, a *ativo, token string, hoje tipos.Data) (*Obtida, error) {
+// consultar pede a cotação ao Yahoo; se ela vier na moeda errada, nada (comparação exata de propósito: o "GBp", em
+// pence, não pode passar como GBP).
+func (s *Servico) consultar(ctx context.Context, a *ativo, hoje tipos.Data) (*Obtida, error) {
 	exterior := a.moeda != cambio.MoedaBase
 	primeira := hoje
 	if a.primeiraOperacao != nil {
@@ -182,17 +159,6 @@ func (s *Servico) consultar(ctx context.Context, a *ativo, token string, hoje ti
 	if exterior {
 		if err := s.cambio.GarantirHistorico(ctx, a.moeda, primeira); err != nil {
 			return nil, err
-		}
-	}
-	if (cotacao == nil || cotacao.Preco == nil) && !exterior && token != "" {
-		pela, err := s.fonte.Brapi(ctx, a.ticker, token)
-		switch {
-		case ctx.Err() != nil:
-			return nil, ctx.Err()
-		case err != nil:
-			s.avisar(fmt.Sprintf("Falha ao consultar %s na brapi.", a.ticker), "erro", err)
-		case pela != nil:
-			cotacao = pela
 		}
 	}
 	return cotacao, nil
@@ -329,17 +295,13 @@ func (s *Servico) Atualizar(ctx context.Context, somente []int64) (Resultado, er
 	if err != nil {
 		return r, err
 	}
-	token, err := s.token(ctx)
-	if err != nil {
-		return r, err
-	}
 	hoje := relogio.Hoje(s.relogio)
 	for i := range ativos {
 		a := &ativos[i]
 		if err := ctx.Err(); err != nil {
 			return r, err
 		}
-		cotacao, err := s.consultar(ctx, a, token, hoje)
+		cotacao, err := s.consultar(ctx, a, hoje)
 		if err != nil {
 			return r, err
 		}

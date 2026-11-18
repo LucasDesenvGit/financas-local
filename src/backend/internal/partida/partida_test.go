@@ -48,6 +48,10 @@ func novaCena(t *testing.T) *cena {
 	db := testeapoio.NovoBancoVazio(t)
 	fab := testeapoio.NovaFabrica(t, db, ontem)
 	c := &cena{db: db, fab: fab}
+	// 7: o token da brapi que ficou do .NET (#763).
+	if _, err := db.Exec(`INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES ('Cotacao.BrapiToken', 'CfDJ8antigo', 1, '2026-01-01 00:00:00')`); err != nil {
+		t.Fatal(err)
+	}
 	categoria := func(nome string, tipo int64) testeapoio.Categoria {
 		return fab.Categoria(func(x *testeapoio.Categoria) { x.Nome, x.Tipo = nome, tipo })
 	}
@@ -182,7 +186,7 @@ func nomes(r []Resultado) []string {
 	return l
 }
 
-// Regra: a partida roda as seis rotinas, na ordem do Program.cs, e cada uma acerta o dado que lhe cabe; a segunda
+// Regra: a partida roda as sete rotinas, na ordem do Program.cs (e a do token da brapi no fim, #763), e cada uma acerta o dado que lhe cabe; a segunda
 // partida não muda nada (nem o carimbo, nem as marcas, nem a auditoria).
 func TestPartidaAcertaOQueCadaRotinaPrometeEESegundaNaoMudaNada(t *testing.T) {
 	t.Parallel()
@@ -191,11 +195,11 @@ func TestPartidaAcertaOQueCadaRotinaPrometeEESegundaNaoMudaNada(t *testing.T) {
 
 	resultados := Executar(t.Context(), opcoes(c.db, log))
 
-	ordem := []string{RegrasPadrao, EntradasNosCartoes, ComprasParceladasEstornadas, Transferencias, ContasAPagar, TrocosSemDuvida}
+	ordem := []string{RegrasPadrao, EntradasNosCartoes, ComprasParceladasEstornadas, Transferencias, ContasAPagar, TrocosSemDuvida, TokenDaBrapi}
 	if obtida := nomes(resultados); strings.Join(obtida, "|") != strings.Join(ordem, "|") {
 		t.Fatalf("rotinas %v, esperado %v", obtida, ordem)
 	}
-	quantas := map[string]int{RegrasPadrao: 1, EntradasNosCartoes: 1, ComprasParceladasEstornadas: 4, Transferencias: 1, ContasAPagar: 1, TrocosSemDuvida: 1}
+	quantas := map[string]int{RegrasPadrao: 1, EntradasNosCartoes: 1, ComprasParceladasEstornadas: 4, Transferencias: 1, ContasAPagar: 1, TrocosSemDuvida: 1, TokenDaBrapi: 1}
 	for _, r := range resultados {
 		if r.Erro != nil || r.Mudaram != quantas[r.Rotina] {
 			t.Errorf("%s: mudaram %d (esperado %d), erro %v", r.Rotina, r.Mudaram, quantas[r.Rotina], r.Erro)
@@ -231,6 +235,11 @@ func TestPartidaAcertaOQueCadaRotinaPrometeEESegundaNaoMudaNada(t *testing.T) {
 	}
 	if ultimo != relogio.Hoje(hoje).SomarDias(-2).String() || proximo != relogio.Hoje(hoje).SomarDias(3).SomarMeses(1).String() {
 		t.Errorf("contas a pagar: último pagamento %s, próximo vencimento %s", ultimo, proximo)
+	}
+	// 7
+	var tokens int
+	if err := c.db.QueryRow(`SELECT COUNT(*) FROM Configuracao WHERE Chave = 'Cotacao.BrapiToken'`).Scan(&tokens); err != nil || tokens != 0 {
+		t.Errorf("token da brapi: sobraram %d, %v", tokens, err)
 	}
 	// 6
 	if e := c.estado(t, c.trocoDaCompra); !e.naCategoria(c.investimentos.Id) || e.tipo != transacoes.Transferencia || !e.ignorar || !e.manual || !e.deHoje() {
@@ -319,9 +328,9 @@ func TestPartidaErroNumaRotinaSegueParaAsSeguintes(t *testing.T) {
 
 	resultados := Executar(t.Context(), opcoes(c.db, log))
 
-	if len(resultados) != 6 || resultados[2].Rotina != ComprasParceladasEstornadas || resultados[2].Erro == nil ||
+	if len(resultados) != 7 || resultados[2].Rotina != ComprasParceladasEstornadas || resultados[2].Erro == nil ||
 		!strings.Contains(resultados[2].Erro.Error(), "banco recusou") {
-		t.Fatalf("a partida deveria rodar as seis, com o erro do banco na rotina 3: %+v", resultados)
+		t.Fatalf("a partida deveria rodar as sete, com o erro do banco na rotina 3: %+v", resultados)
 	}
 	for _, r := range resultados[3:] {
 		if r.Erro != nil || r.Mudaram != 1 {
@@ -368,7 +377,7 @@ func TestPartidaErroNumaRotinaSegueParaAsSeguintes(t *testing.T) {
 		t.Fatal(err)
 	}
 	proxima := Executar(t.Context(), opcoes(c.db, slog.New(slog.DiscardHandler)))
-	if len(proxima) != 6 || proxima[2].Mudaram != 4 || proxima[3].Mudaram != 0 || proxima[4].Mudaram != 0 || proxima[5].Mudaram != 0 {
+	if len(proxima) != 7 || proxima[2].Mudaram != 4 || proxima[3].Mudaram != 0 || proxima[4].Mudaram != 0 || proxima[5].Mudaram != 0 || proxima[6].Mudaram != 0 {
 		t.Errorf("a próxima partida deveria acertar só a rotina 3: %+v", proxima)
 	}
 	for _, r := range proxima {
@@ -389,7 +398,7 @@ func TestPartidaRotinaQueFalhaNoMeioDesfazTudo(t *testing.T) {
 
 	resultados := Executar(t.Context(), opcoes(c.db, log))
 
-	if len(resultados) != 6 || resultados[0].Rotina != RegrasPadrao || resultados[0].Erro == nil || resultados[0].Mudaram != 0 {
+	if len(resultados) != 7 || resultados[0].Rotina != RegrasPadrao || resultados[0].Erro == nil || resultados[0].Mudaram != 0 {
 		t.Fatalf("a partida deveria registrar o erro na rotina 1 e seguir: %+v", resultados)
 	}
 	var n int
@@ -495,14 +504,14 @@ func TestPartidaComContextoCancelado(t *testing.T) {
 	}
 }
 
-// Regra: banco sem nada para acertar (instalação nova, só com os dados iniciais): as seis rotinas rodam sem mudar
+// Regra: banco sem nada para acertar (instalação nova, só com os dados iniciais): as sete rotinas rodam sem mudar
 // nada de usuário e a primeira cria as marcas das regras padrão uma vez só.
 func TestPartidaNoBancoNovo(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBanco(t)
 	log, saida := logEmTexto()
 	resultados := Executar(t.Context(), opcoes(db, log))
-	if len(resultados) != 6 {
+	if len(resultados) != 7 {
 		t.Fatalf("%d rotinas", len(resultados))
 	}
 	for _, r := range resultados {

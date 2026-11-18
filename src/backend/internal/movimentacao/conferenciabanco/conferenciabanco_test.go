@@ -50,7 +50,7 @@ func novaCena(t *testing.T, hoje string) cena {
 	log := slog.New(slog.DiscardHandler)
 	c := cambio.NovoServico(db, cliente, r, log)
 	rs := reservas.NovoServico(db, c, r, log)
-	s := NovoServico(db, rs, carteira.NovoServico(db, c, rs, nil, nil, nil, r, log), c, r, log)
+	s := NovoServico(db, rs, carteira.NovoServico(db, c, rs, nil, nil, r, log), c, r, log)
 	mux := http.NewServeMux()
 	Registrar(mux, s)
 	return cena{s, func(t *testing.T, comando string) {

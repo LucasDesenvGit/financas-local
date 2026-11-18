@@ -3,7 +3,7 @@
     "10.0.13"
   ],
   "resultado": [
-    {"atualizados":6,"proventosNovos":4,"falhas":["EEE.L","GGGG3","HHHH3","KKKK3"]}
+    {"atualizados":4,"proventosNovos":4,"falhas":["EEE.L","FFFF3","GGGG3","HHHH3","IIII3","KKKK3"]}
   ],
   "ativos": [
     {"Id":1,"Ticker":"AAAA11","Nome":"Fundo de Investimento Imobiliário AAAA","Tipo":1,"PrecoAtual":"100.0","PrecoAnterior":"99.5","Atualizado":1,"FonteCotacao":"Yahoo Finance"},
@@ -11,10 +11,10 @@
     {"Id":3,"Ticker":"CCCC3","Nome":"C Curto","Tipo":2,"PrecoAtual":"77.0","PrecoAnterior":null,"Atualizado":0,"FonteCotacao":"Manual"},
     {"Id":4,"Ticker":"DDD","Nome":"D Corp","Tipo":2,"PrecoAtual":"200.1","PrecoAnterior":"199.0","Atualizado":1,"FonteCotacao":"Yahoo Finance"},
     {"Id":5,"Ticker":"EEE.L","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
-    {"Id":6,"Ticker":"FFFF3","Nome":"F Curto","Tipo":2,"PrecoAtual":"33.3333","PrecoAnterior":"33.0","Atualizado":1,"FonteCotacao":"brapi.dev"},
+    {"Id":6,"Ticker":"FFFF3","Nome":"   ","Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
     {"Id":7,"Ticker":"GGGG3","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
     {"Id":8,"Ticker":"HHHH3","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
-    {"Id":9,"Ticker":"IIII3","Nome":null,"Tipo":2,"PrecoAtual":"7.5","PrecoAnterior":null,"Atualizado":1,"FonteCotacao":"brapi.dev"},
+    {"Id":9,"Ticker":"IIII3","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
     {"Id":10,"Ticker":"JJJJ3","Nome":null,"Tipo":2,"PrecoAtual":"5.5556","PrecoAnterior":null,"Atualizado":1,"FonteCotacao":"Yahoo Finance"},
     {"Id":11,"Ticker":"KKKK3","Nome":null,"Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null},
     {"Id":12,"Ticker":"LLLL3","Nome":"L","Tipo":2,"PrecoAtual":null,"PrecoAnterior":null,"Atualizado":0,"FonteCotacao":null}
@@ -47,20 +47,15 @@
     "/v8/finance/chart/EEE.L?range=5y&interval=1mo&events=div",
     "/v8/finance/chart/FFFF3.SA?range=5d&interval=1d",
     "/v8/finance/chart/FFFF3.SA?range=5y&interval=1mo&events=div",
-    "/api/quote/FFFF3",
     "/v8/finance/chart/GGGG3.SA?range=5d&interval=1d",
     "/v8/finance/chart/GGGG3.SA?range=5y&interval=1mo&events=div",
-    "/api/quote/GGGG3",
     "/v8/finance/chart/HHHH3.SA?range=5d&interval=1d",
     "/v8/finance/chart/HHHH3.SA?range=5y&interval=1mo&events=div",
-    "/api/quote/HHHH3",
     "/v8/finance/chart/IIII3.SA?range=5d&interval=1d",
-    "/api/quote/IIII3",
     "/v8/finance/chart/JJJJ3.SA?range=5d&interval=1d",
     "/v8/finance/chart/JJJJ3.SA?range=5y&interval=1mo&events=div",
     "/v8/finance/chart/KKKK3.SA?range=5d&interval=1d",
     "/v8/finance/chart/KKKK3.SA?range=5y&interval=1mo&events=div",
-    "/api/quote/KKKK3",
     "/v8/finance/chart/LLLL3.SA?range=5d&interval=1d",
     "/v8/finance/chart/LLLL3.SA?range=5y&interval=1mo&events=div",
     "/v8/finance/chart/IFIX.SA?range=10y&interval=1mo",

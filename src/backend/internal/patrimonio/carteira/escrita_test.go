@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cotacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
@@ -412,42 +411,16 @@ func TestExcluirAtivo(t *testing.T) {
 	testeapoio.Chamar(t, c.mux, "DELETE", rotaAtivos+"abc", "").ConferirStatus(t, http.StatusNotFound)
 }
 
-// Regra: a configuração só diz se há token; o token passa pelo cofre, aparado; em branco, nada muda; com espaço no meio ou
-// caractere de controle, é recusado; remover apaga o valor e vale mesmo com um token junto.
-func TestConfiguracaoDaCotacao(t *testing.T) {
+// Regra: a rota do token da brapi saiu com ela (#763): não há mais o que ler nem gravar.
+func TestSemConfiguracaoDaCotacao(t *testing.T) {
 	t.Parallel()
-	const rota = "/api/carteira/configuracao"
 	c := cenaSimples(t)
-	configurado := func(esperado string) {
-		t.Helper()
-		testeapoio.Chamar(t, c.mux, "GET", rota, "").ConferirJSON(t, `{"tokenBrapiConfigurado":`+esperado+`}`)
+	for _, metodo := range []string{"GET", "PUT"} {
+		r := testeapoio.Chamar(t, c.mux, metodo, "/api/carteira/configuracao", `{"tokenBrapi":"abc"}`)
+		if r.Status != http.StatusNotFound && r.Status != http.StatusMethodNotAllowed {
+			t.Errorf("%s: %d %s", metodo, r.Status, r.Corpo)
+		}
 	}
-	valor := func() string {
-		t.Helper()
-		return umaLinha(t, c, `SELECT Valor, Protegido FROM Configuracao WHERE Chave = ?`, cotacoes.ChaveTokenBrapi)
-	}
-	configurado("false")
-	testeapoio.Chamar(t, c.mux, "PUT", rota, `{"tokenBrapi":"   "}`).ConferirStatus(t, http.StatusNoContent)
-	if v := valor(); v != "" {
-		t.Errorf("em branco gravou: %s", v)
-	}
-	for _, invalido := range []string{"a b", `a\tb`, `a\u0001b`, `a b`} {
-		r := testeapoio.Chamar(t, c.mux, "PUT", rota, `{"tokenBrapi":"`+invalido+`"}`)
-		r.ConferirStatus(t, http.StatusBadRequest)
-		r.ConferirJSON(t, `{"mensagem":"Token inválido."}`)
-	}
-	testeapoio.Chamar(t, c.mux, "PUT", rota, `{"tokenBrapi":"  abc  "}`).ConferirStatus(t, http.StatusNoContent)
-	if v := valor(); v != "cifrado:abc | 1" {
-		t.Errorf("valor %q", v)
-	}
-	configurado("true")
-	testeapoio.Chamar(t, c.mux, "PUT", rota, `{"tokenBrapi":"novo","remover":true}`).ConferirStatus(t, http.StatusNoContent)
-	if v := valor(); v != "<nil> | 0" {
-		t.Errorf("valor %q", v)
-	}
-	configurado("false")
-	r := testeapoio.Chamar(t, c.mux, "PUT", rota, `{"tokenBrapi":"`+strings.Repeat("x", 201)+`"}`)
-	r.ConferirStatus(t, http.StatusBadRequest)
 }
 
 // Regra: erro do banco ou do câmbio nas rotas que gravam é o 500 genérico; a falha das cotações depois de gravar, não.
@@ -464,7 +437,7 @@ func TestEscritaComErro(t *testing.T) {
 		c := novaCena(t, cambioFalso{erroMoedas: falha}, reservasFalsas{}, selicFalsa{})
 		testeapoio.Chamar(t, c.mux, "POST", rotaOperacoes, corpoDaOperacao(map[string]any{"ticker": "AAPL", "moeda": "USD"})).ConferirStatus(t, http.StatusInternalServerError)
 	})
-	for _, tabela := range []string{"Ativo", "OperacaoAtivo", "Configuracao"} {
+	for _, tabela := range []string{"Ativo", "OperacaoAtivo"} {
 		t.Run("sem a tabela "+tabela, func(t *testing.T) {
 			t.Parallel()
 			c := cenaSimples(t)
@@ -473,17 +446,9 @@ func TestEscritaComErro(t *testing.T) {
 			if _, err := c.db.Exec(`PRAGMA foreign_keys = OFF; DROP TABLE "` + tabela + `"`); err != nil {
 				t.Fatal(err)
 			}
-			var chamadas []testeapoio.Resposta
-			switch tabela {
-			case "Configuracao":
-				chamadas = append(chamadas, testeapoio.Chamar(t, c.mux, "GET", "/api/carteira/configuracao", ""),
-					testeapoio.Chamar(t, c.mux, "PUT", "/api/carteira/configuracao", `{"tokenBrapi":"abc"}`),
-					testeapoio.Chamar(t, c.mux, "PUT", "/api/carteira/configuracao", `{"remover":true}`))
-			default:
-				chamadas = append(chamadas, testeapoio.Chamar(t, c.mux, "POST", rotaOperacoes, corpoDaOperacao(nil)),
-					testeapoio.Chamar(t, c.mux, "PUT", rotaOperacoes+"/1", corpoDaOperacao(nil)),
-					testeapoio.Chamar(t, c.mux, "DELETE", rotaOperacoes+"/1", ""))
-			}
+			chamadas := []testeapoio.Resposta{testeapoio.Chamar(t, c.mux, "POST", rotaOperacoes, corpoDaOperacao(nil)),
+				testeapoio.Chamar(t, c.mux, "PUT", rotaOperacoes+"/1", corpoDaOperacao(nil)),
+				testeapoio.Chamar(t, c.mux, "DELETE", rotaOperacoes+"/1", "")}
 			for i, r := range chamadas {
 				if r.Status != http.StatusInternalServerError {
 					t.Errorf("chamada %d: %d %s", i, r.Status, r.Corpo)

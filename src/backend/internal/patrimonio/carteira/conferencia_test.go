@@ -44,11 +44,11 @@ func cotacoesDaConferencia(t *testing.T, db *sql.DB) *cotacoes.Servico {
 	for caminho, lista := range rotas {
 		srv.Em("GET", caminho, testeapoio.RespostaDeFora{Status: lista[0].Status, Corpo: lista[0].Corpo})
 	}
-	cliente, err := cotacoes.NovoCliente(srv.URL(), srv.URL(), srv.Cliente())
+	cliente, err := cotacoes.NovoCliente(srv.URL(), srv.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
-	return cotacoes.NovoServico(db, cliente, nil, nil, testeapoio.HojeEmBrasilia(2026, 10, 30), slog.New(slog.DiscardHandler))
+	return cotacoes.NovoServico(db, cliente, nil, testeapoio.HojeEmBrasilia(2026, 10, 30), slog.New(slog.DiscardHandler))
 }
 
 func valor(t *testing.T, texto string) tipos.Decimal {
@@ -82,7 +82,7 @@ func TestConferenciaIgualAoCSharp(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := testeapoio.HojeEmBrasilia(2026, 10, 30)
-	s := NovoServico(db, nil, nil, nil, cotacoesDaConferencia(t, db), cofreFalso{}, r, slog.New(slog.DiscardHandler))
+	s := NovoServico(db, nil, nil, nil, cotacoesDaConferencia(t, db), r, slog.New(slog.DiscardHandler))
 	pedido := httptest.NewRequest("POST", "/", nil)
 	login := "teste"
 	var chave *string
