@@ -8,6 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Responda sempre em português do Brasil**, para qualquer pessoa da equipe: respostas, perguntas, resumos de fim de tarefa, descrições de PR e de issue, mensagens de commit e comentários no código. Vale também quando o conteúdo técnico (log, erro, documentação) vier em inglês e depois de a conversa ser resumida. Nomes de comandos, arquivos e APIs ficam como são.
 
+## Simples e enxuto (#769)
+
+Vale em toda tarefa, de qualquer pessoa: é um app local, de um usuário só, e o que não se paga nesse tamanho não entra. Detalhe e exemplos em [docs/SIMPLICIDADE.md](docs/SIMPLICIDADE.md).
+- **Código:** abstração, camada, interface, pacote, dependência ou check de CI novo só com um segundo uso real ou uma falha medida. Antes de criar, procure o que já existe e reuse.
+- **Texto:** frase curta, cada regra num lugar só (nos outros, um link), sem história nem passo a passo da implementação (isso fica no git e no PR). Limites: ADR até ~1,5 mil palavras; README de pasta de 10 a 20 linhas (#657); entrada do CHANGELOG até ~60 palavras, o que muda para quem usa.
+- **Na dúvida, o menor:** prefira a mudança que tira linhas, arquivos ou passos. Tirar um texto de um lugar não é colá-lo inteiro em outro.
+
 ## O que é o projeto
 
 Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux (scripts bash no Linux, PowerShell ou `.msi` no Windows, [ADR 0012](docs/adr/0012-instalador-do-windows-em-powershell.md)): back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md). **O mapa das pastas para pessoas** é o README de cada uma (`src/backend`, `src/frontend`, `src/gerenciador-go`, `banco`, `instalador`, `docs`): pasta principal nova ganha o dela, de 10 a 20 linhas, apontando para o `docs/ARQUITETURA.md` em vez de repetir (#657).

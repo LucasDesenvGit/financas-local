@@ -8,6 +8,8 @@ Use ao revisar um PR com Go e no fim do seu próprio trabalho. Cada achado sai c
 
 ## O que só a revisão pega
 
+- **Simples e enxuto** ([docs/SIMPLICIDADE.md](../../../../docs/SIMPLICIDADE.md), #769): abstração, interface, pacote ou camada nova sem segundo uso; código que repete o que já existe em outro pacote (procure antes); texto novo acima dos limites ou copiado de outro lugar em vez de um link.
+
 **Regra e teste (ADR 0051)**
 - [ ] Cada regra nova tem uma linha numa tabela de teste, e o PR traz a tabela regra → teste.
 - [ ] Os casos-limite que se aplicam estão lá (a lista está na ADR 0051 e no `CONTRIBUINDO.md`); os que não se aplicam estão ditos no PR.
