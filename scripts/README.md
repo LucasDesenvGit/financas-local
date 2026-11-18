@@ -71,8 +71,8 @@ Na raiz de `ci/`:
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `verificar-changelog.py` | Confere o formato de cada arquivo de `changelog.d/` (um título de tipo, entradas, sem versão), exige o arquivo em PR `feat` e `fix` (com `BASE` e `TITULO_PR`) e confere o `CHANGELOG.md`: um título de cada tipo por versão, sem versão repetida e em ordem; `--corrigir` junta os títulos repetidos (#294). O teste é o `test_verificar_changelog.py`. | CI (job "manual do site e changelog.d"); pessoa |
-| `notas.sh` | Notas dos Releases do GitHub, no limite de 125 mil caracteres: `--versao` (tag `vX.Y.Z`, #641, do `CHANGELOG.md`) e `--desenvolvimento` (pré-lançamento, #294 e #600; antes do `CHANGELOG.md`, as seções do que ainda não foi publicado, que o `go run ./cmd/versao -changelog` monta de `changelog.d/`). O teste é o `test_notas.py`, que cobre os dois modos. | CI (workflow "Versão") |
+| `verificar-changelog.py` | Confere o formato de cada arquivo de `changelog.d/` (um título de tipo, entradas, sem versão), exige o arquivo em PR `feat` e `fix` (com `BASE` e `TITULO_PR`) e confere o `CHANGELOG.md`: um título de cada tipo por versão, sem versão repetida e em ordem; avisa (sem barrar) a entrada com mais de ~60 palavras fora do "Técnico" (#722); `--corrigir` junta os títulos repetidos (#294). O teste é o `test_verificar_changelog.py`. | CI (job "manual do site e changelog.d"); pessoa |
+| `notas.sh` | Notas dos Releases do GitHub, no limite de 125 mil caracteres, sem o sub-item "Técnico" (#722): `--versao` (tag `vX.Y.Z`, #641, do `CHANGELOG.md`) e `--desenvolvimento` (pré-lançamento, #294 e #600; antes do `CHANGELOG.md`, as seções do que ainda não foi publicado, que o `go run ./cmd/versao -changelog` monta de `changelog.d/`). O teste é o `test_notas.py`, que cobre os dois modos. | CI (workflow "Versão") |
 
 `ci/go/` (back-end e gerenciador em Go, [ADR 0051](../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)):
 

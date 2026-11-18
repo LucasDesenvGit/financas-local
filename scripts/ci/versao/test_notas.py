@@ -108,6 +108,14 @@ class NotasDaVersao(unittest.TestCase):
         conteudo = changelog(3, 2)
         self.assertEqual(self.gerar(conteudo, crlf=True), self.gerar(conteudo))
 
+    def test_o_sub_item_tecnico_fica_de_fora(self):
+        # #722: as notas são para quem usa; o "Técnico" fica só no CHANGELOG.md.
+        conteudo = ("## [2.9.0] — 2026-11-05\n\n### Correções\n\n- **A** (#1). Muda.\n  - Técnico: coluna `X`.\n- **B** (#2).\n"
+                    "  - Sem Técnico: aqui, que fica.\n")
+        resto = self.gerar(conteudo).split(MUDOU, 1)[1]
+        self.assertEqual(resto, "### 2.9.0 — 2026-11-05\n\n#### Correções\n\n- **A** (#1). Muda.\n- **B** (#2).\n"
+                                "  - Sem Técnico: aqui, que fica.\n")
+
 
 
 def secao_desenvolvimento(versao, linhas):
@@ -187,6 +195,13 @@ class NotasDesenvolvimento(unittest.TestCase):
         self.assertTrue(resto.startswith("### 2.1.0 — 2026-11-02 · desenvolvimento\n"), resto[:60])
         self.assertNotIn("Publicada.", resto)
         self.assertNotIn("# Changelog", resto)  # o título do arquivo não gruda na última seção do changelog.d/
+
+    def test_o_sub_item_tecnico_fica_de_fora(self):
+        novas = ("## [2.1.0] — 2026-11-03 · desenvolvimento\n\n### Correções\n\n- **A** (#1).\n  - Técnico: rota nova.\n")
+        conteudo = "# Changelog\n\n## [2.0.0] — 2026-10-16\n\n### Funcionalidades\n\n- Publicada.\n"
+        resto = self.gerar(conteudo, nao_publicado=novas).split("## Tudo desde a última versão publicada\n\n", 1)[1]
+        self.assertIn("- **A** (#1).", resto)
+        self.assertNotIn("Técnico", resto)
 
     def test_limite_menor_que_o_cabecalho_deixa_so_o_link(self):
         notas = self.gerar(changelog_desenvolvimento(3, 2), limite=10)

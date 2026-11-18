@@ -12,7 +12,8 @@ import (
 
 // O Markdown das notas em HTML, só com o que o CHANGELOG e as notas usam (o RenderizadorNotas.cs): títulos (# a ####),
 // listas com "-" ou "*" (com recuo por nível), **negrito**, *itálico*, `código` e [links](url). Todo texto é escapado;
-// só links http e https viram <a>; comentários HTML (os marcadores dos blocos) não aparecem. Sem biblioteca nova.
+// só links http e https viram <a>; comentários HTML (os marcadores dos blocos) não aparecem; o sub-item "Técnico:" de uma
+// entrada do CHANGELOG também não (changelog.d/LEIA-ME.md). Sem biblioteca nova.
 var (
 	trechosMD = regexp.MustCompile(`\*\*(.+?)\*\*|` + "`([^`]+)`" + `|\[([^\]]+)\]\(([^)\s]+)\)|\*([^*\s](?:[^*]*[^*\s])?)\*`)
 	itemMD    = regexp.MustCompile(`^(\s*)[-*] (.*)$`)
@@ -44,6 +45,9 @@ func HTMLDasNotas(markdown string) template.HTML {
 			continue
 		}
 		if m := itemMD.FindStringSubmatch(linha); m != nil {
+			if strings.HasPrefix(m[2], "Técnico:") {
+				continue
+			}
 			nivel := len(strings.ReplaceAll(m[1], "\t", "  "))/2 + 1
 			switch {
 			case nivel > niveis:

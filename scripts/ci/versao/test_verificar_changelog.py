@@ -54,6 +54,41 @@ class FormatoDaEntrada(unittest.TestCase):
         self.assertTrue(any("o número é calculado no merge" in a for a in achados), achados)
 
 
+def palavras(n):
+    return " ".join(["palavra"] * n)
+
+
+class AvisoDeTamanho(unittest.TestCase):
+    """#722: até ~60 palavras para quem usa; o sub-item "Técnico" não conta, e passar do limite só avisa."""
+
+    def avisos(self, texto):
+        return vc.avisos_da_entrada("changelog.d/a.md", texto)
+
+    def test_limite_em_tabela(self):
+        casos = {
+            "no limite": (f"### Correções\n- {palavras(vc.LIMITE_PALAVRAS)}\n", 0),
+            "um acima": (f"### Correções\n- {palavras(vc.LIMITE_PALAVRAS + 1)}\n", 1),
+            "continua na linha de baixo": (f"### Correções\n- {palavras(40)}\n  {palavras(40)}\n", 1),
+            "Técnico comprido não conta": (f"### Correções\n- {palavras(10)}\n  - Técnico: {palavras(200)}\n", 0),
+            "continuação do Técnico não conta": (f"### Correções\n- {palavras(10)}\n  - Técnico: a\n    {palavras(200)}\n", 0),
+            "outro sub-item conta": (f"### Correções\n- {palavras(10)}\n  - {palavras(60)}\n", 1),
+            "cada entrada à parte": (f"### Correções\n- {palavras(40)}\n- {palavras(40)}\n", 0),
+            "duas longas, dois avisos": (f"### Correções\n- {palavras(70)}\n### Funcionalidades\n- {palavras(70)}\n", 2),
+        }
+        for nome, (texto, quantos) in casos.items():
+            with self.subTest(nome):
+                self.assertEqual(len(self.avisos(texto)), quantos, self.avisos(texto))
+
+    def test_o_aviso_diz_a_entrada_e_o_numero(self):
+        aviso = self.avisos(f"### Correções\n- **Título** {palavras(70)}\n")[0]
+        self.assertIn('"- **Título** palavra', aviso)
+        self.assertIn("tem 71 palavras", aviso)
+
+    def test_entrada_longa_continua_no_formato(self):
+        # Aviso, não erro: o que barra (problemas_da_entrada) não olha o tamanho.
+        self.assertEqual(vc.problemas_da_entrada("changelog.d/a.md", f"### Correções\n- {palavras(80)}\n"), [])
+
+
 class PastaDoChangelog(unittest.TestCase):
     def test_lista_so_os_md_e_ignora_o_leia_me(self):
         with tempfile.TemporaryDirectory() as raiz:

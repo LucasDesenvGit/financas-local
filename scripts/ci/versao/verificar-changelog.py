@@ -11,6 +11,9 @@ Confere o que vira CHANGELOG (ADR 0070, #294):
 3. CHANGELOG.md (o histórico e as seções que o lancar-versao.sh junta): sem título de tipo repetido na mesma versão,
    sem versão repetida e as versões em ordem (a mais nova em cima).
 
+   Cada entrada tem até ~60 palavras para quem usa; o que passa disso (o sub-item "  - Técnico: ..." não conta) é só
+   aviso, nunca barra (#722, "Simples e enxuto").
+
 As notas dos Releases e a janela "O que mudou" do gerenciador saem destes arquivos: entrada fora do formato vira nota errada
 para quem atualiza.
 
@@ -31,6 +34,8 @@ LEIA_ME = 'LEIA-ME.md'
 TIPOS = ('### Funcionalidades', '### Correções', '### Publicação e documentação')
 # Os tipos de PR que mudam algo para quem usa: o arquivo é obrigatório.
 TIPOS_COM_ENTRADA = ('feat', 'fix')
+# Palavras que uma entrada pode ter para quem usa, sem o "Técnico" (aviso, não erro).
+LIMITE_PALAVRAS = 60
 
 
 def ler(caminho):
@@ -83,6 +88,28 @@ def problemas_da_entrada(caminho, texto):
         if not bullets[titulo]:
             achados.append(f'{caminho}: o tipo "{titulo}" não tem entrada ("- ...")')
     return achados
+
+
+def avisos_da_entrada(caminho, texto):
+    """Entradas ("- ...") com mais de LIMITE_PALAVRAS palavras, sem contar o sub-item "  - Técnico: ..." (e o que continua nele)."""
+    entradas, atual, em_tecnico = [], None, False
+    for linha in texto.split('\n'):
+        if linha.startswith('#'):
+            atual = None
+        elif linha.startswith('- '):
+            atual, em_tecnico = [linha], False
+            entradas.append(atual)
+        elif re.match(r'\s+- Técnico:', linha):
+            em_tecnico = True
+        elif atual is not None and not em_tecnico:
+            atual.append(linha)
+    avisos = []
+    for linhas in entradas:
+        palavras = len(' '.join([linhas[0][2:]] + linhas[1:]).split())
+        if palavras > LIMITE_PALAVRAS:
+            avisos.append(f'{caminho}: a entrada "{linhas[0][:50]}" tem {palavras} palavras para quem usa (o limite é ~{LIMITE_PALAVRAS}); '
+                          f'encurte e ponha o detalhe numa linha "  - Técnico: ..." (modelo no {PASTA}/{LEIA_ME})')
+    return avisos
 
 
 def tipo_do_titulo(titulo):
@@ -197,6 +224,8 @@ def main():
     erros += erros_de_lugar
     for caminho, conteudo in arquivos:
         erros += problemas_da_entrada(caminho, conteudo)
+        for aviso in avisos_da_entrada(caminho, conteudo):
+            print(f'::warning title=Entrada longa::{aviso}')
     base, titulo = os.environ.get('BASE'), os.environ.get('TITULO_PR')
     if base and titulo is not None:
         erros += problemas_do_pr(titulo, arquivos_novos(f'origin/{base}'))

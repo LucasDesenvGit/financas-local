@@ -107,6 +107,27 @@ func TestHTMLDasNotas(t *testing.T) {
 	}
 }
 
+// Regra: o sub-item "Técnico:" não aparece nas notas, e o resto da entrada fica como está (changelog.d/LEIA-ME.md).
+func TestHTMLDasNotasEscondeOTecnico(t *testing.T) {
+	t.Parallel()
+	casos := map[string]struct{ md, quer string }{
+		"entrada com Técnico": {"- **A** (#1). Muda.\n  - Técnico: coluna `X`.\n- **B** (#2).",
+			"<ul><li><strong>A</strong> (#1). Muda.</li><li><strong>B</strong> (#2).</li></ul>"},
+		"Técnico com CRLF":        {"- **A**.\r\n  - Técnico: rota.\r\n", "<ul><li><strong>A</strong>.</li></ul>"},
+		"outro sub-item continua": {"- **A**.\n  - dentro\n  - Técnico: x", "<ul><li><strong>A</strong>.<ul><li>dentro</li></ul></li></ul>"},
+		"a palavra no meio fica":  {"- Sem Técnico: aqui", "<ul><li>Sem Técnico: aqui</li></ul>"},
+		"só o Técnico, vazio":     {"  - Técnico: x", ""},
+	}
+	for nome, c := range casos {
+		t.Run(nome, func(t *testing.T) {
+			t.Parallel()
+			if obtido := string(HTMLDasNotas(c.md)); obtido != c.quer {
+				t.Errorf("obtido:\n%s\nquer:\n%s", obtido, c.quer)
+			}
+		})
+	}
+}
+
 // Regra: o endereço do link também é escapado.
 func TestHTMLDasNotasEscapaOLink(t *testing.T) {
 	t.Parallel()
