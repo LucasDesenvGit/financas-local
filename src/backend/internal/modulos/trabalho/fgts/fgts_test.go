@@ -450,4 +450,10 @@ func TestParaRescisaoComConferenciaNoMesDaSaida(t *testing.T) {
 	if r := naSaida(); r.Saldo.String() != "19480.00" || r.BaseDaMulta.String() != "20980.00" {
 		t.Fatalf("com a conferência de 12/10 = %+v", r)
 	}
+	// Saindo em 25/10, a última conferência é a de 20/10 (1): no dia do vencimento, o app já mostra setembro, que não
+	// soma; os dois saques vieram antes dela e voltam para a base da multa.
+	if r, err := s.ParaRescisao(t.Context(), e.Id, testeapoio.Dia(2026, 10, 25)); err != nil || r.Saldo.String() != "1.00" ||
+		r.BaseDaMulta.String() != "1501.00" {
+		t.Fatalf("com a conferência no dia 20 = %+v (%v)", r, err)
+	}
 }
