@@ -11,7 +11,7 @@ const calculo = { tipo: 1, nomeDoTipo: 'Dispensa sem justa causa', aviso: 2, sai
   verbas: [{ descricao: 'Saldo de salário', referencia: '15 dias', valor: 3000 }, { descricao: 'Aviso prévio indenizado', referencia: '36 dias', valor: 7200 },
     { descricao: '13º proporcional', referencia: '12/12', valor: 6000 }],
   descontos: [{ descricao: 'INSS', referencia: 'sobre o saldo de salário', valor: 248.6 }],
-  fgts: { saldo: 10000, depositoRescisao: 1296, percentualMulta: 40, multa: 4518.4, percentualSaque: 100, sacavel: 15814.4 } };
+  fgts: { saldo: 10000, depositoRescisao: 1296, percentualMulta: 40, multa: 4518.4, percentualSaque: 100, sacavel: 15814.4, saqueAniversario: false } };
 const comparacao = [
   { tipo: 1, nome: 'Dispensa sem justa causa', aviso: 2, liquido: 26591.46, multa: 4518.4, sacavel: 15814.4, seguroDesemprego: true },
   { tipo: 2, nome: 'Pedido de demissão', aviso: 1, liquido: 19391.46, multa: 0, sacavel: 0, seguroDesemprego: false },
@@ -32,8 +32,11 @@ test('Trabalho › Rescisão: simular, comparar e registrar', async ({ page }) =
     return r.fulfill(json({ registrada: null }));
   });
   await page.route('**/api/trabalho/empregos/1/rescisao/simular**', (r) => {
-    pedidos.push(new URL(r.request().url()).search);
-    return r.fulfill(json(calculo));
+    const busca = new URL(r.request().url()).search;
+    pedidos.push(busca);
+    // #751: com a resposta "estou no saque-aniversário", a dispensa libera só a multa.
+    return r.fulfill(json(busca.includes('saqueAniversario=true')
+      ? { ...calculo, fgts: { ...calculo.fgts, saqueAniversario: true, percentualSaque: 0, sacavel: 4518.4 } } : calculo));
   });
   await page.route('**/api/trabalho/empregos/1/rescisao/comparar**', (r) => r.fulfill(json(comparacao)));
 
@@ -57,6 +60,18 @@ test('Trabalho › Rescisão: simular, comparar e registrar', async ({ page }) =
   await simular.getByLabel('Tipo').selectOption({ label: 'Dispensa sem justa causa' });
   await simular.getByRole('button', { name: 'Simular' }).click();
 
+  // #751: o site deduziu que não; a pessoa marca, a conta refaz com a resposta; desmarca, e volta.
+  const saque = conta.getByRole('checkbox', { name: 'Estou no saque-aniversário do FGTS' });
+  await expect(saque).not.toBeChecked();
+  await expect(conta).toContainText('Marcado pelo que o site viu nos saques do FGTS.');
+  await saque.check();
+  await expect(conta).toContainText('Para sacar: R$ 4.518,40.');
+  expect(pedidos.at(-1)).toBe('?tipo=1&aviso=2&saida=2026-12-15&saqueAniversario=true');
+  await expect(conta).toContainText('Pela sua resposta.');
+  await saque.uncheck();
+  await expect(conta).toContainText('Para sacar: R$ 15.814,40.');
+  expect(pedidos.at(-1)).toBe('?tipo=1&aviso=2&saida=2026-12-15&saqueAniversario=false');
+
   const pasta = process.env['FOTOS_PASTA'];
   if (pasta) {
     mkdirSync(pasta, { recursive: true });
@@ -66,6 +81,6 @@ test('Trabalho › Rescisão: simular, comparar e registrar', async ({ page }) =
   await conta.getByRole('button', { name: 'Registrar esta rescisão' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Registrar' }).click();
   await expect(page.getByText('Rescisão registrada: o emprego foi fechado.')).toBeVisible();
-  expect(JSON.parse(pedidos.find((p) => p.startsWith('{'))!)).toEqual({ tipo: 1, aviso: 2, saida: '2026-12-15' });
+  expect(JSON.parse(pedidos.find((p) => p.startsWith('{'))!)).toEqual({ tipo: 1, aviso: 2, saida: '2026-12-15', saqueAniversario: false });
   await expect(page.getByRole('heading', { name: 'Rescisão registrada' })).toBeVisible();
 });

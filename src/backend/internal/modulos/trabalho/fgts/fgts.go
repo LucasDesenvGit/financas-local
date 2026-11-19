@@ -128,7 +128,9 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 				continue
 			}
 			mes := emprego.InicioDoMes(a.Inicio)
-			base := a.Calculo.Ferias.Decimal().Add(a.Calculo.TercoFerias.Decimal())
+			// A base é a do INSS das férias: férias + 1/3, sem a dobra do art. 137 nem o 1/3 dela. A Lei 8.036 (art. 15,
+			// § 6º) tira do FGTS o que a Lei 8.212 (art. 28, § 9º, "d") tira do INSS, e a dobra está lá (#751).
+			base := a.Calculo.Inss.Base.Decimal()
 			porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(oitoPct))
 			for m, dias := range diasDeFeriasPorMes(a.Inicio, a.Dias) {
 				if salario, ok := emprego.SalarioDoMes(e.Salarios, m); ok && !lido[m.String()] {
@@ -203,18 +205,37 @@ func (s *Servico) ParaRescisao(ctx context.Context, empregoId int64, saida tipos
 		return NaSaida{}, err
 	}
 	saldo := Estimar(inicio, ate, depositos, lancamentos).Saldo.Decimal()
+	mesDaSaida := emprego.InicioDoMes(saida)
+	// A conferência do app no mês da saída, até ela, vale mais que a estimativa (#751): antes, o Estimar ia só até o
+	// mês anterior e a ignorava. O saldo passa a ser o do app, mais o depósito do mês anterior se ele ainda não aparecia
+	// (o do mês da saída vem no depósito da rescisão); os saques até ela já saíram do saldo do app.
+	var conferencia *Lancamento
+	for i, l := range lancamentos {
+		if l.Tipo == TipoConferencia && !l.Data.Antes(mesDaSaida) && !l.Data.Depois(saida) {
+			conferencia = &lancamentos[i] // a última (a lista vem por data)
+		}
+	}
+	if conferencia != nil {
+		saldo = conferencia.Valor.Decimal()
+		if conferencia.Data.Dia() < DiaDoDeposito(ate) && !ate.Antes(inicio) {
+			saldo = saldo.Add(depositos[ate.String()].Round(2))
+		}
+	}
 	base := saldo
 	r := NaSaida{}
-	mesDaSaida := emprego.InicioDoMes(saida)
 	for _, l := range lancamentos {
 		if l.Tipo != TipoSaque || l.Data.Depois(saida) {
 			continue
 		}
 		r.SaqueAniversario = r.SaqueAniversario || (l.Motivo != nil && *l.Motivo == MotivoSaqueAniversario)
-		if l.Data.Antes(mesDaSaida) {
+		jaSaiu := l.Data.Antes(mesDaSaida) // o Estimar, até o mês antes, já tirou
+		if conferencia != nil {
+			jaSaiu = !l.Data.Depois(conferencia.Data) // o app já tinha tirado
+		}
+		if jaSaiu {
 			base = base.Add(l.Valor.Decimal()) // já saiu do saldo: volta para a base da multa
 		} else {
-			saldo = saldo.Sub(l.Valor.Decimal()) // no mês da saída: o Estimar, até o mês antes, não tirou (revisão do #704)
+			saldo = saldo.Sub(l.Valor.Decimal()) // depois: ainda não saiu (revisão do #704)
 		}
 	}
 	r.Saldo, r.BaseDaMulta = centavos(decimal.Max(saldo, decimal.Zero)), centavos(base)
