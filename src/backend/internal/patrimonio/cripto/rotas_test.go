@@ -24,7 +24,7 @@ func TestRotaDasCotacoes(t *testing.T) {
 	resposta := testeapoio.Chamar(t, mux, "GET", "/api/cripto/cotacoes", "")
 	resposta.ConferirStatus(t, http.StatusOK)
 	resposta.ConferirJSON(t, `{"atualizadoEm":"2026-10-14T21:00:03.12Z","cotacoes":[`+
-		`{"moeda":"BTC","preco":612345.67,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Mercado Bitcoin"}]}`)
+		`{"moeda":"BTC","preco":612345.67,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Binance"}]}`)
 
 	semLogin := testeapoio.ChamarComo(t, mux, 0, "GET", "/api/cripto/cotacoes", "")
 	semLogin.ConferirStatus(t, http.StatusUnauthorized)
@@ -39,8 +39,8 @@ func TestCicloDaTarefa(t *testing.T) {
 		avisoNoLog string
 	}{
 		{"sem internet é aviso, e tenta no próximo ciclo", fmt.Errorf("%w: status 503", ErrRede), false,
-			"Não foi possível consultar a cotação de criptomoedas no Mercado Bitcoin."},
-		{"resposta estranha é erro", errors.New("resposta inesperada do Mercado Bitcoin (não é uma lista)"), true, ""},
+			"Não foi possível consultar a cotação de criptomoedas na Binance."},
+		{"resposta estranha é erro", errors.New("resposta inesperada da Binance (não é uma lista)"), true, ""},
 		{"tudo certo", nil, false, "Cotação de criptomoedas atualizada."},
 	}
 	for _, c := range casos {

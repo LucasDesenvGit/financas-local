@@ -132,7 +132,7 @@ var dependencias = []struct {
 		"internal/movimentacao/faturas", "internal/patrimonio/reservas"}, "a conferência do banco compara os saldos de todos esses (#445)"},
 	{"internal/movimentacao/contas", []string{"internal/movimentacao/bancos", "internal/movimentacao/faturas"}, "a conta mostra o banco e a fatura do cartão"},
 	{"internal/patrimonio/cotacoes", []string{"internal/patrimonio/cambio"}, "cotação em dólar convertida pela PTAX"},
-	{"internal/patrimonio/cripto", nil, "Mercado Bitcoin; só os transversais"},
+	{"internal/patrimonio/cripto", nil, "Binance; só os transversais"},
 	{"internal/plataforma/desfazer", nil, "o desfazer das ações em massa"},
 	{"internal/patrimonio/emprestimos", nil, "totais de empréstimos (#447)"},
 	{"internal/movimentacao/extrato", []string{"internal/ajustes/categorizacao", "internal/plataforma/desfazer", "internal/movimentacao/poucoinformativa",

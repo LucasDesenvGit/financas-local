@@ -21,7 +21,7 @@ func Registrar(mux *http.ServeMux, db *sql.DB, log *slog.Logger, r relogio.Relog
 	RegistrarCom(mux, NovoServico(db, ClientePadrao(), r, log), log)
 }
 
-// RegistrarCom é o Registrar com o serviço pronto (os testes passam um com o Mercado Bitcoin do testeapoio.ServicoDeFora).
+// RegistrarCom é o Registrar com o serviço pronto (os testes passam um com a Binance do testeapoio.ServicoDeFora).
 func RegistrarCom(mux *http.ServeMux, s *Servico, log *slog.Logger) {
 	mux.HandleFunc("GET /api/cripto/cotacoes", func(w http.ResponseWriter, req *http.Request) {
 		if _, ok := sessao.Usuario(req.Context()); !ok {
@@ -85,21 +85,21 @@ func (t *Tarefa) Ciclo(ctx context.Context) error {
 		if errors.Is(err, ErrRecusa) {
 			if err.Error() != t.recusa {
 				t.recusa = err.Error()
-				t.log.Error("O Mercado Bitcoin recusou a consulta da cotação de criptomoedas: não é falta de internet. "+
+				t.log.Error("A Binance recusou a consulta da cotação de criptomoedas: não é falta de internet. "+
 					"A cotação fica parada na última guardada; o site tenta de novo a cada 30 minutos e só registra outra vez se a resposta mudar.",
 					"origem", erros.OrigemCripto, "erro", err)
 			}
 			return nil
 		}
 		if ehDeRede(err) {
-			t.log.Warn("Não foi possível consultar a cotação de criptomoedas no Mercado Bitcoin.", "origem", erros.OrigemCripto, "erro", err)
+			t.log.Warn("Não foi possível consultar a cotação de criptomoedas na Binance.", "origem", erros.OrigemCripto, "erro", err)
 			return nil
 		}
 		return err
 	}
 	if t.recusa != "" {
 		t.recusa = ""
-		t.log.Info("O Mercado Bitcoin voltou a aceitar a consulta: a cotação de criptomoedas voltou a atualizar.", "origem", erros.OrigemCripto)
+		t.log.Info("A Binance voltou a aceitar a consulta: a cotação de criptomoedas voltou a atualizar.", "origem", erros.OrigemCripto)
 	}
 	t.log.Info("Cotação de criptomoedas atualizada.", "origem", erros.OrigemCripto, "novas", resultado.Novas)
 	return nil

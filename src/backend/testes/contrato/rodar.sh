@@ -16,8 +16,8 @@
 #    - a Pluggy falsa (testes/contrato/pluggyfalsa) no lugar da Pluggy, pela
 #      variável Pluggy__UrlBase, com a raiz dela em SSL_CERT_FILE;
 #    - sem internet: no Linux, num namespace de rede só com o loopback
-#      (unshare -rn), se o sistema deixar; senão, com a saída (PTAX, Mercado
-#      Bitcoin) mandada para um proxy numa porta fechada (#416).
+#      (unshare -rn), se o sistema deixar; senão, com a saída (PTAX,
+#      Binance) mandada para um proxy numa porta fechada (#416).
 # 3. Roda o comparador (go test ./testes/contrato) contra ele e o desliga.
 #
 # Uso:

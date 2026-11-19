@@ -1,6 +1,6 @@
 # 0048. Cotação de criptomoedas pela API pública do Mercado Bitcoin
 
-- **Status:** Aceita
+- **Status:** Substituída por [0073](0073-cotacao-de-criptomoedas-pela-binance.md) (em 18/11/2026: desde 14/11 o Mercado Bitcoin bloqueia, com o Cloudflare, quem não é navegador, #762)
 - **Data:** 2026-10-21
 - **Relacionadas:** [0009](0009-ativos-no-exterior-na-carteira-manual.md) (cotações da carteira); a PTAX do câmbio (#247) é o modelo seguido; issue #279
 
