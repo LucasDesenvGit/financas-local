@@ -19,7 +19,7 @@ flowchart LR
     pluggy["Pluggy<br/>api.pluggy.ai"]
     bcb["Banco Central<br/>api.bcb.gov.br<br/>olinda.bcb.gov.br"]
     cot["Yahoo Finance<br/>query1.finance.yahoo.com"]
-    mb["Mercado Bitcoin<br/>api.mercadobitcoin.net"]
+    mb["Binance<br/>api.binance.com"]
     gh["GitHub<br/>api.github.com<br/>github.com"]
     not["Notícias (só com o módulo ligado)<br/>g1.globo.com, feeds.bbci.co.uk<br/>www.tabnews.com.br"]
     cel(["Seu celular<br/>no Wi-Fi de casa"])

@@ -11,7 +11,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 | `internal/api` | o `ServeMux` com as rotas de todos os assuntos : uma linha por assunto |
 | `internal/plataforma/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (login → rota → banco), com a versão e o relógio |
 | `internal/patrimonio/cambio` | câmbio pela PTAX (#81, ADR 0007): cliente do Banco Central, conversor para reais, `/api/cambio` e a tarefa de 15 em 15 minutos |
-| `internal/patrimonio/cripto` | criptomoedas pelo Mercado Bitcoin (#81, ADR 0048): cliente, `/api/cripto` e a tarefa de 30 em 30 minutos |
+| `internal/patrimonio/cripto` | criptomoedas pela Binance (#81, ADR 0073): cliente, `/api/cripto` e a tarefa de 30 em 30 minutos |
 | `internal/ajustes/categorias` | categorias, regras de categorização e regras de descrição (#77): as 14 rotas de `/api/categorias`, `/api/regras` (com o "reaplicar") e `/api/regras-descricao` |
 | `internal/movimentacao/contas` | contas (#77): as 9 rotas de `/api/contas` e o saldo de cada conta, com a escala de casas decimais que o banco guarda |
 | `internal/movimentacao/faturas` | a fatura do cartão (#77): o ciclo (#144), o mês de cobrança de cada lançamento (#167), o pago e a situação (#251) e a fatura do mês de cada cartão (#323); o painel (#80) usa o mesmo |
