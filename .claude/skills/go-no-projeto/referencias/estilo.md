@@ -49,6 +49,7 @@ O banco e o JSON continuam no formato do .NET (ADR 0049), e estas pegadinhas vie
 | Expressão regular | o `regexp` do Go é RE2: sem lookbehind nem lookahead (`(?<!...)`), e o `\b` e o `\d` só conhecem ASCII; confira as pontas no código, como em `internal/patrimonio/carteira/extrato.go` | o C# aceitava os dois e conhece Unicode; o mesmo padrão copiado casa outra coisa ou nem compila |
 | `enum` | tipo `int` nomeado, que sai **número** no JSON; não trocar por texto | é o contrato com o front-end |
 | Validação de entrada | na entrada, com o 400 do `internal/plataforma/respostas` (`type`, `title`, `status` e `errors` por campo, mensagens em português, #710; `LerObjeto`, `LerTextos`, `Validacao`) | a mesma mensagem e o mesmo status em todas as rotas |
+| Rota e resposta | `{id}` que não é int de 32 bits é o 404 sem corpo; o DTO de saída tem as propriedades em camelCase, na ordem do contrato; o erro da regra sai por `respostas.Mensagem` (o `{"mensagem"}` que o front-end mostra), e o inesperado pelo `servidor.ResponderErroInterno` (500 genérico, com o erro no log) | era o que o ASP.NET fazia, e os casos de contrato conferem |
 | Apagar com dependentes | o que o `ON DELETE` de `banco/01-estrutura.sql` não apaga, o Go apaga explícito, em `banco.EmTransacao` | parte da cascata era feita pelo EF Core, não pela chave, e há tabela que nenhum dos dois apagava (o `HistoricoInvestimento`, #575) |
 
 ## Onde divergimos dos guias de fora, e por quê
