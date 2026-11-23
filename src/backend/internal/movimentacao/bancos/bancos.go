@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -157,7 +157,7 @@ func Efetivos(contas []ContaParaBanco) map[int64]*string {
 }
 
 // Carregar é o BancosAsync do ContaService: o banco que vale para cada conta, com o nome da instituição da conexão.
-func Carregar(ctx context.Context, q consultas.DBTX) (map[int64]*string, error) {
+func Carregar(ctx context.Context, q banco.DBTX) (map[int64]*string, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT c."Id", c."Nome", x."NomeInstituicao", c."Banco", c."ContaVinculadaId"
 		FROM "Conta" AS c LEFT JOIN "ConexaoBancaria" AS x ON c."ConexaoBancariaId" = x."Id"`)
 	if err != nil {

@@ -13,7 +13,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/desfazer"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
@@ -296,12 +295,11 @@ func (s *Servico) renomear(w http.ResponseWriter, r *http.Request) {
 		if regra != nil {
 			evento = "RegraDescricaoCriada (" + strconv.Itoa(len(mudaram)) + ")"
 		}
-		q := consultas.New(tx)
-		login, err := auditoria.Login(r.Context(), q)
+		login, err := auditoria.Login(r.Context(), tx)
 		if err != nil {
 			return err
 		}
-		if err := auditoria.Registrar(r.Context(), q, r, agora, evento, login); err != nil {
+		if err := auditoria.Registrar(r.Context(), tx, r, agora, evento, login); err != nil {
 			return err
 		}
 		if err := transacoes.Gravar(r.Context(), tx, t); err != nil {
@@ -408,13 +406,12 @@ func (s *Servico) renomearEmLote(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		estado.anteriores = append(estado.anteriores, outras...)
-		q := consultas.New(tx)
-		login, err := auditoria.Login(r.Context(), q)
+		login, err := auditoria.Login(r.Context(), tx)
 		if err != nil {
 			return err
 		}
 		evento := "RenomearEmLote (" + strconv.Itoa(len(estado.anteriores)) + ", " + strconv.Itoa(len(estado.criadas)) + " regra)"
-		if err := auditoria.Registrar(r.Context(), q, r, agora, evento, login); err != nil {
+		if err := auditoria.Registrar(r.Context(), tx, r, agora, evento, login); err != nil {
 			return err
 		}
 		return transacoes.GravarTodas(r.Context(), tx, selecionadas)
@@ -529,12 +526,11 @@ func (s *Servico) desfazerRenomear(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 		}
-		q := consultas.New(tx)
-		login, err := auditoria.Login(r.Context(), q)
+		login, err := auditoria.Login(r.Context(), tx)
 		if err != nil {
 			return err
 		}
-		if err := auditoria.Registrar(r.Context(), q, r, agora, "RenomearDesfeito ("+strconv.Itoa(len(lista))+")", login); err != nil {
+		if err := auditoria.Registrar(r.Context(), tx, r, agora, "RenomearDesfeito ("+strconv.Itoa(len(lista))+")", login); err != nil {
 			return err
 		}
 		restauradas = len(lista)

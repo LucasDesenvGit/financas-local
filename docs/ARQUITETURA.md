@@ -255,7 +255,7 @@ O site em Go ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dot
 - **Segredos** (o Client Secret da Pluggy; o token da brapi saiu na #763, ADR 0072): AES-256-GCM, gravados com o prefixo `v2:` na tabela `Configuracao` (`internal/plataforma/segredos`). A chave fica em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows e pela permissão de arquivo no Linux. Os segredos gravados pelo .NET (Data Protection) não são lidos: a tela pede para informá-los de novo.
 - **Tarefas em segundo plano:** câmbio, cripto e a sincronização do Open Finance (`internal/plataforma/tarefas`).
 - **Erros:** os avisos e erros do log vão para a tabela `ErroSistema` (Configurações › Erros, [ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md); `internal/plataforma/erros`, #298).
-- **Banco:** em WAL, no formato que o EF Core gravava (decimal, data e GUID como texto, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)), para os bancos que já existem continuarem os mesmos. Consultas só parametrizadas (`sqlc` ou `?`); dinheiro nunca em `float64`, nem somado ou comparado no SQL.
+- **Banco:** em WAL, no formato que o EF Core gravava (decimal, data e GUID como texto, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)), para os bancos que já existem continuarem os mesmos. Consultas só parametrizadas (com `?`); dinheiro nunca em `float64`, nem somado ou comparado no SQL.
 - **Acesso ao banco** é só permissão de arquivo do sistema sobre `dados/`: o SQLite não tem login nem usuário; quem lê e grava é o processo do site, rodando com a conta do serviço. Não há senha de banco em lugar nenhum.
 - **Datas** sempre no fuso de Brasília (`internal/plataforma/relogio`).
 - **Testes** ([ADR 0051](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): cada regra tem teste unitário em tabela no pacote do assunto, além do caso de contrato do endpoint (`testes/contrato`, #72), cujos esperados vieram do .NET e são a regressão do Go. Consultas se testam num SQLite de verdade num arquivo temporário, com o esquema real; handlers, com `httptest`. Só a biblioteca padrão, sem asserção nem mock de terceiros.
@@ -268,7 +268,7 @@ O código fica num pacote por assunto em `internal/<area>/<assunto>` (são mais 
 | `internal/api` | O `ServeMux` com as rotas de todos os assuntos: uma linha por assunto. |
 | `internal/plataforma/servidor` | HTTPS local, arquivos do site, cabeçalhos de segurança (a CSP), erros e o certificado. |
 | `internal/plataforma/autenticacao`, `internal/plataforma/sessao` | Login, sessão, CSRF e limite de tentativas; o usuário logado no contexto. |
-| `internal/plataforma/banco` | SQLite em WAL, transação, consultas do `sqlc` e o esquema ao iniciar. |
+| `internal/plataforma/banco` | SQLite em WAL, transação e o esquema ao iniciar. |
 | `internal/plataforma/segredos` | Os segredos cifrados da `Configuracao`. |
 | `internal/plataforma/tarefas` | As tarefas em segundo plano. |
 | `internal/arquitetura` | O teste de arquitetura (só local): regra sem HTTP e o mapa de contextos. |

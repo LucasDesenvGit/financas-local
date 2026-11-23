@@ -12,7 +12,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transferencias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -28,7 +27,7 @@ func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 }
 
 // ler lê uma transação para alterar; nil se não existe.
-func ler(ctx context.Context, q consultas.DBTX, id int64) (*transacoes.Transacao, error) {
+func ler(ctx context.Context, q banco.DBTX, id int64) (*transacoes.Transacao, error) {
 	lista, err := transacoes.Listar(ctx, q, `WHERE "Id" = ?`, id)
 	if err != nil || len(lista) == 0 {
 		return nil, err

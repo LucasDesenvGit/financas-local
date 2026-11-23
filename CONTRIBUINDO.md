@@ -309,7 +309,7 @@ Exceção que deixou de acontecer, pacote que sumiu e pacote novo sem grupo tamb
   - descer um piso falha, comparando com o arquivo do `develop`;
   - subiu a cobertura 1 ponto ou mais: a CI avisa para subir o piso no mesmo PR.
 - **Como mede:** `go test -race -coverpkg=./internal/...`, em que cada pacote conta as linhas que qualquer teste roda. Os pisos começaram no valor de 24/10/2026, medido na CI; os 80% de pacote novo são *julgamento* (o que a maioria dos pacotes escritos com teste desde o começo já tinha).
-- **"fora"**, com o motivo na linha, é só para código gerado (sqlc, gerador do `go generate`).
+- **"fora"**, com o motivo na linha, é só para código gerado (o gerador do `go generate`).
 - **Subir o piso é de quem subiu a cobertura**, no mesmo PR: ela cai sozinha quando entra código sem teste num pacote antigo, mas não sobe sozinha.
 - **Ver localmente:** em `src/backend`,
 
@@ -332,7 +332,7 @@ Exceção que deixou de acontecer, pacote que sumiu e pacote novo sem grupo tamb
 - [ ] Back-end em Go: regra nova com teste unitário, consulta nova com teste no SQLite real, endpoint novo com caso de contrato, e as mutações listadas no PR ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md), "Testes do back-end (Go)" acima).
 - [ ] Mudança de banco? Tabela/índice novo com `CREATE TABLE/INDEX IF NOT EXISTS` em `banco/01-estrutura.sql`, ou coluna nova com `adicionar_coluna_se_ausente` (de `scripts/geral/comum.sh`) chamado em `scripts/geral/2-criar-banco.sh` (veja [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md)). Sem migrations.
 - [ ] Decisão de arquitetura (dependência ou integração nova, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada em [docs/adr/](docs/adr/README.md), no mesmo PR.
-- [ ] Consultas ao banco só parametrizadas (`sqlc` ou `?`), sem SQL montado com texto do usuário.
+- [ ] Consultas ao banco só parametrizadas (com `?`), sem SQL montado com texto do usuário.
 - [ ] Nada de dado pessoal, senha, chave ou `appsettings.Production.json` no commit.
 - [ ] README atualizado quando a mudança afeta o uso. **CHANGELOG:** em `feat` e `fix`, um arquivo `changelog.d/<nome-da-branch>.md` (modelo no `changelog.d/LEIA-ME.md`; a CI confere em `scripts/ci/versao/verificar-changelog.py`), porque as notas das versões e a janela "O que mudou" do gerenciador saem dele. Não mexa no `CHANGELOG.md`.
 - [ ] **Manual do site** (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) atualizado quando muda algo que o usuário vê (tela, fluxo, cálculo, texto). Se não precisa, escreva "Manual: não se aplica" na descrição do PR. A CI avisa (job "manual do site") quando o PR mexe em telas ou endpoints sem mexer no Manual.

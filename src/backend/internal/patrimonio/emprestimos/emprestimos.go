@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
@@ -43,10 +43,10 @@ type Contrato struct {
 
 // Servico lê os contratos de crédito. Recebe o banco, que pode ser uma transação (*sql.Tx) de quem chama.
 type Servico struct {
-	db consultas.DBTX
+	db banco.DBTX
 }
 
-func NovoServico(db consultas.DBTX) *Servico { return &Servico{db: db} }
+func NovoServico(db banco.DBTX) *Servico { return &Servico{db: db} }
 
 // ContratosAtivos são os contratos em aberto de conexões ativas: o saldo devedor é maior que zero (comparado em Go,
 // com decimal) e a conexão bancária está ativa. A ordem é a do Id.

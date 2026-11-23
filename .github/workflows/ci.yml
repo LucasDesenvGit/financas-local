@@ -212,7 +212,7 @@ jobs:
           fi
           python3 ../../scripts/ci/go/verificar-cobertura-go.py "$RUNNER_TEMP/cobertura.out" cobertura-minima.txt "${base[@]}"
 
-      # O sqlc compila com cgo (o gcc já vem no runner). Falha se uma consulta .sql mudou sem gerar o código Go.
+      # Falha se a cópia embutida dos scripts do banco/ ficou velha (a #723 pode tirar este passo).
       - name: Código gerado em dia (go generate)
         run: |
           go generate ./...

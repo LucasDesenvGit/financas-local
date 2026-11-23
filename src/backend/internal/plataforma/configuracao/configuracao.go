@@ -14,7 +14,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -29,22 +29,22 @@ var ErrProtegido = errors.New("a configuração é um segredo cifrado: leia pelo
 
 // Servico lê e grava a Configuracao. Para gravar junto com outras tabelas, numa transação, use ComTx.
 type Servico struct {
-	q       *consultas.Queries
+	db      banco.DBTX
 	relogio relogio.Relogio
 }
 
-func Novo(db consultas.DBTX, r relogio.Relogio) *Servico {
-	return &Servico{q: consultas.New(db), relogio: r}
+func Novo(db banco.DBTX, r relogio.Relogio) *Servico {
+	return &Servico{db: db, relogio: r}
 }
 
 // ComTx devolve o mesmo serviço gravando na transação tx (o SaveChanges único do .NET).
 func (s *Servico) ComTx(tx *sql.Tx) *Servico {
-	return &Servico{q: s.q.WithTx(tx), relogio: s.relogio}
+	return &Servico{db: tx, relogio: s.relogio}
 }
 
 // Obter é o ObterAsync: o valor, ou nil se a chave não existe ou está sem valor.
 func (s *Servico) Obter(ctx context.Context, chave string) (*string, error) {
-	c, err := s.q.ObterConfiguracao(ctx, chave)
+	c, err := s.linha(ctx, chave)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil
@@ -60,7 +60,9 @@ func (s *Servico) Obter(ctx context.Context, chave string) (*string, error) {
 
 // Existe é o ExisteAsync: a chave existe e tem valor (vale também para segredo).
 func (s *Servico) Existe(ctx context.Context, chave string) (bool, error) {
-	existe, err := s.q.ExisteConfiguracao(ctx, chave)
+	var existe bool
+	err := s.db.QueryRowContext(ctx,
+		`SELECT EXISTS (SELECT 1 FROM "Configuracao" WHERE "Chave" = ? AND "Valor" IS NOT NULL)`, chave).Scan(&existe)
 	if err != nil {
 		return false, fmt.Errorf("conferir a configuração %s: %w", chave, err)
 	}
@@ -106,13 +108,35 @@ func (s *Servico) ObterData(ctx context.Context, chave string) (*Instante, error
 // Definir é o DefinirAsync para valor que não é segredo: cria a chave ou troca o valor, e sempre regrava
 // AtualizadoEm (em UTC), mesmo com o mesmo valor.
 func (s *Servico) Definir(ctx context.Context, chave string, valor *string) error {
-	err := s.q.DefinirConfiguracao(ctx, consultas.DefinirConfiguracaoParams{
-		Chave: chave, Valor: valor, Protegido: false, AtualizadoEm: tipos.NovaDataHora(s.relogio.Agora()),
-	})
-	if err != nil {
+	if err := s.gravar(ctx, chave, valor, false); err != nil {
 		return fmt.Errorf("gravar a configuração %s: %w", chave, err)
 	}
 	return nil
+}
+
+// linhaConfiguracao é uma linha da tabela, como está gravada.
+type linhaConfiguracao struct {
+	Valor     *string
+	Protegido bool
+}
+
+// linha lê a linha da chave; sql.ErrNoRows se a chave não existe.
+func (s *Servico) linha(ctx context.Context, chave string) (linhaConfiguracao, error) {
+	var c linhaConfiguracao
+	err := s.db.QueryRowContext(ctx, `SELECT "Valor", "Protegido" FROM "Configuracao" WHERE "Chave" = ?`, chave).
+		Scan(&c.Valor, &c.Protegido)
+	return c, err
+}
+
+// gravar cria a chave ou troca o valor, sempre com Protegido e AtualizadoEm novos.
+func (s *Servico) gravar(ctx context.Context, chave string, valor *string, protegido bool) error {
+	_, err := s.db.ExecContext(ctx, `INSERT INTO "Configuracao" ("Chave", "Valor", "Protegido", "AtualizadoEm")
+VALUES (?, ?, ?, ?)
+ON CONFLICT ("Chave") DO UPDATE SET
+    "Valor" = excluded."Valor",
+    "Protegido" = excluded."Protegido",
+    "AtualizadoEm" = excluded."AtualizadoEm"`, chave, valor, protegido, tipos.NovaDataHora(s.relogio.Agora()))
+	return err
 }
 
 // Cofre é o que o pacote segredos faz (declarado aqui, por quem usa).
@@ -124,7 +148,7 @@ type Cofre interface {
 // ObterSegredo é o ObterAsync de um valor protegido: nil se não há valor. O valor antigo, do Data Protection, volta
 // como o erro do cofre (segredos.ErrInformarDeNovo) e a linha fica como está.
 func (s *Servico) ObterSegredo(ctx context.Context, cofre Cofre, chave string) (*string, error) {
-	c, err := s.q.ObterConfiguracao(ctx, chave)
+	c, err := s.linha(ctx, chave)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, nil
@@ -145,7 +169,7 @@ func (s *Servico) ObterSegredo(ctx context.Context, cofre Cofre, chave string) (
 // SegredoGravado é o valor como está na linha, sem decifrar e sem abrir a chave, e se ele tem a marca de protegido:
 // para quem precisa saber se o segredo é legível sem tocar no cofre (#85). nil se não há valor.
 func (s *Servico) SegredoGravado(ctx context.Context, chave string) (valor *string, protegido bool, err error) {
-	c, err := s.q.ObterConfiguracao(ctx, chave)
+	c, err := s.linha(ctx, chave)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return nil, false, nil
@@ -166,10 +190,7 @@ func (s *Servico) DefinirSegredo(ctx context.Context, cofre Cofre, chave string,
 		}
 		valor = &cifrado
 	}
-	err := s.q.DefinirConfiguracao(ctx, consultas.DefinirConfiguracaoParams{
-		Chave: chave, Valor: valor, Protegido: true, AtualizadoEm: tipos.NovaDataHora(s.relogio.Agora()),
-	})
-	if err != nil {
+	if err := s.gravar(ctx, chave, valor, true); err != nil {
 		return fmt.Errorf("gravar a configuração %s: %w", chave, err)
 	}
 	return nil

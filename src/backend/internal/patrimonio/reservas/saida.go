@@ -12,7 +12,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/cobrancas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -46,7 +45,7 @@ type Saida struct {
 
 // RegistrarSaida grava a saída do cofrinho e devolve o id do lançamento. A conta tem de existir e ser do Open
 // Finance, o cofrinho não pode ser o Méli Dólar, e a categoria, se vier, tem de existir.
-func (s *Servico) RegistrarSaida(ctx context.Context, q consultas.DBTX, d Saida) (int64, error) {
+func (s *Servico) RegistrarSaida(ctx context.Context, q banco.DBTX, d Saida) (int64, error) {
 	var origem int64
 	err := q.QueryRowContext(ctx, `SELECT "Origem" FROM "Conta" WHERE "Id" = ?`, d.ContaId).Scan(&origem)
 	switch {

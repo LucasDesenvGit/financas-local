@@ -54,7 +54,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 | `internal/ajustes/parametros` | a Parametrização do site (#76): o catálogo, a gravação que valida tudo antes e o diagnóstico |
 | `internal/plataforma/segredos` | os segredos (#76): AES-256-GCM com prefixo `v2:`, chave protegida por DPAPI no Windows e `0600` no Linux |
 | `internal/plataforma/config` | leitura do `appsettings.json` e do `appsettings.Production.json` da instalação |
-| `internal/plataforma/banco` | SQLite no formato do banco (o de quando o EF Core gravava), transação, consultas do `sqlc`, esquema ao iniciar ([README](internal/plataforma/banco/README.md)) |
+| `internal/plataforma/banco` | SQLite no formato do banco (o de quando o EF Core gravava), transação, esquema ao iniciar ([README](internal/plataforma/banco/README.md)) |
 | `internal/plataforma/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato em que o banco os guarda (texto) |
 | `internal/plataforma/relogio` | fuso de Brasília, injetável; o relógio de teste do contrato (`APartirDe`, #363) |
 | `internal/plataforma/versao` | a versão, gravada na compilação pelo `-ldflags` |

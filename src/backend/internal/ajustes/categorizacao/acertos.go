@@ -8,7 +8,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/parcelas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
@@ -61,7 +61,7 @@ var regrasPadraoNovas = []regraPadraoNova{
 // As regras lidas para o AplicarTipo são as de antes das criadas aqui: no C# elas ainda estão só na memória do contexto
 // (Add, sem SaveChanges) quando o CarregarAsync lê o banco, então não entram. Só o texto de estorno no cartão olha as
 // regras, e a regra nova nunca é a certa para ele (a categoria dela é "Investimentos", de transferência).
-func CriarRegrasPadrao(ctx context.Context, q consultas.DBTX, rel relogio.Relogio) (int, error) {
+func CriarRegrasPadrao(ctx context.Context, q banco.DBTX, rel relogio.Relogio) (int, error) {
 	config := configuracao.Novo(q, rel)
 	agora := tipos.NovaDataHora(rel.Agora())
 	var investimentos *int64
@@ -112,7 +112,7 @@ func CriarRegrasPadrao(ctx context.Context, q consultas.DBTX, rel relogio.Relogi
 }
 
 // categoriaInvestimentos é a primeira categoria de transferência chamada "Investimentos" (sem acento nem caixa), ou nil.
-func categoriaInvestimentos(ctx context.Context, q consultas.DBTX) (*int64, error) {
+func categoriaInvestimentos(ctx context.Context, q banco.DBTX) (*int64, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Nome" FROM "Categoria" WHERE "Tipo" = ? ORDER BY "Id"`, CategoriaTransferencia)
 	if err != nil {
 		return nil, fmt.Errorf("ler as categorias de transferência: %w", err)
@@ -133,7 +133,7 @@ func categoriaInvestimentos(ctx context.Context, q consultas.DBTX) (*int64, erro
 
 // passarParaInvestimentos muda para a categoria as transações que ainda não estão nela, sem categoria escolhida à mão e
 // sem grupo de transferência, cujo texto (o do banco, ou o nome se não houver) contém uma das regras do grupo.
-func passarParaInvestimentos(ctx context.Context, q consultas.DBTX, regras *Regras, grupo regraPadraoNova, categoria int64, agora tipos.DataHora) (int, error) {
+func passarParaInvestimentos(ctx context.Context, q banco.DBTX, regras *Regras, grupo regraPadraoNova, categoria int64, agora tipos.DataHora) (int, error) {
 	candidatas := map[int64]*transacoes.Transacao{}
 	var ordem []int64 // a ordem em que cada uma apareceu (o Dictionary do C# guarda a ordem de inserção)
 	for _, filtro := range grupo.filtros {
@@ -184,7 +184,7 @@ func contemAlguma(texto string, trechos []string) bool {
 // ReclassificarEntradasNosCartoes é o ReclassificarEntradasNosCartoesAsync (#166, ADR 0036): acerta as entradas nos
 // cartões que já estão no banco (estornos que contavam como receita, pagamentos sem a categoria certa). Devolve quantas
 // mudaram de tipo, de "fora dos relatórios" ou de categoria.
-func ReclassificarEntradasNosCartoes(ctx context.Context, q consultas.DBTX, agora tipos.DataHora) (int, error) {
+func ReclassificarEntradasNosCartoes(ctx context.Context, q banco.DBTX, agora tipos.DataHora) (int, error) {
 	regras, err := Carregar(ctx, q)
 	if err != nil {
 		return 0, err
@@ -223,7 +223,7 @@ func mesmaCategoria(a, b *int64) bool {
 // devolvida inteira (o estorno do valor total) fica fora dos relatórios, com o estorno e as parcelas dela já lançadas: a
 // compra foi cancelada e, no total, não custou nada. Olha os lançamentos dos cartões dos últimos 460 dias (400 do estorno
 // da compra e 60 de folga). Devolve quantas transações passaram a ficar fora.
-func IgnorarComprasParceladasEstornadas(ctx context.Context, q consultas.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
+func IgnorarComprasParceladasEstornadas(ctx context.Context, q banco.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
 	desde := hoje.SomarDias(-parcelas.DiasEstornoDaCompra - 60)
 	// O C# só traz do banco o que tem valor positivo ou mais de uma parcela, para ler menos linhas. Aqui vem tudo da janela
 	// e o ComprasEstornadas escolhe (ele já descarta o que não é estorno nem parcela): o resultado é o mesmo, e a coluna

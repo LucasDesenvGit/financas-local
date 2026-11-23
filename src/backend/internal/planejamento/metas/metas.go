@@ -21,7 +21,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/reservas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
@@ -128,7 +127,7 @@ type meta struct {
 const colunasMeta = `m."Id", m."Nome", m."ValorAlvo", m."ValorAtual", m."DataAlvo", m."ContaId", c."Nome", m."ReservaNome",
 	m."Prioridade", m."Cor", m."Icone", m."GuardarPorMes", m."Concluida"`
 
-func lerMetas(ctx context.Context, q consultas.DBTX, onde string, argumentos ...any) ([]meta, error) {
+func lerMetas(ctx context.Context, q banco.DBTX, onde string, argumentos ...any) ([]meta, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT `+colunasMeta+` FROM "Meta" AS m LEFT JOIN "Conta" AS c ON m."ContaId" = c."Id" `+
 		onde, argumentos...)
 	if err != nil {

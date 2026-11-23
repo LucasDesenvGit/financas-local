@@ -57,13 +57,12 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	err := banco.EmTransacao(ctx, s.o.DB, func(tx *sql.Tx) error {
-		q := s.q.WithTx(tx)
-		login, err := auditoria.Login(ctx, q)
+		login, err := auditoria.Login(ctx, tx)
 		if err != nil {
 			return err
 		}
 		// Como no .NET, a auditoria é registrada antes dos valores, e as duas coisas vão juntas no mesmo SaveChanges.
-		if err := auditoria.Registrar(ctx, q, r, tipos.NovaDataHora(s.o.Relogio.Agora()), "ParametrosAlterados", login); err != nil {
+		if err := auditoria.Registrar(ctx, tx, r, tipos.NovaDataHora(s.o.Relogio.Agora()), "ParametrosAlterados", login); err != nil {
 			return err
 		}
 		return s.gravar(ctx, tx, dto.valores)

@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -40,7 +39,6 @@ type Opcoes struct {
 // Autenticacao guarda o estado que vive o processo todo: o limitador por IP e o hash fictício.
 type Autenticacao struct {
 	o       Opcoes
-	q       *consultas.Queries
 	limite  *limitador
 	duracao time.Duration
 
@@ -52,7 +50,6 @@ type Autenticacao struct {
 func Nova(o Opcoes) *Autenticacao {
 	return &Autenticacao{
 		o:       o,
-		q:       consultas.New(o.DB),
 		limite:  novoLimitador(5, time.Minute),
 		duracao: time.Duration(o.MinutosSessao) * time.Minute,
 	}
@@ -131,7 +128,7 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 		if c, err := r.Cookie(CookieSessao); err == nil && c.Value != "" {
 			agora := a.o.Relogio.Agora()
 			if s, ok := lerSessao(a.o.Chave, c.Value, agora); ok {
-				valida, err := a.q.SessaoValida(r.Context(), consultas.SessaoValidaParams{Id: s.Usuario, CarimboSeguranca: s.Carimbo})
+				valida, err := sessaoValida(r.Context(), a.o.DB, s.Usuario, s.Carimbo)
 				if err != nil {
 					a.erroInterno(w, r, "conferir a sessão", err)
 					return

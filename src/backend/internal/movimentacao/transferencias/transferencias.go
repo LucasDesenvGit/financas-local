@@ -21,7 +21,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/reservas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -33,7 +33,7 @@ const DiasDoPar = 5
 const ChaveMeuNome = "Transferencias.MeuNome"
 
 // categoriasDeTransferencia são as categorias do tipo transferência, por Id (o C# lê sem ORDER BY: pelo Id).
-func categoriasDeTransferencia(ctx context.Context, q consultas.DBTX) ([]struct {
+func categoriasDeTransferencia(ctx context.Context, q banco.DBTX) ([]struct {
 	id   int64
 	nome string
 }, error) {
@@ -61,7 +61,7 @@ func categoriasDeTransferencia(ctx context.Context, q consultas.DBTX) ([]struct 
 }
 
 // CategoriaGenerica é a categoria "Transferências" (ou "Transferência"), do tipo transferência.
-func CategoriaGenerica(ctx context.Context, q consultas.DBTX) (*int64, error) {
+func CategoriaGenerica(ctx context.Context, q banco.DBTX) (*int64, error) {
 	lista, err := categoriasDeTransferencia(ctx, q)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func CategoriaGenerica(ctx context.Context, q consultas.DBTX) (*int64, error) {
 // Reclassificar é o ReclassificarAsync: decide, para cada lançamento da categoria genérica, se é entre contas suas ou
 // com outra pessoa, depois de acertar os pagamentos de fatura pela conta. Grava o que mudou (com AtualizadoEm = agora)
 // e devolve quantos mudaram.
-func Reclassificar(ctx context.Context, q consultas.DBTX, agora tipos.DataHora) (int, error) {
+func Reclassificar(ctx context.Context, q banco.DBTX, agora tipos.DataHora) (int, error) {
 	cartoes, err := categorizacao.Cartoes(ctx, q)
 	if err != nil {
 		return 0, err
@@ -198,7 +198,7 @@ func CitaONome(descricao *string, palavras []string) bool {
 // pagamentosDeFatura (#172): débito numa conta que é pagamento de fatura (pelo texto ou pela operação) e tem o crédito
 // do mesmo valor num cartão seu, em até DiasDoPar dias, vira transferência na categoria "Pagamento de fatura". Sem
 // esse crédito fica como está ("fatura" também é conta de telefone). Não mexe em categoria escolhida à mão.
-func pagamentosDeFatura(ctx context.Context, q consultas.DBTX, cartoes map[int64]bool, agora tipos.DataHora) (int, error) {
+func pagamentosDeFatura(ctx context.Context, q banco.DBTX, cartoes map[int64]bool, agora tipos.DataHora) (int, error) {
 	if len(cartoes) == 0 {
 		return 0, nil
 	}
@@ -306,7 +306,7 @@ func pagamentosDeFatura(ctx context.Context, q consultas.DBTX, cartoes map[int64
 
 // pareados: os lançamentos que têm o outro lado em outra conta sua (mesmo valor, sinal oposto, até DiasDoPar dias), em
 // qualquer categoria. Cada lado forma um par só, o de data mais próxima (e, empatando, o de menor Id).
-func pareados(ctx context.Context, q consultas.DBTX, lancamentos []*transacoes.Transacao) (map[int64]bool, error) {
+func pareados(ctx context.Context, q banco.DBTX, lancamentos []*transacoes.Transacao) (map[int64]bool, error) {
 	ordenados := slices.Clone(lancamentos)
 	slices.SortStableFunc(ordenados, porDataEId)
 	de, ate := ordenados[0].Data.SomarDias(-DiasDoPar), maiorData(ordenados).SomarDias(DiasDoPar)

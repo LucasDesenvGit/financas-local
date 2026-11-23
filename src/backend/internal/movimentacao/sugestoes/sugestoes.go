@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -154,7 +154,7 @@ func primeiro(s ...*string) string {
 // montarIndice é o MontarIndiceAsync: as categorias, as regras "contém" e as transações categorizadas dos últimos 730
 // dias. As consultas são as do C#, sem ORDER BY: a ordem do banco desempata as categorias de mesmos pontos, e a mesma
 // consulta no mesmo SQLite dá a mesma ordem.
-func montarIndice(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (*indice, error) {
+func montarIndice(ctx context.Context, q banco.DBTX, hoje tipos.Data) (*indice, error) {
 	ix := &indice{porChave: map[string]*votos{}, porPalavra: map[string]*votos{}, categorias: map[int64]categoria{},
 		porNome: map[string]int64{}, regras: map[string]int64{}}
 	linhas, err := q.QueryContext(ctx, `SELECT "c"."Id", "c"."Nome", "c"."Cor", "c"."Tipo" FROM "Categoria" AS "c"`)
@@ -413,7 +413,7 @@ type transacao struct {
 // Grupos é o SugerirGruposAsync: as transações dos últimos dias (sem as transferências do sistema e as de categoria
 // escolhida à mão), agrupadas pela descrição parecida, com a sugestão de cada grupo. Primeiro o que dá para aplicar
 // com segurança (a confiança alta), depois os grupos maiores.
-func Grupos(ctx context.Context, q consultas.DBTX, hoje tipos.Data, somenteSemCategoria bool, dias int) ([]SugestaoDto, error) {
+func Grupos(ctx context.Context, q banco.DBTX, hoje tipos.Data, somenteSemCategoria bool, dias int) ([]SugestaoDto, error) {
 	ix, err := montarIndice(ctx, q, hoje)
 	if err != nil {
 		return nil, err
@@ -524,7 +524,7 @@ func mesmoId(a, b *int64) bool { return (a == nil) == (b == nil) && (a == nil ||
 var ErrNaoEncontrada = errors.New("transação não encontrada")
 
 // ParaTransacao é o SugerirParaTransacaoAsync: até 3 categorias para uma transação, menos a que ela já tem.
-func ParaTransacao(ctx context.Context, q consultas.DBTX, hoje tipos.Data, id int64) ([]OpcaoDto, error) {
+func ParaTransacao(ctx context.Context, q banco.DBTX, hoje tipos.Data, id int64) ([]OpcaoDto, error) {
 	var t transacao
 	err := q.QueryRowContext(ctx, `SELECT "Descricao", "DescricaoOriginal", "Estabelecimento", "Valor", "CategoriaId"
 		FROM "Transacao" WHERE "Id" = ?`, id).Scan(&t.descricao, &t.original, &t.estabelecimento, &t.valor, &t.categoria)

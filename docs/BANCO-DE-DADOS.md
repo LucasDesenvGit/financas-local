@@ -333,7 +333,7 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 
 ### Depois de qualquer mudança
 
-1. Em `src/backend`, rode `go generate ./...` e suba o que ele mudar: o site leva uma cópia dos scripts dentro do executável e um esquema para o `sqlc` ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha. Consulta nova vai em `internal/plataforma/banco/consultas` (o `sqlc`) ou no pacote do assunto, sempre parametrizada.
+1. Em `src/backend`, rode `go generate ./...` e suba o que ele mudar: o site leva uma cópia dos scripts dentro do executável ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha. Consulta nova vai no pacote do assunto, escrita à mão e sempre parametrizada ([ADR 0074](adr/0074-consultas-escritas-a-mao-sem-o-sqlc.md)).
 2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
 3. Rode `python3 scripts/ci/banco/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
 4. Tabela nova: entra em `ASSUNTOS` no `scripts/dev/gerar-diagrama-banco.py`. Rode `python3 scripts/dev/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).

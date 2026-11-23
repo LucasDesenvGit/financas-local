@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/carteira"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -65,7 +65,7 @@ type Investimento struct {
 // RegistrarHistorico é o RegistrarAsync do C#: guarda o saldo de hoje de cada investimento que entra no histórico (a
 // última sincronização do dia vale: o registro do dia é atualizado). Roda dentro da transação de quem chama (a
 // sincronização do Open Finance, #83).
-func RegistrarHistorico(ctx context.Context, q consultas.DBTX, lista []Investimento, hoje tipos.Data, agora time.Time) error {
+func RegistrarHistorico(ctx context.Context, q banco.DBTX, lista []Investimento, hoje tipos.Data, agora time.Time) error {
 	for _, i := range lista {
 		if !EntraNoHistorico(i.Tipo, i.Moeda) {
 			continue

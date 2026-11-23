@@ -13,4 +13,4 @@ O site aplica os dois ao iniciar (`-aplicar-esquema`), com uma cópia embutida n
 - tabela nova vai no **fim** do `01-estrutura.sql` (a CI confere com o `scripts/ci/banco/verificar-sql.py`);
 - coluna nova numa tabela que já existe vai no `2-criar-banco.sh` (`adicionar_coluna_se_ausente`), e não aqui;
 - nunca apagar nem renomear coluna em uso;
-- depois de mudar, `go generate ./...` em `src/backend`, para a cópia embutida e o `sqlc` ficarem em dia.
+- depois de mudar, `go generate ./...` em `src/backend`, para a cópia embutida ficar em dia.

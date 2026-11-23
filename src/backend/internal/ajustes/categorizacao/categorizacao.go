@@ -14,7 +14,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -50,7 +50,7 @@ type Regras struct {
 }
 
 // Carregar é o CarregarAsync.
-func Carregar(ctx context.Context, q consultas.DBTX) (*Regras, error) {
+func Carregar(ctx context.Context, q banco.DBTX) (*Regras, error) {
 	rs := &Regras{tiposCategoria: map[int64]int64{}, mapaPluggy: map[string]*int64{}, cartoes: map[int64]bool{}}
 
 	linhas, err := q.QueryContext(ctx, `SELECT "Texto", "TipoCorrespondencia", "CategoriaId" FROM "RegraCategorizacao"
@@ -128,7 +128,7 @@ func Carregar(ctx context.Context, q consultas.DBTX) (*Regras, error) {
 }
 
 // Cartoes são os ids das contas de cartão de crédito (#166: entrada nelas é pagamento de fatura ou estorno).
-func Cartoes(ctx context.Context, q consultas.DBTX) (map[int64]bool, error) {
+func Cartoes(ctx context.Context, q banco.DBTX) (map[int64]bool, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id" FROM "Conta" WHERE "Tipo" = ?`, tipolancamento.CartaoCredito)
 	if err != nil {
 		return nil, fmt.Errorf("ler os cartões: %w", err)

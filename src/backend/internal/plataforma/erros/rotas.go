@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -23,14 +22,13 @@ const mensagemNaoEncontrado = "Registro não encontrado."
 // Servico é o ErrosController.
 type Servico struct {
 	db      *sql.DB
-	q       *consultas.Queries
 	fila    *Fila
 	relogio relogio.Relogio
 	log     *slog.Logger
 }
 
 func NovoServico(db *sql.DB, fila *Fila, r relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, q: consultas.New(db), fila: fila, relogio: r, log: log}
+	return &Servico{db: db, fila: fila, relogio: r, log: log}
 }
 
 // Registrar põe as 5 rotas de api/erros no mux. Login e CSRF são de quem está na frente (a autenticação do Go
@@ -234,7 +232,7 @@ func (s *Servico) registrarDoFrontEnd(w http.ResponseWriter, r *http.Request) {
 	if !respostas.LerTextos(w, r, mensagem, detalhe, rota) {
 		return
 	}
-	login, err := auditoria.Login(r.Context(), s.q)
+	login, err := auditoria.Login(r.Context(), s.db)
 	if err != nil {
 		s.erroInterno(w, r, "front-end", err)
 		return
