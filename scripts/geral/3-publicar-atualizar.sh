@@ -62,8 +62,7 @@ preparo="$PastaPublicado/preparo"
 destino="$PastaPublicado/api"
 nome_servico='FinancasLocal'
 
-# node e go (portateis ou do PATH) valem tambem com --pular-build: o appsettings.Production.json e gerado pelo
-# node, e o certificado, pelo executavel do Go.
+# node e go (portateis ou do PATH) valem tambem com --pular-build.
 configurar_ambiente_build
 
 # ------------------------------------------------------------------ Build
@@ -100,23 +99,6 @@ fi
 etapa 'Certificado HTTPS local'
 garantir_pasta "$PastaChaves"
 pfx="$PastaChaves/financaslocal.pfx"
-config_atual="$destino/appsettings.Production.json"
-
-# A senha do PFX so e guardada dentro do appsettings.Production.json gerado
-# (nunca impressa na tela). Para reaproveitar um PFX ja existente sem gerar
-# um novo a cada publicacao, lemos a senha do appsettings.Production.json ja
-# publicado anteriormente (se existir).
-obter_senha_atual() {
-    [[ -f "$config_atual" ]] || return 1
-    node -e '
-try {
-    const dados = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8").replace(/^\uFEFF/, ""));
-    const senha = dados.Kestrel.Endpoints.Https.Certificate.Password;
-    if (!senha) process.exit(1);
-    process.stdout.write(senha);
-} catch { process.exit(1); }
-' "$(caminho_nativo "$config_atual")" 2>/dev/null
-}
 
 # passo_a_passo_certificado: mostra os comandos para confiar na parte publica do certificado (sem a
 # chave, no .pem) na distribuicao detectada e no Chrome/Chromium e no Firefox (#300).
@@ -142,58 +124,25 @@ passo_a_passo_certificado() {
     echo '    Detalhes: docs/INSTALACAO-PELO-CODIGO.md, secao "O navegador alerta sobre o certificado".'
 }
 
-senha_pfx=""
-if [[ -f "$pfx" ]]; then
-    senha_pfx="$(obter_senha_atual || true)"
-fi
-if [[ -z "$senha_pfx" ]]; then
-    if command -v openssl >/dev/null 2>&1; then
-        senha_pfx="$(openssl rand -base64 24)"
-    else
-        senha_pfx="$(head -c32 /dev/urandom | base64)"
-    fi
-fi
-
-# #84: quem cuida do certificado e o executavel do Go, sem o .NET: reaproveita o PFX que abre com a senha e
-# vale por mais de 30 dias, e gera outro no caso contrario. A senha vai pela entrada padrao, nao na linha de comando.
+# #775: o executavel do Go cuida do HTTPS (a senha do PFX, o certificado e o appsettings.Production.json, que o
+# site le): reaproveita o PFX que abre com a senha publicada antes e vale por mais de 30 dias, e gera outro no caso
+# contrario. A senha nao passa por aqui.
 pem="${pfx%.pfx}.pem"
-resultado_certificado="$(printf '%s\n' "$senha_pfx" | "$preparo/$nome_go" gerar-certificado -pfx "$(caminho_nativo "$pfx")")" \
-    || erro_sai 'Nao foi possivel gerar o certificado HTTPS.'
-if [[ "$resultado_certificado" == reaproveitado ]]; then
+resultado_https="$("$preparo/$nome_go" preparar-https -pfx "$(caminho_nativo "$pfx")" \
+    -config "$(caminho_nativo "$preparo/appsettings.Production.json")" \
+    -config-atual "$(caminho_nativo "$destino/appsettings.Production.json")" \
+    -banco "$(caminho_nativo "$PastaSql")/FinancasLocal.db" -chaves "$(caminho_nativo "$PastaChaves")")" \
+    || erro_sai 'Nao foi possivel preparar o HTTPS (certificado e appsettings.Production.json).'
+if [[ "$resultado_https" == reaproveitado ]]; then
     ok 'certificado existente reaproveitado'
 else
     ok "certificado gerado em $pfx"
 fi
+ok 'appsettings.Production.json gerado'
 
 aviso 'A instalacao nao mexe nos certificados confiaveis do sistema: isso pede sudo e e decisao de quem instala.'
 aviso 'Sem isso, o navegador mostra um aviso de seguranca ao abrir o site.'
 passo_a_passo_certificado
-
-# ------------------------------------------------------------------ Configuracao de producao
-etapa 'Gerando appsettings.Production.json'
-# Caminhos gravados no json no formato nativo (caminho_nativo, em comum.sh); o
-# JSON.stringify do Node escapa corretamente qualquer caractere especial.
-PASTA_SQL="$(caminho_nativo "$PastaSql")" \
-PASTA_CHAVES="$(caminho_nativo "$PastaChaves")" \
-PFX_CAMINHO="$(caminho_nativo "$pfx")" \
-PFX_SENHA="$senha_pfx" \
-DESTINO_CONFIG="$(caminho_nativo "$preparo/appsettings.Production.json")" \
-node -e '
-const e = process.env;
-const config = {
-    Banco: { Caminho: e.PASTA_SQL + "/FinancasLocal.db" },
-    Seguranca: { PastaChaves: e.PASTA_CHAVES },
-    Kestrel: {
-        Endpoints: {
-            Https: {
-                Certificate: { Path: e.PFX_CAMINHO, Password: e.PFX_SENHA },
-            },
-        },
-    },
-};
-require("fs").writeFileSync(e.DESTINO_CONFIG, JSON.stringify(config, null, 2) + "\n", "utf8");
-'
-ok 'configuracao gerada'
 
 # ------------------------------------------------------------------ Copia dos arquivos
 etapa "Publicando em $destino"

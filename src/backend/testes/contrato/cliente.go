@@ -33,7 +33,7 @@ type Sessao struct {
 	cliente *http.Client
 }
 
-// lerRaiz lê a parte pública do certificado do servidor sob teste (o .pem que o gerar-certificado grava ao lado do .pfx).
+// lerRaiz lê a parte pública do certificado do servidor sob teste (o .pem que o preparar-https grava ao lado do .pfx).
 func lerRaiz(caminho string) (*x509.CertPool, error) {
 	if caminho == "" {
 		return nil, fmt.Errorf("-raiz é obrigatório com -alvo: o .pem do certificado do servidor (veja testes/contrato/README.md)")
@@ -74,7 +74,7 @@ func (s *Sessao) limpar() error {
 		Timeout: 60 * time.Second,
 		Transport: &http.Transport{
 			DialContext: discador.DialContext,
-			// O servidor sob teste usa o certificado do gerar-certificado, criado para a execução, e o cliente confia só
+			// O servidor sob teste usa o certificado do preparar-https, criado para a execução, e o cliente confia só
 			// nele (#638): a conexão é conferida como a do navegador.
 			TLSClientConfig: &tls.Config{RootCAs: s.raizes, MinVersion: tls.VersionTLS12},
 		},
