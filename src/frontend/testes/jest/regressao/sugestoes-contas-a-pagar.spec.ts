@@ -1,3 +1,4 @@
+import { paramsPagamentos } from '../../../src/app/paginas/movimentacao/contas-agendadas';
 import { abrirContasAPagar, sugestao } from '../apoio/contas-agendadas';
 
 /**
@@ -20,8 +21,7 @@ describe('Regressão: sugestões de contas a pagar', () => {
   });
 
   it('"ver pagamentos" leva o período dos meses inteiros, despesa e a busca, sem filtrar por uma conta só', () => {
-    const { tela } = abrirContasAPagar([]);
-    expect(tela.linkPagamentos(sugestao({ primeiroPagamento: '2026-05-12', ultimoPagamento: '2026-10-08' }))).toEqual({
+    expect(paramsPagamentos(sugestao({ primeiroPagamento: '2026-05-12', ultimoPagamento: '2026-10-08' }))).toEqual({
       inicio: '2026-05-01', fim: '2026-10-31', tipo: 'despesa', busca: 'FIAP'
     });
   });
