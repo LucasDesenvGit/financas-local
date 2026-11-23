@@ -84,7 +84,7 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0044](0044-trocos-sem-duvida-classificados-na-sincronizacao.md) | Trocos "sem dúvida" classificados na sincronização, com aviso e "Desfazer" | Aceita |
 | [0045](0045-historico-de-saldo-dos-investimentos-do-open-finance.md) | Histórico de saldo dos investimentos do Open Finance, um registro por dia | Aceita |
 | [0046](0046-menu-lateral-em-grupos-que-abrem-e-fecham.md) | Menu lateral em grupos que abrem e fecham (sanfona), vários abertos ao mesmo tempo | Aceita |
-| [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) | CI em jobs paralelos e, no PR, só os testes afetados; .msi só quando o PR mexe nele | Aceita (a parte do .msi no PR, substituída pela 0050) |
+| [0047](0047-ci-paralela-so-testes-afetados-no-pr.md) | CI em jobs paralelos e, no PR, só os testes afetados; .msi só quando o PR mexe nele | Aceita (a parte do .msi no PR, substituída pela 0050; os testes afetados saíram da CI na #774) |
 | [0048](0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md) | Cotação de criptomoedas pela API pública do Mercado Bitcoin | Aceita |
 | [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) | Back-end em Go, trocado aos poucos atrás do .NET (strangler fig), com sqlc, modernc.org/sqlite e shopspring/decimal; o Go atrás do .NET (#231), na frente (#85) e sozinho, com o .NET fora (#86) | Aceita (concluída na #86) |
 | [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) | O .msi é gerado no merge para o develop (e na tag), e não no PR | Aceita |
