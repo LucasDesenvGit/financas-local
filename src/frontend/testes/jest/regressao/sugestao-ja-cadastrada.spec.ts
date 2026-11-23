@@ -17,8 +17,7 @@ describe('Regressão #205: sugestão do extrato já cadastrada com outro nome', 
   it('"Cadastrar" manda a chave da descrição do banco, mesmo que a descrição seja trocada', () => {
     const t = abrirContasAPagar([livepix()]);
     t.clicar(t.botao('Cadastrar PIX ENVIADO LIVEPIX LTDA'));
-    t.tela.form!.descricao = 'Manwha';
-    t.tela.salvar();
+    t.tela.salvar({ ...t.tela.form!, descricao: 'Manwha' });
     expect(t.salvos).toHaveLength(1);
     expect(t.salvos[0]).toMatchObject({ descricao: 'Manwha', chaveExtrato: 'LIVEPIX' });
   });
@@ -26,7 +25,7 @@ describe('Regressão #205: sugestão do extrato já cadastrada com outro nome', 
   it('editar uma conta a pagar não manda chave (a ligação que já existe fica na API)', () => {
     const t = abrirContasAPagar([], [contaAgendada({ id: 7, descricao: 'Manwha', valor: 7.99 })]);
     t.tela.editar(t.tela.itens()[0]);
-    t.tela.salvar();
+    t.tela.salvar(t.tela.form!);
     expect(t.salvos).toHaveLength(1);
     expect(t.salvos[0].chaveExtrato ?? null).toBeNull();
   });
