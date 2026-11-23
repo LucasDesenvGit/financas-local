@@ -18,7 +18,7 @@ import (
 func usuarioDeTeste(t *testing.T, db *sql.DB, login string) int64 {
 	t.Helper()
 	r, err := db.Exec(`INSERT INTO "Usuario" ("Login", "SenhaHash", "CarimboSeguranca", "TentativasFalhas", "CriadoEm")
-		VALUES (?, 'hash', ?, 0, ?)`, login, tipos.NovoGuid(), tipos.NovaDataHora(time.Now()))
+		VALUES (?, 'hash', ?, 0, ?)`, login, tipos.NovoGuid(), tipos.NovaDataHora(testeapoio.RelogioDosTestes().Agora()))
 	if err != nil {
 		t.Fatal(err)
 	}
