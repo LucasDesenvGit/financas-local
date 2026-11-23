@@ -1,4 +1,3 @@
-import { Recorrencia } from '../../../src/app/core/modelos';
 import { abrirContasAPagar } from '../apoio/contas-agendadas';
 
 /**
@@ -36,7 +35,9 @@ describe('Usabilidade: data limite de conta a pagar', () => {
 
   it('conta única não mostra o campo', async () => {
     const t = await abrirFormulario();
-    t.tela.form!.recorrencia = Recorrencia.Unica;
+    const rec = t.raiz.ownerDocument.querySelector<HTMLSelectElement>('select[name=rec]')!;
+    rec.selectedIndex = 2;
+    rec.dispatchEvent(new Event('change'));
     await t.atualizar();
     expect(t.campo('limite')).toBeNull();
     expect(t.campo('restantes')).toBeNull();
@@ -55,7 +56,7 @@ describe('Usabilidade: data limite de conta a pagar', () => {
   it('"quantos pagamentos faltam" preenche a data, e a data mostra quantos faltam', async () => {
     const t = await abrirFormulario();
     await t.digitar('restantes', '3');
-    expect(t.tela.form!.dataLimite).toBe('2027-01-10');
+    expect(t.campo('limite')!.value).toBe('10/01/2027');
     await t.digitar('limite', '2027-04-10');
     expect(t.campo('restantes')!.value).toBe('6');
   });

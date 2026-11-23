@@ -1,5 +1,5 @@
 import { Recorrencia } from '../../../src/app/core/modelos';
-import { avancarVencimento } from '../../../src/app/paginas/movimentacao/contas-agendadas.component';
+import { avancarVencimento } from '../../../src/app/paginas/movimentacao/contas-agendadas';
 import { abrirContasAPagar, contaAgendada } from '../apoio/contas-agendadas';
 
 /** Regressão da data limite de Contas a pagar (#69): lista, último pagamento, encerrada e o que vai para a API. */
@@ -42,10 +42,9 @@ describe('Regressão: data limite de conta a pagar', () => {
     const t = abrirContasAPagar([], [contaAgendada({ id: 7, dataLimite: '2027-06-10', pagamentosRestantes: 8 })]);
     await t.atualizar();
     t.tela.editar(t.tela.itens()[0]);
-    t.tela.salvar();
+    t.tela.salvar(t.tela.form!);
     t.tela.editar(t.tela.itens()[0]);
-    t.tela.form!.recorrencia = Recorrencia.Unica;
-    t.tela.salvar();
+    t.tela.salvar({ ...t.tela.form!, recorrencia: Recorrencia.Unica });
     expect(t.salvos.map((s) => s.dataLimite)).toEqual(['2027-06-10', null]);
   });
 
