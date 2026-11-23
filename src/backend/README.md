@@ -6,7 +6,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 
 | Pasta | O que tem |
 |---|---|
-| `cmd/financas` | o ponto de entrada: as opções, a ligação das peças e o subcomando `gerar-certificado` |
+| `cmd/financas` | o ponto de entrada: as opções, a ligação das peças e o subcomando `preparar-https` |
 | `cmd/versao` | o cálculo da versão (ADR 0070): a base do `Directory.Build.props` mais um passo por merge do `develop`; também monta o CHANGELOG de `changelog.d/` (`-changelog`, `-publicar`). Só a biblioteca padrão e o `git` |
 | `internal/api` | o `ServeMux` com as rotas de todos os assuntos : uma linha por assunto |
 | `internal/plataforma/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (login → rota → banco), com a versão e o relógio |
@@ -89,7 +89,7 @@ O mesmo executável roda como serviço nos dois sistemas (#84), sem mudar de op�
 
 ## Certificado
 
-`financas-go gerar-certificado -pfx <caminho>`, com a senha na entrada padrão, é o passo do certificado da instalação: reaproveita o `.pfx` que abre com a senha e vale por mais de 30 dias, gera outro no caso contrário (1 ano, para `127.0.0.1`, `::1` e `localhost`) e grava a parte pública no `.pem` ao lado. Escreve `gerado` ou `reaproveitado`.
+`financas-go preparar-https -pfx <caminho> -config <arquivo>` (#775) é o passo do HTTPS da instalação, o mesmo nos scripts, no `.msi` e na CI: lê a senha do `.pfx` do `-config` (ou do `-config-atual`) ou cria uma, reaproveita o `.pfx` que abre com ela e vale por mais de 30 dias ou gera outro (1 ano, para `127.0.0.1`, `::1` e `localhost`), grava a parte pública no `.pem` ao lado e o `-config` com o certificado e a senha (e, se pedidos, `-banco`, `-chaves` e `-url`). Escreve `gerado` ou `reaproveitado`. Pôr o certificado na loja de confiança é do instalador de cada sistema. Os nomes `Kestrel:Endpoints:Https:*` do arquivo são os que as instalações já feitas trazem; ficam em `cmd/financas/https.go`.
 
 ## Rodar
 

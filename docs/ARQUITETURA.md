@@ -264,7 +264,7 @@ O código fica num pacote por assunto em `internal/<area>/<assunto>` (são mais 
 
 | Pasta | O que tem |
 |---|---|
-| `cmd/financas` | O ponto de entrada (opções, ligação das peças) e o subcomando `gerar-certificado`. |
+| `cmd/financas` | O ponto de entrada (opções, ligação das peças) e o subcomando `preparar-https`. |
 | `internal/api` | O `ServeMux` com as rotas de todos os assuntos: uma linha por assunto. |
 | `internal/plataforma/servidor` | HTTPS local, arquivos do site, cabeçalhos de segurança (a CSP), erros e o certificado. |
 | `internal/plataforma/autenticacao`, `internal/plataforma/sessao` | Login, sessão, CSRF e limite de tentativas; o usuário logado no contexto. |
