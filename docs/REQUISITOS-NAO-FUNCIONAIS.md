@@ -13,7 +13,7 @@ Quanto o sistema pode gastar e o que ele garante, com número e meta. Mudou algo
 | Atributo | Medida | Hoje | Meta | Como medir | Situação |
 |---|---|---|---|---|---|
 | Memória da API em uso | MB do processo, ocioso e no pico de uma sincronização | 28,3 MB logo depois de subir (03/11/2026, 3.2.7, Windows, scripts) | Até 60 MB | 5 minutos depois de subir, sem requisições, e durante uma sincronização, com 3 leituras | Medida na #86, só a leitura ociosa: o pico da sincronização não foi medido |
-| Tamanho da instalação | MB e arquivos de `%ProgramFiles%\FinancasLocal` e de `publicado/`, sem os dados | 19,2 MB e 62 arquivos em `publicado\api` (mesma medição); cerca de 35 MB no `.msi` (ensaio da #85) | Até 40 MB | O tamanho da pasta, antes e depois de atualizar | Medida na #86 |
+| Tamanho da instalação | MB e arquivos de `%ProgramFiles%\FinancasLocal` e de `publicado/`, sem os dados | 19,2 MB e 62 arquivos em `publicado\api` (mesma medição); cerca de 35 MB no `.msi` (ensaio da #85) | Até 40 MB | O tamanho da pasta, antes e depois de atualizar; no `.msi`, as linhas `TAMANHO` e `MEMORIA` do log do workflow "Versão (instalador .msi)" (do runner do Windows: servem para comparar versões) | Medida na #86 |
 | Tempo de partida | Segundos do início da API até `GET /api/auth/estado` responder | 2,2 s (31/10/2026, 2.50.31, Windows) | Até 5 s | `medir-desempenho.py`, 3 partidas | Medida |
 | Tempo de resposta das telas principais | A chamada mais lenta ao abrir a tela | Painel 84 ms, Transações 23 ms, Investimentos 43 ms (mesma medição) | Até 300 ms por tela | `medir-desempenho.py`, com 5 anos de transações fictícias | Medida |
 

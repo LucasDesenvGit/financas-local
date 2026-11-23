@@ -61,7 +61,7 @@ Em `src/frontend`:
 
 ```bash
 npm run test:tipos                        # a CI roda; o npm test sozinho não confere tipos
-NAVEGADOR=chromium npm run test:afetados  # Jest + build + navegador só no que mudou, com o Chromium da CI (#286)
+NAVEGADOR=chromium npm run test:afetados  # Jest inteiro, build e navegador só no que mudou, com o Chromium da CI (#286)
 npm run test:arquitetura                  # mexeu em import ou criou arquivo: só local (#476), a CI não roda
 ```
 
