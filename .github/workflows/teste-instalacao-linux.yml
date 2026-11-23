@@ -189,7 +189,7 @@ jobs:
           }
 
           # O Go nao sobe: no lugar dele, um script que falha so com -aplicar-esquema (o servico) e passa o resto ao Go
-          # de verdade (o gerar-certificado).
+          # de verdade (o preparar-https).
           plantar
           mv publicado/preparo/financas-go publicado/preparo/financas-go.real
           { echo '#!/bin/sh'; echo 'case "$*" in *-aplicar-esquema*) exit 1 ;; esac'; echo 'exec "$(dirname "$0")/financas-go.real" "$@"'; } > publicado/preparo/financas-go

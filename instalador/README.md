@@ -11,7 +11,7 @@ O `.msi` que instala o site, o gerenciador e o serviço no Windows, gerado com o
 
 **Testar uma mudança:** o `.msi` não é gerado no PR, só no merge para o `develop` ([ADR 0050](../docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). Mexeu nesta pasta? Rode à mão o workflow "Versão (instalador .msi)" na branch e diga no PR que rodou.
 
-**Cuidado:** serviço, certificado e pastas de dados também existem no `scripts/windows/instalar-windows.ps1`. Mudou um, confira o outro. O `configurar.ps1` tem as mesmas restrições do Windows PowerShell 5.1 (ASCII, sem `??`) e **não** usa o `scripts/windows/comum.ps1`: o `.msi` teria de levar o arquivo junto, e mexer no instalador é a etapa de maior risco.
+**Cuidado:** serviço, certificado e pastas de dados também existem no `scripts/windows/instalar-windows.ps1`. Mudou um, confira o outro. O `configurar.ps1` tem as mesmas restrições do Windows PowerShell 5.1 (ASCII, sem `??`) e usa do `scripts/windows/comum.ps1` só o `Confiar-No-Certificado` (o `gerar-msi.ps1` leva o arquivo junto, para `instalador\`).
 
 ## A ação personalizada
 
@@ -19,7 +19,7 @@ O `.msi` que instala o site, o gerenciador e o serviço no Windows, gerado com o
   - **na instalação, no reparo e na atualização**, antes de registrar o serviço:
     1. cria e protege a pasta de dados;
     2. **migra a instalação pelos scripts**, quando existe o serviço `FinancasLocal` apontando para outra pasta: para o serviço, copia o banco e as chaves (os `key-*.xml` antigos e o `segredos.chave` do Go, só se a pasta nova ainda não tem a dela; o `sessao-go.chave` não vai), sem apagar a pasta antiga, deixa uma nota e remove o serviço antigo, que tem o mesmo nome. Se o banco da instalação antiga não for achado (o caminho do `appsettings.Production.json` dela), para sem mudar nada;
-    3. gera ou reaproveita o certificado (SAN `localhost`/`127.0.0.1`/`::1`) pelo `financas-go.exe gerar-certificado`, com a senha pela entrada padrão, e o põe nas Autoridades Raiz da máquina. Reaproveita o `.pfx` que abre com a senha e vale por mais de 30 dias; a CI confere, na atualização, que ele foi reaproveitado;
+    3. gera ou reaproveita o certificado (SAN `localhost`/`127.0.0.1`/`::1`) pelo `financas-go.exe preparar-https` (que também grava o `configuracao.json`) e o põe nas Autoridades Raiz da máquina. Reaproveita o `.pfx` que abre com a senha e vale por mais de 30 dias; a CI confere, na atualização, que ele foi reaproveitado;
   - **só na desinstalação de verdade** (não na troca de versão): tira o certificado. Com `APAGARDADOS=1`, apaga também os dados.
 
 ## Publicar e a versão de desenvolvimento

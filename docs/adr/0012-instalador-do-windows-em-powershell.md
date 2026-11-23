@@ -44,6 +44,6 @@ Para reduzir a duplicação, o `.ps1` **não tem lista própria de colunas novas
 
 - **Alternativa recusada:** manter os três caminhos e só documentar a duplicação. Cada mudança de URL, certificado ou registro do serviço teria de ser feita no bash e no `.ps1`, e a regra "mudou o bash, confira o `.ps1`" já tinha falhado antes.
 - **O que continua em bash no Windows:** o `2-criar-banco.sh` e o `4-backup.sh` (o backup agendado do Windows roda pelo `bash.exe` do Git).
-- **Código comum do PowerShell:** `scripts/windows/comum.ps1`. O `instalador/configurar.ps1` (`.msi`) **não** o usa: o `.msi` teria de levar o arquivo junto, e mexer no instalador é a etapa de maior risco.
+- **Código comum do PowerShell:** `scripts/windows/comum.ps1`. O `instalador/configurar.ps1` (`.msi`) usa só o `Confiar-No-Certificado` (#775): o `gerar-msi.ps1` leva o arquivo junto, e o resto do `.msi` não depende dele.
 - **Custo:** quem usa o Git Bash no Windows passa a rodar o PowerShell por baixo, com a saída, o log e a exigência de Administrador dele. Quem pulou todas as versões entre a #154 e a #655 e roda o comando antigo do gerenciador em C# precisa usar os caminhos de `scripts/geral/`.
 - **Regra que deixa de valer:** "mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`, confira o `.ps1`". Continua valendo: coluna nova só no `2-criar-banco.sh` (o `.ps1` lê dele), e serviço, certificado e pastas de dados também no `instalador/configurar.ps1`.

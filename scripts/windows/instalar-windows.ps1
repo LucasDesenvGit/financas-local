@@ -45,10 +45,6 @@ function Garantir-Pasta([string]$caminho) {
     if (-not (Test-Path -LiteralPath $caminho)) { New-Item -ItemType Directory -Path $caminho -Force | Out-Null }
 }
 
-# Caminho com barras normais (C:/FinancasLocal), como o cygpath -m dos scripts bash.
-function Caminho-Barras([string]$caminho) { return $caminho -replace '\\', '/' }
-
-
 # Baixa para arquivo e le como UTF-8: dependendo do Content-Type, o .Content do Invoke-WebRequest
 # do 5.1 vem como bytes em vez de texto.
 function Obter-Texto([string]$url) {
@@ -439,66 +435,25 @@ function Publicar {
     Etapa "[3/3] Certificado HTTPS local"
     Garantir-Pasta $PastaChaves
     $pfx = Join-Path $PastaChaves "financaslocal.pfx"
-    $configAtual = Join-Path $destino "appsettings.Production.json"
 
-    # A senha do PFX so fica no appsettings.Production.json publicado (nunca na tela).
-    $senhaPfx = $null
-    if ((Test-Path -LiteralPath $pfx) -and (Test-Path -LiteralPath $configAtual)) {
-        try {
-            $senhaPfx = (Get-Content -LiteralPath $configAtual -Raw -Encoding UTF8 | ConvertFrom-Json).Kestrel.Endpoints.Https.Certificate.Password
-        } catch { $senhaPfx = $null }
-    }
-
-    if (-not $senhaPfx) {
-        $bytes = New-Object byte[] 24
-        [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-        $senhaPfx = [Convert]::ToBase64String($bytes)
-    }
-
-    # #84: quem cuida do certificado e o executavel do Go, sem o .NET: reaproveita o PFX que abre com a senha e
-    # vale por mais de 30 dias, e gera outro no caso contrario. A senha vai pela entrada padrao, nao na linha de comando.
-    $resultadoCertificado = $senhaPfx | & (Join-Path $preparo "financas-go.exe") gerar-certificado -pfx $pfx
-    if ($LASTEXITCODE -ne 0) { ErroSai "Nao foi possivel gerar o certificado HTTPS." }
-    if ($resultadoCertificado -eq "reaproveitado") { Ok "certificado existente reaproveitado" }
+    # #775: o executavel do Go cuida do HTTPS (a senha do PFX, o certificado e o appsettings.Production.json, que o
+    # site le): reaproveita o PFX que abre com a senha publicada antes e vale por mais de 30 dias, e gera outro no caso
+    # contrario. A senha nao passa por aqui.
+    $resultadoHttps = & (Join-Path $preparo "financas-go.exe") preparar-https -pfx $pfx `
+        -config (Join-Path $preparo "appsettings.Production.json") `
+        -config-atual (Join-Path $destino "appsettings.Production.json") `
+        -banco (Join-Path $PastaSql "FinancasLocal.db") -chaves $PastaChaves
+    if ($LASTEXITCODE -ne 0) { ErroSai "Nao foi possivel preparar o HTTPS (certificado e appsettings.Production.json)." }
+    if ($resultadoHttps -eq "reaproveitado") { Ok "certificado existente reaproveitado" }
     else { Ok "certificado gerado em $pfx" }
+    Ok "appsettings.Production.json gerado"
 
-    # Confia na loja da MAQUINA (Autoridades Raiz Confiaveis), sem janela: a loja do usuario pede um
-    # clique e, se quem elevou no UAC foi outra conta, poria o certificado so na conta do
-    # administrador. Vai so a parte publica; o FriendlyName identifica o certificado
-    # antigo para troca-lo quando houver renovacao.
     if ($NaoConfiarCertificado) {
         Aviso "Certificado nao marcado como confiavel (-NaoConfiarCertificado). O navegador vai mostrar um aviso de seguranca."
     } else {
-        $completo = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($pfx, $senhaPfx)
-        $publico = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(, $completo.RawData)
-        $publico.FriendlyName = $NomeServico
-        $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
-        $loja.Open("ReadWrite")
-        try {
-            foreach ($antigo in @($loja.Certificates)) {
-                if ($antigo.FriendlyName -eq $NomeServico -and $antigo.Thumbprint -ne $publico.Thumbprint) { $loja.Remove($antigo) }
-            }
-            if (-not ($loja.Certificates | Where-Object { $_.Thumbprint -eq $publico.Thumbprint })) { $loja.Add($publico) }
-        } finally { $loja.Close() }
+        Confiar-No-Certificado ([IO.Path]::ChangeExtension($pfx, "pem"))
         Ok "certificado confiavel para todas as contas deste computador (vale so para localhost)"
     }
-
-    # ------------------------------------------------------------ Configuracao de producao
-    Etapa "[3/3] Gerando appsettings.Production.json"
-    $config = [ordered]@{
-        Banco = [ordered]@{ Caminho = (Caminho-Barras $PastaSql) + "/FinancasLocal.db" }
-        Seguranca = [ordered]@{ PastaChaves = (Caminho-Barras $PastaChaves) }
-        Kestrel = [ordered]@{
-            Endpoints = [ordered]@{
-                Https = [ordered]@{
-                    Certificate = [ordered]@{ Path = (Caminho-Barras $pfx); Password = $senhaPfx }
-                }
-            }
-        }
-    }
-    $json = ($config | ConvertTo-Json -Depth 10) + "`n"
-    [IO.File]::WriteAllText((Join-Path $preparo "appsettings.Production.json"), $json, (New-Object Text.UTF8Encoding $false))
-    Ok "configuracao gerada"
 
     # ------------------------------------------------------------ Copia (com o servico parado)
     # O Windows trava o executavel em uso: o servico tem de parar antes da copia.

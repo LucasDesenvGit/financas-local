@@ -86,12 +86,9 @@ versao="$(cd "$pasta_go" && go run ./cmd/versao)"
         -o "$pasta/financas-go$exe" ./cmd/financas &&
     go build -o "$pasta/pluggy-falsa$exe" ./testes/contrato/pluggyfalsa)
 
-# O certificado do Go é o da instalação (gerar-certificado, #84), lido do appsettings como no site, e o comparador
+# O certificado do Go é o da instalação (preparar-https, #84 e #775), lido do appsettings como no site, e o comparador
 # confia só na parte pública dele (-raiz): a conexão é conferida, sem InsecureSkipVerify (#638).
-senha_certificado=contrato
-printf '%s\n' "$senha_certificado" | "$pasta/financas-go$exe" gerar-certificado -pfx "$pasta/dados/chaves/financaslocal.pfx" >/dev/null
-printf '{"Kestrel":{"Endpoints":{"Https":{"Certificate":{"Path":"dados/chaves/financaslocal.pfx","Password":"%s"}}}}}\n' \
-    "$senha_certificado" >"$pasta/appsettings.Production.json"
+"$pasta/financas-go$exe" preparar-https -pfx "$pasta/dados/chaves/financaslocal.pfx" -config "$pasta/appsettings.Production.json" >/dev/null
 
 # Todos os arquivos de casos, na ordem: os de um arquivo deixam rastro no banco que os seguintes veem.
 somente="${CONTRATO_SOMENTE:-}"
