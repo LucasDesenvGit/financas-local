@@ -56,6 +56,7 @@ caminho do `geral/4-backup.sh`.
 |---|---|---|
 | `dev/lancar-versao.sh` | Na `release/X.Y.Z`: junta os arquivos de `changelog.d/` numa seção `## [X.Y.Z] — data` do `CHANGELOG.md`, apaga os arquivos e faz o commit `chore: versão X.Y.Z`, depois de conferir a branch, a árvore limpa e que o número calculado é o `X.Y.Z` (ADR 0070). O trabalho é do `src/backend/cmd/versao` (`-publicar`), que tem os testes. | Pessoa (publicar uma versão) |
 | `dev/gerar-diagrama-banco.py` | Gera os diagramas do banco de `docs/BANCO-DE-DADOS.md` a partir de `banco/01-estrutura.sql`; com `--conferir`, só confere que estão em dia. | Pessoa (mudou a estrutura); a CI (`--conferir`) |
+| `dev/testes-afetados.py` | Escolhe os testes no navegador das telas afetadas pelo que mudou desde o develop, com o que não foi commitado; sozinho, só mostra (#286). A CI roda tudo (#774). | `npm run test:afetados` |
 | `dev/medir-desempenho.py` | Mede a partida e o tempo das telas contra uma pasta publicada (`--api <pasta>`), para os requisitos de [docs/REQUISITOS-NAO-FUNCIONAIS.md](../docs/REQUISITOS-NAO-FUNCIONAIS.md). | Pessoa |
 
 ## CI (`ci/`)
@@ -87,7 +88,6 @@ Na raiz de `ci/`:
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `testes-afetados.py` | Descobre o que rodar (Jest e navegador) pelo que o PR mudou; `--base` mostra ou roda (#255, #286). | CI; `npm run test:afetados` |
 | `verificar-tempo-testes.py` | Trava de tempo do Jest, por arquivo e da suíte (#204). | CI |
 | `verificar-cache-estaticos.py` | Confere que a regra do cache longo aceita o hash do build do Angular e nada além (#305). | CI |
 | `verificar-manual.py` | Avisa quando o PR mexe no que o usuário vê e não atualiza o Manual (#177). | CI |
