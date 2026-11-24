@@ -20,18 +20,18 @@ import (
 	"fmt"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
 // Servico é a base dos relatórios. Lê o banco que recebe, que pode ser uma transação (*sql.Tx) de quem chama.
 type Servico struct {
-	db      consultas.DBTX
+	db      banco.DBTX
 	relogio relogio.Relogio
 }
 
-func NovoServico(db consultas.DBTX, r relogio.Relogio) *Servico {
+func NovoServico(db banco.DBTX, r relogio.Relogio) *Servico {
 	return &Servico{db: db, relogio: r}
 }
 

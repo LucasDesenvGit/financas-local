@@ -16,7 +16,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/bancos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/parcelas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -352,7 +352,7 @@ type cartao struct {
 // ignorar nos relatórios entra (ela continua na conta do cartão). Quando a fatura do mês já fechou, vem junto a
 // seguinte, ainda aberta (Proxima, #251). A ordem: o valor do mês, do maior para o menor, e o nome do cartão pela
 // cultura pt-BR (o ThenBy do C#, em memória).
-func DoMesDosCartoes(ctx context.Context, q consultas.DBTX, inicio, fim, hoje tipos.Data) ([]DoMes, error) {
+func DoMesDosCartoes(ctx context.Context, q banco.DBTX, inicio, fim, hoje tipos.Data) ([]DoMes, error) {
 	cartoes, err := lerCartoes(ctx, q)
 	if err != nil || len(cartoes) == 0 {
 		return []DoMes{}, err
@@ -486,7 +486,7 @@ func Vencimentos(faturas []Fatura) []tipos.Data {
 func marcadores(n int) string { return strings.TrimSuffix(strings.Repeat("?, ", n), ", ") }
 
 // lerCartoes: os cartões não arquivados, na ordem do Id (a da tabela, que o C# lê sem ORDER BY).
-func lerCartoes(ctx context.Context, q consultas.DBTX) ([]cartao, error) {
+func lerCartoes(ctx context.Context, q banco.DBTX) ([]cartao, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Nome", "DiaFechamento", "DiaVencimento" FROM "Conta"
 		WHERE "Tipo" = 3 AND NOT "Arquivada" ORDER BY "Id"`)
 	if err != nil {
@@ -510,7 +510,7 @@ func lerCartoes(ctx context.Context, q consultas.DBTX) ([]cartao, error) {
 // LerFaturas lê as faturas importadas que casam com o filtro, por cartão. A ordem é a do índice
 // IX_FaturaCartao_Conta_Vencimento (ContaId, DataVencimento DESC), que a consulta do C# usa sem ORDER BY: ela decide o
 // empate do MinBy e do MaxBy.
-func LerFaturas(ctx context.Context, q consultas.DBTX, onde string, argumentos ...any) (map[int64][]Fatura, error) {
+func LerFaturas(ctx context.Context, q banco.DBTX, onde string, argumentos ...any) (map[int64][]Fatura, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "ContaId", "DataFechamento", "DataVencimento", "ValorTotal",
 		"ValorPago" FROM "FaturaCartao" `+onde+` ORDER BY "ContaId", "DataVencimento" DESC, "Id"`, argumentos...)
 	if err != nil {
@@ -533,7 +533,7 @@ func LerFaturas(ctx context.Context, q consultas.DBTX, onde string, argumentos .
 
 // LerLancamentos são os lançamentos dos cartões desde a data, sem as transferências e os pagamentos de fatura, na ordem do
 // índice IX_Transacao_Conta_Data (ContaId, Data DESC), a da consulta do C#.
-func LerLancamentos(ctx context.Context, q consultas.DBTX, ids []any, desde tipos.Data) (map[int64][]Lancamento, error) {
+func LerLancamentos(ctx context.Context, q banco.DBTX, ids []any, desde tipos.Data) (map[int64][]Lancamento, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "ContaId", "Data", "Valor", "FaturaCartaoId", "ParcelaNumero",
 		"ParcelaTotal", COALESCE("DescricaoOriginal", "Descricao") FROM "Transacao"
 		WHERE "ContaId" IN (`+marcadores(len(ids))+`) AND "Data" >= ? AND "Tipo" <> 3
@@ -562,7 +562,7 @@ func LerLancamentos(ctx context.Context, q consultas.DBTX, ids []any, desde tipo
 // (pagamento pelo texto, pela categoria "Pagamento de fatura" ou transferência sua para o cartão; ADR 0036) ou a que o
 // banco mandou como PAGAMENTO_FATURA. Estorno é despesa com valor positivo e fica de fora. O valor positivo é
 // conferido aqui, e não no SQL: dinheiro é texto no banco.
-func LerPagamentos(ctx context.Context, q consultas.DBTX, ids []any, desde tipos.Data) (map[int64][]Pagamento, error) {
+func LerPagamentos(ctx context.Context, q banco.DBTX, ids []any, desde tipos.Data) (map[int64][]Pagamento, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "ContaId", "Data", "Valor" FROM "Transacao"
 		WHERE "ContaId" IN (`+marcadores(len(ids))+`) AND "Data" >= ?
 		AND ("Tipo" = 3 OR "MeioPagamento" = 'PAGAMENTO_FATURA')`, append(slices.Clone(ids), desde)...)

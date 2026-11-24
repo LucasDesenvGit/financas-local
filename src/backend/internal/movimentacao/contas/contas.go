@@ -16,7 +16,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/bancos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/faturas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
@@ -112,7 +112,7 @@ const colunasDaConta = `c."Id", c."ConexaoBancariaId", c."Nome", c."Tipo", c."Or
 	c."Banco", c."ContaVinculadaId", c."AtualizadoEm", x."NomeInstituicao"`
 
 // lerContas lê as contas que casam com o filtro, com a instituição da conexão.
-func lerContas(ctx context.Context, q consultas.DBTX, onde string, argumentos ...any) ([]conta, error) {
+func lerContas(ctx context.Context, q banco.DBTX, onde string, argumentos ...any) ([]conta, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT `+colunasDaConta+` FROM "Conta" AS c
 		LEFT JOIN "ConexaoBancaria" AS x ON c."ConexaoBancariaId" = x."Id" `+onde, argumentos...)
 	if err != nil {
@@ -137,7 +137,7 @@ func lerContas(ctx context.Context, q consultas.DBTX, onde string, argumentos ..
 }
 
 // lerConta lê uma conta pelo Id; nil quando ela não existe.
-func lerConta(ctx context.Context, q consultas.DBTX, id int64) (*conta, error) {
+func lerConta(ctx context.Context, q banco.DBTX, id int64) (*conta, error) {
 	lista, err := lerContas(ctx, q, `WHERE c."Id" = ?`, id)
 	if err != nil || len(lista) == 0 {
 		return nil, err
@@ -147,7 +147,7 @@ func lerConta(ctx context.Context, q consultas.DBTX, id int64) (*conta, error) {
 
 // NomesDasConexoes é o NomesDasConexoesAsync do C#: o nome de cada conexão, pelos bancos das contas dela (ou, sem conta,
 // pelos dos investimentos), juntos com " + ". Sem banco conhecido, o nome da instituição, ou "Instituição".
-func NomesDasConexoes(ctx context.Context, q consultas.DBTX) (map[int64]string, error) {
+func NomesDasConexoes(ctx context.Context, q banco.DBTX) (map[int64]string, error) {
 	bancosDasContas, err := bancos.Carregar(ctx, q)
 	if err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func NomesDasConexoes(ctx context.Context, q consultas.DBTX) (map[int64]string, 
 
 // Saldos é o CalcularSaldosAsync do C#: o saldo de cada conta. A do Open Finance vale o saldo que a instituição
 // informa; a manual, o saldo inicial mais as transações efetivadas.
-func Saldos(ctx context.Context, q consultas.DBTX) (map[int64]tipos.Decimal, error) {
+func Saldos(ctx context.Context, q banco.DBTX) (map[int64]tipos.Decimal, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Origem", "Saldo", "SaldoInicial" FROM "Conta"`)
 	if err != nil {
 		return nil, fmt.Errorf("ler os saldos: %w", err)

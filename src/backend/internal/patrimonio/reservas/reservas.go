@@ -12,7 +12,7 @@ import (
 	"unicode"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -627,7 +627,7 @@ func (s *Servico) Conferir(ctx context.Context, conta int64, nome string, saldo 
 }
 
 // gravarConferencia é o Conferir no banco ou numa transação dele (a conferência com a diferença como gasto, #691).
-func (s *Servico) gravarConferencia(ctx context.Context, q consultas.DBTX, conta int64, nome string, saldo tipos.Decimal, data tipos.Data,
+func (s *Servico) gravarConferencia(ctx context.Context, q banco.DBTX, conta int64, nome string, saldo tipos.Decimal, data tipos.Data,
 	moedaInformada *string) error {
 	var existe bool
 	if err := q.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM "Conta" WHERE "Id" = ?)`, conta).Scan(&existe); err != nil {

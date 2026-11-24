@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
@@ -62,7 +62,7 @@ const colunas = `"Id", "ContaId", "PluggyTransactionId", "Data", "Descricao", "D
 
 // Listar lê as transações de uma consulta. onde é um trecho de SQL escrito no código (nunca texto de quem usa), com os
 // valores em argumentos "?": "WHERE "CategoriaId" = ?".
-func Listar(ctx context.Context, q consultas.DBTX, onde string, argumentos ...any) ([]*Transacao, error) {
+func Listar(ctx context.Context, q banco.DBTX, onde string, argumentos ...any) ([]*Transacao, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT `+colunas+` FROM "Transacao" `+onde, argumentos...)
 	if err != nil {
 		return nil, fmt.Errorf("ler transações: %w", err)
@@ -195,7 +195,7 @@ func boolIguais(a, b *bool) bool {
 
 // Inserir grava uma transação nova e guarda o Id nela. É o Add com o SaveChanges do EF Core: as colunas que o modelo
 // não tem (DescricaoRevisada) ficam com o valor padrão da entidade.
-func Inserir(ctx context.Context, q consultas.DBTX, t *Transacao, criadoEm tipos.DataHora) error {
+func Inserir(ctx context.Context, q banco.DBTX, t *Transacao, criadoEm tipos.DataHora) error {
 	var guid any
 	if t.TransferenciaGrupo != nil {
 		guid = *t.TransferenciaGrupo
@@ -221,7 +221,7 @@ func Inserir(ctx context.Context, q consultas.DBTX, t *Transacao, criadoEm tipos
 }
 
 // Excluir apaga as transações dos ids.
-func Excluir(ctx context.Context, q consultas.DBTX, ids ...int64) error {
+func Excluir(ctx context.Context, q banco.DBTX, ids ...int64) error {
 	for _, id := range ids {
 		if _, err := q.ExecContext(ctx, `DELETE FROM "Transacao" WHERE "Id" = ?`, id); err != nil {
 			return fmt.Errorf("apagar a transação %d: %w", id, err)
@@ -231,7 +231,7 @@ func Excluir(ctx context.Context, q consultas.DBTX, ids ...int64) error {
 }
 
 // Gravar manda ao banco só as colunas que mudaram (o SaveChanges do EF Core) e deixa a transação como gravada.
-func Gravar(ctx context.Context, q consultas.DBTX, t *Transacao) error {
+func Gravar(ctx context.Context, q banco.DBTX, t *Transacao) error {
 	lista := t.mudancas()
 	if len(lista) == 0 {
 		return nil
@@ -253,7 +253,7 @@ func Gravar(ctx context.Context, q consultas.DBTX, t *Transacao) error {
 }
 
 // GravarTodas grava as que mudaram, na ordem da lista.
-func GravarTodas(ctx context.Context, q consultas.DBTX, lista []*Transacao) error {
+func GravarTodas(ctx context.Context, q banco.DBTX, lista []*Transacao) error {
 	for _, t := range lista {
 		if err := Gravar(ctx, q, t); err != nil {
 			return err

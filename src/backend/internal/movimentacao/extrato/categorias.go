@@ -13,7 +13,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transferencias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/desfazer"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -248,12 +247,11 @@ func (s *Servico) categoriasEmLote(w http.ResponseWriter, r *http.Request) {
 		if len(anteriores) == 0 {
 			return nil
 		}
-		q := consultas.New(tx)
-		login, err := auditoria.Login(r.Context(), q)
+		login, err := auditoria.Login(r.Context(), tx)
 		if err != nil {
 			return err
 		}
-		if err := auditoria.Registrar(r.Context(), q, r, agora, "CategoriaEmLote ("+strconv.Itoa(len(anteriores))+")", login); err != nil {
+		if err := auditoria.Registrar(r.Context(), tx, r, agora, "CategoriaEmLote ("+strconv.Itoa(len(anteriores))+")", login); err != nil {
 			return err
 		}
 		// Como no C#, o SaveChanges grava também o tipo que mudou nas que ficaram com a mesma categoria.
@@ -357,12 +355,11 @@ func (s *Servico) desfazerCategorias(w http.ResponseWriter, r *http.Request) {
 			t.CategoriaManual, t.Tipo, t.IgnorarRelatorios, t.AtualizadoEm = a.manual, a.tipo, a.ignorarRelatorios, agora
 			restauradas++
 		}
-		q := consultas.New(tx)
-		login, err := auditoria.Login(r.Context(), q)
+		login, err := auditoria.Login(r.Context(), tx)
 		if err != nil {
 			return err
 		}
-		if err := auditoria.Registrar(r.Context(), q, r, agora, "CategoriaEmLoteDesfeita ("+strconv.Itoa(restauradas)+")", login); err != nil {
+		if err := auditoria.Registrar(r.Context(), tx, r, agora, "CategoriaEmLoteDesfeita ("+strconv.Itoa(restauradas)+")", login); err != nil {
 			return err
 		}
 		if err := transacoes.GravarTodas(r.Context(), tx, lista); err != nil {

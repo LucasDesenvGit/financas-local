@@ -16,7 +16,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -313,7 +312,7 @@ func (s *Servico) gravarCorrecao(ctx context.Context, r *http.Request, c *correc
 		if err := transacoes.GravarTodas(ctx, tx, c.mudadas); err != nil {
 			return err
 		}
-		return auditoria.Registrar(ctx, consultas.New(tx), r, agora, evento, login)
+		return auditoria.Registrar(ctx, tx, r, agora, evento, login)
 	})
 }
 
@@ -474,7 +473,7 @@ func (s *Servico) Desfazer(ctx context.Context, r *http.Request, chave string, l
 			return err
 		}
 		desfeitas += n
-		return auditoria.Registrar(ctx, consultas.New(tx), r, tipos.NovaDataHora(s.relogio.Agora()), "ConferenciaInvestimentosDesfeita ("+strconv.Itoa(desfeitas)+")", login)
+		return auditoria.Registrar(ctx, tx, r, tipos.NovaDataHora(s.relogio.Agora()), "ConferenciaInvestimentosDesfeita ("+strconv.Itoa(desfeitas)+")", login)
 	})
 	return desfeitas, true, err
 }
@@ -543,7 +542,7 @@ func (s *Servico) ClassificarTrocosSemDuvida(ctx context.Context) (int, error) {
 		if err := s.guardarTrocos(ctx, tx, guardados); err != nil {
 			return err
 		}
-		return auditoria.RegistrarSemPedido(ctx, consultas.New(tx), agora, "TrocosAutomaticos ("+strconv.Itoa(len(ids))+")")
+		return auditoria.RegistrarSemPedido(ctx, tx, agora, "TrocosAutomaticos ("+strconv.Itoa(len(ids))+")")
 	})
 	if err != nil {
 		return 0, err
@@ -616,7 +615,7 @@ func (s *Servico) DesfazerTrocosAutomaticos(ctx context.Context, r *http.Request
 		if err := s.guardarTrocos(ctx, tx, nil); err != nil {
 			return err
 		}
-		return auditoria.Registrar(ctx, consultas.New(tx), r, tipos.NovaDataHora(s.relogio.Agora()), "TrocosAutomaticosDesfeitos ("+strconv.Itoa(desfeitos)+")", login)
+		return auditoria.Registrar(ctx, tx, r, tipos.NovaDataHora(s.relogio.Agora()), "TrocosAutomaticosDesfeitos ("+strconv.Itoa(desfeitos)+")", login)
 	})
 	return desfeitos, err
 }
@@ -638,7 +637,7 @@ func (s *Servico) conferir(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Servico) loginDoPedido(r *http.Request) (*string, error) {
-	return auditoria.Login(r.Context(), consultas.New(s.db))
+	return auditoria.Login(r.Context(), s.db)
 }
 
 // corrigir é o POST /api/carteira/conferencia/corrigir.

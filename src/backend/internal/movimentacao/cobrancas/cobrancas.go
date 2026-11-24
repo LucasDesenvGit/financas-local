@@ -13,7 +13,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/analises/relatorios"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/sugestoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -29,7 +29,7 @@ const FormaAMao = 1
 const tamanhoMaximoDaChave = 150
 
 // RegrasPorValor são os ids das regras de descrição com faixa de valor (#241), o RegrasPorValorAsync do C#.
-func RegrasPorValor(ctx context.Context, q consultas.DBTX) (map[int64]bool, error) {
+func RegrasPorValor(ctx context.Context, q banco.DBTX) (map[int64]bool, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id" FROM "RegraDescricao" WHERE "ValorMinimo" IS NOT NULL OR "ValorMaximo" IS NOT NULL`)
 	if err != nil {
 		return nil, fmt.Errorf("ler as regras de descrição por valor: %w", err)
@@ -129,7 +129,7 @@ type candidata struct {
 // As pagas com um cofrinho (#691, ADR 0063) vêm junto: antes, a baixa automática cuja cobrança chegou pelo extrato é
 // desfeita (desfazerDuplicadas); depois, as em débito automático que venceram recebem a baixa (baixarPeloCofrinho).
 // agora é o carimbo do que o app grava.
-func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
+func Conciliar(ctx context.Context, q banco.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
 	// As regras por valor só são lidas se houver o que conciliar (#675).
 	var regras map[int64]bool
 	regrasPorValor := func() (map[int64]bool, error) {
@@ -157,7 +157,7 @@ func Conciliar(ctx context.Context, q consultas.DBTX, hoje tipos.Data, agora tip
 }
 
 // conciliarPeloExtrato é a conciliação com as cobranças do extrato (#158).
-func conciliarPeloExtrato(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
+func conciliarPeloExtrato(ctx context.Context, q banco.DBTX, hoje tipos.Data,
 	carregarRegras func() (map[int64]bool, error)) (int, error) {
 	contas, err := lerContas(ctx, q)
 	if err != nil {
@@ -234,7 +234,7 @@ func maisRecente(candidatas []candidata, procurado string) *candidata {
 	return melhor
 }
 
-func lerContas(ctx context.Context, q consultas.DBTX) ([]*contaAConciliar, error) {
+func lerContas(ctx context.Context, q banco.DBTX) ([]*contaAConciliar, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "TextoCobranca", "ProximoVencimento", "ContaId", "Recorrencia",
 		"DataLimite", "UltimoPagamentoEm", "Ativa", "ChaveExtrato" FROM "ContaAgendada"
 		WHERE "Ativa" AND "FormaCobranca" <> ? AND "TextoCobranca" IS NOT NULL ORDER BY "Id"`, FormaAMao)
@@ -257,7 +257,7 @@ func lerContas(ctx context.Context, q consultas.DBTX) ([]*contaAConciliar, error
 // lerCandidatas são as despesas de desde a hoje, na conta da conta a pagar (ou em qualquer uma, se ela não diz), sem
 // os lançamentos pagos pelo cofrinho no app (#691): só o que o banco mandou é cobrança. O valor é texto no banco: o
 // "menor que zero" é conferido em Go, com decimal.
-func lerCandidatas(ctx context.Context, q consultas.DBTX, desde, hoje tipos.Data, contaId *int64,
+func lerCandidatas(ctx context.Context, q banco.DBTX, desde, hoje tipos.Data, contaId *int64,
 	regrasPorValor map[int64]bool) ([]candidata, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Data", "Descricao", "DescricaoOriginal", "RegraDescricaoId",
 		"Estabelecimento", "Valor", "CriadoEm" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ? AND (? IS NULL OR "ContaId" = ?)
@@ -289,7 +289,7 @@ func lerCandidatas(ctx context.Context, q consultas.DBTX, desde, hoje tipos.Data
 	return lista, linhas.Err()
 }
 
-func gravar(ctx context.Context, q consultas.DBTX, c *contaAConciliar) error {
+func gravar(ctx context.Context, q banco.DBTX, c *contaAConciliar) error {
 	_, err := q.ExecContext(ctx, `UPDATE "ContaAgendada" SET "UltimoPagamentoEm" = ?, "ProximoVencimento" = ?, "Ativa" = ?,
 		"ChaveExtrato" = ? WHERE "Id" = ?`, c.ultimoPagamentoEm, c.proximoVencimento, c.ativa, c.chaveExtrato, c.id)
 	if err != nil {

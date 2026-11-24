@@ -4,10 +4,9 @@ O banco de quem já usa o site foi criado e gravado pelo .NET, com o EF Core ([A
 
 | O quê | Onde |
 |---|---|
-| Abrir o banco e fazer transação | `banco.go`: `Abrir`, `EmTransacao` |
+| Abrir o banco e fazer transação | `banco.go`: `Abrir`, `EmTransacao`, `DBTX` |
 | Tipos no formato do EF Core | [`internal/plataforma/tipos`](../tipos): `Decimal`, `Data`, `DataHora`, `Guid` |
-| Consultas | `consultas/sql/*.sql`, geradas pelo `sqlc` em `consultas/` |
-| Esquema para o `sqlc` | `esquema/esquema-sqlc.sql`, gerado a partir do `banco/` |
+| Consultas | escritas à mão, com `?`, no pacote de quem as usa; `DBTX` (um `*sql.DB` ou uma `*sql.Tx`) é a interface que elas recebem ([ADR 0074](../../../../../docs/adr/0074-consultas-escritas-a-mao-sem-o-sqlc.md)) |
 | Criar e atualizar o banco (o `EsquemaBanco` do .NET) | `esquema_banco.go`: `AplicarEsquema`; scripts em `esquema/embutido/` |
 | Relógio no fuso de Brasília | [`internal/plataforma/relogio`](../relogio) |
 
@@ -64,22 +63,9 @@ A sonda `testdata/sonda-esquema` (que saiu com o C# na #86 e está na tag `v-ult
 
 Sem o .NET, o gabarito não é mais regravado: ele é a regressão do `AplicarEsquema`. Uma mudança de propósito no jeito de criar ou atualizar o banco muda o teste, com o motivo no PR (ADR 0051).
 
-## `sqlc`: como gerar e o que ele não entende
+## Consultas
 
-```bash
-cd src/backend
-go generate ./...     # copia os scripts para esquema/embutido/, reescreve esquema/esquema-sqlc.sql e gera consultas/ (sqlc v1.31.1 pelo go run)
-```
-
-O `sqlc` compila com cgo: precisa do `gcc` no Linux ou do MSYS2 no Windows. Só precisa quem muda uma consulta ou o esquema, porque o código gerado vai no commit. O teste `TestEsquemaDoSqlcEmDia` falha quando o `banco/` ou o `2-criar-banco.sh` mudam e alguém esquece de gerar.
-
-O motor SQLite do `sqlc` (v1.31.1) tem três limitações, contornadas assim:
-
-1. **`TEXT NULL` vira `interface{}`** e **os nomes do `CREATE TABLE` viram minúsculas** (`CriadoEm` vira o campo `Criadoem`). Por isso o `sqlc` não lê o `01-estrutura.sql`: o gerador em `esquema/` aplica a estrutura e as colunas novas num SQLite em memória e reescreve o esquema como o próprio SQLite o vê, com os nomes entre aspas.
-2. **Nome sem aspas na consulta vira minúsculo** e não acha a tabela. Escreva **todos os nomes entre aspas duplas**: `SELECT "Chave" FROM "Configuracao"`.
-3. **Acento antes da consulta quebra o recorte do SQL**: a consulta gerada sai cortada no lugar errado. Os `.sql` de `consultas/sql/` são **só ASCII** (o `TestConsultasSemAcento` confere). Texto com acento vai por parâmetro (`?`).
-
-Filtro opcional, que o `sqlc` não monta bem, vai para `database/sql` com `?` e uma lista de argumentos. **Nunca** concatene texto do usuário no SQL.
+Escreva o SQL à mão, com `?` para todo valor, num `QueryRowContext`, `QueryContext` ou `ExecContext` sobre um `DBTX`. **Nunca** concatene texto do usuário no SQL; filtro opcional monta o `WHERE` com pedaços fixos e uma lista de argumentos.
 
 ## Testes
 

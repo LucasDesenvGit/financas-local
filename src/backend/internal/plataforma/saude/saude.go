@@ -7,15 +7,13 @@ package saude
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/sessao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao"
 )
@@ -37,35 +35,29 @@ func Registrar(mux *http.ServeMux, db *sql.DB, log *slog.Logger, r relogio.Relog
 
 // Handler responde o GET /api/go/saude.
 func Handler(db *sql.DB, log *slog.Logger, r relogio.Relogio) http.HandlerFunc {
-	q := consultas.New(db)
 	return func(w http.ResponseWriter, req *http.Request) {
-		id, ok := sessao.Usuario(req.Context())
-		if !ok {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		login, err := q.ObterLoginDoUsuario(req.Context(), id)
-		if errors.Is(err, sql.ErrNoRows) {
-			// O .NET já confere o carimbo da sessão a cada requisição; chegar aqui é usuário apagado no meio.
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		if err != nil {
-			log.Error("ler o usuário logado", "erro", err)
-			servidor.ResponderErroInterno(w)
-			return
-		}
 		diario, err := banco.ModoDoDiario(req.Context(), db)
 		if err != nil {
 			log.Error("ler o modo do diário do banco", "erro", err)
 			servidor.ResponderErroInterno(w)
 			return
 		}
+		login, err := auditoria.Login(req.Context(), db)
+		if err != nil {
+			log.Error("ler o usuário logado", "erro", err)
+			servidor.ResponderErroInterno(w)
+			return
+		}
+		if login == nil {
+			// Sem sessão, ou o .NET já conferiu o carimbo e o usuário foi apagado no meio.
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_ = json.NewEncoder(w).Encode(Resposta{
 			Situacao:      "ok",
 			Versao:        versao.Atual,
-			Usuario:       login,
+			Usuario:       *login,
 			DiarioDoBanco: diario,
 			Agora:         tipos.NovaDataHora(r.Agora()),
 			Hoje:          relogio.Hoje(r),

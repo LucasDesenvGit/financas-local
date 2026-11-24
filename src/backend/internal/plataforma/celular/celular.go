@@ -22,7 +22,6 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -66,7 +65,6 @@ type Opcoes struct {
 // Servico liga e desliga o acesso, e guarda o servidor da rede enquanto ele está ligado.
 type Servico struct {
 	o    Opcoes
-	q    *consultas.Queries
 	conf *configuracao.Servico
 
 	mu     sync.Mutex
@@ -101,7 +99,7 @@ func Novo(o Opcoes) *Servico {
 	if o.Escutar == nil {
 		o.Escutar = func(endereco string) (net.Listener, error) { return net.Listen("tcp", endereco) }
 	}
-	return &Servico{o: o, q: consultas.New(o.DB), conf: configuracao.Novo(o.DB, o.Relogio)}
+	return &Servico{o: o, conf: configuracao.Novo(o.DB, o.Relogio)}
 }
 
 // Iniciar liga o acesso que estava ligado quando o site parou. Se o IP gravado não está mais neste computador (o
@@ -325,12 +323,11 @@ func (s *Servico) fecharFirewall(ctx context.Context) {
 // gravar grava a escolha (nil: desligado) e o evento da auditoria juntos, numa transação.
 func (s *Servico) gravar(ctx context.Context, r *http.Request, ip *string, evento string) error {
 	return banco.EmTransacao(ctx, s.o.DB, func(tx *sql.Tx) error {
-		q := s.q.WithTx(tx)
-		login, err := auditoria.Login(ctx, q)
+		login, err := auditoria.Login(ctx, tx)
 		if err != nil {
 			return err
 		}
-		if err := auditoria.Registrar(ctx, q, r, tipos.NovaDataHora(s.o.Relogio.Agora()), evento, login); err != nil {
+		if err := auditoria.Registrar(ctx, tx, r, tipos.NovaDataHora(s.o.Relogio.Agora()), evento, login); err != nil {
 			return err
 		}
 		return s.conf.ComTx(tx).Definir(ctx, ChaveIP, ip)

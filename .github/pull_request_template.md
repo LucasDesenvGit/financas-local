@@ -25,7 +25,7 @@ Closes #<!-- número da issue -->
 - [ ] Decisão de arquitetura (dependência, integração, banco, segurança, infraestrutura, padrão de código)? ADR criada ou atualizada no mesmo PR, ou o motivo de não precisar
 - [ ] Mexeu em `instalador/`, `src/gerenciador-go/`, `src/backend/cmd/financas/` ou `src/backend/internal/plataforma/banco/esquema_banco.go`? Rodei o workflow "Versão (instalador .msi)" à mão nesta branch (ADR 0050)
 - [ ] Mexeu em teste ou em CI? O tempo antes e depois, por job, está aqui
-- [ ] Consultas ao banco só parametrizadas (`?` ou o `sqlc`), nunca SQL montado com texto do usuário
+- [ ] Consultas ao banco só parametrizadas (com `?`), nunca SQL montado com texto do usuário
 - [ ] Nenhum dado pessoal, senha, chave ou `appsettings.Production.json`
 - [ ] **Manual do site** (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) atualizado se mudou algo que o usuário vê; se não precisa, escreva aqui "Manual: não se aplica" (a CI avisa quando falta)
 

@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
@@ -39,12 +38,11 @@ type Opcoes struct {
 
 type Servico struct {
 	o      Opcoes
-	q      *consultas.Queries
 	config *configuracao.Servico
 }
 
 func Novo(o Opcoes) *Servico {
-	return &Servico{o: o, q: consultas.New(o.DB), config: configuracao.Novo(o.DB, o.Relogio)}
+	return &Servico{o: o, config: configuracao.Novo(o.DB, o.Relogio)}
 }
 
 // ParametroDto, na ordem das propriedades do record do C#.
@@ -115,15 +113,9 @@ func (s *Servico) ObterInteiro(ctx context.Context, chave string) (int, error) {
 // Listar é o ListarAsync: cada parâmetro do catálogo com o valor gravado (sem os segredos), ou o padrão quando não
 // há valor ou ele não se lê.
 func (s *Servico) Listar(ctx context.Context) ([]ParametroDto, error) {
-	linhas, err := s.q.ListarConfiguracoes(ctx)
+	gravados, err := s.gravados(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listar as configurações: %w", err)
-	}
-	gravados := map[string]*string{}
-	for _, c := range linhas {
-		if !c.Protegido {
-			gravados[c.Chave] = c.Valor
-		}
 	}
 	lista := make([]ParametroDto, 0, len(Catalogo))
 	for _, d := range Catalogo {
@@ -142,6 +134,31 @@ func (s *Servico) Listar(ctx context.Context) ([]ParametroDto, error) {
 		lista = append(lista, dto)
 	}
 	return lista, nil
+}
+
+// gravados são os valores da Configuracao que não são segredo, pela chave.
+func (s *Servico) gravados(ctx context.Context) (map[string]*string, error) {
+	linhas, err := s.o.DB.QueryContext(ctx, `SELECT "Chave", "Valor" FROM "Configuracao" WHERE "Protegido" = 0`)
+	if err != nil {
+		return nil, err
+	}
+	defer linhas.Close()
+	gravados := map[string]*string{}
+	for linhas.Next() {
+		var chave string
+		var valor *string
+		if err := linhas.Scan(&chave, &valor); err != nil {
+			return nil, err
+		}
+		gravados[chave] = valor
+	}
+	return gravados, linhas.Err()
+}
+
+// contar é o COUNT(*) da consulta dada (uma constante deste pacote, nunca texto de fora).
+func (s *Servico) contar(ctx context.Context, consulta string) (n int64, err error) {
+	err = s.o.DB.QueryRowContext(ctx, consulta).Scan(&n)
+	return n, err
 }
 
 // validar é a primeira metade do SalvarAsync: as mensagens de erro, na ordem dos valores enviados.
@@ -200,13 +217,13 @@ func (s *Servico) InfoSistema(ctx context.Context) (InfoSistemaDto, error) {
 		tamanho := arquivo.Size()
 		info.TamanhoBancoBytes = &tamanho
 	}
-	if info.Contas, err = s.q.ContarContas(ctx); err != nil {
+	if info.Contas, err = s.contar(ctx, `SELECT COUNT(*) FROM "Conta"`); err != nil {
 		return InfoSistemaDto{}, fmt.Errorf("contar as contas: %w", err)
 	}
-	if info.Transacoes, err = s.q.ContarTransacoes(ctx); err != nil {
+	if info.Transacoes, err = s.contar(ctx, `SELECT COUNT(*) FROM "Transacao"`); err != nil {
 		return InfoSistemaDto{}, fmt.Errorf("contar as transações: %w", err)
 	}
-	if info.ConexoesAtivas, err = s.q.ContarConexoesAtivas(ctx); err != nil {
+	if info.ConexoesAtivas, err = s.contar(ctx, `SELECT COUNT(*) FROM "ConexaoBancaria" WHERE "Ativa" = 1`); err != nil {
 		return InfoSistemaDto{}, fmt.Errorf("contar as conexões: %w", err)
 	}
 	if info.UltimaSincronizacao, err = s.config.ObterData(ctx, configuracao.UltimaSincronizacaoGeral); err != nil {

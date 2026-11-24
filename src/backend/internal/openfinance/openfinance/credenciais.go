@@ -10,7 +10,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transferencias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/segredos"
 )
@@ -70,7 +69,7 @@ func (s *Servico) salvarConfiguracao(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	login, err := auditoria.Login(ctx, consultas.New(s.db))
+	login, err := auditoria.Login(ctx, s.db)
 	if err != nil {
 		s.erroInterno(w, r, "ler o login", err)
 		return
@@ -86,7 +85,7 @@ func (s *Servico) salvarConfiguracao(w http.ResponseWriter, r *http.Request) {
 			if err := config.DefinirSegredo(ctx, s.cofre, chaveClientSecret, &segredo); err != nil {
 				return err
 			}
-			if err := auditoria.Registrar(ctx, consultas.New(tx), r, s.agora(), "CredencialPluggyAlterada", login); err != nil {
+			if err := auditoria.Registrar(ctx, tx, r, s.agora(), "CredencialPluggyAlterada", login); err != nil {
 				return err
 			}
 		}
@@ -118,7 +117,7 @@ func (s *Servico) salvarConfiguracao(w http.ResponseWriter, r *http.Request) {
 // removerSecret apaga a linha do Client Secret, e não só o valor: é o ExecuteDelete do .NET.
 func (s *Servico) removerSecret(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	login, err := auditoria.Login(ctx, consultas.New(s.db))
+	login, err := auditoria.Login(ctx, s.db)
 	if err != nil {
 		s.erroInterno(w, r, "ler o login", err)
 		return
@@ -127,7 +126,7 @@ func (s *Servico) removerSecret(w http.ResponseWriter, r *http.Request) {
 		if _, err := tx.ExecContext(ctx, `DELETE FROM "Configuracao" WHERE "Chave" = ?`, chaveClientSecret); err != nil {
 			return err
 		}
-		return auditoria.Registrar(ctx, consultas.New(tx), r, s.agora(), "CredencialPluggyRemovida", login)
+		return auditoria.Registrar(ctx, tx, r, s.agora(), "CredencialPluggyRemovida", login)
 	})
 	if err != nil {
 		s.erroInterno(w, r, "remover o Client Secret", err)

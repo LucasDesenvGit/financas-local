@@ -23,7 +23,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/poucoinformativa"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/desfazer"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -135,7 +135,7 @@ const colunasDoDto = `t."Id", t."ContaId", co."Nome", t."PluggyTransactionId" IS
 	t."MesmaTitularidade", t."TransferenciaGrupo" IS NOT NULL, co."Tipo", t."RegraDescricaoId", t."ReservaNome"`
 
 // lerDtos lê as transações da consulta com as colunas do DTO, e calcula o tipo de lançamento (ADR 0025) de cada uma.
-func lerDtos(ctx context.Context, q consultas.DBTX, resto string, argumentos ...any) ([]TransacaoDto, error) {
+func lerDtos(ctx context.Context, q banco.DBTX, resto string, argumentos ...any) ([]TransacaoDto, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT `+colunasDoDto+` `+de+` `+resto, argumentos...)
 	if err != nil {
 		return nil, fmt.Errorf("ler as transações: %w", err)
@@ -497,7 +497,7 @@ func (s *Servico) obter(w http.ResponseWriter, r *http.Request) {
 // O C# ordenava com a collation EF_DECIMAL, que lia o texto em pt-BR e punha -27,45 antes de -223,50 (#499); o Go copiou
 // isso na migração, e agora a ordem é a do número. O empate fica na ordem em que o SQLite percorre o período: o índice
 // IX_Transacao_Data, da data mais nova para a mais velha.
-func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Data, quantas int) ([]TransacaoDto, error) {
+func MaioresDespesas(ctx context.Context, q banco.DBTX, inicio, fim tipos.Data, quantas int) ([]TransacaoDto, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Valor" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ?
 		AND "Tipo" = ? AND "IgnorarRelatorios" = 0 ORDER BY "Data" DESC, "Id"`, inicio, fim, transacoes.Despesa)
 	if err != nil {
@@ -541,7 +541,7 @@ func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Da
 
 // TransacoesDoPainel são as transações do painel (#334): as últimas até hoje (as parcelas que o banco manda com data
 // futura escondiam o que de fato aconteceu) e, à parte, as próximas depois de hoje, das mais próximas, com quantas são.
-func TransacoesDoPainel(ctx context.Context, q consultas.DBTX, hoje tipos.Data, quantas int) (ultimas, futuras []TransacaoDto,
+func TransacoesDoPainel(ctx context.Context, q banco.DBTX, hoje tipos.Data, quantas int) (ultimas, futuras []TransacaoDto,
 	quantidadeFuturas int, err error) {
 	if ultimas, err = lerDtos(ctx, q, `WHERE t."Data" <= ? ORDER BY t."Data" DESC, t."Id" DESC LIMIT ?`, hoje, quantas); err != nil {
 		return nil, nil, 0, err

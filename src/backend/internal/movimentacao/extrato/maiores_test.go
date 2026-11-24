@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
@@ -72,7 +72,7 @@ func TestMaioresDespesas(t *testing.T) {
 
 // falhaNa é o banco de verdade, mas a consulta que tem o trecho dado devolve erro.
 type falhaNa struct {
-	consultas.DBTX
+	banco.DBTX
 	trecho string
 }
 

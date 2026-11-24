@@ -16,7 +16,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -102,14 +101,13 @@ type Resumo struct {
 // Servico lê, grava e calcula os holerites.
 type Servico struct {
 	db       *sql.DB
-	q        *consultas.Queries
 	empregos *emprego.Servico
 	relogio  relogio.Relogio
 	log      *slog.Logger
 }
 
 func NovoServico(db *sql.DB, empregos *emprego.Servico, r relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, q: consultas.New(db), empregos: empregos, relogio: r, log: log}
+	return &Servico{db: db, empregos: empregos, relogio: r, log: log}
 }
 
 var meses = [...]string{"janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro",
@@ -457,13 +455,12 @@ func (s *Servico) Reabrir(ctx context.Context, r *http.Request, id int64) (Holer
 			WHERE "Id" = ?`, Aberto, Calculado, id); err != nil {
 			return fmt.Errorf("reabrir o holerite: %w", err)
 		}
-		q := s.q.WithTx(tx)
-		login, err := auditoria.Login(ctx, q)
+		login, err := auditoria.Login(ctx, tx)
 		if err != nil {
 			return err
 		}
 		evento := fmt.Sprintf("%s (%04d-%02d)", EventoReaberto, mes.Ano(), mes.Mes())
-		return auditoria.Registrar(ctx, q, r, tipos.NovaDataHora(s.relogio.Agora()), evento, login)
+		return auditoria.Registrar(ctx, tx, r, tipos.NovaDataHora(s.relogio.Agora()), evento, login)
 	})
 	if err != nil {
 		return Holerite{}, err
