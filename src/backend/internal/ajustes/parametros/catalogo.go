@@ -43,13 +43,13 @@ var Catalogo = []Definicao{
 		Descricao: "Com quantos dias de antecedência o painel avisa que o consentimento do Open Finance vai expirar.",
 		Tipo:      Inteiro, Padrao: 30, Minimo: 1, Maximo: 120, Unidade: texto("dias")},
 
-	{Chave: "Seguranca.MaximoTentativasLogin", Grupo: "Segurança", Nome: "Tentativas de login antes do bloqueio",
+	{Chave: "Seguranca.MaximoTentativasLogin", Grupo: grupoSeguranca, Nome: "Tentativas de login antes do bloqueio",
 		Descricao: "Quantas senhas erradas seguidas bloqueiam o acesso temporariamente.",
 		Tipo:      Inteiro, Padrao: 5, Minimo: 3, Maximo: 20, Unidade: texto("tentativas"), DoAppsettings: true},
-	{Chave: "Seguranca.MinutosBloqueio", Grupo: "Segurança", Nome: "Tempo de bloqueio",
+	{Chave: "Seguranca.MinutosBloqueio", Grupo: grupoSeguranca, Nome: "Tempo de bloqueio",
 		Descricao: "Por quanto tempo o login fica bloqueado depois do limite de tentativas.",
 		Tipo:      Inteiro, Padrao: 15, Minimo: 1, Maximo: 1440, Unidade: texto("minutos"), DoAppsettings: true},
-	{Chave: "Seguranca.DiasRetencaoAuditoria", Grupo: "Segurança", Nome: "Guardar o histórico de acessos por",
+	{Chave: "Seguranca.DiasRetencaoAuditoria", Grupo: grupoSeguranca, Nome: "Guardar o histórico de acessos por",
 		Descricao: "Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
 		Tipo:      Inteiro, Padrao: 180, Minimo: 30, Maximo: 730, Unidade: texto("dias")},
 
@@ -81,6 +81,13 @@ var Catalogo = []Definicao{
 		Descricao: "Erros e avisos mais antigos que isso (pela última ocorrência) são apagados sozinhos, uma vez por dia.",
 		Tipo:      Inteiro, Padrao: 90, Minimo: 7, Maximo: 365, Unidade: texto("dias")},
 }
+
+// grupoSeguranca é o grupo dos parâmetros que pedem a senha atual para mudar (#68): as tentativas antes do bloqueio, o
+// tempo de bloqueio e por quanto tempo o histórico de acessos fica guardado.
+const grupoSeguranca = "Segurança"
+
+// PedeSenha diz se mudar o parâmetro pede a senha atual (#68).
+func (d Definicao) PedeSenha() bool { return d.Grupo == grupoSeguranca }
 
 // definicao procura a chave no catálogo (comparação exata).
 func definicao(chave string) (Definicao, bool) {

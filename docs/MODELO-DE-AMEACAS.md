@@ -72,7 +72,7 @@ flowchart TB
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização) e limite por minuto (`internal/plataforma/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | Sair não invalida a sessão no servidor (#68, item 3). Política de senha (#68, item 8) |
+| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização, e mudar o bloqueio pede a senha atual, #68 item 8) e limite por minuto (`internal/plataforma/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | Sair não invalida a sessão no servidor (#68, item 3). A senha mínima é de 8 caracteres, sem outra regra (decisão de 27/11/2026) |
 | **Adulteração** | Um site aberto no navegador manda um pedido em seu nome (CSRF), ou aponta um domínio para `127.0.0.1` (DNS rebinding) | Token antifalsificação em todo pedido que grava e `AllowedHosts` restrito | — |
 | **Repúdio** | Negar uma ação feita no site | `AuditoriaAcesso`: login, falhas, bloqueios, senha, parâmetros, credenciais, conexões, alterações em lote nas transações e conferências de investimentos, cada um com o desfazer | A auditoria fica no banco: quem tem o arquivo pode mudá-la |
 | **Vazamento** | O holerite em PDF (CPF, salário) ou a senha dele ficam no disco ou no log (#228) | O PDF e a senha só existem durante a leitura: não são gravados, e o erro e o log não levam texto do PDF; só os valores confirmados vão para o holerite ([ADR 0068](adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) | — |
@@ -140,7 +140,7 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Alguém no Wi-Fi tenta adivinhar a senha | O mesmo login da fronteira 1: bloqueio por tentativas e limite de 5 por minuto **por IP** (cada aparelho tem o seu) | A senha passa a ser a barreira: sem política de senha (#68, item 8), uma senha fraca é risco real. A tela de ligar avisa |
+| **Falsificação** | Alguém no Wi-Fi tenta adivinhar a senha | O mesmo login da fronteira 1: bloqueio por tentativas e limite de 5 por minuto **por IP** (cada aparelho tem o seu) | A senha passa a ser a barreira: com só o mínimo de 8 caracteres (#68, item 8), uma senha fraca é risco real. A tela de ligar avisa |
 | **Falsificação** | Um aparelho da rede se passa pelo site para o celular (homem no meio), para pegar a senha | HTTPS com o certificado de uma autoridade local que o celular instalou; a tela mostra a impressão digital para conferir | Na primeira vez, o celular baixa a autoridade por uma conexão em que ainda não confia: quem estiver no meio nesse momento pode trocar o arquivo. Conferir a impressão digital fecha isso, mas depende da pessoa (*julgamento*) |
 | **Adulteração** | Um site de fora aponta um domínio para o IP da rede (DNS rebinding) | O servidor da rede só aceita o próprio IP no `Host` | — |
 | **Repúdio** | Não saber qual aparelho entrou ou ligou o acesso | A auditoria grava o IP de cada login e o ligar e desligar | — |
@@ -161,5 +161,5 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 | 5. Certificado confiável para a máquina inteira | Fronteira 1, vazamento |
 | 6. Serviço do Linux sem isolamento | Fronteira 5, aumento de privilégio |
 | 7. CI e cadeia de dependências | Fronteira 4, aumento de privilégio |
-| 8. Política de senha e bloqueio | Fronteira 1, falsificação |
+| 8. Política de senha e bloqueio | Fronteira 1, falsificação. Resolvido: mudar o bloqueio pede a senha atual; o mínimo de 8 caracteres ficou por decisão |
 | 9. Sobras da instalação antiga com IIS | Fora daqui: não muda uma fronteira |

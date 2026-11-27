@@ -495,6 +495,8 @@ export enum TipoParametro { Inteiro = 1, Booleano = 2 }
 export interface Parametro {
   chave: string; grupo: string; nome: string; descricao: string; tipo: TipoParametro;
   valor: number; padrao: number; minimo: number | null; maximo: number | null; unidade: string | null;
+  /** #68: mudar o valor pede a senha atual (os parâmetros de segurança do login). */
+  pedeSenha: boolean;
 }
 export interface InfoSistema {
   versao: string; dotNet: string; sistemaOperacional: string; iniciadoEm: string; caminhoBanco: string;

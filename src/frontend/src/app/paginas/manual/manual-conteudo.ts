@@ -1474,8 +1474,10 @@ export const MANUAL: CapituloManual[] = [
           'Abra Configurações › Parametrização.',
           'Cada parâmetro mostra o que faz, a faixa válida e o padrão: sincronização, Painel, segurança do login e por quanto tempo o histórico de acessos fica guardado, orçamentos, metas, transações e erros.',
           'Mude o valor e salve: vale na hora.',
+          'Mudar a segurança do login (tentativas antes do bloqueio, tempo de bloqueio e por quanto tempo o histórico de acessos fica guardado) pede a sua senha atual: o campo aparece ao lado de “Salvar parâmetros”. Assim, quem achar o site aberto não afrouxa o bloqueio.',
           'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.'
         ],
+        erros: ['“A senha atual não confere”: a senha digitada não é a de entrar no site. Digite de novo e salve; nada foi gravado.'],
         abrir: [{ rotulo: 'Abrir a Parametrização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
       },
       {

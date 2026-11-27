@@ -299,8 +299,9 @@ export class ApiService {
 
   // Open Finance
   parametros(): Observable<Parametro[]> { return this.http.get<Parametro[]>(`${this.base}/parametros`); }
-  salvarParametros(valores: Record<string, number>): Observable<Parametro[]> {
-    return this.http.put<Parametro[]>(`${this.base}/parametros`, { valores });
+  /** #68: a senha atual vai só quando muda um parâmetro de segurança (`Parametro.pedeSenha`). */
+  salvarParametros(valores: Record<string, number>, senhaAtual?: string): Observable<Parametro[]> {
+    return this.http.put<Parametro[]>(`${this.base}/parametros`, senhaAtual ? { valores, senhaAtual } : { valores });
   }
   infoSistema(): Observable<InfoSistema> { return this.http.get<InfoSistema>(`${this.base}/parametros/sistema`); }
 
