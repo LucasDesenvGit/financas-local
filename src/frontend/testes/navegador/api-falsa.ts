@@ -16,7 +16,9 @@ export interface ApiFalsa {
   chamadasComQuery: string[];
 }
 
-const hoje = new Date();
+/** Dia fixo dos prints do Manual (ADR 0071): o mesmo dia no navegador e aqui, para o print não mudar sozinho. */
+export const DATA_DOS_PRINTS = new Date(2026, 10, 15, 12, 0, 0);
+const hoje = process.env['PRINTS_MANUAL'] ? DATA_DOS_PRINTS : new Date();
 /** "AAAA-MM-DD" na data local. */
 const dataIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const ano = hoje.getFullYear();
