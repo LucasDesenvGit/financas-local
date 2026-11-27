@@ -4,7 +4,7 @@
 - **Data:** 2026-10-17 (issue #119)
 - **Relacionadas:** substitui em parte a [0012](0012-instalador-do-windows-em-powershell.md) (instalador em PowerShell); [0003](0003-esquema-por-scripts-sql-idempotentes.md) (a API aplica o esquema); [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) (gerenciador); [0005](0005-segredos-criptografados-com-data-protection.md) (chaves); [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o `.msi` só no merge)
 
-**Os passos** (publicar uma versão, o que a ação personalizada faz, a versão de desenvolvimento, as notas do Release, o WiX na CI) estão no [README do instalador](../../instalador/README.md). Esta ADR guarda a decisão, as alternativas e o custo.
+**Os passos** (publicar uma versão e as notas do Release) estão no [CONTRIBUINDO.md, "Publicar uma versão"](../../CONTRIBUINDO.md#publicar-uma-versão); a versão de desenvolvimento e o WiX na CI, no [`versao.yml`](../../.github/workflows/versao.yml); a ação personalizada, no [README do instalador](../../instalador/README.md). Esta ADR guarda a decisão, as alternativas e o custo.
 
 ## Contexto
 
