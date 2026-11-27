@@ -51,3 +51,45 @@ func TestAplicarEsquemaSubcomando(t *testing.T) {
 		t.Error("a coluna Meta.Icone não voltou")
 	}
 }
+
+// Regra (#723, ADR 0065): os scripts aplicam o 02-dados-iniciais.sql também em banco existente, para a vigência nova do
+// INSS chegar a quem já instalou, e rodar de novo não duplica.
+func TestAplicarEsquemaSubcomandoReaplicaDadosIniciais(t *testing.T) {
+	ctx := context.Background()
+	r := relogio.Fixo{Instante: inicioDoContrato}
+	caminho := filepath.Join(t.TempDir(), "FinancasLocal.db")
+	argumentos := []string{"-banco", caminho}
+	if err := aplicarEsquema(ctx, argumentos, r); err != nil {
+		t.Fatal(err)
+	}
+	db, err := banco.Abrir(ctx, caminho)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	contar := func(consulta string) int {
+		t.Helper()
+		var n int
+		if err := db.QueryRowContext(ctx, consulta).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	const vigencias = "SELECT COUNT(*) FROM InssVigencia WHERE Inicio = '2026-01-01'"
+	const faixas = "SELECT COUNT(*) FROM InssFaixa WHERE Inicio = '2026-01-01'"
+	if contar(vigencias) != 1 || contar(faixas) == 0 {
+		t.Fatal("banco novo sem a vigência de 2026 do INSS")
+	}
+	faixasDeFato := contar(faixas)
+	if _, err := db.ExecContext(ctx, "DELETE FROM InssFaixa WHERE Inicio = '2026-01-01'; DELETE FROM InssVigencia WHERE Inicio = '2026-01-01'"); err != nil {
+		t.Fatal(err)
+	}
+	for volta := 1; volta <= 2; volta++ { // a segunda volta não duplica
+		if err := aplicarEsquema(ctx, argumentos, r); err != nil {
+			t.Fatal(err)
+		}
+		if v, f := contar(vigencias), contar(faixas); v != 1 || f != faixasDeFato {
+			t.Errorf("volta %d: %d vigência(s) e %d faixa(s) de 2026, esperado 1 e %d", volta, v, f, faixasDeFato)
+		}
+	}
+}

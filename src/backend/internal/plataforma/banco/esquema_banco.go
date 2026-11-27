@@ -42,6 +42,30 @@ func AplicarEsquema(ctx context.Context, caminho string, r relogio.Relogio, log 
 	return aplicarEsquema(ctx, caminho, scripts, r, log)
 }
 
+// AplicarEsquemaEDados é o que os scripts de instalação rodam (#723): o AplicarEsquema e, em seguida, o
+// 02-dados-iniciais.sql sempre, também em banco que já existe, como o sqlite3 do 2-criar-banco.sh fazia. É assim que
+// a vigência nova do INSS e do IRRF de cada ano chega a quem já tem banco (ADR 0065). O script é idempotente
+// (INSERT OR IGNORE, WHERE NOT EXISTS). O site, ao iniciar, usa só o AplicarEsquema.
+func AplicarEsquemaEDados(ctx context.Context, caminho string, r relogio.Relogio, log *slog.Logger) error {
+	info, err := os.Stat(caminho)
+	existia := err == nil && !info.IsDir() && info.Size() > 0
+	if err := AplicarEsquema(ctx, caminho, r, log); err != nil {
+		return err
+	}
+	if !existia { // o AplicarEsquema já pôs os dados iniciais no banco novo
+		return nil
+	}
+	db, err := Abrir(ctx, caminho)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	if _, err := db.ExecContext(ctx, esquema.Texto(embutido.DadosIniciais)); err != nil {
+		return fmt.Errorf("aplicar o 02-dados-iniciais.sql: %w", err)
+	}
+	return nil
+}
+
 func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Scripts, r relogio.Relogio, log *slog.Logger) error {
 	colunas := scripts.Colunas
 	assinatura := esquema.Assinatura(scripts.Estrutura, colunas)
