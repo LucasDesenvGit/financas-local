@@ -28,24 +28,27 @@ const (
 // AplicarEsquema cria e atualiza o banco (ADR 0003): os scripts de banco/, embutidos no executável, e as colunas
 // novas de esquema.ColunasNovas. Banco novo recebe também os dados iniciais. Num banco que já existe, se a assinatura
 // dos scripts (PRAGMA user_version) mudou desde a última vez, faz antes uma cópia em dados/backups; se não mudou, não
-// mexe em nada.
+// refaz o esquema. Em todo caso, banco novo ou existente, aplica o 03-tabelas-oficiais.sql (INSS e IRRF): é como a
+// vigência de um ano novo chega a quem atualiza só pelo serviço (ADR 0065, #805). Ele não entra na assinatura, então
+// uma vigência nova não gera cópia de backup, e é idempotente, então nada muda se já estiver lá.
 //
 // Quem chama: o site, com -aplicar-esquema (a linha do serviço), e o subcomando aplicar-esquema, que os scripts de
 // instalação rodam antes de publicar (cmd/financas/esquema.go, #723). A assinatura é a mesma, então um não refaz o
 // trabalho do outro.
 func AplicarEsquema(ctx context.Context, caminho string, r relogio.Relogio, log *slog.Logger) error {
 	scripts := esquema.Scripts{
-		Estrutura:     esquema.Texto(embutido.Estrutura),
-		DadosIniciais: esquema.Texto(embutido.DadosIniciais),
-		Colunas:       esquema.ColunasNovas,
+		Estrutura:       esquema.Texto(embutido.Estrutura),
+		DadosIniciais:   esquema.Texto(embutido.DadosIniciais),
+		TabelasOficiais: esquema.Texto(embutido.TabelasOficiais),
+		Colunas:         esquema.ColunasNovas,
 	}
 	return aplicarEsquema(ctx, caminho, scripts, r, log)
 }
 
 // AplicarEsquemaEDados é o que os scripts de instalação rodam (#723): o AplicarEsquema e, em seguida, o
-// 02-dados-iniciais.sql sempre, também em banco que já existe, como o sqlite3 do 2-criar-banco.sh fazia. É assim que
-// a vigência nova do INSS e do IRRF de cada ano chega a quem já tem banco (ADR 0065). O script é idempotente
-// (INSERT OR IGNORE, WHERE NOT EXISTS). O site, ao iniciar, usa só o AplicarEsquema.
+// 02-dados-iniciais.sql sempre, também em banco que já existe, como o sqlite3 do 2-criar-banco.sh fazia. O script é
+// idempotente (INSERT OR IGNORE, WHERE NOT EXISTS). O site, ao iniciar, usa só o AplicarEsquema, que não o roda em
+// banco existente (recriaria categoria apagada).
 func AplicarEsquemaEDados(ctx context.Context, caminho string, r relogio.Relogio, log *slog.Logger) error {
 	info, err := os.Stat(caminho)
 	existia := err == nil && !info.IsDir() && info.Size() > 0
@@ -97,7 +100,7 @@ func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Sc
 		}
 		// Mesmos scripts da última vez: nada a fazer (o comum, a cada reinício do serviço).
 		if versao == int64(assinatura) {
-			return nil
+			return aplicarTabelasOficiais(ctx, db, scripts)
 		}
 		if err := copiarAntesDaAtualizacao(ctx, db, caminho, r, log); err != nil {
 			return err
@@ -131,6 +134,9 @@ func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Sc
 				return fmt.Errorf("aplicar o 02-dados-iniciais.sql: %w", err)
 			}
 		}
+		if _, err := tx.ExecContext(ctx, scripts.TabelasOficiais); err != nil {
+			return fmt.Errorf("aplicar o 03-tabelas-oficiais.sql: %w", err)
+		}
 		return nil
 	})
 	if err != nil {
@@ -145,6 +151,16 @@ func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Sc
 		log.Info("Estrutura do banco conferida", "caminho", caminho)
 	}
 	return nil
+}
+
+// aplicarTabelasOficiais é o caminho do banco em dia (assinatura igual): só o 03-tabelas-oficiais.sql, numa transação.
+func aplicarTabelasOficiais(ctx context.Context, db *sql.DB, scripts esquema.Scripts) error {
+	return EmTransacao(ctx, db, func(tx *sql.Tx) error {
+		if _, err := tx.ExecContext(ctx, scripts.TabelasOficiais); err != nil {
+			return fmt.Errorf("aplicar o 03-tabelas-oficiais.sql: %w", err)
+		}
+		return nil
+	})
 }
 
 // passarParaWal faz o mesmo que o EsquemaBanco.PassarParaWal do .NET (#231, ADR 0049): o .NET e o Go usam o mesmo

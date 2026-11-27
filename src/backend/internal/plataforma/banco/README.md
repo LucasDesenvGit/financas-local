@@ -49,6 +49,7 @@ O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../../docs/adr/0003-esque
    - **Ordem pelo nome, byte a byte** (`slices.Sort`; no .NET, `StringComparer.Ordinal`): o `.` vem antes do `_`, e o nome antigo de um segundo (`_HHMMSS.db`) fica antes dos novos do mesmo segundo. A ordem da cultura, padrão do `OrderBy` do .NET, põe o `_` antes do `.` (medido) e apagaria o mais novo.
    - **Cópia antiga que não dá para apagar** (outro dono, só leitura) fica para a próxima, com um aviso no log que diz o arquivo, e a API sobe (#365).
 4. Numa transação: o `01-estrutura.sql`, as colunas que faltam e, **só no banco novo**, o `02-dados-iniciais.sql`. Depois grava a assinatura.
+5. O `03-tabelas-oficiais.sql` (INSS e IRRF) entra em todo caso, também com a assinatura em dia (passo 2) e sem entrar nela: não gera cópia, e a vigência nova de um ano chega a quem já tem banco (#805).
 
 **Quem aplica o esquema é o executável**: o site ao iniciar, com `-aplicar-esquema` (a linha do serviço instalado sempre liga), e os scripts de instalação, com o subcomando `aplicar-esquema -banco <caminho>` (`cmd/financas/esquema.go`, #723). A assinatura é a mesma que o .NET calculava: quem atualiza vindo da versão em .NET não ganha uma cópia nem uma atualização à toa.
 
