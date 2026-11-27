@@ -602,6 +602,33 @@ func TestAplicarEsquemaComOsScriptsEmbutidos(t *testing.T) {
 	}
 }
 
+// #723: o erro do esquema e o dos dados iniciais chegam a quem chamou (o script de instalação para nele).
+func TestAplicarEsquemaEDadosDevolveOErro(t *testing.T) {
+	ctx := context.Background()
+	for _, c := range []struct {
+		nome     string
+		preparar func(t *testing.T) string
+		trecho   string
+	}{
+		{"o caminho é uma pasta", func(t *testing.T) string { return t.TempDir() }, ""},
+		{"o banco em dia sem a tabela Categoria", func(t *testing.T) string {
+			caminho := filepath.Join(t.TempDir(), "dados", "sql", "FinancasLocal.db")
+			if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+				t.Fatal(err)
+			}
+			executar(t, caminho, "PRAGMA foreign_keys = OFF; DROP TABLE Categoria;")
+			return caminho
+		}, "02-dados-iniciais.sql"},
+	} {
+		t.Run(c.nome, func(t *testing.T) {
+			err := AplicarEsquemaEDados(ctx, c.preparar(t), instanteDosTestes, semLog())
+			if err == nil || !strings.Contains(err.Error(), c.trecho) {
+				t.Errorf("erro = %v, esperado um erro com %q", err, c.trecho)
+			}
+		})
+	}
+}
+
 func contar(t *testing.T, caminho, consulta string) int {
 	t.Helper()
 	db, err := Abrir(context.Background(), caminho)
