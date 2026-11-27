@@ -5,9 +5,10 @@ package esquema
 
 // Arquivos de origem, a partir de src/backend.
 const (
-	ArquivoEstrutura     = "../../banco/01-estrutura.sql"
-	ArquivoDadosIniciais = "../../banco/02-dados-iniciais.sql"
-	PastaEmbutido        = "internal/plataforma/banco/esquema/embutido"
+	ArquivoEstrutura       = "../../banco/01-estrutura.sql"
+	ArquivoDadosIniciais   = "../../banco/02-dados-iniciais.sql"
+	ArquivoTabelasOficiais = "../../banco/03-tabelas-oficiais.sql"
+	PastaEmbutido          = "internal/plataforma/banco/esquema/embutido"
 )
 
 // ColunaNova é uma coluna acrescentada a uma tabela que já existia.

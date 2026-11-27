@@ -11,4 +11,6 @@ var (
 	Estrutura []byte
 	//go:embed 02-dados-iniciais.sql
 	DadosIniciais []byte
+	//go:embed 03-tabelas-oficiais.sql
+	TabelasOficiais []byte
 )
