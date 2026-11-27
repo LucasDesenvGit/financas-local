@@ -1,4 +1,4 @@
-// Pacote extrato são as rotas de /api/transacoes, a tela de Transações (o TransacoesController do C#). O modelo da
+// Pacote extrato são as rotas de /api/transacoes, a tela de Transações. O modelo da
 // transação que as regras leem e gravam fica em internal/movimentacao/transacoes, que a categorização e as transferências usam:
 // as rotas ficam aqui para esses pacotes não dependerem de quem responde HTTP.
 //
@@ -23,7 +23,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/poucoinformativa"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/desfazer"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -33,7 +33,7 @@ import (
 
 const mensagemNaoEncontrado = "Registro não encontrado."
 
-// parametros é o que o extrato usa dos Parâmetros (o ParametroService do C#): o mínimo de letras da descrição pouco
+// parametros é o que o extrato usa dos Parâmetros: o mínimo de letras da descrição pouco
 // informativa. A interface é declarada aqui, por quem usa: o serviço de verdade é o internal/ajustes/parametros, e o teste
 // passa um valor fixo.
 type parametros interface {
@@ -46,7 +46,7 @@ type Servico struct {
 	relogio    relogio.Relogio
 	parametros parametros
 	log        *slog.Logger
-	// O estado de antes das alterações em lote, para o Desfazer: na memória, por 10 minutos (o IMemoryCache do C#).
+	// O estado de antes das alterações em lote, para o Desfazer: na memória, por 10 minutos.
 	memoriaCategorias *desfazer.Memoria[[]categoriaAntes]
 	memoriaNomes      *desfazer.Memoria[desfazerNome]
 }
@@ -87,7 +87,7 @@ func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa stri
 	servidor.ResponderErroInterno(w)
 }
 
-// TransacaoDto, na ordem do record do C#.
+// TransacaoDto, na ordem dos campos do JSON.
 type TransacaoDto struct {
 	Id                int64               `json:"id"`
 	ContaId           int64               `json:"contaId"`
@@ -114,7 +114,7 @@ type TransacaoDto struct {
 	ReservaNome *string `json:"reservaNome"`
 }
 
-// PaginaDto é o PaginaTransacoesDto do C#.
+// PaginaDto é a página de transações.
 type PaginaDto struct {
 	Itens         []TransacaoDto `json:"itens"`
 	Total         int            `json:"total"`
@@ -135,7 +135,7 @@ const colunasDoDto = `t."Id", t."ContaId", co."Nome", t."PluggyTransactionId" IS
 	t."MesmaTitularidade", t."TransferenciaGrupo" IS NOT NULL, co."Tipo", t."RegraDescricaoId", t."ReservaNome"`
 
 // lerDtos lê as transações da consulta com as colunas do DTO, e calcula o tipo de lançamento (ADR 0025) de cada uma.
-func lerDtos(ctx context.Context, q consultas.DBTX, resto string, argumentos ...any) ([]TransacaoDto, error) {
+func lerDtos(ctx context.Context, q banco.DBTX, resto string, argumentos ...any) ([]TransacaoDto, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT `+colunasDoDto+` `+de+` `+resto, argumentos...)
 	if err != nil {
 		return nil, fmt.Errorf("ler as transações: %w", err)
@@ -198,10 +198,10 @@ func lista[T any](valores []T) (string, []any) {
 	return strings.TrimSuffix(strings.Repeat("?, ", len(valores)), ", "), args
 }
 
-// escaparLike é o do C#: a barra invertida, o % e o _ digitados valem como texto (ESCAPE '\').
+// escaparLike: a barra invertida, o % e o _ digitados valem como texto (ESCAPE '\').
 var escaparLike = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 
-// filtrar monta o WHERE dos filtros (o FiltrarAsync do C#). Os dois filtros que o SQL não sabe fazer (o tipo de
+// filtrar monta o WHERE dos filtros. Os dois filtros que o SQL não sabe fazer (o tipo de
 // lançamento e a descrição pouco informativa) são contas na memória sobre o que os outros já restringiram, e voltam
 // para o SQL como uma lista de Ids.
 func (s *Servico) filtrar(ctx context.Context, f filtro) (onde, error) {
@@ -325,7 +325,7 @@ func (s *Servico) idsPoucoInformativos(ctx context.Context, o onde) ([]int64, er
 	return ids, linhas.Err()
 }
 
-// listar é o Listar do C#: a página pedida, o total e as somas do filtro inteiro.
+// listar: a página pedida, o total e as somas do filtro inteiro.
 func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
 	f, erros := lerFiltro(r)
 	if len(erros) > 0 {
@@ -359,7 +359,7 @@ func (s *Servico) pagina(ctx context.Context, f filtro) (PaginaDto, error) {
 }
 
 // totais: receitas e despesas fora das transferências e das ignoradas, pelo tipo e não pelo sinal (estorno no cartão
-// é despesa positiva e abate as despesas, ADR 0036). A soma do C# é feita no SQLite pelo EF Core e volta na escala em
+// é despesa positiva e abate as despesas, ADR 0036). A soma sai na escala em
 // que ele grava ("0.0" sem nenhuma linha); a despesa sai com o sinal trocado.
 func (s *Servico) totais(ctx context.Context, o onde) (receitas, despesas tipos.Decimal, err error) {
 	c := o.com(`NOT t."IgnorarRelatorios" AND t."Tipo" <> 3`)
@@ -466,14 +466,14 @@ func (s *Servico) itensPeloValor(ctx context.Context, o onde, crescente bool, pu
 	return dtos, nil
 }
 
-// compararSemSinal é a ordem pelo valor sem o sinal, como número (#499). O C# ordenava no SQLite com a collation
-// EF_DECIMAL, que lia o texto em pt-BR, com o ponto de separador de milhar: "12.75" valia 1275 e ficava depois de "18.9"
-// e de "100.0". O Go copiou isso durante a migração; com o .NET fora (#86), a ordem é a do número.
+// compararSemSinal é a ordem pelo valor sem o sinal, como número (#499). Não vale a ordem do texto:
+// o ponto é decimal, e não de milhar: "12.75" fica antes de "18.9"
+// e de "100.0".
 func compararSemSinal(a, b tipos.Decimal) int {
 	return a.Decimal().Abs().Cmp(b.Decimal().Abs())
 }
 
-// obter é o Obter do C#: {id:long}; o que não é número de 64 bits não casa com a rota (404 sem corpo).
+// obter: {id:long}; o que não é número de 64 bits não casa com a rota (404 sem corpo).
 func (s *Servico) obter(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(strings.TrimPrefix(r.PathValue("id"), "+"), 10, 64)
 	if err != nil {
@@ -494,10 +494,10 @@ func (s *Servico) obter(w http.ResponseWriter, r *http.Request) {
 
 // MaioresDespesas são as maiores despesas do período (o GET /api/relatorios/maiores-despesas, #80), sem as ignoradas
 // nos relatórios, no máximo quantas: da mais negativa para a menos. A ordem é em Go, porque dinheiro é texto no banco.
-// O C# ordenava com a collation EF_DECIMAL, que lia o texto em pt-BR e punha -27,45 antes de -223,50 (#499); o Go copiou
-// isso na migração, e agora a ordem é a do número. O empate fica na ordem em que o SQLite percorre o período: o índice
+// A ordem não é a do texto em pt-BR, que poria -27,45 antes de -223,50 (#499):
+// vale a do número. O empate fica na ordem em que o SQLite percorre o período: o índice
 // IX_Transacao_Data, da data mais nova para a mais velha.
-func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Data, quantas int) ([]TransacaoDto, error) {
+func MaioresDespesas(ctx context.Context, q banco.DBTX, inicio, fim tipos.Data, quantas int) ([]TransacaoDto, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Valor" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ?
 		AND "Tipo" = ? AND "IgnorarRelatorios" = 0 ORDER BY "Data" DESC, "Id"`, inicio, fim, transacoes.Despesa)
 	if err != nil {
@@ -541,7 +541,7 @@ func MaioresDespesas(ctx context.Context, q consultas.DBTX, inicio, fim tipos.Da
 
 // TransacoesDoPainel são as transações do painel (#334): as últimas até hoje (as parcelas que o banco manda com data
 // futura escondiam o que de fato aconteceu) e, à parte, as próximas depois de hoje, das mais próximas, com quantas são.
-func TransacoesDoPainel(ctx context.Context, q consultas.DBTX, hoje tipos.Data, quantas int) (ultimas, futuras []TransacaoDto,
+func TransacoesDoPainel(ctx context.Context, q banco.DBTX, hoje tipos.Data, quantas int) (ultimas, futuras []TransacaoDto,
 	quantidadeFuturas int, err error) {
 	if ultimas, err = lerDtos(ctx, q, `WHERE t."Data" <= ? ORDER BY t."Data" DESC, t."Id" DESC LIMIT ?`, hoje, quantas); err != nil {
 		return nil, nil, 0, err

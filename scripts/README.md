@@ -20,20 +20,25 @@ quem não usa terminal.
 caminhos no clone (`src/gerenciador-go/internal/desenvolvimento/`), e o crontab e o Agendador de Tarefas guardam o
 caminho do `geral/4-backup.sh`.
 
+**O que muda junto:** no Windows, as etapas 1 e 3 existem só no `windows/instalar-windows.ps1` (as pastas e mensagens
+comuns, no `windows/comum.ps1`), e o `2-criar-banco.sh` e o `4-backup.sh` têm de continuar rodando no Git Bash. Serviço,
+certificado e pastas de dados existem também no `instalador/configurar.ps1` (`.msi`,
+[ADR 0029](../docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)): confira se mudam juntos.
+
 ## Instalação e operação (`geral/`, `windows/`, `linux/`)
 
 | Script | O que faz | Quem roda |
 |---|---|---|
 | `geral/instalar.sh` | As etapas 1, 2 e 3 em sequência; para no primeiro erro. No Git Bash do Windows, repassa para o `windows/instalar-windows.ps1`. | Pessoa, no Linux ou no Git Bash; a CI ("Teste de instalação") |
 | `geral/1-preparar-ambiente.sh` | Confere as ferramentas básicas do terminal; instala Node.js LTS, Go (a linha do `src/backend/go.mod`) e, se o sistema não tiver, `sqlite3` portáteis em `ferramentas/`. Não depende de Python ([ADR 0011](../docs/adr/0011-ferramentas-de-instalacao-portateis-sem-python.md)). No Windows, recusa e manda usar o `instalar-windows.cmd`. | Pessoa (etapa 1 do `instalar.sh`) |
-| `geral/2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e aplica os arquivos de `banco/` em ordem. Também é lido pelo site (cópia embutida em `internal/plataforma/banco/esquema`) e pelo `instalar-windows.ps1`, que tiram dele a lista de colunas novas. | Pessoa (etapa 2); o `go generate` e a CI leem |
+| `geral/2-criar-banco.sh` | Cria as pastas de `dados/` com permissão restrita e cria ou atualiza o banco pelo executável do Go (`go run ./cmd/financas aplicar-esquema`, #723): estrutura, colunas novas e dados iniciais vêm embutidos nele, e não há lista de colunas no bash. | Pessoa (etapa 2); a CI |
 | `geral/3-publicar-atualizar.sh` | Compila o front-end e o back-end em Go (`financas-go`), publica em `publicado/api`, gera ou reaproveita o certificado HTTPS local e registra o serviço (systemd `--user`). No Git Bash do Windows, repassa para o `windows/instalar-windows.ps1`. | Pessoa (etapa 3); `atualizar.sh`; a CI |
 | `geral/4-backup.sh` | Backup online do banco (`sqlite3 .backup`), com retenção e opção de agendar (`--agendar`). | Pessoa; o crontab ou o Agendador de Tarefas; a CI |
 | `geral/atualizar.sh` | Só na instalação de desenvolvimento (clone na branch `develop`, [ADR 0040](../docs/adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)): traz o `develop` (só avança, recusa com alteração local ou outra branch) e reinstala. | Gerenciador (botão "Atualizar para a última do develop") |
 | `geral/parar.sh` | Para o serviço, o site fora dele e o `npm start`; no Git Bash, repassa para o `windows/parar-windows.ps1`. | Pessoa |
-| `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, repasse para o PowerShell e caminho nativo no Windows, extração de `.zip`, conferência de hash, ajudantes de coluna do banco, a versão do sistema pelo `go run ./cmd/versao`, ADR 0070). | Os outros scripts de `geral/` (`source`) |
-| `windows/comum.ps1` | Pastas, `Etapa`/`Ok`/`Aviso`/`ErroSai` e `VersaoDoSistema` (o `go run ./cmd/versao`, ADR 0070) dos `.ps1` de `windows/` (#655). O `instalador/configurar.ps1` (`.msi`) não o usa. | Os outros `.ps1` de `windows/` (dot-source) |
-| `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash: a única implementação das etapas 1 e 3 no Windows. Lê a lista de colunas novas do `geral/2-criar-banco.sh`. | Pessoa, pelo `instalar-windows.cmd` (que pede elevação) ou pelo `instalar.sh` e o `3-publicar-atualizar.sh` no Git Bash; o `atualizar-windows.ps1` |
+| `geral/comum.sh` | Funções compartilhadas pelos scripts (detecção de SO, pastas, `sqlite3` portátil no PATH, repasse para o PowerShell e caminho nativo no Windows, `systemctl` do host num Flatpak, extração de `.zip`, conferência de hash, ajudantes de coluna do banco, a versão do sistema pelo `go run ./cmd/versao`, ADR 0070). | Os outros scripts de `geral/` (`source`) |
+| `windows/comum.ps1` | Pastas, `Etapa`/`Ok`/`Aviso`/`ErroSai`, `VersaoDoSistema` (o `go run ./cmd/versao`, ADR 0070) e `Confiar-No-Certificado` (a loja Root, #775) dos `.ps1` de `windows/` (#655). O `instalador/configurar.ps1` (`.msi`) só usa o `Confiar-No-Certificado`. | Os outros `.ps1` de `windows/` e o `configurar.ps1` (dot-source) |
+| `windows/instalar-windows.ps1` | Etapas 1, 2 e 3 no Windows PowerShell 5.1, sem bash: a única implementação das etapas 1 e 3 no Windows. O banco, na etapa 2, pelo mesmo `aplicar-esquema` do Go. | Pessoa, pelo `instalar-windows.cmd` (que pede elevação) ou pelo `instalar.sh` e o `3-publicar-atualizar.sh` no Git Bash; o `atualizar-windows.ps1` |
 | `windows/parar-windows.ps1` | O `parar.sh` em PowerShell. | Pessoa, pelo `parar-windows.cmd` ou pelo `parar.sh` no Git Bash |
 | `windows/atualizar-windows.ps1` | O `atualizar.sh` no Windows (instalação de desenvolvimento). | Gerenciador |
 | `windows/instalar-gerenciador.ps1`, `linux/instalar-gerenciador.sh` | Opcionais, sem administrador/root: compilam o gerenciador em Go (`publicado/gerenciador` no Windows, #430; `publicado/gerenciador-go` no Linux, #277) e criam os atalhos. Rodar de novo atualiza. | Pessoa; o `instalar.sh`; o gerenciador no Linux |
@@ -56,6 +61,7 @@ caminho do `geral/4-backup.sh`.
 |---|---|---|
 | `dev/lancar-versao.sh` | Na `release/X.Y.Z`: junta os arquivos de `changelog.d/` numa seção `## [X.Y.Z] — data` do `CHANGELOG.md`, apaga os arquivos e faz o commit `chore: versão X.Y.Z`, depois de conferir a branch, a árvore limpa e que o número calculado é o `X.Y.Z` (ADR 0070). O trabalho é do `src/backend/cmd/versao` (`-publicar`), que tem os testes. | Pessoa (publicar uma versão) |
 | `dev/gerar-diagrama-banco.py` | Gera os diagramas do banco de `docs/BANCO-DE-DADOS.md` a partir de `banco/01-estrutura.sql`; com `--conferir`, só confere que estão em dia. | Pessoa (mudou a estrutura); a CI (`--conferir`) |
+| `dev/testes-afetados.py` | Escolhe os testes no navegador das telas afetadas pelo que mudou desde o develop, com o que não foi commitado; sozinho, só mostra (#286). A CI roda tudo (#774). | `npm run test:afetados` |
 | `dev/medir-desempenho.py` | Mede a partida e o tempo das telas contra uma pasta publicada (`--api <pasta>`), para os requisitos de [docs/REQUISITOS-NAO-FUNCIONAIS.md](../docs/REQUISITOS-NAO-FUNCIONAIS.md). | Pessoa |
 
 ## CI (`ci/`)
@@ -71,7 +77,7 @@ Na raiz de `ci/`:
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `verificar-changelog.py` | Confere o formato de cada arquivo de `changelog.d/` (um título de tipo, entradas, sem versão), exige o arquivo em PR `feat` e `fix` (com `BASE` e `TITULO_PR`) e confere o `CHANGELOG.md`: um título de cada tipo por versão, sem versão repetida e em ordem; avisa (sem barrar) a entrada com mais de ~60 palavras fora do "Técnico" (#722); `--corrigir` junta os títulos repetidos (#294). O teste é o `test_verificar_changelog.py`. | CI (job "manual do site e changelog.d"); pessoa |
+| `verificar-changelog.py` | Confere o formato de cada arquivo de `changelog.d/` (um título de tipo, entradas, sem versão), exige o arquivo em PR `feat` e `fix` (com `BASE` e `TITULO_PR`); não confere o `CHANGELOG.md` (só o `cmd/versao -publicar` o escreve, #721); avisa (sem barrar) a entrada com mais de ~60 palavras fora do "Técnico" (#722). O teste é o `test_verificar_changelog.py`. | CI (job "manual do site e changelog.d"); pessoa |
 | `notas.sh` | Notas dos Releases do GitHub, no limite de 125 mil caracteres, sem o sub-item "Técnico" (#722): `--versao` (tag `vX.Y.Z`, #641, do `CHANGELOG.md`, mais as PRs da versão sem arquivo em `changelog.d/`, pelo título, do `go run ./cmd/versao -sem-changelog`, #757) e `--desenvolvimento` (pré-lançamento, #294 e #600; antes do `CHANGELOG.md`, as seções do que ainda não foi publicado, que o `go run ./cmd/versao -changelog` monta de `changelog.d/`). O teste é o `test_notas.py`, que cobre os dois modos. | CI (workflow "Versão") |
 
 `ci/go/` (back-end e gerenciador em Go, [ADR 0051](../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)):
@@ -87,7 +93,6 @@ Na raiz de `ci/`:
 
 | Script | O que faz | Quem roda |
 |---|---|---|
-| `testes-afetados.py` | Descobre o que rodar (Jest e navegador) pelo que o PR mudou; `--base` mostra ou roda (#255, #286). | CI; `npm run test:afetados` |
 | `verificar-tempo-testes.py` | Trava de tempo do Jest, por arquivo e da suíte (#204). | CI |
 | `verificar-cache-estaticos.py` | Confere que a regra do cache longo aceita o hash do build do Angular e nada além (#305). | CI |
 | `verificar-manual.py` | Avisa quando o PR mexe no que o usuário vê e não atualiza o Manual (#177). | CI |

@@ -27,12 +27,12 @@ Cada tela do menu tem de abrir **sem**: erro no console, exceção, bloqueio da 
 
 ```bash
 npx playwright install chromium                         # uma vez
-NAVEGADOR=chromium npm run test:afetados                # antes do push: só o que o PR afeta (Jest + build + navegador)
+NAVEGADOR=chromium npm run test:afetados                # antes do push: Jest inteiro, build e o navegador só no que o PR afeta
 NAVEGADOR=chromium npx playwright test <arquivo> --repeat-each=5   # teste novo: 5 vezes, computador e celular
 NAVEGADOR=chromium npx playwright test                  # tudo, com o Chromium da CI (quando quiser a suíte inteira)
 ```
 
-`python3 ../../scripts/ci/front/testes-afetados.py --base origin/develop` só mostra o que rodaria. Para simular a CI mais lenta: `--workers=8 --repeat-each=10 --retries=0`.
+`python3 ../../scripts/dev/testes-afetados.py` só mostra o que rodaria. Para simular a CI mais lenta: `--workers=8 --repeat-each=10 --retries=0`.
 
 **Falhou?** Leia `testes/navegador/resultados/<teste>/error-context.md` (a árvore da página no momento da falha) e o `test-failed-1.png` antes de mexer. Não "conserte" o teste para passar: descubra se a tela quebrou.
 

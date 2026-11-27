@@ -12,12 +12,12 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 )
 
-// NivelCritico é o nível do slog para o LogLevel.Critical do .NET (o slog não tem um).
+// NivelCritico é o nível crítico do slog (o slog não tem um).
 const NivelCritico = slog.LevelError + 4
 
-// CategoriaLog é a categoria dos registros do Go, a mesma que o .NET usa para o log do Go repassado (ProcessoGo):
+// CategoriaLog é a categoria dos registros do Go, a mesma de sempre:
 // "Financas.Go", ou "Financas.Go.<origem>" quando o log diz a origem. A assinatura (agrupamento) usa a categoria, e
-// assim o mesmo aviso continua agrupado na troca do .NET para o Go.
+// assim o mesmo aviso continua agrupado.
 const CategoriaLog = "Financas.Go"
 
 // Handler é o RegistroErrosLoggerProvider: repassa tudo ao próximo handler (o log de sempre) e, dos avisos para
@@ -79,9 +79,9 @@ func comGrupo(grupo string, attrs []slog.Attr) []slog.Attr {
 	return valor.Group()
 }
 
-// registro monta o Registro como o .NET monta o do log do Go (ProcessoGo e RegistroErrosLogger):
+// registro monta o Registro monta o do log do Go (ProcessoGo e RegistroErrosLogger):
 //   - origem: o atributo "origem", se for uma das conhecidas; senão "Sistema";
-//   - mensagem: a do log mais os outros atributos, "msg (chave=valor ...)", como a linha JSON vira no .NET;
+//   - mensagem: a do log mais os outros atributos, "msg (chave=valor ...)";
 //   - detalhe: os atributos que são error, com o tipo do erro mais de dentro (o que foi embrulhado com %w) na
 //     primeira linha. É o "tipo da exceção" da assinatura: o mesmo erro de E/S agrupa, com mensagens diferentes;
 //   - rota e usuário: os da requisição, quando o log foi feito com o contexto dela (ComRequisicao).
@@ -186,7 +186,7 @@ func desembrulhar(err error) error {
 	return nil
 }
 
-// textoDoValor escreve o valor como ele sai no slog.JSONHandler e o .NET o lê: texto cru, e o resto em JSON.
+// textoDoValor escreve o valor como ele sai no slog.JSONHandler: texto cru, e o resto em JSON.
 func textoDoValor(v slog.Value) string {
 	switch v.Kind() {
 	case slog.KindString:
@@ -230,7 +230,7 @@ type requisicao struct {
 }
 
 // ComRequisicao guarda no contexto a rota ("GET /api/contas", sem a query string) e o login de quem está na sessão:
-// um log feito com esse contexto (log.ErrorContext) leva os dois para a tabela, como o HttpContext no .NET.
+// um log feito com esse contexto (log.ErrorContext) leva os dois para a tabela.
 func ComRequisicao(ctx context.Context, metodo, caminho string, usuario *string) context.Context {
 	return context.WithValue(ctx, chaveRequisicao{}, requisicao{rota: metodo + " " + caminho, usuario: usuario})
 }

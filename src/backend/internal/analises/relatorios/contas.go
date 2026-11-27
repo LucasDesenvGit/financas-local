@@ -9,7 +9,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Recorrência de uma conta a pagar (o enum Recorrencia do C#).
+// Recorrência de uma conta a pagar.
 const (
 	RecorrenciaUnica  = 0
 	RecorrenciaMensal = 1
@@ -20,17 +20,17 @@ const (
 // painel.
 const FormaCartaoCredito = 3
 
-// maiorNumeroDoDia é o DateOnly.MaxDayNumber do C#: o número do dia 31/12/9999.
+// maiorNumeroDoDia é o número do dia 31/12/9999.
 const maiorNumeroDoDia = 3652058
 
 // maximoDePagamentos é o limite do laço de PagamentosAte (uma conta mensal por 100 anos).
 const maximoDePagamentos = 1200
 
-// ErroDataForaDoIntervalo é a ArgumentOutOfRangeException que o DateOnly.AddDays do C# lança quando a data de chegada
+// ErroDataForaDoIntervalo é o erro de quando a data de chegada
 // sai do ano 1 a 9999: lá vira o 500 do servidor.
 var ErroDataForaDoIntervalo = errors.New("a data sai do intervalo de 1 a 9999")
 
-// ContaAgendadaDto é uma conta a pagar com o próximo vencimento, na ordem do record ContaAgendadaDto do C#.
+// ContaAgendadaDto é uma conta a pagar com o próximo vencimento, na ordem dos campos do JSON.
 type ContaAgendadaDto struct {
 	Id                  int64         `json:"id"`
 	Descricao           string        `json:"descricao"`
@@ -57,7 +57,7 @@ type ContaAgendadaDto struct {
 // Sem proximosDias, vêm todas, inclusive as inativas e as encerradas. Com ele, só as ativas que vencem até hoje mais
 // esses dias (as atrasadas também entram), sem as cobradas no cartão de crédito: no painel, o que cai no cartão não é
 // conta a pagar, entra na fatura (#158). Um número de dias que leva a data para fora do ano 1 a 9999 dá
-// ErroDataForaDoIntervalo, como a exceção do C#.
+// ErroDataForaDoIntervalo.
 //
 // diasParaVencer é o vencimento menos hoje (negativo se atrasou). pagamentosRestantes só vem para conta ativa com
 // data limite; encerrada é a conta inativa que passou da data limite (as de recorrência única nunca).
@@ -71,7 +71,7 @@ func (s *Servico) ContasAgendadas(ctx context.Context, proximosDias *int) ([]Con
 		LEFT JOIN "Conta" conta ON conta."Id" = c."ContaId" `
 	var argumentos []any
 	if proximosDias != nil {
-		// O DateOnly.AddDays do C# confere o número do dia de chegada (0 a MaxDayNumber), sem estourar com um int grande.
+		// O número do dia de chegada é conferido (0 a MaxDayNumber), sem estourar com um int grande.
 		if *proximosDias < -hoje.NumeroDoDia() || *proximosDias > maiorNumeroDoDia-hoje.NumeroDoDia() {
 			return nil, fmt.Errorf("vencimentos dos próximos %d dias a partir de %s: %w", *proximosDias, hoje, ErroDataForaDoIntervalo)
 		}

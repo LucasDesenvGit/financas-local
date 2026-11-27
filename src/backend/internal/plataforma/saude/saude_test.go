@@ -67,4 +67,14 @@ func TestSaude(t *testing.T) {
 		r := testeapoio.ChamarComo(t, m, id, "GET", "/api/go/saude", "")
 		r.ConferirStatus(t, http.StatusInternalServerError)
 	})
+	t.Run("tabela de usuários sumida: 500", func(t *testing.T) {
+		outro := testeapoio.NovoBanco(t)
+		m := http.NewServeMux()
+		saude.Registrar(m, outro, slog.New(slog.DiscardHandler), testeapoio.RelogioDosTestes())
+		if _, err := outro.ExecContext(t.Context(), `DROP TABLE "Usuario"`); err != nil {
+			t.Fatal(err)
+		}
+		r := testeapoio.ChamarComo(t, m, id, "GET", "/api/go/saude", "")
+		r.ConferirStatus(t, http.StatusInternalServerError)
+	})
 }

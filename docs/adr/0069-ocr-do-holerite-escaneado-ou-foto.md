@@ -22,12 +22,12 @@ Restrições:
 - **Tesseract** ([Apache-2.0](https://github.com/tesseract-ocr/tesseract)) **como programa à parte, chamado pela API** (`os/exec`, saída TSV com a caixa e a confiança de cada palavra). *Recomendada, julgamento a confirmar.*
   - Prós:
     - É o OCR livre mais usado, com modelo treinado em português.
-    - O modelo rápido (`tessdata_fast/por.traineddata`) tem cerca de 2 MB (*inferido*, pelo espelho público; conferir no repositório oficial).
+    - O modelo rápido (`tessdata_fast/por.traineddata`) tem cerca de 2 MB (*inferido*).
     - Dá a confiança de cada palavra.
     - Sem cgo, e o mesmo caminho no Windows e no Linux.
     - O Go só lê o TSV e reaproveita o `leitor.Agrupar`/`Interpretar`: cada palavra entra como uma "letra" larga.
   - Contras:
-    - **Um processo novo**, que é uma fronteira no modelo de ameaças. O Tesseract lê a imagem da pessoa, de uma pasta temporária e com tempo limite.
+    - **Um processo novo**, que é uma fronteira no modelo de ameaças.
     - **Precisa estar instalado**, no `.msi` ou à parte. O tamanho no Windows não foi medido: *inferido* na casa das dezenas de MB com as bibliotecas.
     - No Linux, a versão vem do pacote da distribuição (`tesseract-ocr`, `tesseract-ocr-por`).
     - **Foto torta ou com sombra** pede preparo da imagem (endireitar, contraste). O Tesseract faz parte disso. A perspectiva da foto de celular, não.
@@ -55,50 +55,19 @@ Restrições:
 **Usar o Tesseract como programa à parte, chamado pela API, e opcional.** A ADR fica Proposta até o usuário decidir três pontos:
 
 1. **De onde vem o Tesseract.** Opções:
-   - **(a)** a pessoa instala à parte (`winget install UB-Mannheim.TesseractOCR` no Windows, `apt install tesseract-ocr tesseract-ocr-por` no Linux), e o site o acha na pasta padrão ou no caminho configurado (nunca pelo `PATH`, veja "Onde o site acha o Tesseract");
+   - **(a)** a pessoa instala à parte (`winget install UB-Mannheim.TesseractOCR` no Windows, `apt install tesseract-ocr tesseract-ocr-por` no Linux), e o site o acha como diz o item 4 do caminho, abaixo;
    - **(b)** o `.msi` traz o Tesseract junto.
    *Julgamento:* começar pela (a), sem crescer a instalação de quem não usa, e trazer no `.msi` só se o uso pedir. Antes de escolher a (b), medir o tamanho real no `.msi`.
 2. **Ligado onde.** *Julgamento:* uma opção do módulo Trabalho, em Configurações › Módulos, que só aparece ligável com o Tesseract encontrado. Desligada, o leitor recusa o PDF sem texto como hoje.
 3. **O modelo:** `tessdata_fast` (menor e mais rápido) ou `tessdata_best` (mais preciso, maior). *Julgamento:* medir os dois nos holerites fictícios antes.
 
 **Como ficaria o caminho**, *julgamento a detalhar na implementação*:
-1. **A entrada:**
-   - o PDF sem texto (`leitor.ErrSemTexto`), de que o site tira a imagem de cada página (JPEG direto; os outros formatos, se der);
-   - ou um JPG/PNG enviado direto.
-2. **Os limites** (revisão do #707, 16/11/2026: os 700 KB do PDF não servem para foto, que sai do celular com 2 a 5 MB):
-   - **O front-end reduz a foto antes de enviar:** o lado maior vai a no máximo 3000 pixels, em JPEG, até caber em
-     700 KB (no `canvas`, sem biblioteca de fora e sem mudar a CSP). Assim o pedido segue no limite de 1 MB do site.
-     3000 pixels no lado maior de uma folha A4 dão uns 250 dpi, perto dos 300 que o Tesseract recomenda (*inferido*:
-     medir nos holerites fictícios fotografados).
-   - **A API confere de novo, pelo conteúdo:** só JPEG e PNG (pelo começo do arquivo), até 700 KB, e **até 4000
-     pixels de lado e 16 megapixels**, lidos do cabeçalho (`image.DecodeConfig`) antes de abrir a imagem. A imagem
-     tirada do PDF escaneado passa pela mesma conferência. Os números são *inferidos*: uma página A4 escaneada a 300 dpi
-     tem 2480 × 3508 pixels (8,7 megapixels).
-   - **O PDF escaneado** continua com os 700 KB e as 5 páginas, e passa pelo mesmo leitor, com os limites da revisão do
-     #706 (a árvore de páginas, o tamanho aberto, um PDF por vez e o prazo; ADR 0068). Tirar a imagem da página também
-     confere o tamanho aberto antes.
-3. **O OCR:** a imagem vai para uma pasta temporária com permissão só do serviço. O Tesseract roda com saída TSV, e a pasta é apagada no fim, mesmo com erro. A imagem não é guardada nem vai para o log, como o PDF.
-   - **Limites do processo** (revisão do #707: imagem malformada também trava ou estoura a memória do Leptonica, como o
-     PDF da #706): prazo por página (30 segundos, *inferido*), e no fim do prazo o processo é morto; **limite de memória
-     do processo**, pelo sistema: no Windows, um *Job Object* com limite de memória e "matar ao fechar"
-     (`golang.org/x/sys/windows`, que o site já usa); no Linux, o `prlimit` do util-linux (`--as` e `--cpu`), presente
-     nas distribuições (*inferido*: conferir no Debian, no Ubuntu e no Fedora). Número inicial: 512 MB (*inferido*,
-     medir).
-   - **Um OCR por vez,** como a leitura do PDF.
-   - **A saída também tem teto:** o TSV é lido até um limite (2 MB, *inferido*), e as palavras, até o limite de letras
-     do leitor.
-
-**Onde o site acha o Tesseract** (revisão do #707): **nunca pelo `PATH`.** O site roda como serviço do sistema, e
-procurar pelo `PATH` deixaria outro programa com o mesmo nome rodar com a conta do serviço. O caminho é:
-- **o padrão de cada sistema:** a pasta do instalador da UB-Mannheim no Windows (`C:\Program Files\Tesseract-OCR\tesseract.exe`)
-  e `/usr/bin/tesseract` no Linux;
-- **ou um caminho configurado** em Configurações, absoluto.
-- **Conferido antes de ligar:** o arquivo existe, `tesseract --version` responde em poucos segundos e diz a versão 5 ou
-  mais nova, e o português (`por`) está na lista de idiomas. *Julgamento:* avisar quando a pasta do programa aceita
-  escrita da conta do serviço (no Windows, dentro de `Program Files` só o administrador escreve).
-- O Go chama o caminho absoluto (`exec.Command` com o caminho inteiro não consulta o `PATH`).
-4. **Do OCR ao leitor:** cada palavra vira uma "letra" do `leitor.Agrupar`, com a confiança. Daí em diante, o caminho da #228 sem mudança: o dicionário, as escolhas, a prova real e a prévia.
-5. **Leitura duvidosa:** a linha com uma palavra de confiança baixa vem marcada, em texto, na prévia ("leitura duvidosa: confira com o papel").
+1. **A entrada:** o PDF sem texto (`leitor.ErrSemTexto`), de que o site tira a imagem de cada página (JPEG direto; os outros formatos, se der), ou um JPG/PNG enviado direto.
+2. **Os limites:** a foto do celular sai com 2 a 5 MB, então o **front-end a reduz antes de enviar** (no `canvas`, sem biblioteca nem mudança na CSP): o lado maior vai a no máximo 3000 pixels (uns 250 dpi numa folha A4, perto dos 300 que o Tesseract recomenda, *inferido*), em JPEG até 700 KB, para o pedido caber no 1 MB do site. **A API confere de novo pelo conteúdo:** só JPEG e PNG, até 700 KB e até 4000 pixels de lado e 16 megapixels, lidos do cabeçalho (`image.DecodeConfig`) antes de abrir (*inferido*: uma A4 a 300 dpi tem 8,7 megapixels). O PDF escaneado segue com os limites da ADR 0068, e tirar a imagem da página também confere o tamanho aberto antes.
+3. **O OCR:** a imagem vai para uma pasta temporária só do serviço, apagada no fim, mesmo com erro; não é guardada nem vai para o log. Imagem malformada também pode travar ou estourar a memória, então o processo tem **prazo por página** (30 s, *inferido*, e é morto no fim), **limite de memória pelo sistema** (no Windows, um *Job Object* com "matar ao fechar", pelo `golang.org/x/sys/windows` que o site já usa; no Linux, o `prlimit --as --cpu` do util-linux, *inferido* presente no Debian, no Ubuntu e no Fedora; 512 MB para começar, *inferido*), **um OCR por vez** e **teto na saída** (o TSV até 2 MB, *inferido*, e as palavras até o limite de letras do leitor).
+4. **Onde o site acha o Tesseract: nunca pelo `PATH`**, que deixaria outro programa com o mesmo nome rodar com a conta do serviço. Vale o caminho padrão (`C:\Program Files\Tesseract-OCR\tesseract.exe` no Windows, `/usr/bin/tesseract` no Linux) ou um caminho absoluto configurado, chamado inteiro pelo `exec.Command`. Antes de ligar, o site confere que `tesseract --version` responde, é a 5 ou mais nova e tem o português (`por`). *Julgamento:* avisar quando a conta do serviço pode escrever na pasta do programa.
+5. **Do OCR ao leitor:** cada palavra vira uma "letra" do `leitor.Agrupar`, com a confiança. Daí em diante, o caminho da #228 sem mudança: o dicionário, as escolhas, a prova real e a prévia.
+6. **Leitura duvidosa:** a linha com uma palavra de confiança baixa vem marcada, em texto, na prévia ("leitura duvidosa: confira com o papel").
 
 ## Consequências
 
@@ -108,17 +77,12 @@ procurar pelo `PATH` deixaria outro programa com o mesmo nome rodar com a conta 
   - Nada sai do computador, e quem não usa não paga o tamanho, na opção (a).
 - **Negativas:**
   - **Um programa de fora** para instalar e manter atualizado, e uma fronteira nova no modelo de ameaças (o processo do OCR lendo um arquivo da pessoa).
-  - **Limitar a memória do processo é diferente em cada sistema** (o *Job Object* no Windows, o `prlimit` no Linux):
-    dois caminhos para manter e testar.
-  - **A foto reduzida no navegador** perde detalhe: se 3000 pixels não bastarem para o OCR, o limite sobe com o pedido
-    maior (e o limite de 1 MB do site muda junto, outra decisão).
+  - **Limitar a memória do processo é diferente em cada sistema:** dois caminhos para manter e testar.
+  - **A foto reduzida no navegador** perde detalhe: se 3000 pixels não bastarem, o limite sobe, e o de 1 MB do site muda junto (outra decisão).
   - **A foto de celular em ângulo pode não ser lida:** sem corrigir a perspectiva, o OCR erra. A prova real e a "leitura duvidosa" mostram o erro, mas não o corrigem.
   - **Os testes de OCR precisam do Tesseract na CI** (`apt install` no Ubuntu e `choco` ou `winget` no Windows). Localmente, sem ele, o teste é pulado e diz isso.
   - **As imagens de teste** têm de ser geradas na hora, a partir dos holerites fictícios do `leitor/ficticios`: inclinadas, com sombra, em baixa resolução. Nunca imagem real.
 - **Na prática (quando aceita):**
   - atualizar a ADR 0049 (o programa de fora), o `docs/DADOS-PESSOAIS.md` (a imagem), o Manual e o CHANGELOG;
-  - no `docs/MODELO-DE-AMEACAS.md`, as linhas do processo novo: **elevação de privilégio** (o caminho fixo ou
-    configurado, conferido, nunca o `PATH`), **negação de serviço** (o prazo, o limite de memória do processo, a imagem
-    limitada em bytes e em pixels antes de abrir, um OCR por vez, o teto da saída) e **vazamento** (a pasta temporária
-    só do serviço, apagada no fim, nada no log);
+  - no `docs/MODELO-DE-AMEACAS.md`, as linhas do processo novo (elevação de privilégio, negação de serviço e vazamento), com as defesas dos itens 2 a 4 da decisão;
   - na opção (b), também o `instalador/` e o workflow do `.msi`, com o tamanho antes e depois no PR ([requisitos não funcionais](../REQUISITOS-NAO-FUNCIONAIS.md)).

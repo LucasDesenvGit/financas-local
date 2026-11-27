@@ -1,4 +1,4 @@
-// Pacote cotacoes é o CotacaoService do C# (#82): as cotações e os proventos dos ativos, pelo Yahoo Finance (pública, sem
+// Pacote cotacoes (#82): as cotações e os proventos dos ativos, pelo Yahoo Finance (pública, sem
 // chave, não oficial; a brapi.dev saiu na #763, ADR 0072). Ativos no exterior usam o código como no Yahoo, sem ".SA". Só o
 // código do ativo sai do computador: nenhuma quantidade, valor ou dado pessoal.
 package cotacoes
@@ -32,7 +32,7 @@ const (
 	casasDoProvento = 8
 )
 
-// errFormato é a resposta que não tem a forma esperada (as exceções do JsonElement no C#).
+// errFormato é a resposta que não tem a forma esperada.
 var errFormato = errors.New("resposta fora do formato")
 
 // Cliente consulta o Yahoo. Faz só HTTPS: a URL base é configurável para os testes.
@@ -113,7 +113,7 @@ func tipoDoJSON(v json.RawMessage) byte {
 	return 0
 }
 
-// campo é o TryGetProperty do C#: só em objeto, senão a exceção vira erro.
+// campo: só em objeto, senão a exceção vira erro.
 func campo(v json.RawMessage, nome string) (json.RawMessage, bool, error) {
 	if tipoDoJSON(v) != '{' {
 		return nil, false, fmt.Errorf("%w: %s fora de um objeto", errFormato, nome)
@@ -178,7 +178,7 @@ func textoDoCampo(v json.RawMessage, nome string) *string {
 	return &s
 }
 
-// inteiroDoJSON é o TryGetInt64: fora de um número, a exceção do C# vira erro; número que não é inteiro, false.
+// inteiroDoJSON: fora de um número, vira erro; número que não é inteiro, false.
 func inteiroDoJSON(cru json.RawMessage) (int64, bool, error) {
 	if t := tipoDoJSON(cru); t != '-' && (t < '0' || t > '9') {
 		return 0, false, fmt.Errorf("%w: número esperado", errFormato)
@@ -316,7 +316,7 @@ type Provento struct {
 	Valor   tipos.Decimal
 }
 
-// Obtida é a CotacaoObtida do C#. Moeda é a que a fonte informou, quando informa.
+// Obtida é a cotação obtida. Moeda é a que a fonte informou, quando informa.
 type Obtida struct {
 	Preco, PrecoAnterior *tipos.Decimal
 	Nome, Moeda          *string

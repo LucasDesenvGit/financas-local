@@ -31,7 +31,7 @@ func (p *paginaComCursor) proximo() string {
 	return *p.Next
 }
 
-// Numero é o double? do .NET com AllowReadingFromString: vem como número ou como texto. Fica como veio, em texto: o
+// Numero é um número opcional: vem como número ou como texto. Fica como veio, em texto: o
 // dinheiro só passa pelo double dentro do Decimal.
 type Numero string
 
@@ -50,7 +50,7 @@ func (n *Numero) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Decimal é o (decimal)double do .NET: o C# lê todo valor da Pluggy em double e o converte, guardando 15 dígitos.
+// Decimal: todo valor da Pluggy é lido em double e convertido, guardando 15 dígitos.
 // Passar pelo double é o que dá o mesmo centavo: 19.884999999999998 vira 19.885 e arredonda para 19,89, e o decimal
 // direto do texto daria 19,88. O float64 não sai deste arquivo.
 func (n Numero) Decimal() (tipos.Decimal, error) {
@@ -69,7 +69,7 @@ func (n Numero) double() (float64, error) {
 	return v, nil
 }
 
-// SomaDosPagamentos é o pagamentos.Sum(p => p.Amount ?? 0) do C#: a soma é em double, e só o total vira decimal.
+// SomaDosPagamentos: a soma é em double, e só o total vira decimal.
 func SomaDosPagamentos(lista []PagamentoFatura) (tipos.Decimal, error) {
 	soma := 0.0
 	for _, p := range lista {
@@ -85,7 +85,7 @@ func SomaDosPagamentos(lista []PagamentoFatura) (tipos.Decimal, error) {
 	return tipos.DecimalDeFloat64(soma)
 }
 
-// Inteiro é o int do .NET com AllowReadingFromString.
+// Inteiro é um inteiro que vem como número ou como texto.
 type Inteiro int32
 
 // UnmarshalJSON lê o número ou o texto com um número inteiro.
@@ -114,7 +114,7 @@ func textoDoNumero(b []byte) (string, error) {
 	return texto, nil
 }
 
-// Instante é o DateTimeOffset? do .NET, nos formatos que o System.Text.Json lê. Sem fuso, vale a hora de Brasília.
+// Instante é um instante opcional, em vários formatos de data e hora. Sem fuso, vale a hora de Brasília.
 type Instante struct{ t time.Time }
 
 var (
@@ -143,10 +143,10 @@ func (i *Instante) UnmarshalJSON(b []byte) error {
 	return errors.New("data da Pluggy inválida")
 }
 
-// UTC é o UtcDateTime do .NET.
+// UTC é o instante em UTC.
 func (i Instante) UTC() time.Time { return i.t.UTC() }
 
-// Data é o Relogio.ParaDataLocal do .NET: o dia em Brasília.
+// Data é o dia em Brasília.
 func (i Instante) Data() tipos.Data { return tipos.DataDe(relogio.ParaHoraLocal(i.t)) }
 
 // Conector é a instituição do item.

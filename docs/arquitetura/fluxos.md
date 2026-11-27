@@ -77,7 +77,7 @@ sequenceDiagram
             Mux->>Ass: a função da rota
             Ass->>Ass: lê a entrada (respostas.LerObjeto: 400 com as mensagens)
             Ass->>Reg: chama a regra
-            Reg->>BD: SQL com ? ou sqlc, numa transação (banco.EmTransacao)
+            Reg->>BD: SQL com ?, numa transação (banco.EmTransacao)
             Ass-->>Nav: o JSON da resposta, ou o {"mensagem"} do erro
         end
     end

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -262,7 +262,7 @@ func TestNenhumaContaDeDinheiroNoSQL(t *testing.T) {
 }
 
 // bancoQueFalha é o banco de verdade, mas toda consulta devolve erro.
-type bancoQueFalha struct{ consultas.DBTX }
+type bancoQueFalha struct{ banco.DBTX }
 
 var errDeTeste = errors.New("falha de teste")
 

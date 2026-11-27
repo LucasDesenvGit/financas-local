@@ -46,7 +46,7 @@ type CartaoUsoLimiteDto struct {
 	Percentual  tipos.Decimal `json:"percentual"`
 }
 
-// ItemSugestaoDto é uma categoria na sugestão, na ordem do record ItemSugestaoOrcamentoDto do C#.
+// ItemSugestaoDto é uma categoria na sugestão, na ordem dos campos do JSON.
 type ItemSugestaoDto struct {
 	CategoriaId            int64          `json:"categoriaId"`
 	Nome                   string         `json:"nome"`
@@ -64,8 +64,8 @@ type ItemSugestaoDto struct {
 	Motivos                []string       `json:"motivos"`
 }
 
-// SugestaoDto é o SugestaoOrcamentoDto do C#: o resumo (renda, parcelas, poupança, cartões) e uma linha por
-// categoria. Ano e Mes têm o tipo do C# (short e byte).
+// SugestaoDto: o resumo (renda, parcelas, poupança, cartões) e uma linha por
+// categoria. Ano e Mes são pequenos (short e byte).
 type SugestaoDto struct {
 	Ano                    int16                `json:"ano"`
 	Mes                    uint8                `json:"mes"`
@@ -106,7 +106,7 @@ type linha struct {
 func d(v tipos.Decimal) decimal.Decimal { return v.Decimal() }
 func t(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v) }
 
-// div é a divisão do decimal do C# (com a escala dele).
+// div é a divisão do decimal (com a escala dele).
 func div(a, b decimal.Decimal) decimal.Decimal {
 	q, err := tipos.Dividir(t(a), t(b))
 	if err != nil {
@@ -459,7 +459,7 @@ func primeiroPositivo(meses []decimal.Decimal) int {
 	return -1
 }
 
-// media3 é o Average() do C# de três meses (soma ÷ 3, com a divisão do decimal).
+// media3 é a média de três meses (soma ÷ 3, com a divisão do decimal).
 func media3(v []decimal.Decimal) decimal.Decimal {
 	return div(v[0].Add(v[1]).Add(v[2]), decimal.NewFromInt(3))
 }
@@ -499,7 +499,7 @@ func mediana(valores []decimal.Decimal) decimal.Decimal {
 	return div(ordenados[meio-1].Add(ordenados[meio]), decimal.NewFromInt(2))
 }
 
-// itens são as linhas da tela: pelo sugerido (as sem sugestão no fim), pela média e pelo nome (a ordem pt-BR do C#),
+// itens são as linhas da tela: pelo sugerido (as sem sugestão no fim), pela média e pelo nome,
 // só as com sugestão, gasto ou orçamento atual.
 func itens(linhas []*linha) []ItemSugestaoDto {
 	ordenadas := slices.Clone(linhas)
@@ -695,10 +695,10 @@ func (s *Servico) ultimasFaturas(ctx context.Context, conta int64, hoje tipos.Da
 	return valores, linhas.Err()
 }
 
-// inteiro é o {x:0} do C#: o número sem casas, arredondado para longe do zero no meio.
+// inteiro: o número sem casas, arredondado para longe do zero no meio.
 func inteiro(v decimal.Decimal) string { return v.Round(0).String() }
 
-// mesesAbreviados são os do ToString("MMM", pt-BR) do .NET (ICU), já sem o ponto.
+// mesesAbreviados são os de "MMM" em pt-BR (ICU), já sem o ponto.
 var mesesAbreviados = [...]string{"jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"}
 
 // nomeMes é o NomeMes: "out/26", o mês do índice a partir do início (índice negativo vale o primeiro).
@@ -707,8 +707,8 @@ func nomeMes(inicio tipos.Data, indice int) string {
 	return fmt.Sprintf("%s/%02d", mesesAbreviados[m.Mes()-1], m.Ano()%100)
 }
 
-// reais é o ToString("C0", pt-BR) do .NET: "R$ 1.235", com o milhar com ponto, arredondado para longe do zero no meio.
-// O espaço depois do R$ é o comum (U+0020), como no .NET do Windows (ICU do sistema) em que o Finanças roda; a libicu
+// reais formata como "C0" em pt-BR: "R$ 1.235", com o milhar com ponto, arredondado para longe do zero no meio.
+// O espaço depois do R$ é o comum (U+0020) do Windows (ICU do sistema) em que o Finanças roda; a libicu
 // do Linux pode trazer o não separável (U+00A0).
 func reais(v decimal.Decimal) string {
 	n := v.Round(0)

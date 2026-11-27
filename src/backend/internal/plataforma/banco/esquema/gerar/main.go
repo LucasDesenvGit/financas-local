@@ -1,12 +1,10 @@
-// Gera, a partir do banco/ e do scripts/geral/2-criar-banco.sh:
-//   - internal/plataforma/banco/esquema/embutido/: cópias idênticas, que vão dentro do executável (o //go:embed não sai do módulo);
-//   - internal/plataforma/banco/esquema/esquema-sqlc.sql: o esquema para o sqlc.
+// Gera, a partir do banco/ e do scripts/geral/2-criar-banco.sh, as cópias idênticas em
+// internal/plataforma/banco/esquema/embutido/, que vão dentro do executável (o //go:embed não sai do módulo).
 //
 // Roda pelo go generate ./... (a partir de qualquer pasta do módulo).
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,21 +24,6 @@ func main() {
 		if err := os.WriteFile(filepath.Join(esquema.PastaEmbutido, copia), conteudo, 0o644); err != nil {
 			log.Fatal(err)
 		}
-	}
-	estrutura, err := os.ReadFile(esquema.ArquivoEstrutura)
-	if err != nil {
-		log.Fatal(err)
-	}
-	script, err := os.ReadFile(esquema.ArquivoColunas)
-	if err != nil {
-		log.Fatal(err)
-	}
-	texto, err := esquema.GerarEsquemaSqlc(context.Background(), string(estrutura), string(script))
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := os.WriteFile(esquema.ArquivoGerado, []byte(texto), 0o644); err != nil {
-		log.Fatal(err)
 	}
 }
 

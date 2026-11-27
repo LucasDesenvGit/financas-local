@@ -4,7 +4,7 @@
 - **Data:** 2026-10-17 (issue #119)
 - **Relacionadas:** substitui em parte a [0012](0012-instalador-do-windows-em-powershell.md) (instalador em PowerShell); [0003](0003-esquema-por-scripts-sql-idempotentes.md) (a API aplica o esquema); [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) (gerenciador); [0005](0005-segredos-criptografados-com-data-protection.md) (chaves); [0050](0050-msi-gerado-no-merge-e-nao-no-pr.md) (o `.msi` só no merge)
 
-**Os passos** (publicar uma versão, o que a ação personalizada faz, a versão de desenvolvimento, as notas do Release, o WiX na CI) estão no [README do instalador](../../instalador/README.md). Esta ADR guarda a decisão, as alternativas e o custo.
+**Os passos** (publicar uma versão e as notas do Release) estão no [CONTRIBUINDO.md, "Publicar uma versão"](../../CONTRIBUINDO.md#publicar-uma-versão); a versão de desenvolvimento e o WiX na CI, no [`versao.yml`](../../.github/workflows/versao.yml); a ação personalizada, no [README do instalador](../../instalador/README.md). Esta ADR guarda a decisão, as alternativas e o custo.
 
 ## Contexto
 
@@ -55,7 +55,7 @@ O Release criado à mão antes da tag ficava com o título e as notas da mão (a
 
 ## Atualização de 2026-11-02: o `.msi` preparado para o Go (issue #277)
 
-- **Certificado e chaves pelo Go:** o certificado passa a ser gerado pelo `financas-go.exe gerar-certificado`, como nos scripts (#84), e a migração dos scripts copia também a chave dos segredos do Go (`segredos.chave`), pela mesma regra das chaves antigas. Vale porque o serviço antigo e o novo rodam na mesma conta, dona do DPAPI.
+- **Certificado e chaves pelo Go:** o certificado passa a ser gerado pelo `financas-go.exe preparar-https` (#84, #775), como nos scripts, e a migração dos scripts copia também a chave dos segredos do Go (`segredos.chave`), pela mesma regra das chaves antigas. Vale porque o serviço antigo e o novo rodam na mesma conta, dona do DPAPI.
 - **Versão mínima do Windows:** o `.msi` e o `instalar-windows.ps1` recusam um Windows abaixo da compilação **17763** (Windows 10 1809 / Server 2019), com uma mensagem clara, em vez de um site que não abre. O motivo é o certificado: o Go grava o `.pfx` com AES e SHA-256, que o Windows lê [a partir do Server 2019](https://pkg.go.dev/software.sslmate.com/src/go-pkcs12#pkg-variables).
 - **Firefox:** a tela final avisa que o Firefox não usa os certificados do Windows por padrão e diz como aceitar. O instalador **não muda o Firefox sozinho**: ligar `security.enterprise_roots.enabled` faz ele confiar em todos os certificados do sistema, inclusive os de empresa, e essa escolha é de quem usa.
 - **Ficaram de fora** (*julgamento de quem fez a #277, não confirmado com o time*; cada um vira issue quando alguém precisar): **assinatura do `.msi`** (continua sem; o README ensina a passar pelo aviso do Windows); **Windows ARM** (compila barato, mas nunca foi testado e a CI não tem runner ARM com Windows); **pacote pronto no Linux** (o gerenciador precisa de cgo e das bibliotecas da própria distribuição, o que pede um pacote por distribuição).

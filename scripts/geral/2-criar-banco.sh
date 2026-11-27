@@ -3,9 +3,9 @@
 # FinancasLocal - 2) Criacao do banco de dados
 #
 #  - Cria as pastas de dados com permissoes restritas (melhor esforco)
-#  - Cria a estrutura (banco/01-estrutura.sql) e insere os dados iniciais
-#    (banco/02-dados-iniciais.sql) via sqlite3
-#  - Pode ser executado novamente: os scripts SQL sao idempotentes
+#  - Cria a estrutura, as colunas novas e os dados iniciais pelo executavel do
+#    Go (subcomando aplicar-esquema, #723); no banco existente, so o que falta
+#  - Pode ser executado novamente: o esquema e idempotente
 #
 # Uso:
 #   scripts/geral/2-criar-banco.sh                           # usa dados/sql/FinancasLocal.db
@@ -17,10 +17,8 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 requer_comando sqlite3 'sqlite3 nao encontrado no PATH. Rode antes o 1-preparar-ambiente.sh.'
 
 banco="${1:-$PastaSql/FinancasLocal.db}"
-pasta_banco_sql="$Raiz/banco"
-
-# Convencao para FUTURAS alteracoes de schema: veja os helpers coluna_existe e
-# adicionar_coluna_se_ausente em comum.sh (dependem da variavel $banco acima).
+# O go run roda dentro de src/backend: um caminho relativo valeria a partir de la.
+[[ "$banco" == /* || "$banco" =~ ^[A-Za-z]:[/\\] ]] || banco="$PWD/$banco"
 
 etapa 'Criando pastas de dados'
 garantir_pasta "$Dados"
@@ -46,49 +44,16 @@ if [[ -f "$banco" ]]; then
     ok "copia em $copia"
 fi
 
-etapa "Criando a estrutura em $banco (01-estrutura.sql)"
-[[ -f "$pasta_banco_sql/01-estrutura.sql" ]] || erro_sai "Arquivo nao encontrado: $pasta_banco_sql/01-estrutura.sql"
-sqlite3 "${SQLITE_ESPERA[@]}" "$banco" < "$pasta_banco_sql/01-estrutura.sql"
-ok 'estrutura criada/atualizada'
-
-etapa 'Adicionando colunas novas em tabelas existentes'
-# Bancos criados antes de cada coluna existir; em banco novo ela ja nasce no CREATE TABLE.
-adicionar_coluna_se_ausente "Ativo" "Moeda" "TEXT NOT NULL DEFAULT 'BRL'"
-adicionar_coluna_se_ausente "OperacaoAtivo" "Cambio" "TEXT NOT NULL DEFAULT '1'"
-adicionar_coluna_se_ausente "Meta" "ReservaNome" "TEXT NULL"
-adicionar_coluna_se_ausente "Meta" "Prioridade" "INTEGER NOT NULL DEFAULT 0"
-adicionar_coluna_se_ausente "ContaAgendada" "DataLimite" "TEXT NULL"
-adicionar_coluna_se_ausente "Transacao" "DescricaoRevisada" "INTEGER NOT NULL DEFAULT 0"
-adicionar_coluna_se_ausente "Conta" "Banco" "TEXT NULL"
-adicionar_coluna_se_ausente "Conta" "ContaVinculadaId" "INTEGER NULL"
-adicionar_coluna_se_ausente "Conta" "SaldoReservado" "TEXT NULL"
-adicionar_coluna_se_ausente "Conta" "ReservasInformadas" "TEXT NULL"
-adicionar_coluna_se_ausente "Transacao" "MeioPagamento" "TEXT NULL"
-adicionar_coluna_se_ausente "Transacao" "MesmaTitularidade" "INTEGER NULL"
-adicionar_coluna_se_ausente "Transacao" "RegraDescricaoId" "INTEGER NULL"
-adicionar_coluna_se_ausente "Transacao" "DescricaoManual" "INTEGER NOT NULL DEFAULT 0"
-adicionar_coluna_se_ausente "Investimento" "NomePersonalizado" "TEXT NULL"
-adicionar_coluna_se_ausente "Conta" "LimiteAjustadoNoApp" "INTEGER NULL"
-adicionar_coluna_se_ausente "Conta" "LimiteDiferencaAvaliada" "TEXT NULL"
-adicionar_coluna_se_ausente "ContaAgendada" "FormaCobranca" "INTEGER NOT NULL DEFAULT 1"
-adicionar_coluna_se_ausente "ContaAgendada" "TextoCobranca" "TEXT NULL"
-adicionar_coluna_se_ausente "ContaAgendada" "Observacao" "TEXT NULL"
-adicionar_coluna_se_ausente "ContaAgendada" "ChaveExtrato" "TEXT NULL"
-adicionar_coluna_se_ausente "RegraDescricao" "ValorMinimo" "TEXT NULL"
-adicionar_coluna_se_ausente "RegraDescricao" "ValorMaximo" "TEXT NULL"
-adicionar_coluna_se_ausente "Meta" "Icone" "TEXT NULL"
-adicionar_coluna_se_ausente "Meta" "GuardarPorMes" "TEXT NULL"
-adicionar_coluna_se_ausente "ContaAgendada" "ReservaNome" "TEXT NULL"
-adicionar_coluna_se_ausente "ContaAgendada" "ReservaDesde" "TEXT NULL"
-adicionar_coluna_se_ausente "Transacao" "ReservaNome" "TEXT NULL"
-adicionar_coluna_se_ausente "Holerite" "Origem" "INTEGER NOT NULL DEFAULT 1"
-adicionar_coluna_se_ausente "Emprego" "AdiantamentoQuinzenal" "INTEGER NOT NULL DEFAULT 0"
-ok 'colunas conferidas'
-
-etapa 'Inserindo dados iniciais (02-dados-iniciais.sql)'
-[[ -f "$pasta_banco_sql/02-dados-iniciais.sql" ]] || erro_sai "Arquivo nao encontrado: $pasta_banco_sql/02-dados-iniciais.sql"
-sqlite3 "${SQLITE_ESPERA[@]}" "$banco" < "$pasta_banco_sql/02-dados-iniciais.sql"
-ok 'categorias e configuracoes padrao'
+etapa "Criando/atualizando a estrutura em $banco"
+# #723: quem aplica o esquema e o executavel do Go (banco/01-estrutura.sql e 02-dados-iniciais.sql embutidos, as
+# colunas novas em internal/plataforma/banco/esquema/colunas_novas.go): banco novo nasce completo e banco antigo ganha
+# o que falta, sem repetir o que ja existe. O executavel ainda nao foi publicado nesta etapa (a 3 faz isso), entao
+# roda do codigo com o Go da etapa 1: o cache de compilacao evita compilar tudo de novo na etapa 3.
+configurar_ambiente_build
+command -v go >/dev/null 2>&1 || erro_sai 'Go nao encontrado. Rode antes o 1-preparar-ambiente.sh.'
+(cd "$Raiz/src/backend" && go run ./cmd/financas aplicar-esquema -banco "$(caminho_nativo "$banco")") \
+    || erro_sai 'Nao foi possivel criar/atualizar o banco.'
+ok 'estrutura, colunas novas e dados iniciais conferidos'
 
 total_tabelas="$(sqlite3 "${SQLITE_ESPERA[@]}" "$banco" "SELECT COUNT(*) FROM sqlite_master WHERE type='table';")"
 

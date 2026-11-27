@@ -11,7 +11,7 @@ Esta lista é a fonte (até a #729, era a "Convenções do código Go" da ADR 00
 - `context.Context` como primeiro parâmetro de quem faz I/O;
 - dependências pelo construtor, sem container;
 - relógio injetável no fuso de Brasília, nunca o `time.Now()`;
-- SQL só pelo `sqlc` ou com `?`, nunca com texto do usuário concatenado ([README do banco](../../../../src/backend/internal/plataforma/banco/README.md));
+- SQL escrito à mão, só com `?`, nunca com texto do usuário concatenado ([README do banco](../../../../src/backend/internal/plataforma/banco/README.md));
 - dinheiro só em decimal, e nada de `SUM`, `ORDER BY` ou `<`/`>` no SQL em coluna de dinheiro (o porquê nas "Armadilhas" do README do banco);
 - `gofmt`, `go vet` e `go test -race` limpos (o "Antes de subir" do [README do Go](../../../../src/backend/README.md); o `verificar-regras-go.py` da CI confere `float64` e `time.Now()`).
 
@@ -49,6 +49,7 @@ O banco e o JSON continuam no formato do .NET (ADR 0049), e estas pegadinhas vie
 | Expressão regular | o `regexp` do Go é RE2: sem lookbehind nem lookahead (`(?<!...)`), e o `\b` e o `\d` só conhecem ASCII; confira as pontas no código, como em `internal/patrimonio/carteira/extrato.go` | o C# aceitava os dois e conhece Unicode; o mesmo padrão copiado casa outra coisa ou nem compila |
 | `enum` | tipo `int` nomeado, que sai **número** no JSON; não trocar por texto | é o contrato com o front-end |
 | Validação de entrada | na entrada, com o 400 do `internal/plataforma/respostas` (`type`, `title`, `status` e `errors` por campo, mensagens em português, #710; `LerObjeto`, `LerTextos`, `Validacao`) | a mesma mensagem e o mesmo status em todas as rotas |
+| Rota e resposta | `{id}` que não é int de 32 bits é o 404 sem corpo; o DTO de saída tem as propriedades em camelCase, na ordem do contrato; o erro da regra sai por `respostas.Mensagem` (o `{"mensagem"}` que o front-end mostra), e o inesperado pelo `servidor.ResponderErroInterno` (500 genérico, com o erro no log) | era o que o ASP.NET fazia, e os casos de contrato conferem |
 | Apagar com dependentes | o que o `ON DELETE` de `banco/01-estrutura.sql` não apaga, o Go apaga explícito, em `banco.EmTransacao` | parte da cascata era feita pelo EF Core, não pela chave, e há tabela que nenhum dos dois apagava (o `HistoricoInvestimento`, #575) |
 
 ## Onde divergimos dos guias de fora, e por quê
@@ -62,9 +63,9 @@ Os guias conhecidos (Effective Go, CodeReviewComments, Google Go Style Guide, Ub
 | Preferir a fatia `nil` ([declaring empty slices](https://go.dev/wiki/CodeReviewComments#declaring-empty-slices)) | `[]T{}` em toda saída JSON | `nil` sai `null`, e o contrato (e o front-end) espera `[]`. O próprio guia cita a exceção do JSON |
 | Biblioteca de asserção ou mock (`testify`, `gomock`, `go-sqlmock`) | só a biblioteca padrão; `testeapoio.ConferirJSON` | ADR 0051 |
 | Framework HTTP (gin, chi, echo) | `net/http` com os padrões de rota do Go 1.22+ | ADR 0049; [routing enhancements](https://go.dev/blog/routing-enhancements) |
-| ORM (gorm, ent) | `sqlc` + `database/sql`, ou SQL com `?` | ADR 0049; [SQL injection](https://go.dev/doc/database/sql-injection) |
+| ORM (gorm, ent) | `database/sql` com SQL à mão e `?` | ADR 0049 e 0074; [SQL injection](https://go.dev/doc/database/sql-injection) |
 | Biblioteca de log de terceiros | `log/slog` | ADR 0049 |
 | `float64` para número | `tipos.Decimal` em todo dinheiro | `CLAUDE.md` |
 | Pacote por camada (`handlers/`, `services/`, `repositories/`) | camadas **dentro** do assunto (`internal/<area>/<assunto>`) | ADR 0056 |
-| Interface de repositório para poder trocar o banco (Clean, Hexagonal) | sem repositório: a regra fica perto do `sqlc` | ADR 0056, consequência aceita: trocar o SQLite não está nos planos (ADR 0002) |
+| Interface de repositório para poder trocar o banco (Clean, Hexagonal) | sem repositório: a regra fica perto do SQL | ADR 0056, consequência aceita: trocar o SQLite não está nos planos (ADR 0002) |
 | Interface "para o caso de precisar" | só com duas implementações de verdade | ADR 0056 |

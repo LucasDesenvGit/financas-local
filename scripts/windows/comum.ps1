@@ -2,7 +2,8 @@
 # FinancasLocal - o que os scripts de scripts\windows\ repetiam: pastas e mensagens (#655).
 # Carregado com '. (Join-Path $PSScriptRoot "comum.ps1")' (nao execute direto). Como o comum.sh no bash.
 # So ASCII e compativel com o Windows PowerShell 5.1.
-# O instalador do .msi (instalador\configurar.ps1) NAO usa este arquivo: o .msi teria de levar ele junto.
+# O instalador do .msi (instalador\configurar.ps1) carrega este arquivo so para o Confiar-No-Certificado (#775): o
+# gerar-msi.ps1 o leva para instalador\. As pastas daqui nao valem la: o configurar.ps1 define as dele depois.
 # =====================================================================
 
 # ---------------------------------------------------------------- Pastas (mesma convencao do comum.sh)
@@ -35,6 +36,24 @@ function VersaoDoSistema([string]$go = "go") {
     $linhas = @($saida | ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message } else { "$_" } })
     if ($codigo -ne 0) { ErroSai ("Nao consegui calcular a versao (go run ./cmd/versao, em src\backend): " + ($linhas -join " ")) }
     return ($linhas -join "").Trim()
+}
+
+# Confia no certificado do site na loja da MAQUINA (Autoridades Raiz Confiaveis), sem janela: a loja do usuario pede um
+# clique e, se quem elevou no UAC foi outra conta, poria o certificado so na conta do administrador. $pem e a parte
+# publica que o preparar-https grava ao lado do .pfx (sem a chave nem a senha). O FriendlyName identifica o certificado
+# antigo para troca-lo quando houver renovacao (e para a desinstalacao do .msi tira-lo).
+function Confiar-No-Certificado([string]$pem) {
+    $der = [Convert]::FromBase64String(((Get-Content -LiteralPath $pem) -notmatch "-----") -join "")
+    $publico = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(, $der)
+    $publico.FriendlyName = $NomeServico
+    $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
+    $loja.Open("ReadWrite")
+    try {
+        foreach ($antigo in @($loja.Certificates)) {
+            if ($antigo.FriendlyName -eq $NomeServico -and $antigo.Thumbprint -ne $publico.Thumbprint) { $loja.Remove($antigo) }
+        }
+        if (-not ($loja.Certificates | Where-Object { $_.Thumbprint -eq $publico.Thumbprint })) { $loja.Add($publico) }
+    } finally { $loja.Close() }
 }
 
 # Erros previstos (com mensagem pronta) sao marcados para o catch final nao mostrar a linha do

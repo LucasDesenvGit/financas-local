@@ -1,8 +1,7 @@
-// Pacote autenticacao é o AuthController e a segurança do Program.cs em Go (#75): login, sessão em cookie assinado,
-// CSRF, limite de tentativas por IP, bloqueio por usuário e auditoria, com o mesmo contrato do .NET (#72).
+// Pacote autenticacao tem o login e a segurança (#75): login, sessão em cookie assinado,
+// CSRF, limite de tentativas por IP, bloqueio por usuário e auditoria (#72).
 //
-// Só vale com o Go sozinho, sem o .NET na frente: até a inversão (#85, ADR 0049) quem faz o login no site é o .NET,
-// e o Go atrás dele recebe o usuário pelo cabeçalho interno (servidor.RodarAtrasDoDotnet).
+// Só vale com o Go sozinho: o login no site é feito aqui (#85, ADR 0049).
 package autenticacao
 
 import (
@@ -15,7 +14,6 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/erros"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -40,7 +38,6 @@ type Opcoes struct {
 // Autenticacao guarda o estado que vive o processo todo: o limitador por IP e o hash fictício.
 type Autenticacao struct {
 	o       Opcoes
-	q       *consultas.Queries
 	limite  *limitador
 	duracao time.Duration
 
@@ -52,13 +49,12 @@ type Autenticacao struct {
 func Nova(o Opcoes) *Autenticacao {
 	return &Autenticacao{
 		o:       o,
-		q:       consultas.New(o.DB),
 		limite:  novoLimitador(5, time.Minute),
 		duracao: time.Duration(o.MinutosSessao) * time.Minute,
 	}
 }
 
-// Rotas de api/auth que não exigem login (AllowAnonymous), mas os POST exigem CSRF, como no .NET. A autoridade do
+// Rotas de api/auth que não exigem login (AllowAnonymous), mas os POST exigem CSRF. A autoridade do
 // acesso pelo celular (#328) também: o celular a baixa antes de confiar no site e de entrar, e ela é só o certificado
 // público (o pacote celular a serve só com o acesso ligado). E o estado dele, para o gerenciador, que não tem login
 // (#679): só ligado e o endereço, e só para quem pede do próprio computador.
@@ -115,7 +111,7 @@ func (r *requisicao) usuario() int64 {
 //  2. o cookie da sessão é conferido (assinatura, validade e o carimbo no banco); carimbo trocado derruba a sessão;
 //  3. rota que não é anônima exige login: 401 sem corpo, e não redirecionamento (OnRedirectToLogin);
 //  4. método que muda algo exige o token CSRF do usuário (400 em ProblemDetails). O 404 de rota que não existe não
-//     confere (no .NET é o MapFallback, que não é controller).
+//     confere.
 func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		chaveRota := r.Method + " " + strings.ToLower(r.URL.Path)
@@ -131,13 +127,13 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 		if c, err := r.Cookie(CookieSessao); err == nil && c.Value != "" {
 			agora := a.o.Relogio.Agora()
 			if s, ok := lerSessao(a.o.Chave, c.Value, agora); ok {
-				valida, err := a.q.SessaoValida(r.Context(), consultas.SessaoValidaParams{Id: s.Usuario, CarimboSeguranca: s.Carimbo})
+				valida, err := sessaoValida(r.Context(), a.o.DB, s.Usuario, s.Carimbo)
 				if err != nil {
 					a.erroInterno(w, r, "conferir a sessão", err)
 					return
 				}
 				if !valida {
-					// O ValidadorSessao do .NET: a senha mudou (ou o usuário saiu do banco), então a sessão acaba.
+					// A sessão é validada de novo: a senha mudou (ou o usuário saiu do banco), então a sessão acaba.
 					expirarSessao(w)
 				} else {
 					if s.precisaRenovar(agora) {
@@ -161,7 +157,7 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 		}
 
 		// A rota e o login vão para o contexto: um erro logado durante a requisição os leva para a tabela de erros
-		// (#298), como o HttpContext no .NET.
+		// (#298).
 		var login *string
 		if req.sessao != nil {
 			login = &req.sessao.Login
@@ -175,7 +171,7 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 	})
 }
 
-// metodoSeguro são os métodos que o antiforgery do ASP.NET não confere.
+// metodoSeguro são os métodos que o antiforgery não confere.
 func metodoSeguro(metodo string) bool {
 	switch metodo {
 	case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:

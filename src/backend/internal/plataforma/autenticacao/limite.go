@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-// limitador é a política "login" do .NET (Program.cs, AddRateLimiter): janela fixa de 1 minuto, 5 pedidos por IP,
+// limitador é a política "login": janela fixa de 1 minuto, 5 pedidos por IP,
 // sem fila, somando "entrar" e "configurar". O sexto pedido no mesmo minuto recebe 429 sem corpo, antes de olhar
-// CSRF, corpo ou senha (o UseRateLimiter vem antes de tudo isso no .NET).
+// CSRF, corpo ou senha (o limite vem antes de tudo isso).
 //
 // A janela começa no primeiro pedido do IP e vale um minuto inteiro, como o FixedWindowRateLimiter. O tempo é o do
 // relógio monotônico do processo (time.Now), e não o relógio de negócio: limite não depende da data.

@@ -72,9 +72,9 @@ func TestNovoBancoComEsquemaEDadosIniciais(t *testing.T) {
 	if categorias == 0 {
 		t.Error("NovoBanco deveria vir com as categorias padrão do 02-dados-iniciais.sql")
 	}
-	// A coluna nova do 2-criar-banco.sh também tem de existir (o esquema é o real, não só o 01-estrutura.sql).
+	// A coluna nova de esquema.ColunasNovas também tem de existir (o esquema é o real, não só o 01-estrutura.sql).
 	if _, err := db.ExecContext(t.Context(), `SELECT DescricaoManual, RegraDescricaoId FROM Transacao`); err != nil {
-		t.Errorf("as colunas novas do 2-criar-banco.sh não estão no banco: %v", err)
+		t.Errorf("as colunas novas (esquema.ColunasNovas) não estão no banco: %v", err)
 	}
 	var chaves int
 	if err := db.QueryRowContext(t.Context(), `PRAGMA foreign_keys`).Scan(&chaves); err != nil || chaves != 1 {

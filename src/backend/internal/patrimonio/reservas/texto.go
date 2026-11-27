@@ -1,4 +1,4 @@
-// Pacote reservas é o ReservaService do C# (#82): as reservas ("cofrinhos", "caixinhas") das contas do Open Finance.
+// Pacote reservas (#82): as reservas ("cofrinhos", "caixinhas") das contas do Open Finance.
 // Quando a instituição informa o valor reservado (#168, ADR 0037), ele vale. Senão, o saldo é estimado pelos lançamentos
 // de entrada e saída de cada reserva no extrato da conta (o Mercado Pago, ADR 0010), a partir da conferência que você
 // fez no app da instituição. O Méli Dólar do Mercado Pago (#169, ADR 0038) é uma reserva em dólar, convertida pela PTAX.
@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	// TamanhoMaximoNome é o tamanho do nome de uma reserva (em chars UTF-16, o string.Length do C#).
+	// TamanhoMaximoNome é o tamanho do nome de uma reserva (em chars UTF-16).
 	TamanhoMaximoNome = 100
 	// DiasConferenciaAntiga: conferência mais velha que isso é sinalizada para ser refeita.
 	DiasConferenciaAntiga = 30
@@ -35,7 +35,7 @@ const (
 // prefixos (do extrato) que identificam o dinheiro indo para uma reserva ou voltando dela.
 var prefixos = []string{"Dinheiro reservado ", "Dinheiro retirado "}
 
-// semPrefixo devolve o resto da descrição depois do prefixo de reserva (o StartsWith OrdinalIgnoreCase do C#).
+// semPrefixo devolve o resto da descrição depois do prefixo de reserva.
 func semPrefixo(descricao string) (string, bool) {
 	for _, p := range prefixos {
 		if len(descricao) >= len(p) && strings.EqualFold(descricao[:len(p)], p) {
@@ -80,7 +80,7 @@ func EhMeliDolar(descricao string) bool {
 // EhNomeMeliDolar diz se a reserva é o Méli Dólar (em dólar: não tem saída em reais pelo site).
 func EhNomeMeliDolar(nome string) bool { return texto.ParaRegras(nome) == "MELI DOLAR" }
 
-// quantidadeMusd é o Regex "MUSD\s*(\d(?:[\d.,]*\d)?)" do C#, com IgnoreCase e CultureInvariant. O \d e o \s do .NET
+// quantidadeMusd é o regex "MUSD\s*(\d(?:[\d.,]*\d)?)", sem diferença de maiúsculas. O \d e o \s
 // são de Unicode, e o (?i) do RE2 iria além (o "ſ" casaria com o "s"): as classes e as letras ficam escritas por
 // extenso.
 var quantidadeMusd = regexp.MustCompile(`[Mm][Uu][Ss][Dd][\t\n\v\f\r\x{85}\p{Z}]*(\p{Nd}(?:[\p{Nd}.,]*\p{Nd})?)`)
@@ -98,7 +98,7 @@ func QuantidadeNaDescricao(descricao string) *tipos.Decimal {
 	} else if strings.Count(numero, ".") != 1 || len(numero)-strings.Index(numero, ".")-1 == 3 {
 		numero = strings.ReplaceAll(numero, ".", "")
 	}
-	// O decimal.TryParse invariante lê só os dígitos de 0 a 9 e recusa o que não cabe no decimal do C#.
+	// O decimal.TryParse invariante lê só os dígitos de 0 a 9 e recusa o que não cabe no decimal.
 	q, ok := tipos.LerNumero(numero)
 	if !ok || !q.Decimal().IsPositive() {
 		return nil

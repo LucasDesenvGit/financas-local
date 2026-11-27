@@ -896,7 +896,7 @@ func TestImportarCarteira(t *testing.T) {
 		conexao := semHistorico(t, c)
 		ativo := c.fab.Ativo(func(a *testeapoio.Ativo) { a.Ticker = "FALS3" })
 		c.fab.OperacaoAtivo(ativo, func(o *testeapoio.OperacaoAtivo) {
-			o.Origem, o.PluggyTransacaoId = origemOpenFinance, p("m0")
+			o.Origem, o.PluggyTransacaoId = tipos.OrigemOpenFinance, p("m0")
 		})
 		sua := c.fab.OperacaoAtivo(ativo, func(o *testeapoio.OperacaoAtivo) {
 			o.Quantidade, o.Data = testeapoio.Valor("2.0"), tipos.NovaData(2026, 1, 10)
@@ -915,7 +915,7 @@ func TestImportarCarteira(t *testing.T) {
 		c := novoCenario(t)
 		conexao := semHistorico(t, c)
 		ativo := c.fab.Ativo(func(a *testeapoio.Ativo) { a.Ticker = "FALS3" })
-		c.fab.OperacaoAtivo(ativo, func(o *testeapoio.OperacaoAtivo) { o.Origem, o.PluggyTransacaoId = origemOpenFinance, p("m0") })
+		c.fab.OperacaoAtivo(ativo, func(o *testeapoio.OperacaoAtivo) { o.Origem, o.PluggyTransacaoId = tipos.OrigemOpenFinance, p("m0") })
 		investimento(c, conexao, func(i *testeapoio.Investimento) { i.Codigo, i.Quantidade = p("FALS3"), p(testeapoio.Valor("4.0")) })
 		c.falsa.Em("GET", "*", testeapoio.RespostaDeFora{Status: 400})
 		if r := importar(t, c); r.OperacoesImportadas != 0 || len(r.SemHistorico) != 0 {

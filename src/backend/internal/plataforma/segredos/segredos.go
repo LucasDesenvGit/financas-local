@@ -1,5 +1,5 @@
 // Pacote segredos é o esquema novo dos segredos da tabela Configuracao (o Client Secret da Pluggy; o token da brapi saiu na #763),
-// que substitui o ASP.NET Data Protection na inversão (#85, ADR 0049; a 0005 fica substituída).
+// que substitui o Data Protection antigo (#85, ADR 0049; a 0005 fica substituída).
 //
 //   - Cifra: AES-256-GCM com nonce aleatório de 96 bits, novo a cada gravação (cipher.NewGCMWithRandomNonce: quem
 //     sorteia o nonce é a biblioteca padrão). O valor gravado é "v2:" + base64(nonce|cifra);
@@ -7,12 +7,12 @@
 //   - A chave da Configuracao (ex.: "Pluggy.ClientSecret") entra como dado autenticado (AAD): o valor cifrado de um
 //     segredo não serve se for copiado para a linha de outro.
 //   - Chave: 32 bytes em dados/chaves/segredos.chave. No Windows, o arquivo guarda a chave protegida pelo DPAPI
-//     (CryptProtectData, da conta que roda o site), como o .NET faz hoje com as chaves do Data Protection; no Linux, a
+//     (CryptProtectData, da conta que roda o site) faz hoje com as chaves do Data Protection; no Linux, a
 //     chave crua num arquivo que só o dono lê (0600).
 //   - Valor antigo (do Data Protection, sem "v2:"): não se lê, e Decifrar devolve ErrInformarDeNovo. Ninguém apaga
 //     nem regrava a linha sozinho: quem usa informa o segredo de novo na tela.
 //
-// Até a #85 nenhuma rota de segredo está em uso: quem lê e grava segredo no site é o .NET, e o Go só tem o Tardio pronto.
+// O Tardio só lê a chave no primeiro uso.
 package segredos
 
 import (
@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	// ErrInformarDeNovo é o valor gravado pelo .NET (Data Protection), que o Go não lê: o segredo precisa ser
+	// ErrInformarDeNovo é o valor gravado no esquema antigo (Data Protection), que o Go não lê: o segredo precisa ser
 	// informado de novo.
 	ErrInformarDeNovo = errors.New("o segredo foi gravado pela versão anterior e precisa ser informado de novo")
 	// ErrAdulterado é o valor "v2:" que não confere com a chave: mudou no banco, veio de outra instalação ou de
@@ -61,8 +61,8 @@ func Abrir(pasta string) (*Cofre, error) {
 	return novoCofre(chave)
 }
 
-// Tardio é o Cofre que só lê a chave no primeiro uso. Até a troca dos segredos (#85), nenhuma rota de segredo está ligada,
-// e o Go que sobe atrás do .NET não pode criar o arquivo da chave por nada.
+// Tardio é o Cofre que só lê a chave no primeiro uso. Se nenhuma rota de segredo é usada,
+// o arquivo da chave não é criado à toa.
 type Tardio struct {
 	pasta string
 	abrir func() (*Cofre, error)
@@ -113,7 +113,7 @@ func (c *Cofre) Cifrar(chave, segredo string) (string, error) {
 }
 
 // GravadoPeloGo diz se o valor gravado é do esquema do Go ("v2:"), sem abrir a chave. O que não é (o do Data
-// Protection do .NET) o Go não lê: a tela tem de pedir de novo, e não dizer "configurado" (#85).
+// Protection antigo) o Go não lê: a tela tem de pedir de novo, e não dizer "configurado" (#85).
 func GravadoPeloGo(gravado string) bool { return strings.HasPrefix(gravado, prefixo) }
 
 // Decifrar devolve o segredo gravado na chave dada. Valor sem "v2:" é ErrInformarDeNovo; "v2:" que não confere é

@@ -9,7 +9,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/categorizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/analises/relatorios"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -19,9 +19,6 @@ import (
 
 // FormaDebitoAutomatico é a FormaCobranca "débito automático": com um cofrinho, a baixa é no vencimento.
 const FormaDebitoAutomatico = 2
-
-// origemOpenFinance é a OrigemConta do Open Finance: só nela há reservas.
-const origemOpenFinance = 2
 
 // statusEfetivada é o StatusTransacao.Efetivada.
 const statusEfetivada = 1
@@ -54,7 +51,7 @@ type Despesa struct {
 
 // LancarDespesa grava a despesa efetivada, com a categoria (manual, se houver) e o tipo pelo tipo da categoria (o
 // AplicarTipo), e devolve o id dela.
-func LancarDespesa(ctx context.Context, q consultas.DBTX, d Despesa, agora tipos.DataHora) (int64, error) {
+func LancarDespesa(ctx context.Context, q banco.DBTX, d Despesa, agora tipos.DataHora) (int64, error) {
 	rs, err := categorizacao.Carregar(ctx, q)
 	if err != nil {
 		return 0, err
@@ -117,7 +114,7 @@ func ProximoDoPagamento(vencimento tipos.Data, recorrencia int64, dataLimite *ti
 // PagarPeloCofrinho dá baixa no vencimento atual da conta a pagar com a despesa saindo do cofrinho: grava o lançamento
 // do app na data, a linha de PagamentoCofrinho (para o "Desfazer") e avança o vencimento. Muda c para o novo estado.
 // Só na conta a pagar ativa (ErrContaEncerrada): assim o "Desfazer" sabe que ela estava ativa antes.
-func PagarPeloCofrinho(ctx context.Context, q consultas.DBTX, c *ContaDoCofrinho, data tipos.Data, automatico bool,
+func PagarPeloCofrinho(ctx context.Context, q banco.DBTX, c *ContaDoCofrinho, data tipos.Data, automatico bool,
 	agora tipos.DataHora) error {
 	if !c.Ativa {
 		return ErrContaEncerrada
@@ -148,12 +145,12 @@ func PagarPeloCofrinho(ctx context.Context, q consultas.DBTX, c *ContaDoCofrinho
 // não recebe baixa de novo: a conta fica vencida, com "Pagar". O vencimento de antes do dia em que o "Pago com" passou
 // a valer (ReservaDesde) também não: quem cadastra a conta com o vencimento meses atrás não ganha despesas nos meses
 // já fechados. Conta arquivada fica de fora, como na aba Reservas. Devolve quantas baixas deu.
-func baixarPeloCofrinho(ctx context.Context, q consultas.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
+func baixarPeloCofrinho(ctx context.Context, q banco.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT a."Id", a."Descricao", a."Valor", a."ProximoVencimento", a."Recorrencia",
 		a."CategoriaId", a."ContaId", a."Ativa", a."DataLimite", a."UltimoPagamentoEm", a."ReservaNome", a."ReservaDesde"
 		FROM "ContaAgendada" AS a INNER JOIN "Conta" AS c ON c."Id" = a."ContaId"
 		WHERE a."Ativa" AND a."FormaCobranca" = ? AND a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND NOT c."Arquivada"
-		AND a."ProximoVencimento" <= ? ORDER BY a."Id"`, FormaDebitoAutomatico, origemOpenFinance, hoje)
+		AND a."ProximoVencimento" <= ? ORDER BY a."Id"`, FormaDebitoAutomatico, tipos.OrigemOpenFinance, hoje)
 	if err != nil {
 		return 0, fmt.Errorf("ler as contas a pagar pelo cofrinho: %w", err)
 	}
@@ -210,7 +207,7 @@ type baixaPeloCofrinho struct {
 // para a do "Pagar" (a conta é cobrada sozinha: o banco manda a cobrança). Vale a do banco, e o último pagamento vai
 // para a data dela. Cada cobrança desfaz uma baixa só: duas contas com textos parecidos não somem com uma cobrança.
 // Devolve quantas.
-func desfazerDuplicadas(ctx context.Context, q consultas.DBTX, hoje tipos.Data,
+func desfazerDuplicadas(ctx context.Context, q banco.DBTX, hoje tipos.Data,
 	carregarRegras func() (map[int64]bool, error)) (int, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT p."TransacaoId", a."Id", a."ContaId", a."TextoCobranca", p."Vencimento",
 		t."Data", p."CriadoEm", a."UltimoPagamentoEm"
@@ -288,7 +285,7 @@ type pagamento struct {
 	ultimoPagamentoAnterior *tipos.Data
 }
 
-func ultimoPagamento(ctx context.Context, q consultas.DBTX, conta int64) (*pagamento, error) {
+func ultimoPagamento(ctx context.Context, q banco.DBTX, conta int64) (*pagamento, error) {
 	var p pagamento
 	err := q.QueryRowContext(ctx, `SELECT "Id", "TransacaoId", "Vencimento", "ProximoVencimento", "UltimoPagamentoAnterior"
 		FROM "PagamentoCofrinho" WHERE "ContaAgendadaId" = ? ORDER BY "Id" DESC LIMIT 1`, conta).Scan(&p.id, &p.transacao,
@@ -319,7 +316,7 @@ func desfazivel(proximoAtual tipos.Data, ativa bool, recorrencia int64, dataLimi
 // DesfazerPagamento desfaz a última baixa pelo cofrinho da conta a pagar: apaga o lançamento e volta o vencimento, o
 // último pagamento e a conta ativa, como estavam. Só enquanto a conta a pagar não mudou depois dela (ErrPagamentoMudou:
 // outro vencimento, ou encerrada pela pessoa); sem baixa com lançamento, ErrSemPagamento.
-func DesfazerPagamento(ctx context.Context, q consultas.DBTX, conta int64) error {
+func DesfazerPagamento(ctx context.Context, q banco.DBTX, conta int64) error {
 	p, err := ultimoPagamento(ctx, q, conta)
 	if err != nil {
 		return err
@@ -350,7 +347,7 @@ func DesfazerPagamento(ctx context.Context, q consultas.DBTX, conta int64) error
 
 // AjustarPagamento muda o valor da última baixa pelo cofrinho (a conta de consumo que variou): o lançamento passa a
 // ser -valor. Sem baixa com lançamento, ErrSemPagamento.
-func AjustarPagamento(ctx context.Context, q consultas.DBTX, conta int64, valor tipos.Decimal, agora tipos.DataHora) error {
+func AjustarPagamento(ctx context.Context, q banco.DBTX, conta int64, valor tipos.Decimal, agora tipos.DataHora) error {
 	p, err := ultimoPagamento(ctx, q, conta)
 	if err != nil {
 		return err
@@ -377,7 +374,7 @@ type UltimoPeloCofrinho struct {
 
 // UltimosPeloCofrinho são as últimas baixas pelo cofrinho de cada conta a pagar que ainda têm o lançamento, pelo id
 // da conta a pagar. O valor sai positivo.
-func UltimosPeloCofrinho(ctx context.Context, q consultas.DBTX) (map[int64]UltimoPeloCofrinho, error) {
+func UltimosPeloCofrinho(ctx context.Context, q banco.DBTX) (map[int64]UltimoPeloCofrinho, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT p."ContaAgendadaId", t."Id", t."Data", t."Valor", t."ReservaNome",
 		p."Automatico", p."Vencimento", p."ProximoVencimento", a."ProximoVencimento", a."Ativa", a."Recorrencia", a."DataLimite"
 		FROM "PagamentoCofrinho" AS p

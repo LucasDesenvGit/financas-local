@@ -36,4 +36,3 @@ Leia junto com "Onde divergimos" em [`estilo.md`](estilo.md): os guias não sabe
 
 - [`shopspring/decimal`](https://pkg.go.dev/github.com/shopspring/decimal): [`RoundBank`](https://pkg.go.dev/github.com/shopspring/decimal#Decimal.RoundBank), o arredondamento bancário do `Math.Round` do C#
 - [`modernc.org/sqlite`](https://pkg.go.dev/modernc.org/sqlite)
-- [sqlc](https://docs.sqlc.dev/en/latest/)

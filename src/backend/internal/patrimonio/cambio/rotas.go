@@ -47,7 +47,7 @@ func ClientePadrao() *ClientePTAX {
 // cotacao é o GET /api/cambio/cotacao?moeda=USD&data=2026-10-15.
 func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Logger) {
 	ctx := req.Context()
-	// O model binding do ASP.NET roda antes da ação: data inválida é o 400 automático, antes de olhar a moeda.
+	// O model binding roda antes da ação: data inválida é o 400 automático, antes de olhar a moeda.
 	var data *tipos.Data
 	if bruta, _ := respostas.ParametroDaQuery(req, "data"); bruta != "" {
 		d, ok := respostas.DataDaQuery(bruta)
@@ -90,7 +90,7 @@ func cotacao(w http.ResponseWriter, req *http.Request, s *Servico, log *slog.Log
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, c)
 }
 
-// soLogado confere o usuário que o .NET passou (ele já conferiu o login; chegar sem é requisição de fora).
+// soLogado confere o usuário que a autenticação passou (chegar sem é requisição de fora).
 func soLogado(h http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if _, ok := sessao.Usuario(req.Context()); !ok {

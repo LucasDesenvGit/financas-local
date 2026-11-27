@@ -4,10 +4,9 @@ O banco de quem já usa o site foi criado e gravado pelo .NET, com o EF Core ([A
 
 | O quê | Onde |
 |---|---|
-| Abrir o banco e fazer transação | `banco.go`: `Abrir`, `EmTransacao` |
+| Abrir o banco e fazer transação | `banco.go`: `Abrir`, `EmTransacao`, `DBTX` |
 | Tipos no formato do EF Core | [`internal/plataforma/tipos`](../tipos): `Decimal`, `Data`, `DataHora`, `Guid` |
-| Consultas | `consultas/sql/*.sql`, geradas pelo `sqlc` em `consultas/` |
-| Esquema para o `sqlc` | `esquema/esquema-sqlc.sql`, gerado a partir do `banco/` |
+| Consultas | escritas à mão, com `?`, no pacote de quem as usa; `DBTX` (um `*sql.DB` ou uma `*sql.Tx`) é a interface que elas recebem ([ADR 0074](../../../../../docs/adr/0074-consultas-escritas-a-mao-sem-o-sqlc.md)) |
 | Criar e atualizar o banco (o `EsquemaBanco` do .NET) | `esquema_banco.go`: `AplicarEsquema`; scripts em `esquema/embutido/` |
 | Relógio no fuso de Brasília | [`internal/plataforma/relogio`](../relogio) |
 
@@ -43,43 +42,31 @@ A sonda `internal/plataforma/tipos/testdata/sonda-efcore` gravou valores pelo me
 
 O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../../docs/adr/0003-esquema-por-scripts-sql-idempotentes.md)), passo a passo igual:
 
-1. Lê as linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh` com a mesma expressão (com o `\s` do .NET, que pega mais espaços que o do Go) e calcula a **mesma assinatura** do .NET.
+1. Calcula a **mesma assinatura** do .NET, com a estrutura e as `ColunasNovas` (`esquema/colunas_novas.go`; até a #723 eram as linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh`).
 2. Banco que já existe com a mesma assinatura no `PRAGMA user_version`: não faz nada, nem cópia.
 3. Assinatura diferente: copia o banco com `VACUUM INTO` para `dados/backups/FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db` (hora de Brasília; o .NET usa a do computador) e guarda as 5 mais recentes.
    - **Milissegundos no nome** (#366): só até o segundo, duas atualizações no mesmo segundo davam o mesmo nome, e o `VACUUM INTO` recusa um destino que já existe.
    - **Ordem pelo nome, byte a byte** (`slices.Sort`; no .NET, `StringComparer.Ordinal`): o `.` vem antes do `_`, e o nome antigo de um segundo (`_HHMMSS.db`) fica antes dos novos do mesmo segundo. A ordem da cultura, padrão do `OrderBy` do .NET, põe o `_` antes do `.` (medido) e apagaria o mais novo.
    - **Cópia antiga que não dá para apagar** (outro dono, só leitura) fica para a próxima, com um aviso no log que diz o arquivo, e a API sobe (#365).
 4. Numa transação: o `01-estrutura.sql`, as colunas que faltam e, **só no banco novo**, o `02-dados-iniciais.sql`. Depois grava a assinatura.
+5. O `03-tabelas-oficiais.sql` (INSS e IRRF) entra em todo caso, também com a assinatura em dia (passo 2) e sem entrar nela: não gera cópia, e a vigência nova de um ano chega a quem já tem banco (#805).
 
-**Quem aplica o esquema ao iniciar é o site**, com `-aplicar-esquema` (a linha do serviço instalado sempre liga). A assinatura é a mesma que o .NET calculava: quem atualiza vindo da versão em .NET não ganha uma cópia nem uma atualização à toa.
+**Quem aplica o esquema é o executável**: o site ao iniciar, com `-aplicar-esquema` (a linha do serviço instalado sempre liga), e os scripts de instalação, com o subcomando `aplicar-esquema -banco <caminho>` (`cmd/financas/esquema.go`, #723). A assinatura é a mesma que o .NET calculava: quem atualiza vindo da versão em .NET não ganha uma cópia nem uma atualização à toa.
 
-Os scripts vão dentro do executável. Como o `//go:embed` não sai do módulo (`src/backend`), o `go generate ./...` copia os três arquivos para `esquema/embutido/`. **Não edite a cópia:** mude o original e rode o `go generate`. O `TestCopiasEmDia` falha se a cópia ficar velha.
+Os scripts `.sql` vão dentro do executável (a lista de colunas já é código Go). Como o `//go:embed` não sai do módulo (`src/backend`), o `go generate ./...` copia os dois arquivos `.sql` para `esquema/embutido/`. **Não edite a cópia:** mude o original e rode o `go generate`. O `TestCopiasEmDia` falha se a cópia ficar velha.
 
 ### O gabarito do .NET
 
 A sonda `testdata/sonda-esquema` (que saiu com o C# na #86 e está na tag `v-ultimo-dotnet`) compilava o **mesmo** `EsquemaBanco.cs` da API, com os mesmos scripts embutidos, rodava os cenários (banco novo, sem mudança, arquivo vazio, banco antigo sem duas colunas, rodízio das cópias, pasta da cópia) e gravou:
 
-- `testdata/esquema-dotnet.json`: as assinaturas, as linhas lidas do `.sh` e a estrutura e os dados de cada banco (tabela por tabela, coluna por coluna, índices e chaves estrangeiras);
+- `testdata/esquema-dotnet.json`: as assinaturas e a estrutura e os dados de cada banco (tabela por tabela, coluna por coluna, índices e chaves estrangeiras);
 - `testdata/entradas-esquema/*.gz`: os scripts com que o gabarito foi feito. O teste do Go aplica **esses**, e não os de agora, para não ficar velho a cada mudança no `banco/`.
 
 Sem o .NET, o gabarito não é mais regravado: ele é a regressão do `AplicarEsquema`. Uma mudança de propósito no jeito de criar ou atualizar o banco muda o teste, com o motivo no PR (ADR 0051).
 
-## `sqlc`: como gerar e o que ele não entende
+## Consultas
 
-```bash
-cd src/backend
-go generate ./...     # copia os scripts para esquema/embutido/, reescreve esquema/esquema-sqlc.sql e gera consultas/ (sqlc v1.31.1 pelo go run)
-```
-
-O `sqlc` compila com cgo: precisa do `gcc` no Linux ou do MSYS2 no Windows. Só precisa quem muda uma consulta ou o esquema, porque o código gerado vai no commit. O teste `TestEsquemaDoSqlcEmDia` falha quando o `banco/` ou o `2-criar-banco.sh` mudam e alguém esquece de gerar.
-
-O motor SQLite do `sqlc` (v1.31.1) tem três limitações, contornadas assim:
-
-1. **`TEXT NULL` vira `interface{}`** e **os nomes do `CREATE TABLE` viram minúsculas** (`CriadoEm` vira o campo `Criadoem`). Por isso o `sqlc` não lê o `01-estrutura.sql`: o gerador em `esquema/` aplica a estrutura e as colunas novas num SQLite em memória e reescreve o esquema como o próprio SQLite o vê, com os nomes entre aspas.
-2. **Nome sem aspas na consulta vira minúsculo** e não acha a tabela. Escreva **todos os nomes entre aspas duplas**: `SELECT "Chave" FROM "Configuracao"`.
-3. **Acento antes da consulta quebra o recorte do SQL**: a consulta gerada sai cortada no lugar errado. Os `.sql` de `consultas/sql/` são **só ASCII** (o `TestConsultasSemAcento` confere). Texto com acento vai por parâmetro (`?`).
-
-Filtro opcional, que o `sqlc` não monta bem, vai para `database/sql` com `?` e uma lista de argumentos. **Nunca** concatene texto do usuário no SQL.
+Escreva o SQL à mão, com `?` para todo valor, num `QueryRowContext`, `QueryContext` ou `ExecContext` sobre um `DBTX`. **Nunca** concatene texto do usuário no SQL; filtro opcional monta o `WHERE` com pedaços fixos e uma lista de argumentos.
 
 ## Testes
 
@@ -91,5 +78,5 @@ FINANCAS_COPIA_BANCO=/tmp/copia.db go test ./internal/plataforma/banco -run Copi
 ```
 
 Coluna nova (#367, `colunas_novas_test.go`), com os scripts de agora:
-- `TestColunasNovasTambemNoCreateTable`: toda coluna das linhas `adicionar_coluna_se_ausente` também está no `CREATE TABLE` do `01-estrutura.sql`;
+- `TestColunasNovasTambemNoCreateTable`: toda coluna de `ColunasNovas` também está no `CREATE TABLE` do `01-estrutura.sql`;
 - `TestBancoAntigoAtualizadoFicaIgualAoNovo`: um banco sem essas colunas, atualizado pelo `AplicarEsquema`, fica com as mesmas colunas do banco novo (tipo, `NOT NULL`, padrão e chave; só a ordem pode mudar).

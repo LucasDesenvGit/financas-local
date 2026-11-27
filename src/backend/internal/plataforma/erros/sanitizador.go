@@ -9,11 +9,11 @@ import (
 // Removido é o que fica no lugar do que foi tirado.
 const Removido = "[removido]"
 
-// As expressões do Sanitizador.cs, no RE2 do Go (regexp/syntax). Nenhuma usa lookahead nem lookbehind, então todas
-// passam. Diferenças do .NET, todas para o lado de tirar mais:
-//   - \s do .NET pega também \v, U+0085 e os espaços Unicode: aqui é a classe espaco, com os mesmos;
-//   - \d do .NET pega qualquer dígito Unicode: aqui é \p{Nd}, igual;
-//   - \b do .NET olha letras Unicode; o do RE2 só ASCII. Em "çtoken=x" o .NET não vê fronteira e deixa passar; o Go
+// As expressões, no RE2 do Go (regexp/syntax). Nenhuma usa lookahead nem lookbehind, então todas
+// passam. Cuidados com o RE2, todos para o lado de tirar mais:
+//   - \s pega também \v, U+0085 e os espaços Unicode: aqui é a classe espaco, com os mesmos;
+//   - \d pega qualquer dígito Unicode: aqui é \p{Nd}, igual;
+//   - \b olharia letras Unicode, mas o do RE2 é só ASCII. Em "çtoken=x" uma regex Unicode não vê fronteira e deixa passar; o Go
 //     vê e tira. É o único caso em que o resultado muda, e muda para tirar mais.
 const (
 	espaco   = `\s\v\x{85}\p{Z}`
@@ -35,7 +35,7 @@ var (
 // Limpar é o Sanitizador.Limpar: tira query strings de URLs, pares "chave=valor" de segredos, tokens Bearer e JWT,
 // CPF e valores em reais, nessa ordem. É uma limpeza por padrão de texto, não uma garantia: o código continua não
 // pondo segredo em log.
-// As expressões e a ordem são as mesmas do .NET: mudou uma, muda a outra no mesmo PR (o contrato 17-erros confere).
+// As expressões e a ordem são conferidas pelo contrato 17-erros.
 func Limpar(texto string) string {
 	if texto == "" {
 		return texto
@@ -49,8 +49,8 @@ func Limpar(texto string) string {
 	return texto
 }
 
-// LimparECortar é o LimparECortar: limpa e corta no tamanho da coluna (em caracteres UTF-16, como o string.Length do
-// C#), com "…" no fim quando corta. nil fica nil.
+// LimparECortar é o LimparECortar: limpa e corta no tamanho da coluna (em caracteres UTF-16),
+// com "…" no fim quando corta. nil fica nil.
 func LimparECortar(texto *string, maximo int) *string {
 	if texto == nil {
 		return nil
