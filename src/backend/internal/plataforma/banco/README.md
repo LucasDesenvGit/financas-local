@@ -42,7 +42,7 @@ A sonda `internal/plataforma/tipos/testdata/sonda-efcore` gravou valores pelo me
 
 O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../../docs/adr/0003-esquema-por-scripts-sql-idempotentes.md)), passo a passo igual:
 
-1. Lê as linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh` com a mesma expressão (com o `\s` do .NET, que pega mais espaços que o do Go) e calcula a **mesma assinatura** do .NET.
+1. Calcula a **mesma assinatura** do .NET, com a estrutura e as `ColunasNovas` (`esquema/colunas_novas.go`; até a #723 eram as linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh`).
 2. Banco que já existe com a mesma assinatura no `PRAGMA user_version`: não faz nada, nem cópia.
 3. Assinatura diferente: copia o banco com `VACUUM INTO` para `dados/backups/FinancasLocal-antes-atualizacao-AAAAMMDD_HHMMSS_mmm.db` (hora de Brasília; o .NET usa a do computador) e guarda as 5 mais recentes.
    - **Milissegundos no nome** (#366): só até o segundo, duas atualizações no mesmo segundo davam o mesmo nome, e o `VACUUM INTO` recusa um destino que já existe.
@@ -50,15 +50,15 @@ O porte do `Data/EsquemaBanco.cs` ([ADR 0003](../../../../../docs/adr/0003-esque
    - **Cópia antiga que não dá para apagar** (outro dono, só leitura) fica para a próxima, com um aviso no log que diz o arquivo, e a API sobe (#365).
 4. Numa transação: o `01-estrutura.sql`, as colunas que faltam e, **só no banco novo**, o `02-dados-iniciais.sql`. Depois grava a assinatura.
 
-**Quem aplica o esquema ao iniciar é o site**, com `-aplicar-esquema` (a linha do serviço instalado sempre liga). A assinatura é a mesma que o .NET calculava: quem atualiza vindo da versão em .NET não ganha uma cópia nem uma atualização à toa.
+**Quem aplica o esquema é o executável**: o site ao iniciar, com `-aplicar-esquema` (a linha do serviço instalado sempre liga), e os scripts de instalação, com o subcomando `aplicar-esquema -banco <caminho>` (`cmd/financas/esquema.go`, #723). A assinatura é a mesma que o .NET calculava: quem atualiza vindo da versão em .NET não ganha uma cópia nem uma atualização à toa.
 
-Os scripts vão dentro do executável. Como o `//go:embed` não sai do módulo (`src/backend`), o `go generate ./...` copia os três arquivos para `esquema/embutido/`. **Não edite a cópia:** mude o original e rode o `go generate`. O `TestCopiasEmDia` falha se a cópia ficar velha.
+Os scripts `.sql` vão dentro do executável (a lista de colunas já é código Go). Como o `//go:embed` não sai do módulo (`src/backend`), o `go generate ./...` copia os dois arquivos `.sql` para `esquema/embutido/`. **Não edite a cópia:** mude o original e rode o `go generate`. O `TestCopiasEmDia` falha se a cópia ficar velha.
 
 ### O gabarito do .NET
 
 A sonda `testdata/sonda-esquema` (que saiu com o C# na #86 e está na tag `v-ultimo-dotnet`) compilava o **mesmo** `EsquemaBanco.cs` da API, com os mesmos scripts embutidos, rodava os cenários (banco novo, sem mudança, arquivo vazio, banco antigo sem duas colunas, rodízio das cópias, pasta da cópia) e gravou:
 
-- `testdata/esquema-dotnet.json`: as assinaturas, as linhas lidas do `.sh` e a estrutura e os dados de cada banco (tabela por tabela, coluna por coluna, índices e chaves estrangeiras);
+- `testdata/esquema-dotnet.json`: as assinaturas e a estrutura e os dados de cada banco (tabela por tabela, coluna por coluna, índices e chaves estrangeiras);
 - `testdata/entradas-esquema/*.gz`: os scripts com que o gabarito foi feito. O teste do Go aplica **esses**, e não os de agora, para não ficar velho a cada mudança no `banco/`.
 
 Sem o .NET, o gabarito não é mais regravado: ele é a regressão do `AplicarEsquema`. Uma mudança de propósito no jeito de criar ou atualizar o banco muda o teste, com o motivo no PR (ADR 0051).
@@ -77,5 +77,5 @@ FINANCAS_COPIA_BANCO=/tmp/copia.db go test ./internal/plataforma/banco -run Copi
 ```
 
 Coluna nova (#367, `colunas_novas_test.go`), com os scripts de agora:
-- `TestColunasNovasTambemNoCreateTable`: toda coluna das linhas `adicionar_coluna_se_ausente` também está no `CREATE TABLE` do `01-estrutura.sql`;
+- `TestColunasNovasTambemNoCreateTable`: toda coluna de `ColunasNovas` também está no `CREATE TABLE` do `01-estrutura.sql`;
 - `TestBancoAntigoAtualizadoFicaIgualAoNovo`: um banco sem essas colunas, atualizado pelo `AplicarEsquema`, fica com as mesmas colunas do banco novo (tipo, `NOT NULL`, padrão e chave; só a ordem pode mudar).

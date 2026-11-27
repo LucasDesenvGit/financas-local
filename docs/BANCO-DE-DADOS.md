@@ -7,7 +7,7 @@ O banco é **SQLite**, num arquivo local (`dados/sql/FinancasLocal.db`), criado 
 | `banco/01-estrutura.sql` | Tabelas, índices e restrições, todos com `CREATE TABLE/INDEX IF NOT EXISTS`. |
 | `banco/02-dados-iniciais.sql` | Categorias padrão, configurações e regras de categorização iniciais. |
 
-`scripts/geral/2-criar-banco.sh` executa os dois, em ordem, via `sqlite3`. O site também os aplica ao iniciar (`-aplicar-esquema`, `src/backend/internal/plataforma/banco/esquema_banco.go`, com os scripts embutidos no executável; os dados iniciais só no banco novo), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
+Quem aplica os dois é o executável do Go (`src/backend/internal/plataforma/banco/esquema_banco.go`, com os scripts e a lista de colunas novas embutidos nele; os dados iniciais só no banco novo): o site, ao iniciar (`-aplicar-esquema`), e os scripts de instalação, que chamam `financas-go aplicar-esquema -banco <caminho>` na etapa 2 (#723; ali o Go roda do código, com `go run`, porque a publicação é a etapa 3), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
 
 O `01-estrutura.sql` é uma baseline limpa da troca SQL Server → SQLite: as colunas que antes chegavam por `ALTER TABLE` incremental (blocos `v4`–`v7`) já nascem dentro do `CREATE TABLE`.
 
@@ -318,23 +318,23 @@ CREATE INDEX IF NOT EXISTS IX_NovaTabela_Nome ON NovaTabela (Nome);
 
 ### Coluna nova numa tabela existente
 
-O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no script, não no SQL:
+O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempotência fica no Go, não no SQL:
 
-1. Inclua a coluna no `CREATE TABLE` de `01-estrutura.sql` (para quem cria o banco do zero), com a mesma definição do passo 2. Os testes do Go conferem as duas coisas (#367): `TestColunasNovasTambemNoCreateTable` falha se a coluna ficar só no `.sh`, e `TestBancoAntigoAtualizadoFicaIgualAoNovo`, se o banco novo e o antigo atualizado ficarem com tipo, `NOT NULL` ou padrão diferentes.
-2. Em `scripts/geral/2-criar-banco.sh`, depois de aplicar o `01-estrutura.sql`, chame o helper de `comum.sh` (ele consulta `PRAGMA table_info` antes de alterar):
+1. Inclua a coluna no `CREATE TABLE` de `01-estrutura.sql` (para quem cria o banco do zero), com a mesma definição do passo 2. Os testes do Go conferem as duas coisas (#367): `TestColunasNovasTambemNoCreateTable` falha se a coluna ficar só na lista, e `TestBancoAntigoAtualizadoFicaIgualAoNovo`, se o banco novo e o antigo atualizado ficarem com tipo, `NOT NULL` ou padrão diferentes.
+2. Acrescente uma linha **no fim** de `ColunasNovas`, em `src/backend/internal/plataforma/banco/esquema/colunas_novas.go` (o `AplicarEsquema` só altera se `PRAGMA table_info` não mostra a coluna):
 
-   ```bash
-   adicionar_coluna_se_ausente "Tabela" "NovaColuna" "INTEGER NOT NULL DEFAULT 0"
+   ```go
+   {"Tabela", "NovaColuna", "INTEGER NOT NULL DEFAULT 0"},
    ```
 
-   Coluna `NOT NULL` adicionada a uma tabela com dados precisa de `DEFAULT`.
+   Coluna `NOT NULL` adicionada a uma tabela com dados precisa de `DEFAULT`. Não mude a ordem nem o texto das linhas que já existem: a lista entra na assinatura do banco (`PRAGMA user_version`), e mudar o que já está faz todo banco antigo ganhar uma cópia de segurança de novo.
 
-   Mantenha esse formato (uma chamada por linha, os três argumentos entre aspas duplas): o instalador do Windows (`scripts/windows/instalar-windows.ps1`) e o próprio site (`src/backend/internal/plataforma/banco/esquema`, que embute uma cópia do `2-criar-banco.sh`) leem essas linhas em vez de ter lista própria ([ADR 0012](adr/0012-instalador-do-windows-em-powershell.md), [ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
+   A lista é só essa: o bash, o `instalar-windows.ps1` e o `.msi` não têm cópia nem leem nada ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md), [ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)).
 
 ### Depois de qualquer mudança
 
 1. Em `src/backend`, rode `go generate ./...` e suba o que ele mudar: o site leva uma cópia dos scripts dentro do executável ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)). O job Go da CI falha se a cópia ficar velha. Consulta nova vai no pacote do assunto, escrita à mão e sempre parametrizada ([ADR 0074](adr/0074-consultas-escritas-a-mao-sem-o-sqlc.md)).
-2. Rode `scripts/geral/2-criar-banco.sh` e depois `scripts/geral/3-publicar-atualizar.sh`.
+2. Rode `scripts/geral/2-criar-banco.sh` (chama o Go) e depois `scripts/geral/3-publicar-atualizar.sh`.
 3. Rode `python3 scripts/ci/banco/verificar-sql.py` (o CI também aplica os scripts num banco descartável).
 4. Tabela nova: entra em `ASSUNTOS` no `scripts/dev/gerar-diagrama-banco.py`. Rode `python3 scripts/dev/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).
 5. No commit, use `feat(banco)!:` para marcar que a estrutura mudou. Quem atualiza não precisa fazer nada: o site aplica o esquema ao iniciar ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).

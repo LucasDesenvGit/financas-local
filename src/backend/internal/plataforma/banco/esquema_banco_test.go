@@ -32,12 +32,10 @@ import (
 // testdata/entradas-esquema/*.gz: o Go aplica exatamente esses, e o teste não fica velho quando o banco/ muda.
 
 type gabaritoEsquema struct {
-	Pragmas        map[string]string `json:"pragmas"`
-	Entradas       map[string]string `json:"entradas"`
-	Assinaturas    map[string]int32  `json:"assinaturas"`
-	TextoDeLeitura string            `json:"textoDeLeitura"`
-	Leitura        []string          `json:"leitura"`
-	Cenarios       struct {
+	Pragmas     map[string]string `json:"pragmas"`
+	Entradas    map[string]string `json:"entradas"`
+	Assinaturas map[string]int32  `json:"assinaturas"`
+	Cenarios    struct {
 		Novo struct {
 			Banco  despejo  `json:"banco"`
 			Copias []string `json:"copias"`
@@ -132,7 +130,7 @@ func lerGabaritoEsquema(t *testing.T) (gabaritoEsquema, esquema.Scripts) {
 	return g, esquema.Scripts{
 		Estrutura:     entrada("01-estrutura.sql"),
 		DadosIniciais: entrada("02-dados-iniciais.sql"),
-		CriarBanco:    entrada("2-criar-banco.sh"),
+		Colunas:       colunasDoGabarito(entrada("2-criar-banco.sh")),
 	}
 }
 
@@ -145,7 +143,7 @@ func hashTexto[T string | []byte](conteudo T) string {
 
 func TestAssinaturaIgualAoDotnet(t *testing.T) {
 	g, scripts := lerGabaritoEsquema(t)
-	colunas := esquema.LerColunasNovas(scripts.CriarBanco)
+	colunas := scripts.Colunas
 	casos := map[string]int32{
 		"scripts":        esquema.Assinatura(scripts.Estrutura, colunas),
 		"scriptsComCrlf": esquema.Assinatura(strings.ReplaceAll(scripts.Estrutura, "\n", "\r\n"), colunas),
@@ -165,17 +163,6 @@ func TestAssinaturaIgualAoDotnet(t *testing.T) {
 	}
 }
 
-func TestLeituraDasLinhasIgualAoDotnet(t *testing.T) {
-	g, _ := lerGabaritoEsquema(t)
-	var got []string
-	for _, c := range esquema.LerColunasNovas(g.TextoDeLeitura) {
-		got = append(got, c.Tabela+"|"+c.Coluna+"|"+c.Definicao)
-	}
-	if !slices.Equal(got, g.Leitura) {
-		t.Errorf("linhas lidas pelo Go:\n%q\npelo .NET:\n%q", got, g.Leitura)
-	}
-}
-
 func TestTextoTiraOBOM(t *testing.T) {
 	if got := esquema.Texto([]byte("\xEF\xBB\xBFCREATE")); got != "CREATE" {
 		t.Errorf("Texto = %q, o StreamReader do .NET tira o BOM", got)
@@ -188,7 +175,6 @@ func TestCopiasEmDia(t *testing.T) {
 	embutidos := map[string][]byte{
 		"01-estrutura.sql":      embutido.Estrutura,
 		"02-dados-iniciais.sql": embutido.DadosIniciais,
-		"2-criar-banco.sh":      embutido.CriarBanco,
 	}
 	if len(embutidos) != len(esquema.Copias) {
 		t.Fatalf("o embutido tem %d arquivos e o esquema.Copias %d", len(embutidos), len(esquema.Copias))
@@ -592,8 +578,7 @@ func TestAplicarEsquemaComOsScriptsEmbutidos(t *testing.T) {
 	if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
 		t.Fatal(err)
 	}
-	embutidos := esquema.Scripts{Estrutura: string(embutido.Estrutura), CriarBanco: string(embutido.CriarBanco)}
-	assinatura := esquema.Assinatura(embutidos.Estrutura, esquema.LerColunasNovas(embutidos.CriarBanco))
+	assinatura := esquema.Assinatura(string(embutido.Estrutura), esquema.ColunasNovas)
 	if d := despejar(t, caminho); d.UserVersion != int64(assinatura) {
 		t.Errorf("user_version = %d, esperado %d", d.UserVersion, assinatura)
 	}
@@ -629,17 +614,6 @@ func contar(t *testing.T, caminho, consulta string) int {
 		t.Fatal(err)
 	}
 	return n
-}
-
-func TestAplicarEsquemaSemColunasNovas(t *testing.T) {
-	caminho := filepath.Join(t.TempDir(), "FinancasLocal.db")
-	err := aplicarEsquema(context.Background(), caminho, esquema.Scripts{Estrutura: "CREATE TABLE A (Id INTEGER);"}, instanteDosTestes, semLog())
-	if err == nil || !strings.Contains(err.Error(), "nenhuma coluna nova") {
-		t.Fatalf("sem linhas adicionar_coluna_se_ausente deveria falhar como o .NET; erro: %v", err)
-	}
-	if _, err := os.Stat(caminho); !errors.Is(err, fs.ErrNotExist) {
-		t.Error("o banco não deveria ser criado")
-	}
 }
 
 func TestPastaDasCopias(t *testing.T) {
