@@ -14,7 +14,7 @@ Um título de tipo, uma só vez cada, com pelo menos uma entrada: `### Funcional
 
 - **Para quem usa, até ~60 palavras** por entrada, sem nome de coluna, rota ou ADR. Passou disso, a CI avisa (não barra).
 - **`  - Técnico: ...`** é opcional, numa linha só, recuada com dois espaços. O gerenciador e as notas dos Releases a escondem; ela fica no `CHANGELOG.md`.
-- **Sem versão** (`## [X.Y.Z]`): ela é calculada no merge (`go run ./cmd/versao`, em `src/backend`). Não mexa no `CHANGELOG.md` nem no `Directory.Build.props`.
+- **Sem versão** (`## [X.Y.Z]`): ela é calculada no merge (`go run ./cmd/versao`, em `src/backend`). Não mexa no `CHANGELOG.md`.
 
 ## Na publicação
 

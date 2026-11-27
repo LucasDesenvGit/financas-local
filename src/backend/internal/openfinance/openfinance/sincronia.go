@@ -13,7 +13,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/openfinance/sincronizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 )
 
@@ -66,7 +65,7 @@ func (s *Servico) adicionarConexao(w http.ResponseWriter, r *http.Request) {
 		s.erroInterno(w, r, "consultar o item", err)
 		return
 	}
-	login, err := auditoria.Login(ctx, consultas.New(s.db))
+	login, err := auditoria.Login(ctx, s.db)
 	if err != nil {
 		s.erroInterno(w, r, "ler o login", err)
 		return
@@ -99,7 +98,7 @@ func (s *Servico) gravarConexao(ctx context.Context, r *http.Request, item *plug
 		if id, err = res.LastInsertId(); err != nil {
 			return err
 		}
-		return auditoria.Registrar(ctx, consultas.New(tx), r, s.agora(), "ConexaoAdicionada", login)
+		return auditoria.Registrar(ctx, tx, r, s.agora(), "ConexaoAdicionada", login)
 	})
 	return id, err
 }

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -13,8 +14,8 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/esquema/embutido"
 )
 
-// #367: toda coluna das linhas adicionar_coluna_se_ausente do 2-criar-banco.sh também está no CREATE TABLE do
-// 01-estrutura.sql, com a mesma definição (docs/BANCO-DE-DADOS.md). A linha do .sh atualiza o banco antigo; o
+// #367: toda coluna das colunas de esquema.ColunasNovas também está no CREATE TABLE do
+// 01-estrutura.sql, com a mesma definição (docs/BANCO-DE-DADOS.md). A lista atualiza o banco antigo; o
 // CREATE TABLE cria o banco novo. Os dois têm de chegar às mesmas colunas: só a ordem delas pode mudar.
 
 func TestColunasNovasTambemNoCreateTable(t *testing.T) {
@@ -27,9 +28,9 @@ func TestColunasNovasTambemNoCreateTable(t *testing.T) {
 	if _, err := db.ExecContext(ctx, string(embutido.Estrutura)); err != nil {
 		t.Fatalf("aplicar a estrutura: %v", err)
 	}
-	colunas := esquema.LerColunasNovas(string(embutido.CriarBanco))
+	colunas := esquema.ColunasNovas
 	if len(colunas) == 0 {
-		t.Fatal("nenhuma linha adicionar_coluna_se_ausente no 2-criar-banco.sh embutido")
+		t.Fatal("esquema.ColunasNovas está vazia")
 	}
 	for _, c := range colunas {
 		var n int
@@ -38,7 +39,7 @@ func TestColunasNovasTambemNoCreateTable(t *testing.T) {
 			t.Fatalf("conferir %s.%s: %v", c.Tabela, c.Coluna, err)
 		}
 		if n == 0 {
-			t.Errorf("%s.%s só existe na linha adicionar_coluna_se_ausente: ponha também no CREATE TABLE do 01-estrutura.sql",
+			t.Errorf("%s.%s só existe em esquema.ColunasNovas: ponha também no CREATE TABLE do 01-estrutura.sql",
 				c.Tabela, c.Coluna)
 		}
 	}
@@ -52,11 +53,11 @@ func TestBancoAntigoAtualizadoFicaIgualAoNovo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Banco antigo: o de hoje sem nenhuma das colunas que as linhas do .sh acrescentam, e com outra assinatura.
+	// Banco antigo: o de hoje sem nenhuma das colunas que esquema.ColunasNovas acrescenta, e com outra assinatura.
 	antigo := filepath.Join(pasta, "antigo", "dados", "sql", "FinancasLocal.db")
 	copiarBanco(t, novo, antigo)
 	var remover strings.Builder
-	for _, c := range esquema.LerColunasNovas(string(embutido.CriarBanco)) {
+	for _, c := range esquema.ColunasNovas {
 		fmt.Fprintf(&remover, "ALTER TABLE %s DROP COLUMN %s;\n", c.Tabela, c.Coluna)
 	}
 	executar(t, antigo, remover.String()+"PRAGMA user_version = 7;")
@@ -67,7 +68,7 @@ func TestBancoAntigoAtualizadoFicaIgualAoNovo(t *testing.T) {
 	esperado, obtido := colunasPorTabela(t, novo), colunasPorTabela(t, antigo)
 	for tabela, want := range esperado {
 		if got := obtido[tabela]; !slices.Equal(got, want) {
-			t.Errorf("%s: só no banco antigo atualizado (linha do .sh): %q; só no banco novo (CREATE TABLE): %q",
+			t.Errorf("%s: só no banco antigo atualizado (ColunasNovas): %q; só no banco novo (CREATE TABLE): %q",
 				tabela, faltaEm(got, want), faltaEm(want, got))
 		}
 	}
@@ -75,6 +76,26 @@ func TestBancoAntigoAtualizadoFicaIgualAoNovo(t *testing.T) {
 		if _, ok := esperado[tabela]; !ok {
 			t.Errorf("tabela %s só no banco antigo atualizado", tabela)
 		}
+	}
+}
+
+// Os nomes vão para o ALTER TABLE sem parâmetro (DDL não aceita), então só podem ter letras, números e "_"; a definição
+// não pode ter aspas duplas nem ";" (um comando só), e a mesma coluna não entra duas vezes.
+func TestColunasNovasBemFormadas(t *testing.T) {
+	nome := regexp.MustCompile(`^[A-Za-z0-9_]+$`)
+	vistas := map[string]bool{}
+	for _, c := range esquema.ColunasNovas {
+		if !nome.MatchString(c.Tabela) || !nome.MatchString(c.Coluna) {
+			t.Errorf("nome inválido em %+v", c)
+		}
+		if c.Definicao == "" || strings.ContainsAny(c.Definicao, `";`) {
+			t.Errorf("definição inválida em %+v", c)
+		}
+		chave := c.Tabela + "." + c.Coluna
+		if vistas[chave] {
+			t.Errorf("%s repetida", chave)
+		}
+		vistas[chave] = true
 	}
 }
 

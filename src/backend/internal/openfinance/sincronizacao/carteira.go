@@ -26,8 +26,6 @@ const (
 
 	operacaoCompra int64 = 1
 	operacaoVenda  int64 = 2
-
-	origemOpenFinance int64 = 2
 )
 
 const (
@@ -175,7 +173,7 @@ type ativoLocal struct {
 }
 
 func movimentoDaCorretora(o *operacao) bool {
-	return o.origem == origemOpenFinance && o.pluggyTransacaoId != nil && !strings.HasPrefix(*o.pluggyTransacaoId, prefixoDaPosicao)
+	return o.origem == tipos.OrigemOpenFinance && o.pluggyTransacaoId != nil && !strings.HasPrefix(*o.pluggyTransacaoId, prefixoDaPosicao)
 }
 
 func (r *rodada) lerAtivo(ctx context.Context, ticker string) (*ativoLocal, error) {
@@ -237,7 +235,7 @@ func (r *rodada) importarInvestimento(ctx context.Context, inv investimentoDaCar
 	temDaCorretora := slices.ContainsFunc(ativo.operacoes, movimentoDaCorretora)
 	var seus []*operacao
 	for _, o := range ativo.operacoes {
-		if o.origem != origemOpenFinance {
+		if o.origem != tipos.OrigemOpenFinance {
 			seus = append(seus, o)
 		}
 	}
@@ -506,7 +504,7 @@ func (r *rodada) gravarAtivo(ctx context.Context, ativo *ativoLocal, inv investi
 		for _, n := range m.novas {
 			if _, err := tx.ExecContext(ctx, `INSERT INTO "OperacaoAtivo" ("AtivoId", "Tipo", "Data", "Quantidade", "PrecoUnitario", "Taxas", "Cambio", "Observacao", "Origem",
 				"PluggyTransacaoId", "CriadoEm") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, ativo.id, n.tipo, n.data, n.quantidade, n.preco, n.taxas, tipos.DecimalDeInteiro(1), n.observacao,
-				origemOpenFinance, n.idExterno, agora); err != nil {
+				tipos.OrigemOpenFinance, n.idExterno, agora); err != nil {
 				return err
 			}
 		}

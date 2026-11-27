@@ -6,7 +6,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// descricaoNativa é o OSDescription do .NET no Windows: "Microsoft Windows 10.0.26200" (a versão de verdade, pelo
+// descricaoNativa descreve o sistema no Windows: "Microsoft Windows 10.0.26200" (a versão de verdade, pelo
 // RtlGetVersion, que não depende do manifesto do programa).
 func descricaoNativa() string {
 	v := windows.RtlGetVersion()

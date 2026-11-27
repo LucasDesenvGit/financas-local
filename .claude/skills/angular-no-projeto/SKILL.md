@@ -13,7 +13,7 @@ Você escreve, avalia e revisa o front-end do projeto (`src/frontend`). O que va
 | Assunto | Fonte (a regra está lá) |
 |---|---|
 | UI/UX: as referências obrigatórias (Shneiderman, Nielsen, WCAG 2.2, NN/g, WAI-ARIA) e os padrões já adotados | [`docs/UI-UX.md`](../../../docs/UI-UX.md): leia antes de propor, avaliar ou desenhar |
-| `Eager`, `ApiService`, standalone, signals, pastas de `src/app` | `CLAUDE.md`, "Arquitetura" (`Eager` e `ApiService`), `CONTRIBUINDO.md`, "Convenções de código", [`docs/ARQUITETURA.md`](../../../docs/ARQUITETURA.md) e o teste de arquitetura (`testes/arquitetura/arquitetura.spec.ts`) |
+| `Eager`, `ApiService`, standalone, signals, pastas de `src/app` | `CLAUDE.md`, "Arquitetura" (`Eager` e `ApiService`), [`referencias/estilo.md`](referencias/estilo.md) (standalone, signals, control flow), [`docs/ARQUITETURA.md`](../../../docs/ARQUITETURA.md) e o teste de arquitetura (`testes/arquitetura/arquitetura.spec.ts`) |
 | Mesma origem, sem CORS, nada de terceiros | [ADR 0004](../../../docs/adr/0004-front-end-publicado-no-wwwroot-da-api.md) e [ADR 0034](../../../docs/adr/0034-sem-sri-no-build-do-front-end.md) (CSP sem script inline) |
 | Preferência de exibição no `localStorage` (`financas.*`) | [ADR 0017](../../../docs/adr/0017-preferencias-de-exibicao-no-navegador.md) |
 | Estado na URL, detalhe por navegação, chips de filtro | [ADR 0018](../../../docs/adr/0018-estado-da-tela-na-url-e-detalhe-por-navegacao.md) |
@@ -61,7 +61,7 @@ Em `src/frontend`:
 
 ```bash
 npm run test:tipos                        # a CI roda; o npm test sozinho não confere tipos
-NAVEGADOR=chromium npm run test:afetados  # Jest + build + navegador só no que mudou, com o Chromium da CI (#286)
+NAVEGADOR=chromium npm run test:afetados  # Jest inteiro, build e navegador só no que mudou, com o Chromium da CI (#286)
 npm run test:arquitetura                  # mexeu em import ou criou arquivo: só local (#476), a CI não roda
 ```
 
@@ -71,4 +71,4 @@ npm run test:arquitetura                  # mexeu em import ou criou arquivo: s�
 
 ## Como entregar
 
-Separe o que conferiu no código ou no navegador (com `arquivo:linha` ou o print) do que é julgamento seu, cite o princípio de UI/UX de cada decisão de desenho, diga o que rodou e o resultado (inclusive o que falhou ou não rodou), e o que ficou de fora, com o motivo. PR: o checklist do `CONTRIBUINDO.md` e do modelo de PR; merge só com o "pode" de quem pediu, para aquele PR.
+Separe o que conferiu no código ou no navegador (com `arquivo:linha` ou o print) do que é julgamento seu, cite o princípio de UI/UX de cada decisão de desenho, diga o que rodou e o resultado (inclusive o que falhou ou não rodou), e o que ficou de fora, com o motivo. PR: o checklist do modelo de PR (`.github/pull_request_template.md`); merge só com o "pode" de quem pediu, para aquele PR.

@@ -59,7 +59,7 @@ func ClientePadrao() *Cliente {
 	return c
 }
 
-// errRespostaDoBanco é a resposta que não tem a forma esperada (as exceções do JsonElement no C#).
+// errRespostaDoBanco é a resposta que não tem a forma esperada.
 var errRespostaDoBanco = errors.New("resposta do Banco Central fora do formato")
 
 // obter faz o GET e devolve o status e o corpo.
@@ -88,7 +88,7 @@ func (c *Cliente) obter(ctx context.Context, caminho string) (int, []byte, error
 
 func sucesso(status int) bool { return status >= 200 && status <= 299 }
 
-// textoDoCampo é o GetString do C#: ausente ou null, nil; outro tipo, erro.
+// textoDoCampo: ausente ou null, nil; outro tipo, erro.
 func textoDoCampo(item map[string]json.RawMessage, campo string) (*string, error) {
 	cru, ok := item[campo]
 	if !ok {
@@ -101,7 +101,7 @@ func textoDoCampo(item map[string]json.RawMessage, campo string) (*string, error
 	return texto, nil
 }
 
-// itens lê a lista de objetos da resposta. Item que não é objeto é erro, como o TryGetProperty do C#.
+// itens lê a lista de objetos da resposta. Item que não é objeto é erro.
 func itens(corpo []byte) ([]map[string]json.RawMessage, error) {
 	var lista []map[string]json.RawMessage
 	if err := json.Unmarshal(corpo, &lista); err != nil {

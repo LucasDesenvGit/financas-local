@@ -9,8 +9,8 @@
 api                             96.9
 plataforma/auditoria            100.0
 plataforma/autenticacao         76.0
-plataforma/banco                80.5
-plataforma/banco/esquema        81.8
+plataforma/banco                85.1
+plataforma/banco/esquema        100.0
 movimentacao/bancos             96.4
 patrimonio/cambio               87.9
 patrimonio/carteira             97.3
@@ -18,7 +18,7 @@ ajustes/categorias              87.0
 ajustes/categorizacao           96.1
 movimentacao/cobrancas          92.3
 plataforma/config               86.7
-plataforma/configuracao         89.3
+plataforma/configuracao         93.1
 movimentacao/contas             88.0
 movimentacao/contasagendadas    84.7
 patrimonio/cotacoes             95.2
@@ -33,7 +33,7 @@ planejamento/metas              90.1
 openfinance/openfinance         87.1
 planejamento/orcamentos         89.0
 analises/painel                 93.0
-ajustes/parametros              81.5
+ajustes/parametros              84.0
 movimentacao/parcelas           100.0
 partida                         100.0
 openfinance/pluggy              96.8
@@ -43,7 +43,7 @@ analises/relatorios             96.9
 plataforma/relogio              95.4
 patrimonio/reservas             93.2
 plataforma/respostas            100.0
-plataforma/saude                86.3
+plataforma/saude                100.0
 plataforma/segredos             77.7
 patrimonio/selic                93.8
 plataforma/servidor             88.8
@@ -58,5 +58,4 @@ plataforma/tipos                93.3
 movimentacao/transacoes         97.3
 movimentacao/transferencias     91.5
 
-plataforma/banco/consultas      fora  código gerado pelo sqlc (go generate); as consultas são testadas pelos pacotes que as usam
 plataforma/banco/esquema/gerar  fora  o gerador do go generate, que não vai no executável

@@ -109,7 +109,7 @@ func lerIds(ctx context.Context, tx *sql.Tx) (map[string]bool, error) {
 	return ids, linhas.Err()
 }
 
-// categoriasPorNome é o ToDictionary do C#, sem diferença de maiúsculas. Nome repetido é erro, como a exceção do C#.
+// categoriasPorNome indexa pelo nome, sem diferença de maiúsculas. Nome repetido é erro.
 func categoriasPorNome(ctx context.Context, tx *sql.Tx) (map[string]int64, error) {
 	linhas, err := tx.QueryContext(ctx, `SELECT "Id", "Nome" FROM "Categoria"`)
 	if err != nil {

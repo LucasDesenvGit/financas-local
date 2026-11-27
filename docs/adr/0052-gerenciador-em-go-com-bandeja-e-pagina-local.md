@@ -16,7 +16,7 @@ O que ele precisa continuar fazendo (lista da #276): funcionar com o site deslig
 
 ## Alternativas consideradas
 
-Os protótipos (#276, 24 a 26/10/2026) tinham as mesmas funções (situação, ligar, desligar, ícone com menu) e foram medidos no Windows 11 e no Ubuntu 24.04 do WSL2, com o C# como referência. O resumo (tabelas completas no [README](../../src/gerenciador-go/README.md#medições-dos-protótipos-276)):
+Os protótipos (#276, 24 a 26/10/2026) tinham as mesmas funções (situação, ligar, desligar, ícone com menu) e foram medidos no Windows 11 e no Ubuntu 24.04 do WSL2, com o C# como referência. O resumo (tabelas completas no [README de antes da #790](https://github.com/LucasDesenvGit/financas-local/blob/4d33bedab550681f83563614ad74d1c51c58750f/src/gerenciador-go/README.md#medições-dos-protótipos-276)):
 
 | | C# | A/D: bandeja + página pelo Edge | **E: Wails v3** | C: Fyne 2 |
 |---|---|---|---|---|

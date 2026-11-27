@@ -20,7 +20,7 @@ O Trabalho é o primeiro módulo do site (ADR 0064): mora em `internal/modulos/t
 - **Salário como um campo do emprego**, trocado a cada aumento: simples, mas o mês passado passaria a ser calculado com o salário novo. Rejeitada.
 - **Salário com vigência** (uma linha por salário, com o mês em que começou a valer): o mês usa a última vigência que começou até ele. Escolhida.
 - **Tabelas do INSS e do IRRF no código** (como o Manual, ADR 0026): os testes ficam ao lado, mas a pessoa depende de uma versão nova do site quando o governo muda a tabela no meio do ano. Rejeitada.
-- **Tabelas no banco, por vigência, com os valores oficiais nos dados iniciais** (`02-dados-iniciais.sql`): vêm com o site, valem na hora e podem ser corrigidas sem versão nova. Escolhida.
+- **Tabelas no banco, por vigência, com os valores oficiais num script próprio** (`03-tabelas-oficiais.sql`, idempotente, aplicado pelo site a cada partida, também em banco existente; #805): vêm com o site, valem na hora e podem ser corrigidas sem versão nova. Ficam fora do `02-dados-iniciais.sql`, que só roda em banco novo (rodá-lo de novo recriaria categoria apagada). Escolhida.
 - **O holerite como receita** (somado nos relatórios): o crédito do salário já entra pela transação, e somar os dois dobraria a receita. Rejeitada.
 
 ## Decisão
@@ -108,11 +108,11 @@ Como ficou na #211:
   - Os relatórios não mudam com o Trabalho ligado ou desligado.
 - **Negativas:**
   - Seis tabelas novas no banco (`feat(banco)!`), que existem mesmo com o módulo desligado.
-  - A tabela de cada ano precisa entrar nos dados iniciais a cada ano novo (tarefa de manutenção, com a fonte citada).
+  - A tabela de cada ano precisa entrar no `03-tabelas-oficiais.sql` a cada ano novo (tarefa de manutenção, com a fonte citada).
   - O cálculo é estimativa: a pessoa pode achar que é o valor do holerite. A tela diz que não é, sempre.
 - **Na prática:**
   - Pacotes em `internal/modulos/trabalho` (o módulo), `internal/modulos/trabalho/emprego` e `internal/modulos/trabalho/encargos`; rotas em `/api/trabalho/`.
-  - Tabela nova do governo: uma vigência nova em `banco/02-dados-iniciais.sql` (com a fonte), teste do cálculo com casos da tabela nova.
+  - Tabela nova do governo: uma vigência nova em `banco/03-tabelas-oficiais.sql` (com a fonte), teste do cálculo com casos da tabela nova.
   - Dinheiro sempre em `tipos.Decimal`, nunca `float64`; comparação e soma em Go.
 
 ### Revisão da rescisão (#704, 16/11/2026)

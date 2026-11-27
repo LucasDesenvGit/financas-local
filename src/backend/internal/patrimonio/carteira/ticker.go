@@ -1,4 +1,4 @@
-// Pacote carteira é o CarteiraService do C# (#82): a carteira de renda variável lançada à mão (FIIs, ações, ETFs, BDRs),
+// Pacote carteira (#82): a carteira de renda variável lançada à mão (FIIs, ações, ETFs, BDRs),
 // com preço médio, valorização, proventos e comparação com a Selic, e os investimentos do Open Finance ao lado dela.
 package carteira
 

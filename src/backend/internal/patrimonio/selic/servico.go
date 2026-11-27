@@ -59,7 +59,7 @@ func NovoServico(db *sql.DB, f fonte, r relogio.Relogio, log *slog.Logger) *Serv
 	return &Servico{db: db, config: configuracao.Novo(db, r), fonte: f, relogio: r, log: log}
 }
 
-// avisar registra o aviso com a origem do C#: o SelicService fica em Servicos.Investimentos. Na pausa depois de uma
+// avisar registra o aviso com a origem de sempre (Servicos.Investimentos). Na pausa depois de uma
 // falha, não avisa: ninguém tentou, e a falha que a começou já foi avisada.
 func (s *Servico) avisar(msg string, err error) {
 	if errors.Is(err, errEmPausa) {

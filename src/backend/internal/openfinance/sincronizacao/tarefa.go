@@ -25,7 +25,7 @@ const (
 type Tarefa struct {
 	servico         *Servico
 	log             *slog.Logger
-	ultimaTentativa *time.Time // na memória, como o campo _ultimaTentativa do .NET
+	ultimaTentativa *time.Time // na memória
 }
 
 // NovaTarefa cria a tarefa.

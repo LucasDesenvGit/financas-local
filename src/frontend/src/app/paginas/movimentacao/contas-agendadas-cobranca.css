@@ -1,0 +1,10 @@
+/* Usado pela tela e pelo bloco de sugestões (#777; o `.pago-cofrinho` é só da tela). #379: o selo da cobrança numa
+   coluna; à direita, o nome, a conta e a forma de cobrança empilhados, alinhados. */
+.cobranca { display: flex; align-items: flex-start; gap: 10px; min-width: 15rem; }
+.cobranca > app-selo-servico { flex: none; }
+.cobranca-texto { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.nome-cobranca { min-height: 24px; display: inline-flex; align-items: center; overflow-wrap: anywhere; }
+/* #242: o selo do banco junto do nome da conta, na mesma linha. */
+.conta-da-cobranca { display: inline-flex; align-items: center; gap: 5px; }
+.cobranca-texto .botao { margin-top: 4px; }
+.pago-cofrinho .link { margin-left: 4px; }

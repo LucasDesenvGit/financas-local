@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -173,7 +173,7 @@ func TestPainelComErroDoBanco(t *testing.T) {
 
 // bancoQueFalhaEm é o banco de verdade, mas a consulta que tem o trecho dado devolve erro.
 type bancoQueFalhaEm struct {
-	consultas.DBTX
+	banco.DBTX
 	trecho string
 }
 

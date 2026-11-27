@@ -17,7 +17,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// salvarTransacaoDto é o SalvarTransacaoDto do C#, já lido e validado.
+// salvarTransacaoDto é o corpo da transação, já lido e validado.
 type salvarTransacaoDto struct {
 	ContaId           int64
 	Data              tipos.Data
@@ -59,10 +59,7 @@ func lerSalvarTransacao(w http.ResponseWriter, r *http.Request) (salvarTransacao
 		Status: status.Ou(1), Emergencia: emergencia.Valor, ReservaNome: aparadoOuNulo(reserva.Valor)}, true
 }
 
-// origemManual é a OrigemConta das contas manuais.
-const origemManual = 1
-
-// validarManual é o ValidarManualAsync do C#: nunca transferência (tem a opção própria), e a categoria, se veio, tem
+// validarManual: nunca transferência (tem a opção própria), e a categoria, se veio, tem
 // de existir. Em conta manual, sem cofrinho. Em conta do Open Finance, só o gasto pago direto de um cofrinho (#758,
 // ADR 0063): despesa, com o cofrinho, que não pode ser o Méli Dólar (em dólar). Devolve a mensagem do 400, ou "".
 func (s *Servico) validarManual(ctx context.Context, d salvarTransacaoDto) (string, error) {
@@ -76,13 +73,13 @@ func (s *Servico) validarManual(ctx context.Context, d salvarTransacaoDto) (stri
 		return "Conta inválida.", nil
 	case err != nil:
 		return "", err
-	case origem == origemManual && d.ReservaNome != nil:
+	case origem == tipos.OrigemManual && d.ReservaNome != nil:
 		return "O cofrinho só vale em conta do Open Finance: em conta manual, o gasto sai do saldo da conta.", nil
-	case origem != origemManual && d.ReservaNome == nil:
+	case origem != tipos.OrigemManual && d.ReservaNome == nil:
 		return "Não é possível lançar manualmente em contas do Open Finance. Os lançamentos chegam pela sincronização.", nil
-	case origem != origemManual && d.Tipo == transacoes.Receita:
+	case origem != tipos.OrigemManual && d.Tipo == transacoes.Receita:
 		return "Do cofrinho só se lança despesa.", nil
-	case origem != origemManual && reservas.EhNomeMeliDolar(*d.ReservaNome):
+	case origem != tipos.OrigemManual && reservas.EhNomeMeliDolar(*d.ReservaNome):
 		return reservas.ErrSaidaMeliDolar.Error(), nil
 	}
 	if d.CategoriaId != nil {
@@ -126,7 +123,7 @@ func aplicar(t *transacoes.Transacao, d salvarTransacaoDto, rs *categorizacao.Re
 	t.AtualizadoEm = agora
 }
 
-// aparadoOuNulo é o "string.IsNullOrWhiteSpace(x) ? null : x.Trim()" do C#.
+// aparadoOuNulo apara o texto e devolve nil se ele for vazio ou só espaços.
 func aparadoOuNulo(s *string) *string {
 	if s == nil || strings.TrimSpace(*s) == "" {
 		return nil
@@ -137,7 +134,7 @@ func aparadoOuNulo(s *string) *string {
 
 // criar é o lançamento manual (em conta manual, ou o gasto pago por um cofrinho numa do Open Finance, #758). Depois de gravar, as transferências entre contas suas são
 // conferidas de novo (o AcertarTransferenciasAsync, ADR 0031): um lançamento novo pode formar par com outro. As duas
-// coisas vão numa transação do banco só (no C#, dois SaveChanges).
+// coisas vão numa transação do banco só.
 func (s *Servico) criar(w http.ResponseWriter, r *http.Request) {
 	d, ok := lerSalvarTransacao(w, r)
 	if !ok {
@@ -187,7 +184,7 @@ func (s *Servico) criar(w http.ResponseWriter, r *http.Request) {
 		s.erroInterno(w, r, "ler o lançamento criado", errors.Join(err, errors.New("lançamento criado não encontrado")))
 		return
 	}
-	// O C# manda a URL absoluta (CreatedAtAction); atrás do .NET, o Go não sabe o host, e ninguém lê esse cabeçalho.
+	// O Location vai com a URL relativa: o Go não sabe o host, e ninguém lê esse cabeçalho.
 	w.Header().Set("Location", "/api/transacoes/"+strconv.FormatInt(id, 10))
 	respostas.JSON(w, http.StatusCreated, respostas.ConteudoJSON, lista[0])
 }

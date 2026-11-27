@@ -1,4 +1,4 @@
-// Pacote transferencias é o TransferenciasService do .NET (ADR 0031): transferência só fica fora dos relatórios quando
+// Pacote transferencias (ADR 0031): transferência só fica fora dos relatórios quando
 // é entre contas suas. Vale para a categoria genérica "Transferências", que recebe as transferências do Open Finance.
 // Cada lançamento dela é entre contas suas (fora dos relatórios) quando foi lançado pelo site, o banco informa o mesmo
 // titular, tem o par em outra conta sua (mesmo valor, sinal oposto, até DiasDoPar dias), é dinheiro de uma reserva ou,
@@ -21,7 +21,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/reservas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -32,8 +32,8 @@ const DiasDoPar = 5
 // ChaveMeuNome é o seu nome como aparece nos Pix (Configuracao, #172).
 const ChaveMeuNome = "Transferencias.MeuNome"
 
-// categoriasDeTransferencia são as categorias do tipo transferência, por Id (o C# lê sem ORDER BY: pelo Id).
-func categoriasDeTransferencia(ctx context.Context, q consultas.DBTX) ([]struct {
+// categoriasDeTransferencia são as categorias do tipo transferência, por Id (sem ORDER BY: pelo Id).
+func categoriasDeTransferencia(ctx context.Context, q banco.DBTX) ([]struct {
 	id   int64
 	nome string
 }, error) {
@@ -61,7 +61,7 @@ func categoriasDeTransferencia(ctx context.Context, q consultas.DBTX) ([]struct 
 }
 
 // CategoriaGenerica é a categoria "Transferências" (ou "Transferência"), do tipo transferência.
-func CategoriaGenerica(ctx context.Context, q consultas.DBTX) (*int64, error) {
+func CategoriaGenerica(ctx context.Context, q banco.DBTX) (*int64, error) {
 	lista, err := categoriasDeTransferencia(ctx, q)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func CategoriaGenerica(ctx context.Context, q consultas.DBTX) (*int64, error) {
 // Reclassificar é o ReclassificarAsync: decide, para cada lançamento da categoria genérica, se é entre contas suas ou
 // com outra pessoa, depois de acertar os pagamentos de fatura pela conta. Grava o que mudou (com AtualizadoEm = agora)
 // e devolve quantos mudaram.
-func Reclassificar(ctx context.Context, q consultas.DBTX, agora tipos.DataHora) (int, error) {
+func Reclassificar(ctx context.Context, q banco.DBTX, agora tipos.DataHora) (int, error) {
 	cartoes, err := categorizacao.Cartoes(ctx, q)
 	if err != nil {
 		return 0, err
@@ -166,7 +166,7 @@ func PalavrasDoNome(nome *string) []string {
 	return []string{palavras[0], palavras[len(palavras)-1]}
 }
 
-// CitaONome: a descrição tem o primeiro e o último nome como palavras inteiras. Como o C#, que olha um char por vez,
+// CitaONome: a descrição tem o primeiro e o último nome como palavras inteiras. O texto é olhado um char por vez:
 // um caractere fora do plano básico vira dois espaços (as metades do par UTF-16 não são letra).
 func CitaONome(descricao *string, palavras []string) bool {
 	d := ""
@@ -198,7 +198,7 @@ func CitaONome(descricao *string, palavras []string) bool {
 // pagamentosDeFatura (#172): débito numa conta que é pagamento de fatura (pelo texto ou pela operação) e tem o crédito
 // do mesmo valor num cartão seu, em até DiasDoPar dias, vira transferência na categoria "Pagamento de fatura". Sem
 // esse crédito fica como está ("fatura" também é conta de telefone). Não mexe em categoria escolhida à mão.
-func pagamentosDeFatura(ctx context.Context, q consultas.DBTX, cartoes map[int64]bool, agora tipos.DataHora) (int, error) {
+func pagamentosDeFatura(ctx context.Context, q banco.DBTX, cartoes map[int64]bool, agora tipos.DataHora) (int, error) {
 	if len(cartoes) == 0 {
 		return 0, nil
 	}
@@ -248,7 +248,7 @@ func pagamentosDeFatura(ctx context.Context, q consultas.DBTX, cartoes map[int64
 	slices.SortStableFunc(candidatos, porDataEId)
 	de, ate := candidatos[0].Data.SomarDias(-DiasDoPar), maiorData(candidatos).SomarDias(DiasDoPar)
 
-	// O C# não tem ORDER BY: vale a ordem do índice IX_Transacao_Conta_Data (ContaId, Data DESC), que a consulta dele
+	// Sem ORDER BY: vale a ordem do índice IX_Transacao_Conta_Data (ContaId, Data DESC), que as outras consultas do assunto
 	// e esta usam. Aqui ela fica escrita, sem custo (o plano é o mesmo), para o empate não depender do plano.
 	argumentos = []any{}
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Data", "Valor" FROM "Transacao" WHERE "ContaId" IN (`+
@@ -306,7 +306,7 @@ func pagamentosDeFatura(ctx context.Context, q consultas.DBTX, cartoes map[int64
 
 // pareados: os lançamentos que têm o outro lado em outra conta sua (mesmo valor, sinal oposto, até DiasDoPar dias), em
 // qualquer categoria. Cada lado forma um par só, o de data mais próxima (e, empatando, o de menor Id).
-func pareados(ctx context.Context, q consultas.DBTX, lancamentos []*transacoes.Transacao) (map[int64]bool, error) {
+func pareados(ctx context.Context, q banco.DBTX, lancamentos []*transacoes.Transacao) (map[int64]bool, error) {
 	ordenados := slices.Clone(lancamentos)
 	slices.SortStableFunc(ordenados, porDataEId)
 	de, ate := ordenados[0].Data.SomarDias(-DiasDoPar), maiorData(ordenados).SomarDias(DiasDoPar)
@@ -359,7 +359,7 @@ func pareados(ctx context.Context, q consultas.DBTX, lancamentos []*transacoes.T
 	return usados, nil
 }
 
-// chaveDoValor agrupa pelo valor sem a escala, como a igualdade do decimal do C# (10.0 == 10.00).
+// chaveDoValor agrupa pelo valor sem a escala, como a igualdade do decimal (10.0 == 10.00).
 func chaveDoValor(v tipos.Decimal) string { return v.Decimal().String() }
 
 func porDataEId(a, b *transacoes.Transacao) int {

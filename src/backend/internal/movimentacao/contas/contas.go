@@ -1,4 +1,4 @@
-// Pacote contas são as rotas de /api/contas (o ContasController do C#) e o saldo de cada conta (CalcularSaldosAsync
+// Pacote contas são as rotas de /api/contas e o saldo de cada conta (CalcularSaldosAsync
 // do ContaService). A fatura do cartão fica no pacote faturas, e o banco de cada conta no pacote bancos.
 package contas
 
@@ -16,7 +16,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/bancos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/faturas"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
@@ -28,8 +28,8 @@ const (
 	CartaoCredito = 3
 	Investimento  = 4
 
-	Manual      = 1
-	OpenFinance = 2
+	Manual      = tipos.OrigemManual
+	OpenFinance = tipos.OrigemOpenFinance
 )
 
 const mensagemNaoEncontrado = "Registro não encontrado."
@@ -61,7 +61,7 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 
 func (s *Servico) agora() tipos.DataHora { return tipos.NovaDataHora(s.relogio.Agora()) }
 
-// idDaRota é o {id:int} do C#: o que não é número de 32 bits não casa com a rota, e a resposta é 404 sem corpo.
+// idDaRota: o que não é número de 32 bits não casa com a rota, e a resposta é 404 sem corpo.
 func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(strings.TrimPrefix(r.PathValue("id"), "+"), 10, 32)
 	if err != nil {
@@ -71,7 +71,7 @@ func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	return id, true
 }
 
-// erroInterno é o 500 do .NET, com o erro no log; requisição cancelada não responde nem registra.
+// erroInterno responde 500, com o erro no log; requisição cancelada não responde nem registra.
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
 	if errors.Is(err, context.Canceled) || r.Context().Err() != nil {
 		return
@@ -112,7 +112,7 @@ const colunasDaConta = `c."Id", c."ConexaoBancariaId", c."Nome", c."Tipo", c."Or
 	c."Banco", c."ContaVinculadaId", c."AtualizadoEm", x."NomeInstituicao"`
 
 // lerContas lê as contas que casam com o filtro, com a instituição da conexão.
-func lerContas(ctx context.Context, q consultas.DBTX, onde string, argumentos ...any) ([]conta, error) {
+func lerContas(ctx context.Context, q banco.DBTX, onde string, argumentos ...any) ([]conta, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT `+colunasDaConta+` FROM "Conta" AS c
 		LEFT JOIN "ConexaoBancaria" AS x ON c."ConexaoBancariaId" = x."Id" `+onde, argumentos...)
 	if err != nil {
@@ -137,7 +137,7 @@ func lerContas(ctx context.Context, q consultas.DBTX, onde string, argumentos ..
 }
 
 // lerConta lê uma conta pelo Id; nil quando ela não existe.
-func lerConta(ctx context.Context, q consultas.DBTX, id int64) (*conta, error) {
+func lerConta(ctx context.Context, q banco.DBTX, id int64) (*conta, error) {
 	lista, err := lerContas(ctx, q, `WHERE c."Id" = ?`, id)
 	if err != nil || len(lista) == 0 {
 		return nil, err
@@ -145,9 +145,9 @@ func lerConta(ctx context.Context, q consultas.DBTX, id int64) (*conta, error) {
 	return &lista[0], nil
 }
 
-// NomesDasConexoes é o NomesDasConexoesAsync do C#: o nome de cada conexão, pelos bancos das contas dela (ou, sem conta,
+// NomesDasConexoes: o nome de cada conexão, pelos bancos das contas dela (ou, sem conta,
 // pelos dos investimentos), juntos com " + ". Sem banco conhecido, o nome da instituição, ou "Instituição".
-func NomesDasConexoes(ctx context.Context, q consultas.DBTX) (map[int64]string, error) {
+func NomesDasConexoes(ctx context.Context, q banco.DBTX) (map[int64]string, error) {
 	bancosDasContas, err := bancos.Carregar(ctx, q)
 	if err != nil {
 		return nil, err
@@ -223,9 +223,9 @@ func NomesDasConexoes(ctx context.Context, q consultas.DBTX) (map[int64]string, 
 	return resultado, conexoes.Err()
 }
 
-// Saldos é o CalcularSaldosAsync do C#: o saldo de cada conta. A do Open Finance vale o saldo que a instituição
+// Saldos: o saldo de cada conta. A do Open Finance vale o saldo que a instituição
 // informa; a manual, o saldo inicial mais as transações efetivadas.
-func Saldos(ctx context.Context, q consultas.DBTX) (map[int64]tipos.Decimal, error) {
+func Saldos(ctx context.Context, q banco.DBTX) (map[int64]tipos.Decimal, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Origem", "Saldo", "SaldoInicial" FROM "Conta"`)
 	if err != nil {
 		return nil, fmt.Errorf("ler os saldos: %w", err)
@@ -251,9 +251,9 @@ func Saldos(ctx context.Context, q consultas.DBTX) (map[int64]tipos.Decimal, err
 		return nil, fmt.Errorf("ler os saldos: %w", err)
 	}
 
-	// Dinheiro é texto no banco: a soma é feita aqui, e não com SUM no SQL. O Sum do EF Core é feito no SQLite (o
-	// ef_sum) e volta no formato em que ele grava: -0.25 + -0.75 é -1.0, e não -1.00 (gabarito testdata/saldos.json,
-	// do próprio CalcularSaldosAsync). Por isso o NaEscalaDoBanco na soma.
+	// Dinheiro é texto no banco: a soma é feita aqui, e não com SUM no SQL. A soma sai no formato em que o banco grava (o
+	// ef_sum): -0.25 + -0.75 é -1.0, e não -1.00 (gabarito testdata/saldos.json,
+	// do cálculo de saldos). Por isso o NaEscalaDoBanco na soma.
 	linhas, err = q.QueryContext(ctx, `SELECT t."ContaId", t."Valor" FROM "Transacao" AS t
 		INNER JOIN "Conta" AS c ON t."ContaId" = c."Id" WHERE c."Origem" = 1 AND t."Status" = 1`)
 	if err != nil {
@@ -315,7 +315,7 @@ func (s *Servico) extras(ctx context.Context) (extras, error) {
 	return e, nil
 }
 
-// ContaDto, na ordem do record do C#.
+// ContaDto, na ordem dos campos do JSON.
 type ContaDto struct {
 	Id                      int64          `json:"id"`
 	Nome                    string         `json:"nome"`
@@ -343,7 +343,7 @@ type ContaDto struct {
 	LimiteDiferencaAvaliada *tipos.Decimal `json:"limiteDiferencaAvaliada"`
 }
 
-// paraDto é o ParaDto do controller. atualizadoEm é o carimbo como o C# o tem: lido do banco (sem fuso) ou o que ele
+// paraDto é o ParaDto do controller. atualizadoEm é o carimbo o tem: lido do banco (sem fuso) ou o que ele
 // acabou de gravar (DateTime.UtcNow, com "Z").
 func paraDto(c conta, ex extras, atualizadoEm json.Marshaler) ContaDto {
 	saldo, ok := ex.saldos[c.Id]

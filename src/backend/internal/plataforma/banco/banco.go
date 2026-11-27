@@ -16,6 +16,13 @@ import (
 	_ "modernc.org/sqlite" // registra o driver "sqlite" (Go puro, sem cgo)
 )
 
+// DBTX é o que as consultas precisam: um *sql.DB ou uma *sql.Tx. Quem recebe o DBTX roda na transação de quem chama.
+type DBTX interface {
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
 // EsperaSeOcupado é quanto uma conexão espera quando outra está gravando, em milissegundos. É o mesmo tempo que o
 // Microsoft.Data.Sqlite espera por padrão (30 s) antes de desistir de um banco ocupado.
 const EsperaSeOcupado = 30_000

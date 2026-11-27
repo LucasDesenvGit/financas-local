@@ -7,7 +7,6 @@
 # Formato: pacote e, depois de um espaço, o motivo.
 
 internal/api                    só junta as rotas dos assuntos num ServeMux; quem confere o que cada rota faz é o contrato
-internal/plataforma/banco/consultas        código gerado pelo sqlc (go generate em dia na CI); as consultas são testadas pelos assuntos
 internal/plataforma/banco/esquema/embutido só o //go:embed dos scripts de banco/
 internal/plataforma/banco/esquema/gerar    o programa do go generate que copia os scripts; a CI confere que a cópia está em dia
 internal/plataforma/saude                  o diagnóstico GET /api/go/saude, sem regra; conferido pelo contrato 90-go

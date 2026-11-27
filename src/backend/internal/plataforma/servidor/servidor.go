@@ -30,7 +30,7 @@ type Opcoes struct {
 	API http.Handler
 	// AoEscutar, se não for nil, é chamada com o endereço de verdade (a porta escolhida, se o endereço pedido era
 	// ":0") quando o servidor já aceita conexões. É o sinal de "subiu" para o teste, no lugar de tentar de novo até
-	// responder (#458); o modo atrás do .NET faz o mesmo com o AvisarPorta.
+	// responder (#458).
 	AoEscutar func(endereco string)
 }
 
@@ -44,8 +44,8 @@ func NovoHandler(o Opcoes) (http.Handler, error) {
 		return nil, errPastaSemIndex
 	}
 
-	// As rotas de cada assunto entram neste ServeMux (ADR 0049). O "/" é o MapFallback("/api/{**caminho}") do
-	// .NET: 404 sem corpo.
+	// As rotas de cada assunto entram neste ServeMux (ADR 0049). O "/" (rota que ninguém atende) responde:
+	// 404 sem corpo.
 	var api http.Handler = o.API
 	if api == nil {
 		semRotas := http.NewServeMux()
@@ -53,8 +53,8 @@ func NovoHandler(o Opcoes) (http.Handler, error) {
 		api = semRotas
 	}
 
-	// O caminho é limpo aqui ("/a/../b" vira "/b"), como o Kestrel faz em silêncio: o ServeMux responderia com um
-	// redirecionamento. Atenção para as próximas etapas: o ServeMux diferencia maiúsculas, e a rota do .NET não.
+	// O caminho é limpo aqui ("/a/../b" vira "/b") em silêncio: o ServeMux responderia com um
+	// redirecionamento. Atenção para as próximas etapas: o ServeMux diferencia maiúsculas, e a rota do site não.
 	rotas := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = limparCaminho(r.URL.Path)
 		if ehAPI(r.URL.Path) {
