@@ -158,12 +158,14 @@ jobs:
           # Gravar, acrescentar, atributos, apagar, trocar permissao ou dono, e GENERIC_ALL/GENERIC_WRITE.
           $escrita = 0x2 -bor 0x4 -bor 0x10 -bor 0x40 -bor 0x100 -bor 0x10000 -bor 0x40000 -bor 0x80000 -bor 0x10000000 -bor 0x40000000
           $tipo = [Security.Principal.SecurityIdentifier]
+          # So as pastas que o Proteger-Pasta protege quebram a heranca; as de dentro (dados\chaves) herdam delas.
+          $raizes = "publicado\api", "publicado\api-anterior", "publicado\preparo", "dados", "backups"
           foreach ($p in "publicado\api", "publicado\api\financas-go.exe", "publicado\api-anterior", "publicado\preparo",
                          "dados", "dados\chaves", "dados\sql\FinancasLocal.db", "backups") {
             $acl = Get-Acl -LiteralPath $p
             $dono = $acl.GetOwner($tipo).Value
             if ($dono -ne $admins -and $dono -ne $sistema) { throw "${p}: o dono e $dono" }
-            if ((Test-Path -LiteralPath $p -PathType Container) -and -not $acl.AreAccessRulesProtected) { throw "${p}: ainda herda da pasta de cima" }
+            if ($raizes -contains $p -and -not $acl.AreAccessRulesProtected) { throw "${p}: ainda herda da pasta de cima" }
             foreach ($r in $acl.GetAccessRules($true, $true, $tipo)) {
               $sid = $r.IdentityReference.Value
               if ($r.AccessControlType -ne "Allow" -or $sid -eq $sistema -or $sid -eq $admins) { continue }
