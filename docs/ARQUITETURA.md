@@ -15,7 +15,7 @@ flowchart TB
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]<br/>Open Finance: extratos, saldos<br/>e investimentos dos bancos"]
     bcb["Banco Central<br/>[Sistema de fora]<br/>Selic e PTAX"]
     cotacoes["Yahoo Finance<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
-    mercado["Mercado Bitcoin<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
+    mercado["Binance<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
     github["GitHub<br/>[Sistema de fora]<br/>Versões novas"]
     noticias["G1, BBC News Brasil e TabNews<br/>[Sistemas de fora]<br/>Notícias, só com o módulo ligado"]
     celular["Seu celular<br/>[Pessoa, na rede de casa]<br/>Só com o acesso pelo celular ligado"]
@@ -52,7 +52,7 @@ flowchart TB
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]"]
     bcb["Banco Central: Selic e PTAX<br/>[Sistema de fora]"]
     cotacoes["Yahoo Finance<br/>[Sistema de fora]"]
-    mercado["Mercado Bitcoin<br/>[Sistema de fora]"]
+    mercado["Binance<br/>[Sistema de fora]"]
     github["GitHub<br/>[Sistema de fora]"]
     noticias["G1, BBC e TabNews<br/>[Sistemas de fora]"]
 
@@ -243,7 +243,7 @@ As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice s
 | Código Go com as camadas dentro de cada assunto | Uma mudança num assunto fica num pacote; a regra não conhece HTTP; o mapa de contextos é conferido por teste | [0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Back-end em Go, trocado aos poucos | Um executável só, mais leve; a troca do .NET foi um assunto por vez, com volta fácil, e terminou na #86 | [0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
 | CSP restritiva, sem script inline | Nada de terceiros carregado no site | [0034](adr/0034-sem-sri-no-build-do-front-end.md) |
-| Saídas de rede só por HTTPS, com o mínimo de dados | Cada domínio novo pede uma ADR e entra na [tabela](SEGURANCA.md#o-que-sai-para-a-internet) | [0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md), por exemplo |
+| Saídas de rede só por HTTPS, com o mínimo de dados | Cada domínio novo pede uma ADR e entra na [tabela](SEGURANCA.md#o-que-sai-para-a-internet) | [0073](adr/0073-cotacao-de-criptomoedas-pela-binance.md), por exemplo |
 
 ## Back-end — `src/backend`
 

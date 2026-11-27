@@ -1092,7 +1092,7 @@ export const MANUAL: CapituloManual[] = [
           'As abas separam o Resumo, os FIIs, a Renda variável e o que veio do Open Finance.',
           'No Resumo, o bloco “Câmbio” mostra quanto valem em reais 1 dólar, 1 euro e 100 ienes, pela PTAX de compra do Banco Central (a mesma que o site usa para converter), com a bandeira do país e a data de cada cotação. Em “Mais 7 moedas” ficam as outras que o Banco Central publica: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca; o site lembra se você deixou aberto. A cotação é de dia útil e se atualiza sozinha; sem internet, fica a última guardada, com a data dela. Ela não some com “ocultar valores”, porque não é um dado seu.',
           '“Mais análises”, no fim do Resumo, mostra a distribuição por tipo de investimento (rosca e lista com os valores) e a rentabilidade de cada ativo comparada com a Selic. Sem ações ou FIIs em carteira, a distribuição ocupa a largura toda.',
-          'Logo abaixo, o bloco “Criptomoedas” mostra o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether (o “dólar digital”): o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia. Cada moeda diz de onde veio a cotação e quando (“Mercado Bitcoin · 22/10 16:00”), como o “PTAX de …” do câmbio; com mais de 2 horas, a linha diz “desatualizada”. A variação em 24 h aparece depois que o site tiver a cotação de um dia antes. É preço de referência de uma corretora e muda muito: confira na sua corretora antes de comprar ou vender. Também não some com “ocultar valores”.'
+          'Logo abaixo, o bloco “Criptomoedas” mostra o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether (o “dólar digital”): o último negócio na Binance, que o site guarda sozinho a cada 30 minutos, 24 horas por dia. Cada moeda diz de onde veio a cotação e quando (“Binance · 22/10 16:00”), como o “PTAX de …” do câmbio; com mais de 2 horas, a linha diz “desatualizada”. A variação em 24 h aparece depois que o site tiver a cotação de um dia antes. É preço de referência de uma corretora e muda muito: confira na sua corretora antes de comprar ou vender. Também não some com “ocultar valores”.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['precoMedio', 'dy', 'dyNaCompra', 'yieldOnCost', 'ptax']
@@ -1561,7 +1561,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber exatamente para onde vão os seus dados.',
         passos: [
           'Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.',
-          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance); e o pedido das cotações de criptomoedas ao Mercado Bitcoin, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
+          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance); e o pedido das cotações de criptomoedas à Binance, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
           'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
           'Não sai: valores, quantidades e dados pessoais.',
           'Com o acesso pelo celular ligado (Configurações › Segurança), o site também atende os aparelhos da sua rede de casa, que chegam à tela de entrar. Nada vai para a internet por causa disso, e fora de casa o celular não chega ao site.',
@@ -1637,38 +1637,3 @@ export const MANUAL: CapituloManual[] = [
     ]
   }
 ];
-
-/** Capítulo (e seção) do manual da tela de uma URL ("/transacoes?x=1" → transações); null fora das telas do menu. */
-export function ajudaDaUrl(url: string): { capitulo: string; secao?: string } | null {
-  // #211: a tela de um módulo tem dois trechos ("trabalho/holerites"); vale o mais específico.
-  const partes = url.split(/[?#]/)[0].split('/').filter(Boolean);
-  return AJUDA_POR_ROTA[partes.slice(0, 2).join('/')] ?? AJUDA_POR_ROTA[partes[0] ?? ''] ?? null;
-}
-
-/**
- * "Ajuda" na barra de cima: a seção do manual que explica a tela aberta (pelo primeiro trecho da rota).
- * Toda rota do menu precisa estar aqui (teste de regressão).
- */
-export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }> = {
-  painel: { capitulo: 'relatorios', secao: 'painel' },
-  anual: { capitulo: 'relatorios', secao: 'visao-anual' },
-  transacoes: { capitulo: 'transacoes' },
-  contas: { capitulo: 'contas' },
-  orcamentos: { capitulo: 'orcamentos' },
-  metas: { capitulo: 'metas' },
-  'contas-a-pagar': { capitulo: 'contas-a-pagar' },
-  investimentos: { capitulo: 'investimentos' },
-  emprestimos: { capitulo: 'investimentos', secao: 'emprestimos' },
-  relatorios: { capitulo: 'relatorios', secao: 'relatorios-tela' },
-  projecao: { capitulo: 'relatorios', secao: 'projecao' },
-  categorias: { capitulo: 'categorias' },
-  configuracoes: { capitulo: 'configuracoes' },
-  trabalho: { capitulo: 'trabalho', secao: 'salario' },
-  'trabalho/holerites': { capitulo: 'trabalho', secao: 'holerites' },
-  'trabalho/decimo-terceiro': { capitulo: 'trabalho', secao: 'decimo-terceiro' },
-  'trabalho/ferias': { capitulo: 'trabalho', secao: 'ferias' },
-  'trabalho/fgts': { capitulo: 'trabalho', secao: 'fgts' },
-  'trabalho/rescisao': { capitulo: 'trabalho', secao: 'rescisao' },
-  noticias: { capitulo: 'noticias' },
-  'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
-};

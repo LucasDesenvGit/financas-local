@@ -2,7 +2,7 @@ import { Component, DestroyRef, ElementRef, HostListener, Injector, afterNextRen
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { ajudaDaUrl } from '../paginas/manual/manual-conteudo';
+import { ajudaDaUrl } from '../paginas/manual/ajuda-por-rota';
 import { BotaoPrivacidadeComponent } from './botao-privacidade.component';
 import { CalculadoraComponent } from './calculadora.component';
 import { StatusSincronizacaoComponent } from './status-sincronizacao.component';
