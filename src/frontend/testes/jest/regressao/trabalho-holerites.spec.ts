@@ -2,7 +2,7 @@ import { SituacaoHolerite, TipoLancamentoHolerite as T } from '../../../src/app/
 import {
   ehPorHora, ehProvento, estadoDoFormulario, lancamentoNovo, paraSalvar, rotuloTipo, textoSituacao, trocarTipo
 } from '../../../src/app/paginas/trabalho/holerites';
-import { ajudaDaUrl } from '../../../src/app/paginas/manual/manual-conteudo';
+import { ajudaDaUrl } from '../../../src/app/paginas/manual/ajuda-por-rota';
 
 /** #211 (ADR 0065): as regras da tela Trabalho › Holerites (o cálculo é da API, testado no Go). */
 describe('Trabalho › Holerites (#211)', () => {
