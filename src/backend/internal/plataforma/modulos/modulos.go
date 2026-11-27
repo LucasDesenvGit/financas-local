@@ -21,7 +21,6 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -89,7 +88,6 @@ var idValido = regexp.MustCompile(`^[a-z]+$`)
 type Catalogo struct {
 	db      *sql.DB
 	conf    *configuracao.Servico
-	q       *consultas.Queries
 	relogio relogio.Relogio
 	log     *slog.Logger
 	modulos []Modulo
@@ -100,7 +98,7 @@ type Catalogo struct {
 
 // NovoCatalogo devolve o catálogo vazio: cada módulo entra com Adicionar, no internal/api.
 func NovoCatalogo(db *sql.DB, r relogio.Relogio, log *slog.Logger) *Catalogo {
-	return &Catalogo{db: db, conf: configuracao.Novo(db, r), q: consultas.New(db), relogio: r, log: log, porID: map[string]Modulo{},
+	return &Catalogo{db: db, conf: configuracao.Novo(db, r), relogio: r, log: log, porID: map[string]Modulo{},
 		sinais: map[string][]chan struct{}{}}
 }
 
@@ -163,13 +161,17 @@ func (c *Catalogo) Definir(ctx context.Context, r *http.Request, id string, liga
 		evento = EventoLigado
 	}
 	valor := strconv.FormatBool(ligado)
+	var estava bool // antes do pedido: só a passagem de desligado para ligado acorda a tarefa (#750)
 	err := banco.EmTransacao(ctx, c.db, func(tx *sql.Tx) error {
-		q := c.q.WithTx(tx)
-		login, err := auditoria.Login(ctx, q)
+		var err error
+		if estava, err = c.conf.ComTx(tx).ObterBool(ctx, Chave(id), c.porID[id].Info().LigadoPorPadrao); err != nil {
+			return err
+		}
+		login, err := auditoria.Login(ctx, tx)
 		if err != nil {
 			return err
 		}
-		if err := auditoria.Registrar(ctx, q, r, tipos.NovaDataHora(c.relogio.Agora()), evento+" ("+id+")", login); err != nil {
+		if err := auditoria.Registrar(ctx, tx, r, tipos.NovaDataHora(c.relogio.Agora()), evento+" ("+id+")", login); err != nil {
 			return err
 		}
 		return c.conf.ComTx(tx).Definir(ctx, Chave(id), &valor)
@@ -177,7 +179,7 @@ func (c *Catalogo) Definir(ctx context.Context, r *http.Request, id string, liga
 	if err != nil {
 		return Situacao{}, fmt.Errorf("gravar o módulo %s: %w", id, err)
 	}
-	if ligado {
+	if ligado && !estava { // ligar de novo o que já está ligado não roda outra busca na internet
 		c.acordar(id)
 	}
 	lista, err := c.Listar(ctx)

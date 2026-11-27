@@ -17,15 +17,6 @@ func dec(texto string) tipos.Decimal { return testeapoio.Valor(texto) }
 
 func dia(ano int, mes time.Month, d int) tipos.Data { return testeapoio.Dia(ano, mes, d) }
 
-// textoDe escreve uma lista de decimais como o JSON a escreve, separados por barra: a escala também é conferida.
-func textoDe(valores []tipos.Decimal) string {
-	partes := make([]string, len(valores))
-	for i, v := range valores {
-		partes[i] = v.String()
-	}
-	return strings.Join(partes, "|")
-}
-
 func comoJSON(t *testing.T, v any) string {
 	t.Helper()
 	dados, err := json.Marshal(v)

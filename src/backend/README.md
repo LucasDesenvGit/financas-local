@@ -6,12 +6,12 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 
 | Pasta | O que tem |
 |---|---|
-| `cmd/financas` | o ponto de entrada: as opções, a ligação das peças e o subcomando `gerar-certificado` |
+| `cmd/financas` | o ponto de entrada: as opções, a ligação das peças e o subcomando `preparar-https` |
 | `cmd/versao` | o cálculo da versão (ADR 0070): a base do `Directory.Build.props` mais um passo por merge do `develop`; também monta o CHANGELOG de `changelog.d/` (`-changelog`, `-publicar`). Só a biblioteca padrão e o `git` |
 | `internal/api` | o `ServeMux` com as rotas de todos os assuntos : uma linha por assunto |
 | `internal/plataforma/saude` | `GET /api/go/saude`, o exemplo que passa pelo caminho todo (login → rota → banco), com a versão e o relógio |
 | `internal/patrimonio/cambio` | câmbio pela PTAX (#81, ADR 0007): cliente do Banco Central, conversor para reais, `/api/cambio` e a tarefa de 15 em 15 minutos |
-| `internal/patrimonio/cripto` | criptomoedas pelo Mercado Bitcoin (#81, ADR 0048): cliente, `/api/cripto` e a tarefa de 30 em 30 minutos |
+| `internal/patrimonio/cripto` | criptomoedas pela Binance (#81, ADR 0073): cliente, `/api/cripto` e a tarefa de 30 em 30 minutos |
 | `internal/ajustes/categorias` | categorias, regras de categorização e regras de descrição (#77): as 14 rotas de `/api/categorias`, `/api/regras` (com o "reaplicar") e `/api/regras-descricao` |
 | `internal/movimentacao/contas` | contas (#77): as 9 rotas de `/api/contas` e o saldo de cada conta, com a escala de casas decimais que o banco guarda |
 | `internal/movimentacao/faturas` | a fatura do cartão (#77): o ciclo (#144), o mês de cobrança de cada lançamento (#167), o pago e a situação (#251) e a fatura do mês de cada cartão (#323); o painel (#80) usa o mesmo |
@@ -54,7 +54,7 @@ O site do Finanças Local: serve o Angular e a `/api`, num executável só (`fin
 | `internal/ajustes/parametros` | a Parametrização do site (#76): o catálogo, a gravação que valida tudo antes e o diagnóstico |
 | `internal/plataforma/segredos` | os segredos (#76): AES-256-GCM com prefixo `v2:`, chave protegida por DPAPI no Windows e `0600` no Linux |
 | `internal/plataforma/config` | leitura do `appsettings.json` e do `appsettings.Production.json` da instalação |
-| `internal/plataforma/banco` | SQLite no formato do banco (o de quando o EF Core gravava), transação, consultas do `sqlc`, esquema ao iniciar ([README](internal/plataforma/banco/README.md)) |
+| `internal/plataforma/banco` | SQLite no formato do banco (o de quando o EF Core gravava), transação, esquema ao iniciar ([README](internal/plataforma/banco/README.md)) |
 | `internal/plataforma/tipos` | `Decimal`, `Data`, `DataHora`, `Guid` no formato em que o banco os guarda (texto) |
 | `internal/plataforma/relogio` | fuso de Brasília, injetável; o relógio de teste do contrato (`APartirDe`, #363) |
 | `internal/plataforma/versao` | a versão, gravada na compilação pelo `-ldflags` |
@@ -89,7 +89,7 @@ O mesmo executável roda como serviço nos dois sistemas (#84), sem mudar de op�
 
 ## Certificado
 
-`financas-go gerar-certificado -pfx <caminho>`, com a senha na entrada padrão, é o passo do certificado da instalação: reaproveita o `.pfx` que abre com a senha e vale por mais de 30 dias, gera outro no caso contrário (1 ano, para `127.0.0.1`, `::1` e `localhost`) e grava a parte pública no `.pem` ao lado. Escreve `gerado` ou `reaproveitado`.
+`financas-go preparar-https -pfx <caminho> -config <arquivo>` (#775) é o passo do HTTPS da instalação, o mesmo nos scripts, no `.msi` e na CI: lê a senha do `.pfx` do `-config` (ou do `-config-atual`) ou cria uma, reaproveita o `.pfx` que abre com ela e vale por mais de 30 dias ou gera outro (1 ano, para `127.0.0.1`, `::1` e `localhost`), grava a parte pública no `.pem` ao lado e o `-config` com o certificado e a senha (e, se pedidos, `-banco`, `-chaves` e `-url`). Escreve `gerado` ou `reaproveitado`. Pôr o certificado na loja de confiança é do instalador de cada sistema. Os nomes `Kestrel:Endpoints:Https:*` do arquivo são os que as instalações já feitas trazem; ficam em `cmd/financas/https.go`.
 
 ## Rodar
 
@@ -133,7 +133,7 @@ Teste de mutação (#373, #456, ADR 0051): no PR, o workflow "Teste de mutação
 python3 ../../scripts/ci/go/mutacao-go.py internal/ajustes/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
 ```
 
-A CI roda todos menos os de ponta a ponta no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`); o contrato, no job "contrato", e o site ligando, no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
+A CI roda todos menos os de ponta a ponta no job "Go" (também quando muda o `banco/`); o contrato, no job "contrato", e o site ligando, no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
 
 **Testes de contrato (#72):** mudou o back-end? Rode `testes/contrato/rodar.sh` (Linux ou Git Bash do Windows; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe como o serviço instalado. Os esperados são a regressão do site (os primeiros vieram do .NET, até a #86): um esperado só muda com o motivo no PR (ADR 0051). A CI roda o contrato no job "contrato".
 

@@ -1,5 +1,5 @@
-// Pacote partida são as rotinas que acertam dados toda vez que a API sobe (Program.cs do .NET, logo depois do
-// EsquemaBanco.Aplicar): sete, sempre nesta ordem, que importa (#444). As seis primeiras vêm do .NET.
+// Pacote partida são as rotinas que acertam dados toda vez que a API sobe (logo depois do
+// EsquemaBanco.Aplicar): sete, sempre nesta ordem, que importa (#444).
 //
 //  1. regras padrão novas, uma vez por banco, com marca em Configuracao (ADR 0038, #172);
 //  2. entrada no cartão é estorno ou pagamento de fatura, nunca receita (ADR 0036, #166);
@@ -14,8 +14,7 @@
 // só: a sincronização (#83) chama as mesmas depois de cada rodada. Aqui só ficam a ordem, a transação de cada rotina e o
 // que fazer quando uma falha.
 //
-// Quem chama é o cmd/financas, só quando o Go está na frente (sozinho, com -rotinas-de-partida): atrás do .NET, quem
-// roda as rotinas é o .NET, e rodar nos dois seria acertar duas vezes (ADR 0049, #297).
+// Quem chama é o cmd/financas, só quando o Go está na frente (sozinho, com -rotinas-de-partida).
 package partida
 
 import (
@@ -64,7 +63,7 @@ type rotina struct {
 	executar func(ctx context.Context) (int, error)
 }
 
-// Executar roda as sete rotinas, na ordem do .NET (a sétima é do Go), e devolve o que cada uma fez (só as que rodaram). Erro numa rotina não
+// Executar roda as sete rotinas, na ordem, e devolve o que cada uma fez (só as que rodaram). Erro numa rotina não
 // derruba a subida: é registrado como aviso (que vai para Configurações › Erros) e a partida segue para a próxima (#444);
 // a que falhou desfez o que fez e roda de novo na próxima partida. Diferente do try/catch único do Program.cs, que para
 // na primeira: cada rotina tem a transação dela, então seguir não deixa nada pela metade, e uma rotina quebrada não
@@ -73,7 +72,7 @@ func Executar(ctx context.Context, o Opcoes) []Resultado {
 	return executar(ctx, o.Log, rotinas(o))
 }
 
-// rotinas são as sete, na ordem. As cinco primeiras e a sétima gravam numa transação cada uma (o SaveChanges do .NET entre
+// rotinas são as sete, na ordem. As cinco primeiras e a sétima gravam numa transação cada uma (entre
 // uma e outra); a sexta tem a transação dela, como o ClassificarTrocosSemDuvidaAsync, que grava sozinho.
 func rotinas(o Opcoes) []rotina {
 	emTransacao := func(fn func(ctx context.Context, tx *sql.Tx) (int, error)) func(context.Context) (int, error) {
@@ -113,7 +112,7 @@ func rotinas(o Opcoes) []rotina {
 }
 
 // executar roda as rotinas na ordem, todas, mesmo quando uma falha; para só com o contexto cancelado, em que as seguintes
-// falhariam do mesmo jeito. Pânico em rotina vira erro (o .NET pega toda exceção): a API sobe do mesmo jeito.
+// falhariam do mesmo jeito. Pânico em rotina vira erro (toda exceção é pega): a API sobe do mesmo jeito.
 func executar(ctx context.Context, log *slog.Logger, lista []rotina) []Resultado {
 	resultados := make([]Resultado, 0, len(lista))
 	for _, r := range lista {

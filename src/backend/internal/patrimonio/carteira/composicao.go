@@ -51,7 +51,7 @@ func (s *Servico) posicoesEmReais(ctx context.Context) (tipos.Decimal, map[strin
 	return soma, tickers, conversor, nil
 }
 
-// Composicao são os valores de investimento do patrimônio, em reais (o ComposicaoInvestimentos do C#).
+// Composicao são os valores de investimento do patrimônio, em reais.
 type Composicao struct {
 	Carteira, OpenFinanceRendaVariavel, OpenFinanceDemais, Reservas tipos.Decimal
 	MoedasSemCotacao                                                []string
@@ -67,7 +67,7 @@ func (c Composicao) Total() tipos.Decimal {
 	return tipos.Somar(tipos.Somar(tipos.Somar(c.Carteira, c.OpenFinanceRendaVariavel), c.OpenFinanceDemais), c.Reservas)
 }
 
-// Composicao é o ComposicaoAsync do C# (#80): a carteira pela última cotação (ou o custo), os investimentos do Open
+// Composicao (#80): a carteira pela última cotação (ou o custo), os investimentos do Open
 // Finance das conexões ativas em reais, sem repetir os que já estão na carteira pelo código (a moeda sem cotação fica
 // de fora e é anotada), e as reservas estimadas pelo extrato.
 func (s *Servico) Composicao(ctx context.Context) (Composicao, error) {

@@ -18,7 +18,7 @@ cd financas-local/scripts/geral
 ```bash
 cd financas-local/scripts/geral
 ./1-preparar-ambiente.sh     # Go, Node.js e sqlite3 (poucos minutos)
-./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa
+./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa (o Go aplica o esquema)
 ./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
 ```
 
@@ -48,6 +48,7 @@ scripts/linux/instalar-gerenciador.sh
 - **Iniciar com o sistema:** deixa o ícone na bandeja e avisa se o site cair. No GNOME, a bandeja precisa da extensão AppIndicator; sem ela, a janela abre minimizada.
 - **No terminal:** `publicado/gerenciador-go/financas-gerenciador --situacao` mostra a situação sem abrir a janela.
 - **Sem login:** a instalação também avisa, no fim, quando o *linger* está desligado.
+- **Terminal de um app em Flatpak** (ex.: o VS Code no Bazzite): os scripts chamam o `systemctl` do host pelo `flatpak-spawn --host` (#789); o registro do serviço sai com `flatpak-spawn --host journalctl --user -u financaslocal.service`. O gerenciador não compila dentro do Flatpak: instale-o num terminal do host ou numa toolbox.
 
 ### De onde vem cada coisa
 

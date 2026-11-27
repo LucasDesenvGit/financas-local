@@ -1092,7 +1092,7 @@ export const MANUAL: CapituloManual[] = [
           'As abas separam o Resumo, os FIIs, a Renda variável e o que veio do Open Finance.',
           'No Resumo, o bloco “Câmbio” mostra quanto valem em reais 1 dólar, 1 euro e 100 ienes, pela PTAX de compra do Banco Central (a mesma que o site usa para converter), com a bandeira do país e a data de cada cotação. Em “Mais 7 moedas” ficam as outras que o Banco Central publica: libra, franco suíço, dólar canadense, dólar australiano e as coroas dinamarquesa, norueguesa e sueca; o site lembra se você deixou aberto. A cotação é de dia útil e se atualiza sozinha; sem internet, fica a última guardada, com a data dela. Ela não some com “ocultar valores”, porque não é um dado seu.',
           '“Mais análises”, no fim do Resumo, mostra a distribuição por tipo de investimento (rosca e lista com os valores) e a rentabilidade de cada ativo comparada com a Selic. Sem ações ou FIIs em carteira, a distribuição ocupa a largura toda.',
-          'Logo abaixo, o bloco “Criptomoedas” mostra o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether (o “dólar digital”): o último negócio no Mercado Bitcoin, que o site guarda sozinho a cada 30 minutos, 24 horas por dia. Cada moeda diz de onde veio a cotação e quando (“Mercado Bitcoin · 22/10 16:00”), como o “PTAX de …” do câmbio; com mais de 2 horas, a linha diz “desatualizada”. A variação em 24 h aparece depois que o site tiver a cotação de um dia antes. É preço de referência de uma corretora e muda muito: confira na sua corretora antes de comprar ou vender. Também não some com “ocultar valores”.'
+          'Logo abaixo, o bloco “Criptomoedas” mostra o preço em reais do Bitcoin, do Ethereum, da Solana e do Tether (o “dólar digital”): o último negócio na Binance, que o site guarda sozinho a cada 30 minutos, 24 horas por dia. Cada moeda diz de onde veio a cotação e quando (“Binance · 22/10 16:00”), como o “PTAX de …” do câmbio; com mais de 2 horas, a linha diz “desatualizada”. A variação em 24 h aparece depois que o site tiver a cotação de um dia antes. É preço de referência de uma corretora e muda muito: confira na sua corretora antes de comprar ou vender. Também não some com “ocultar valores”.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['precoMedio', 'dy', 'dyNaCompra', 'yieldOnCost', 'ptax']
@@ -1325,9 +1325,9 @@ export const MANUAL: CapituloManual[] = [
           'Abra Trabalho › Holerites, escolha o mês e clique em “Abrir o holerite do mês”. O salário vem do Trabalho › Salário, proporcional se você entrou ou saiu no meio do mês (o mês tem 30 dias, como na folha).',
           'Os lançamentos que você marcou “Repetir nos próximos meses” no último holerite (plano de saúde, pensão) já vêm no mês novo.',
           '“+ Lançamento” acrescenta: horas extras (as horas e o percentual, 50% ou 100%), adicional noturno (as horas, 20% se não disser), outro provento (bônus, PLR, comissão, ajuda de custo: marque se tem INSS e IRRF), vale-transporte (o custo do mês; o desconto fica em até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outro desconto (marque se deduz do IR).',
-          '“Dias úteis” e “Domingos e feriados” vêm do calendário: segunda a sábado; os domingos e os feriados nacionais de data fixa (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12). Acerte os outros feriados (os estaduais, os municipais e os de data móvel). No mês da admissão ou da saída, conte só os dias do período em que você trabalhou. Eles calculam o DSR, o descanso pago sobre as horas extras e o adicional noturno.',
+          '“Dias úteis” e “Domingos e feriados” vêm do calendário: segunda a sábado; os domingos e os feriados nacionais de data fixa (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12). Acerte os outros feriados: os estaduais, os municipais e os de data móvel, como a Sexta-feira Santa, que muda de data a cada ano e é feriado em quase todo o país. No mês da admissão ou da saída, conte só os dias do período em que você trabalhou. Eles calculam o DSR, o descanso pago sobre as horas extras e o adicional noturno.',
           '“Salvar e calcular” mostra o holerite: cada provento e desconto com a referência, o INSS, o IRRF (com a dedução que der menos imposto e a redução da Lei 15.270/2025), os totais, o líquido e o FGTS do mês (que a empresa deposita, sem sair do salário).',
-          '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes.',
+          '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes. Se o mês ficou sem salário ou fora do emprego (a saída corrigida para antes dele, por exemplo), o site não reabre, para não perder os números guardados: corrija o salário ou o emprego antes. O holerite lido do PDF reabre sempre (volta para a estimativa do site, que fica sem o cálculo nesse caso), e aí pode ser excluído.',
           'A lista à esquerda mostra cada mês, aberto ou fechado, com o líquido. O holerite aberto fica no endereço da página, então o voltar do navegador funciona.',
           '“Recebido na conta”: ligue ao holerite o crédito do salário que caiu na conta. Em “Parece o salário”, o site sugere os créditos do dia 15 do mês ao dia 15 do seguinte, dizendo por quê (valor perto do líquido, o banco marcou como salário, cita o empregador, na conta do salário); “Outros créditos do período” deixa ligar qualquer outro. Um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite (o site liga só o que falta do líquido).',
           'A tela mostra quanto foi recebido e a diferença para o líquido estimado. A transação ligada que estava sem categoria passa para “Salário”, como escolha sua. “Desligar” desfaz.',
@@ -1344,7 +1344,7 @@ export const MANUAL: CapituloManual[] = [
           'Rubrica que o site não conhece (“escolha o tipo”): ela vem sem tipo, e o “Confirmar e gravar” espera você escolher (ou deixar a linha de fora). Escolha uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida. Vale também para a que você corrigiu.',
           'O PDF é lido no seu computador, sem nenhum serviço de fora, e não fica guardado: só os valores do holerite.',
           'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
-          'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',
+          'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. Nessas horas, não lance também o adicional noturno: os 80% já o contam, e lançar os dois paga a noite duas vezes. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',
           'O mês tem 30 dias, como na folha: quem entra no dia 15 recebe 16 dias (30 − 15 + 1), também em fevereiro.',
           'O holerite não é receita: a receita continua sendo a transação do salário na conta. Ligar o crédito ao holerite só explica esse dinheiro, e os relatórios contam a receita uma vez só.'
         ],
@@ -1362,7 +1362,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber quanto vem de 13º, em quais datas, e quanto já veio adiantado.',
         passos: [
           'Abra Trabalho › 13º salário e escolha o ano em ‹ ›.',
-          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano. As horas de cada mês valem pelo salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor. O mês sem holerite entra como zero, e a tela avisa quantos meses têm.',
+          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano. O mês da admissão ou da saída com menos de 15 dias não conta avo, e as horas dele também ficam fora da média. As horas de cada mês valem pelo salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor. O mês sem holerite entra como zero, e a tela avisa quantos meses têm.',
           'A 1ª parcela, até 30/11, é metade do 13º, sem desconto. A 2ª, até 20/12, é o 13º menos o INSS, o IRRF e a 1ª parcela.',
           'O IR do 13º é separado do salário: só as deduções da lei (INSS e dependentes), e a redução da Lei 15.270/2025 também vale para ele.',
           'Se a 1ª parcela veio antes (com as férias) ou num valor diferente, informe em “A 1ª parcela que veio”: a 2ª é recalculada. Só a data, sem o valor, mantém a metade calculada. “Voltar ao padrão” desfaz.',
@@ -1494,7 +1494,7 @@ export const MANUAL: CapituloManual[] = [
           'Desligar não apaga nada: os dados do módulo ficam guardados e voltam quando você ligar de novo.',
           'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).'
         ],
-        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). Clique em “Tentar de novo”; enquanto isso, as telas dos módulos ficam fora do menu.'],
+        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). O aviso aparece no menu e em Configurações › Módulos: clique em “Tentar de novo”, que diz “Tentando…” enquanto lê. Enquanto isso, as telas dos módulos ficam fora do menu.'],
         abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       },
       {
@@ -1566,7 +1566,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber exatamente para onde vão os seus dados.',
         passos: [
           'Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.',
-          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance); e o pedido das cotações de criptomoedas ao Mercado Bitcoin, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
+          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance); e o pedido das cotações de criptomoedas à Binance, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
           'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
           'Não sai: valores, quantidades e dados pessoais.',
           'Com o acesso pelo celular ligado (Configurações › Segurança), o site também atende os aparelhos da sua rede de casa, que chegam à tela de entrar. Nada vai para a internet por causa disso, e fora de casa o celular não chega ao site.',
@@ -1642,38 +1642,3 @@ export const MANUAL: CapituloManual[] = [
     ]
   }
 ];
-
-/** Capítulo (e seção) do manual da tela de uma URL ("/transacoes?x=1" → transações); null fora das telas do menu. */
-export function ajudaDaUrl(url: string): { capitulo: string; secao?: string } | null {
-  // #211: a tela de um módulo tem dois trechos ("trabalho/holerites"); vale o mais específico.
-  const partes = url.split(/[?#]/)[0].split('/').filter(Boolean);
-  return AJUDA_POR_ROTA[partes.slice(0, 2).join('/')] ?? AJUDA_POR_ROTA[partes[0] ?? ''] ?? null;
-}
-
-/**
- * "Ajuda" na barra de cima: a seção do manual que explica a tela aberta (pelo primeiro trecho da rota).
- * Toda rota do menu precisa estar aqui (teste de regressão).
- */
-export const AJUDA_POR_ROTA: Record<string, { capitulo: string; secao?: string }> = {
-  painel: { capitulo: 'relatorios', secao: 'painel' },
-  anual: { capitulo: 'relatorios', secao: 'visao-anual' },
-  transacoes: { capitulo: 'transacoes' },
-  contas: { capitulo: 'contas' },
-  orcamentos: { capitulo: 'orcamentos' },
-  metas: { capitulo: 'metas' },
-  'contas-a-pagar': { capitulo: 'contas-a-pagar' },
-  investimentos: { capitulo: 'investimentos' },
-  emprestimos: { capitulo: 'investimentos', secao: 'emprestimos' },
-  relatorios: { capitulo: 'relatorios', secao: 'relatorios-tela' },
-  projecao: { capitulo: 'relatorios', secao: 'projecao' },
-  categorias: { capitulo: 'categorias' },
-  configuracoes: { capitulo: 'configuracoes' },
-  trabalho: { capitulo: 'trabalho', secao: 'salario' },
-  'trabalho/holerites': { capitulo: 'trabalho', secao: 'holerites' },
-  'trabalho/decimo-terceiro': { capitulo: 'trabalho', secao: 'decimo-terceiro' },
-  'trabalho/ferias': { capitulo: 'trabalho', secao: 'ferias' },
-  'trabalho/fgts': { capitulo: 'trabalho', secao: 'fgts' },
-  'trabalho/rescisao': { capitulo: 'trabalho', secao: 'rescisao' },
-  noticias: { capitulo: 'noticias' },
-  'conferir-banco': { capitulo: 'contas', secao: 'conferir-banco' }
-};

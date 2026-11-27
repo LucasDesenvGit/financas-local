@@ -13,12 +13,12 @@ const caminhoValores = "$.valores"
 
 // corpoSalvar é o SalvarParametrosDto lido do JSON.
 type corpoSalvar struct {
-	nulo    bool    // o JSON inteiro era "null": o ASP.NET trata como corpo vazio
+	nulo    bool    // o JSON inteiro era "null": vale como corpo vazio
 	valores []Valor // nil quando "valores" faltou ou veio null ([Required] recusa)
 }
 
-// lerSalvar lê o corpo como o System.Text.Json com as opções web do ASP.NET, na ordem do texto: a primeira coisa
-// errada é a que vira o erro (como o leitor do .NET, que para no primeiro problema).
+// lerSalvar lê o corpo como JSON, na ordem do texto: a primeira coisa
+// errada é a que vira o erro (a leitura para no primeiro problema).
 //
 //   - nomes de propriedade sem diferença de maiúsculas; propriedades a mais são ignoradas; a última repetida vale;
 //   - Valores é um Dictionary<string, int>: a chave repetida fica com o último valor, no lugar da primeira;

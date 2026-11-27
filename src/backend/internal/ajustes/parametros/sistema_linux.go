@@ -6,7 +6,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// descricaoNativa é o OSDescription do .NET no Linux: o nome, a versão e a compilação do kernel (uname).
+// descricaoNativa descreve o sistema no Linux: o nome, a versão e a compilação do kernel (uname).
 func descricaoNativa() string {
 	var u unix.Utsname
 	if err := unix.Uname(&u); err != nil {

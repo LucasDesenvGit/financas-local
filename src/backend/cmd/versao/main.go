@@ -8,6 +8,7 @@
 //	go run ./cmd/versao -publicada          # num commit de tag (o merge da release na main): o do commit da release
 //	go run ./cmd/versao -changelog          # as seções do CHANGELOG do que ainda não foi publicado (changelog.d/)
 //	go run ./cmd/versao -publicar 3.25.0 -data 2026-11-20   # na release/X.Y.Z: junta changelog.d/ numa seção do CHANGELOG.md
+//	go run ./cmd/versao -publicada -sem-changelog -desde v3.24.0   # os PRs da versão sem arquivo em changelog.d/, pelo título
 //
 // Sem o histórico do git (uma cópia baixada em .zip, ou um clone raso), o número é a base com o sufixo -sem-git.
 package main
@@ -42,6 +43,8 @@ func executar(argumentos []string, saida io.Writer) error {
 	changelog := opcoes.Bool("changelog", false, "as seções do CHANGELOG do que ainda não foi publicado")
 	publicar := opcoes.String("publicar", "", "X.Y.Z: grava no CHANGELOG.md a seção única da versão, com tudo de changelog.d/, e apaga os arquivos")
 	data := opcoes.String("data", "", "AAAA-MM-DD da seção do -publicar")
+	semChangelog := opcoes.Bool("sem-changelog", false, "os PRs da linha principal que não trouxeram arquivo para changelog.d/, pelo título (#757)")
+	desde := opcoes.String("desde", "", "com -sem-changelog: a última versão publicada (a tag anterior); sem ele, desde a base")
 	if err := opcoes.Parse(argumentos); err != nil {
 		return err
 	}
@@ -59,8 +62,8 @@ func executar(argumentos []string, saida io.Writer) error {
 		return err
 	}
 	if !temHistorico(raiz) {
-		if *changelog || *publicar != "" {
-			return fmt.Errorf("-changelog e -publicar: %w", errSemHistorico)
+		if *changelog || *publicar != "" || *semChangelog {
+			return fmt.Errorf("-changelog, -publicar e -sem-changelog: %w", errSemHistorico)
 		}
 		return semGit(raiz, saida)
 	}
@@ -96,6 +99,13 @@ func executar(argumentos []string, saida io.Writer) error {
 			return err
 		}
 		_, err = io.WriteString(saida, strings.TrimRight(secoesPorVersao(entradas), "\n")+"\n")
+		return err
+	case *semChangelog:
+		linhas, err := prsSemChangelog(r, c, hash, *desde)
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(saida, linhas)
 		return err
 	}
 	_, err = fmt.Fprintln(saida, c.versao())
@@ -188,4 +198,50 @@ func (c calculo) entradasNaoPublicadas(r repositorio, ref string) ([]entrada, er
 		return strings.Compare(a.arquivo, b.arquivo)
 	})
 	return entradas, nil
+}
+
+// prsSemChangelog são os PRs da linha principal depois de desde (ou da base), até hash, que não têm nota: não
+// acrescentaram entrada a changelog.d/ nem mexeram no CHANGELOG.md (como os de antes da ADR 0070, que já estão nas
+// seções "· desenvolvimento"). São os de CI, testes, documentação interna e Dependabot. As notas da versão publicada os
+// listam pelo título, como decidido na ADR 0070 (#757), um por linha ("- título (#N)"), do mais novo para o mais
+// antigo. Os que trazem a main ou uma release/* de volta ficam de fora, como na conta da versão.
+func prsSemChangelog(r repositorio, c calculo, hash, desde string) (string, error) {
+	commits, inicio := c.commits, c.hashBase
+	if desde != "" {
+		inicioDesde, err := r.resolver(desde)
+		if err != nil {
+			return "", fmt.Errorf("-desde: %w", err)
+		}
+		if commits, err = r.commitsDepois(inicioDesde, hash); err != nil {
+			return "", err
+		}
+		inicio = inicioDesde
+	}
+	acrescimos, err := r.acrescimos(inicio + ".." + hash)
+	if err != nil {
+		return "", err
+	}
+	comNota := map[string]bool{}
+	for _, a := range acrescimos {
+		comNota[a.hash] = true
+	}
+	noChangelog, err := r.git("log", "--first-parent", "-m", "--format=%H", inicio+".."+hash, "--", arquivoDoChangelog)
+	if err != nil {
+		return "", err
+	}
+	for _, h := range strings.Fields(noChangelog) {
+		comNota[h] = true
+	}
+	var texto strings.Builder
+	for _, cm := range slices.Backward(commits) {
+		if !cm.contaNaSubida() || comNota[cm.hash] {
+			continue
+		}
+		titulo := cm.titulo()
+		if n := cm.numeroDoPR(); n != "" && !strings.HasSuffix(strings.TrimSpace(titulo), "(#"+n+")") {
+			titulo += " (#" + n + ")"
+		}
+		fmt.Fprintf(&texto, "- %s\n", titulo)
+	}
+	return texto.String(), nil
 }

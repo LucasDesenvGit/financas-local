@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/carteira"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -62,10 +62,10 @@ type Investimento struct {
 	ValorAplicado      *tipos.Decimal
 }
 
-// RegistrarHistorico é o RegistrarAsync do C#: guarda o saldo de hoje de cada investimento que entra no histórico (a
+// RegistrarHistorico: guarda o saldo de hoje de cada investimento que entra no histórico (a
 // última sincronização do dia vale: o registro do dia é atualizado). Roda dentro da transação de quem chama (a
 // sincronização do Open Finance, #83).
-func RegistrarHistorico(ctx context.Context, q consultas.DBTX, lista []Investimento, hoje tipos.Data, agora time.Time) error {
+func RegistrarHistorico(ctx context.Context, q banco.DBTX, lista []Investimento, hoje tipos.Data, agora time.Time) error {
 	for _, i := range lista {
 		if !EntraNoHistorico(i.Tipo, i.Moeda) {
 			continue
@@ -98,7 +98,7 @@ type atual struct {
 	emissor, personalizado *string
 }
 
-// MesAMes é o MesAMesAsync do C#: o rendimento de cada mês, por investimento, é quanto o saldo cresceu além do valor
+// MesAMes: o rendimento de cada mês, por investimento, é quanto o saldo cresceu além do valor
 // aplicado ((saldo − aplicado) no fim do mês menos no fim do mês anterior), arredondado em duas casas pelo método
 // bancário. Assim, o que entrou e saiu não conta como rendimento; sem o valor aplicado, o rendimento é null. O mês em
 // que o histórico começa conta a partir do primeiro registro (Desde). O saldo do fim do mês é o do último dia com
@@ -183,7 +183,7 @@ func (s *Servico) MesAMes(ctx context.Context) (HistoricoInvestimentosDto, error
 			}
 			m.Saldo = tipos.Somar(m.Saldo, i.Saldo)
 		}
-		// OrderByDescending(Saldo).ThenBy(Nome): o nome pela comparação padrão do C# (a da cultura).
+		// Pelo saldo, do maior para o menor; o nome, pela comparação padrão (a da cultura).
 		slices.SortStableFunc(itens, func(a, b RendimentoInvestimentoMesDto) int {
 			if c := b.Saldo.Decimal().Cmp(a.Saldo.Decimal()); c != 0 {
 				return c
@@ -216,7 +216,7 @@ func primeiroDesde(serie []registro, dia int) *registro {
 	return nil
 }
 
-// lerRegistros: o histórico pela data (o OrderBy do EF Core: o empate fica na ordem da tabela, o Id).
+// lerRegistros: o histórico pela data (o empate fica na ordem da tabela, o Id).
 func (s *Servico) lerRegistros(ctx context.Context) ([]registro, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "PluggyInvestmentId", "Nome", "Tipo", "Data", "Saldo", "ValorAplicado"
 		FROM "HistoricoInvestimento" ORDER BY "Data", "Id"`)

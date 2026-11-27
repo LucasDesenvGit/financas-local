@@ -33,7 +33,7 @@ const (
 	transacoesNoPainel = 8
 	// orcamentosNoPainel é quantos orçamentos o card do painel mostra.
 	orcamentosNoPainel = 6
-	// tamanhoDoExemplo é o maior exemplo de descrição pouco informativa, em chars (UTF-16), como no C#.
+	// tamanhoDoExemplo é o maior exemplo de descrição pouco informativa, em chars (UTF-16).
 	tamanhoDoExemplo = 60
 	nivelErro        = 4 // NivelErro.Erro: Erro e Crítico entram no aviso; Aviso, não
 
@@ -42,7 +42,7 @@ const (
 	chaveUltimaSincronizacao = "Sincronizacao.UltimaExecucao"
 )
 
-// PainelDto é o PainelDto do C#.
+// PainelDto é o painel do mês.
 type PainelDto struct {
 	SaldoContas                       tipos.Decimal                  `json:"saldoContas"`
 	DividaCartoes                     tipos.Decimal                  `json:"dividaCartoes"`
@@ -281,7 +281,7 @@ func (s *Servico) Avisos(ctx context.Context) (AvisosDto, error) {
 }
 
 // emergencias é o valor absoluto das saídas do mês marcadas como emergência (sem as ignoradas e as transferências),
-// somadas como o SumAsync do EF Core: no formato do banco ("0.0" sem nenhuma).
+// somadas no formato do banco ("0.0" sem nenhuma).
 func (s *Servico) emergencias(ctx context.Context, inicio, fim tipos.Data) (tipos.Decimal, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Valor" FROM "Transacao" WHERE "Data" >= ? AND "Data" <= ?
 		AND "Emergencia" AND NOT "IgnorarRelatorios" AND "Tipo" <> ? ORDER BY "Id"`, inicio, fim, transacoes.Transferencia)
@@ -314,7 +314,7 @@ func (s *Servico) poucoInformativas(ctx context.Context, hoje tipos.Data) (int, 
 	if err != nil {
 		return 0, desde, nil, err
 	}
-	// O C# lê sem ORDER BY: o SQLite percorre o período pelo índice IX_Transacao_Data (a data mais nova primeiro).
+	// Sem ORDER BY: o SQLite percorre o período pelo índice IX_Transacao_Data (a data mais nova primeiro).
 	linhas, err := s.db.QueryContext(ctx, `SELECT t."Descricao" FROM "Transacao" AS t WHERE t."Data" >= ? AND t."Data" <= ?
 		AND `+poucoinformativa.Candidatas+` ORDER BY t."Data" DESC, t."Id"`, desde, hoje)
 	if err != nil {
@@ -357,7 +357,7 @@ func (s *Servico) poucoInformativas(ctx context.Context, hoje tipos.Data) (int, 
 	return len(lista), desde, &exemplo, nil
 }
 
-// cortarUtf16 corta o texto em até n chars UTF-16 (o s[..n] do C#).
+// cortarUtf16 corta o texto em até n chars UTF-16.
 func cortarUtf16(s string, n int) string {
 	unidades := utf16.Encode([]rune(s))
 	if len(unidades) <= n {
@@ -366,7 +366,7 @@ func cortarUtf16(s string, n int) string {
 	return string(utf16.Decode(unidades[:n]))
 }
 
-// alertas são os avisos do painel e das notificações (#327), na ordem do C#.
+// alertas são os avisos do painel e das notificações (#327).
 func (s *Servico) alertas(ctx context.Context, proximas []relatorios.ContaAgendadaDto, moedasSemCotacao []string) ([]string, error) {
 	alertas := []string{}
 	for _, p := range proximas {

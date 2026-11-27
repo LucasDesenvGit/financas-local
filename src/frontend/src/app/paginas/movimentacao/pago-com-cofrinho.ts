@@ -1,4 +1,5 @@
-import { Conta, ContaAgendada, FormaCobranca, OrigemConta, PagamentoCofrinho, Reserva } from '../../core/modelos';
+import { dataIso } from '../../compartilhado/utilidades';
+import { AvisoContaAgendada, Conta, ContaAgendada, FormaCobranca, OrigemConta, PagamentoCofrinho, Reserva } from '../../core/modelos';
 
 /**
  * #691 (ADR 0063): "Pago com" um cofrinho nas contas a pagar. O dinheiro sai direto de uma reserva da conta do Open
@@ -19,6 +20,11 @@ export function textoOpcaoCofrinho(o: OpcaoCofrinho): string {
 /** O cofrinho só existe em conta do Open Finance, e a conta cobrada no cartão não sai dele. */
 export function aceitaCofrinho(conta: Conta | undefined, forma: FormaCobranca): boolean {
   return conta?.origem === OrigemConta.OpenFinance && forma !== FormaCobranca.CartaoCredito;
+}
+
+/** O mesmo, para o formulário: a conta é a escolhida nele (`contaId`) entre as contas da tela. */
+export function formAceitaCofrinho(fm: { contaId: number | null; formaCobranca: FormaCobranca }, contas: Conta[]): boolean {
+  return aceitaCofrinho(contas.find((c) => c.id === fm.contaId), fm.formaCobranca);
 }
 
 /**
@@ -70,7 +76,7 @@ export function podeLancar(c: ContaAgendada, contas: Conta[]): boolean {
 }
 
 /** "dd/MM" de uma data ISO. */
-function diaMes(iso: string): string {
+export function diaMes(iso: string): string {
   const [, m, d] = iso.split('-');
   return `${d}/${m}`;
 }
@@ -78,4 +84,46 @@ function diaMes(iso: string): string {
 /** A última baixa pelo cofrinho, em texto (Nielsen 1: o que o app fez sozinho fica à vista). */
 export function textoPagamentoCofrinho(u: PagamentoCofrinho): string {
   return `paga pelo cofrinho ${u.reservaNome} em ${diaMes(u.data)}${u.automatico ? ' (automático)' : ''}`;
+}
+
+/** O texto da confirmação de "desfazer": o lançamento sai e o vencimento volta (Nielsen 5). */
+export function textoDesfazerPagamento(c: ContaAgendada, u: PagamentoCofrinho): string {
+  return `Apagar a despesa de ${c.descricao} paga pelo cofrinho ${u.reservaNome} e voltar o vencimento? `
+    + (u.automatico ? 'O app não lança de novo sozinho este vencimento: use “Pagar” se ele foi pago.' : '');
+}
+
+/** O texto da confirmação de "lançar pelo cofrinho": a despesa do último pagamento que ficou sem ela. */
+export function textoLancarPeloCofrinho(c: ContaAgendada, data: string): string {
+  return `Lançar a despesa de ${c.descricao} de ${diaMes(data)}, no valor da conta a pagar, saindo do cofrinho ${c.reservaNome}? `
+    + 'Se o valor foi outro, ajuste depois em Transações.';
+}
+
+/**
+ * O "Pagar" aberto: a conta, a data inicial e o cofrinho já escolhido (`null` = o "Pagar" de sempre; texto, mesmo vazio =
+ * "foi paga com um cofrinho?", aberto pelo aviso).
+ */
+export interface AberturaPagamento { conta: ContaAgendada; data: string; cofrinho: string | null }
+
+/** "Foi paga com um cofrinho": a data do vencimento e o primeiro cofrinho da conta já escolhidos. */
+export function aberturaPeloAviso(c: ContaAgendada, a: AvisoContaAgendada, reservas: Reserva[], hoje = dataIso()): AberturaPagamento {
+  return { conta: c, data: a.data ?? hoje, cofrinho: opcoesCofrinho(reservas, c.contaId, null)[0]?.nome ?? '' };
+}
+
+/** O que a janela do "Pagar" guarda enquanto a pessoa escolhe. */
+export interface EscolhaDoPagamento { data: string; lancar: boolean; cofrinho: string | null; guardarCofrinho: boolean }
+
+/** A caixa "Lançar a despesa" já vem marcada onde o app pode lançar; no cofrinho, o lançamento é certo. */
+export function lancarNoPagar(a: AberturaPagamento, contas: Conta[]): boolean {
+  return a.cofrinho !== null || podeLancar(a.conta, contas);
+}
+
+/** O que vai para a API ao confirmar. Com cofrinho, a despesa é sempre lançada; sem, só onde o app pode lançar. */
+export interface PagamentoParaApi {
+  lancar: boolean; data: string; cofrinho?: { reservaNome: string; guardarCofrinho: boolean }
+}
+
+export function corpoDoPagamento(conta: ContaAgendada, contas: Conta[], e: EscolhaDoPagamento): PagamentoParaApi {
+  const nome = e.cofrinho?.trim();
+  const cofrinho = nome ? { reservaNome: nome, guardarCofrinho: e.guardarCofrinho } : undefined;
+  return { lancar: cofrinho ? true : e.lancar && podeLancar(conta, contas), data: e.data, cofrinho };
 }

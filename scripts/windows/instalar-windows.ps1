@@ -6,8 +6,8 @@
     Equivalente, no Windows, a scripts/geral/instalar.sh (etapas 1, 2 e 3). Usa so o que vem com o
     Windows (Windows PowerShell 5.1) e baixa o resto para ferramentas\:
       1) Node.js LTS, Go e sqlite3 portateis (reaproveita go da linha do go.mod e sqlite3 do PATH), todos por HTTPS e conferidos pelo hash publicado pela origem
-      2) Banco SQLite: banco\01-estrutura.sql, colunas novas e banco\02-dados-iniciais.sql
-         (a lista de colunas novas e lida do 2-criar-banco.sh, para existir num lugar so)
+      2) Banco SQLite: o executavel do Go (subcomando aplicar-esquema, #723) aplica a estrutura, as colunas
+         novas e os dados iniciais, que ficam embutidos nele
       3) Compila o front-end e o back-end em Go (financas-go.exe, o site desde a #86), publica em
          publicado\api, gera/reaproveita o certificado HTTPS
          e registra o servico do Windows "FinancasLocal"
@@ -44,10 +44,6 @@ $ProgressPreference = "SilentlyContinue"   # a barra de progresso deixa o Invoke
 function Garantir-Pasta([string]$caminho) {
     if (-not (Test-Path -LiteralPath $caminho)) { New-Item -ItemType Directory -Path $caminho -Force | Out-Null }
 }
-
-# Caminho com barras normais (C:/FinancasLocal), como o cygpath -m dos scripts bash.
-function Caminho-Barras([string]$caminho) { return $caminho -replace '\\', '/' }
-
 
 # Baixa para arquivo e le como UTF-8: dependendo do Content-Type, o .Content do Invoke-WebRequest
 # do 5.1 vem como bytes em vez de texto.
@@ -318,7 +314,6 @@ function Sqlite-NaPasta([string]$banco, [string]$comando, [string]$arquivo) {
 
 function Criar-Banco {
     $banco = Join-Path $PastaSql "FinancasLocal.db"
-    $pastaBancoSql = Join-Path $Raiz "banco"
 
     Etapa "[2/3] Criando pastas de dados"
     foreach ($p in @($Dados, $PastaSql, $PastaChaves, $PastaBackups)) { Garantir-Pasta $p }
@@ -335,39 +330,18 @@ function Criar-Banco {
         Ok "copia em $copia"
     }
 
-    # .read em vez de redirecionar o arquivo: o pipe do PowerShell 5.1 para programas externos
-    # converte o texto para ASCII e estragaria os acentos de 02-dados-iniciais.sql.
-    Etapa "[2/3] Criando a estrutura em $banco (01-estrutura.sql)"
-    $estrutura = Join-Path $pastaBancoSql "01-estrutura.sql"
-    if (-not (Test-Path -LiteralPath $estrutura)) { ErroSai "Arquivo nao encontrado: $estrutura" }
-    Sqlite-NaPasta $banco ".read" $estrutura
-    Ok "estrutura criada/atualizada"
-
-    # A lista de colunas novas fica so no 2-criar-banco.sh (linhas adicionar_coluna_se_ausente),
-    # para nao precisar manter duas copias.
-    Etapa "[2/3] Adicionando colunas novas em tabelas existentes"
-    $scriptBanco = Join-Path $Raiz "scripts\geral\2-criar-banco.sh"
-    $padrao = '^\s*adicionar_coluna_se_ausente\s+"([A-Za-z0-9_]+)"\s+"([A-Za-z0-9_]+)"\s+"([^"]+)"'
-    $total = 0
-    foreach ($linha in (Get-Content -LiteralPath $scriptBanco)) {
-        $m = [regex]::Match($linha, $padrao)
-        if (-not $m.Success) { continue }
-        $total++
-        $tabela = $m.Groups[1].Value; $coluna = $m.Groups[2].Value; $definicao = $m.Groups[3].Value
-        $colunas = Sqlite $banco "PRAGMA table_info($tabela);" | ForEach-Object { ($_ -split '\|')[1] }
-        if (@($colunas) -notcontains $coluna) {
-            Sqlite $banco "ALTER TABLE $tabela ADD COLUMN $coluna $definicao;" | Out-Null
-            Ok "coluna $coluna adicionada em $tabela"
-        }
-    }
-    if ($total -eq 0) { Aviso "nenhuma linha adicionar_coluna_se_ausente encontrada em 2-criar-banco.sh" }
-    Ok "colunas conferidas"
-
-    Etapa "[2/3] Inserindo dados iniciais (02-dados-iniciais.sql)"
-    $iniciais = Join-Path $pastaBancoSql "02-dados-iniciais.sql"
-    if (-not (Test-Path -LiteralPath $iniciais)) { ErroSai "Arquivo nao encontrado: $iniciais" }
-    Sqlite-NaPasta $banco ".read" $iniciais
-    Ok "categorias e configuracoes padrao"
+    # #723: quem aplica o esquema e o executavel do Go (banco\01-estrutura.sql e 02-dados-iniciais.sql embutidos,
+    # as colunas novas em internal\plataforma\banco\esquema\colunas_novas.go): banco novo nasce completo e banco
+    # antigo ganha o que falta. O executavel ainda nao foi publicado nesta etapa (a 3 faz isso), entao roda do codigo
+    # com o Go da etapa 1: o cache de compilacao evita compilar tudo de novo na etapa 3.
+    Configurar-AmbienteBuild
+    if (-not (Comando-Existe "go")) { ErroSai "Go nao encontrado (a etapa 1 devia ter instalado em ferramentas\go)." }
+    Etapa "[2/3] Criando/atualizando a estrutura em $banco"
+    Push-Location (Join-Path $Raiz "src\backend")
+    try {
+        Executar "go" @("run", "./cmd/financas", "aplicar-esquema", "-banco", $banco)
+    } finally { Pop-Location }
+    Ok "estrutura, colunas novas e dados iniciais conferidos"
 
     $tabelas = Sqlite $banco "SELECT COUNT(*) FROM sqlite_master WHERE type='table';"
     Ok "banco pronto ($tabelas tabela(s))"
@@ -439,66 +413,25 @@ function Publicar {
     Etapa "[3/3] Certificado HTTPS local"
     Garantir-Pasta $PastaChaves
     $pfx = Join-Path $PastaChaves "financaslocal.pfx"
-    $configAtual = Join-Path $destino "appsettings.Production.json"
 
-    # A senha do PFX so fica no appsettings.Production.json publicado (nunca na tela).
-    $senhaPfx = $null
-    if ((Test-Path -LiteralPath $pfx) -and (Test-Path -LiteralPath $configAtual)) {
-        try {
-            $senhaPfx = (Get-Content -LiteralPath $configAtual -Raw -Encoding UTF8 | ConvertFrom-Json).Kestrel.Endpoints.Https.Certificate.Password
-        } catch { $senhaPfx = $null }
-    }
-
-    if (-not $senhaPfx) {
-        $bytes = New-Object byte[] 24
-        [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-        $senhaPfx = [Convert]::ToBase64String($bytes)
-    }
-
-    # #84: quem cuida do certificado e o executavel do Go, sem o .NET: reaproveita o PFX que abre com a senha e
-    # vale por mais de 30 dias, e gera outro no caso contrario. A senha vai pela entrada padrao, nao na linha de comando.
-    $resultadoCertificado = $senhaPfx | & (Join-Path $preparo "financas-go.exe") gerar-certificado -pfx $pfx
-    if ($LASTEXITCODE -ne 0) { ErroSai "Nao foi possivel gerar o certificado HTTPS." }
-    if ($resultadoCertificado -eq "reaproveitado") { Ok "certificado existente reaproveitado" }
+    # #775: o executavel do Go cuida do HTTPS (a senha do PFX, o certificado e o appsettings.Production.json, que o
+    # site le): reaproveita o PFX que abre com a senha publicada antes e vale por mais de 30 dias, e gera outro no caso
+    # contrario. A senha nao passa por aqui.
+    $resultadoHttps = & (Join-Path $preparo "financas-go.exe") preparar-https -pfx $pfx `
+        -config (Join-Path $preparo "appsettings.Production.json") `
+        -config-atual (Join-Path $destino "appsettings.Production.json") `
+        -banco (Join-Path $PastaSql "FinancasLocal.db") -chaves $PastaChaves
+    if ($LASTEXITCODE -ne 0) { ErroSai "Nao foi possivel preparar o HTTPS (certificado e appsettings.Production.json)." }
+    if ($resultadoHttps -eq "reaproveitado") { Ok "certificado existente reaproveitado" }
     else { Ok "certificado gerado em $pfx" }
+    Ok "appsettings.Production.json gerado"
 
-    # Confia na loja da MAQUINA (Autoridades Raiz Confiaveis), sem janela: a loja do usuario pede um
-    # clique e, se quem elevou no UAC foi outra conta, poria o certificado so na conta do
-    # administrador. Vai so a parte publica; o FriendlyName identifica o certificado
-    # antigo para troca-lo quando houver renovacao.
     if ($NaoConfiarCertificado) {
         Aviso "Certificado nao marcado como confiavel (-NaoConfiarCertificado). O navegador vai mostrar um aviso de seguranca."
     } else {
-        $completo = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($pfx, $senhaPfx)
-        $publico = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(, $completo.RawData)
-        $publico.FriendlyName = $NomeServico
-        $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
-        $loja.Open("ReadWrite")
-        try {
-            foreach ($antigo in @($loja.Certificates)) {
-                if ($antigo.FriendlyName -eq $NomeServico -and $antigo.Thumbprint -ne $publico.Thumbprint) { $loja.Remove($antigo) }
-            }
-            if (-not ($loja.Certificates | Where-Object { $_.Thumbprint -eq $publico.Thumbprint })) { $loja.Add($publico) }
-        } finally { $loja.Close() }
+        Confiar-No-Certificado ([IO.Path]::ChangeExtension($pfx, "pem"))
         Ok "certificado confiavel para todas as contas deste computador (vale so para localhost)"
     }
-
-    # ------------------------------------------------------------ Configuracao de producao
-    Etapa "[3/3] Gerando appsettings.Production.json"
-    $config = [ordered]@{
-        Banco = [ordered]@{ Caminho = (Caminho-Barras $PastaSql) + "/FinancasLocal.db" }
-        Seguranca = [ordered]@{ PastaChaves = (Caminho-Barras $PastaChaves) }
-        Kestrel = [ordered]@{
-            Endpoints = [ordered]@{
-                Https = [ordered]@{
-                    Certificate = [ordered]@{ Path = (Caminho-Barras $pfx); Password = $senhaPfx }
-                }
-            }
-        }
-    }
-    $json = ($config | ConvertTo-Json -Depth 10) + "`n"
-    [IO.File]::WriteAllText((Join-Path $preparo "appsettings.Production.json"), $json, (New-Object Text.UTF8Encoding $false))
-    Ok "configuracao gerada"
 
     # ------------------------------------------------------------ Copia (com o servico parado)
     # O Windows trava o executavel em uso: o servico tem de parar antes da copia.

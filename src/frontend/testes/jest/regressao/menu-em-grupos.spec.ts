@@ -241,6 +241,30 @@ describe('Regressão: menu lateral em grupos (sanfona)', () => {
       TestBed.inject(ModulosService).lista.set([{ id: 'exemplo', nome: 'Exemplo', descricao: 'd', acessaInternet: false, destinos: [], ligado: true }]);
       expect(t.shell.telaVisivel()(tela)).toBe(true);
     });
+
+    it('a leitura que falhou aparece no menu, com "Tentar de novo" ali mesmo (#750)', async () => {
+      const t = await abrirShell({ url: '/painel' });
+      const aviso = () => t.raiz.querySelector<HTMLElement>('nav.menu .menu-aviso');
+      expect(aviso()).toBeNull();
+      const modulos = TestBed.inject(ModulosService);
+      modulos.falhou.set(true); // como depois de um erro no carregar() do construtor
+      await t.atualizar();
+      expect(aviso()!.getAttribute('role')).toBe('status');
+      expect(aviso()!.textContent).toContain('Não deu para ler os módulos');
+      const botao = aviso()!.querySelector<HTMLButtonElement>('button')!;
+      modulos.carregando.set(true);
+      await t.atualizar();
+      expect(botao.disabled).toBe(true);
+      expect(botao.textContent!.trim()).toBe('Tentando…');
+      modulos.carregando.set(false);
+      await t.atualizar();
+      expect(botao.textContent!.trim()).toBe('Tentar de novo');
+      const carregar = jest.spyOn(modulos, 'carregar').mockImplementation(() => modulos.falhou.set(false));
+      botao.click(); // o que o carregar() faz está no modulos.spec.ts; aqui, que o botão o chama
+      await t.atualizar();
+      expect(carregar).toHaveBeenCalledTimes(1);
+      expect(aviso()).toBeNull();
+    });
   });
 
   it('grupoDaUrl acha o grupo pela tela, com filtros, âncoras e subcaminhos; tela solta não tem grupo', () => {

@@ -20,7 +20,7 @@ O Trabalho é o primeiro módulo do site (ADR 0064): mora em `internal/modulos/t
 - **Salário como um campo do emprego**, trocado a cada aumento: simples, mas o mês passado passaria a ser calculado com o salário novo. Rejeitada.
 - **Salário com vigência** (uma linha por salário, com o mês em que começou a valer): o mês usa a última vigência que começou até ele. Escolhida.
 - **Tabelas do INSS e do IRRF no código** (como o Manual, ADR 0026): os testes ficam ao lado, mas a pessoa depende de uma versão nova do site quando o governo muda a tabela no meio do ano. Rejeitada.
-- **Tabelas no banco, por vigência, com os valores oficiais nos dados iniciais** (`02-dados-iniciais.sql`): vêm com o site, valem na hora e podem ser corrigidas sem versão nova. Escolhida.
+- **Tabelas no banco, por vigência, com os valores oficiais num script próprio** (`03-tabelas-oficiais.sql`, idempotente, aplicado pelo site a cada partida, também em banco existente; #805): vêm com o site, valem na hora e podem ser corrigidas sem versão nova. Ficam fora do `02-dados-iniciais.sql`, que só roda em banco novo (rodá-lo de novo recriaria categoria apagada). Escolhida.
 - **O holerite como receita** (somado nos relatórios): o crédito do salário já entra pela transação, e somar os dois dobraria a receita. Rejeitada.
 
 ## Decisão
@@ -76,8 +76,8 @@ O holerite de um mês, depois de fechado, guarda os números calculados (e não 
 Como ficou na #211:
 - `Holerite` (um por emprego e mês, `Situacao` aberto ou fechado) e `HoleriteLancamento` (horas extras, adicional noturno, outros proventos, vale-transporte, VR/VA, plano de saúde, pensão e outros descontos).
 - Fechado, a coluna `Calculo` guarda o resultado inteiro em JSON (as linhas, os totais, o INSS, o IRRF e o FGTS do mês); aberto, ela fica nula e o cálculo é refeito a cada leitura. *Inferido:* JSON em vez de uma tabela por número, porque o holerite fechado só é lido inteiro, nunca filtrado nem somado no SQL.
-- Reabrir grava `HoleriteReaberto (AAAA-MM)` na auditoria.
-- O salário do mês é proporcional na admissão e na saída, pelo **mês comercial de 30 dias**: a admissão no dia D conta 30 − D + 1 dias, também em fevereiro (quem entra em 15/02 recebe 16/30), e a saída no último dia do mês conta o mês inteiro. *Julgamento* (revisão do #699): há empresas que pagam fevereiro pelos dias do calendário; o comercial é o mais comum na folha.
+- Reabrir grava `HoleriteReaberto (AAAA-MM)` na auditoria. Recusa (409, com o motivo) quando o cálculo de agora daria aviso, sem salário, fora do emprego ou sem tabela, porque o número congelado sumiria e o fechar não o devolveria (#750). O caso típico é a saída corrigida para antes de um mês fechado: mudar a saída confere os salários, não os holerites.
+- O salário do mês é proporcional na admissão e na saída, pelo **mês comercial de 30 dias**: a admissão no dia D conta 30 − D + 1 dias, também em fevereiro: quem entra em 15/02 recebe 16/30, e quem entra em 28/02 recebe 3/30, e não 1/28 (#750). A saída no último dia do mês conta o mês inteiro. *Julgamento* (revisão do #699): há empresas que pagam fevereiro pelos dias do calendário; o comercial é o mais comum na folha.
 - O DSR das horas extras e do adicional noturno é o total ÷ dias úteis × domingos e feriados. O padrão vem do calendário: segunda a sábado são úteis; os domingos e os **feriados nacionais de data fixa** (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12) são descanso. A pessoa acerta os outros feriados e, no mês da admissão ou da saída, os dias do período.
 - **Fica de fora** (*julgamento*, dito no Manual): a hora extra noturna com o adicional noturno na base (OJ 97 da SDI-1 do TST) e a hora noturna reduzida (52'30"). A pessoa lança a hora extra noturna com o percentual somado (1,2 × 1,5 = 80%) e as horas já convertidas.
 - Outro provento (bônus, PLR, comissão) diz se tem INSS e IRRF; a pensão alimentícia e o "outro desconto" marcado deduzem do IR; o vale-transporte desconta o custo do mês até 6% do salário.
@@ -86,7 +86,8 @@ Como ficou na #211:
 ### 13º salário (#214)
 
 - Calculado, sem guardar o resultado: (salário de dezembro, ou o do mês da saída, + a média das horas extras, do adicional noturno e do DSR dos holerites do ano) × avos ÷ 12. Os avos contam o mês com 15 dias ou mais de calendário.
-- *Inferido:* a média divide a soma das variáveis do ano pelos avos (e não por 11 ou 12 fixos); bônus e comissão não entram (só o que é hora).
+- *Inferido:* a média divide a soma das variáveis do ano pelos avos (e não por 11 ou 12 fixos); bônus e comissão não entram (só o que é hora). *Julgamento* (#750): a soma usa só os holerites dos meses que contam avo, para o numerador e o denominador cobrirem os mesmos meses. O mês da admissão ou da saída com menos de 15 dias não conta para o 13º, e as horas dele também não; antes, elas entravam na soma sem entrar nos avos e subiam a média.
+- A 1ª parcela informada: o "não passa do total" só confere quando o valor muda; trocar só a data de uma 1ª que ficou acima do total (um holerite apagado, o salário de dezembro menor) grava (#750). A resposta diz se a data e o valor vieram da pessoa (`dataInformada`, `valorInformado`), para a tela não gravar o 30/11 padrão nem a metade calculada como informados.
 - **Súmula 347 do TST** (revisão do #700): as horas extras entram pelas horas, com o salário-hora de agora. O valor de cada mês vai corrigido por salário de agora ÷ salário daquele mês, o que dá o mesmo que refazer as horas e vale também para o holerite lido do PDF, que não guarda as horas. O mês sem holerite entra como zero, e a tela diz quantos meses têm holerite.
 - A 2ª parcela nunca fica negativa: a 1ª informada maior que o 13º líquido vira aviso ("a empresa desconta a diferença"), e a 1ª não pode passar do 13º do ano inteiro.
 - 1ª parcela: metade, sem desconto, até 30/11. A tabela `DecimoTerceiro` guarda só o que a pessoa informa (quando e quanto veio, como na 1ª adiantada nas férias).
@@ -110,11 +111,11 @@ Como ficou na #211:
   - Os relatórios não mudam com o Trabalho ligado ou desligado.
 - **Negativas:**
   - Seis tabelas novas no banco (`feat(banco)!`), que existem mesmo com o módulo desligado.
-  - A tabela de cada ano precisa entrar nos dados iniciais a cada ano novo (tarefa de manutenção, com a fonte citada).
+  - A tabela de cada ano precisa entrar no `03-tabelas-oficiais.sql` a cada ano novo (tarefa de manutenção, com a fonte citada).
   - O cálculo é estimativa: a pessoa pode achar que é o valor do holerite. A tela diz que não é, sempre.
 - **Na prática:**
   - Pacotes em `internal/modulos/trabalho` (o módulo), `internal/modulos/trabalho/emprego` e `internal/modulos/trabalho/encargos`; rotas em `/api/trabalho/`.
-  - Tabela nova do governo: uma vigência nova em `banco/02-dados-iniciais.sql` (com a fonte), teste do cálculo com casos da tabela nova.
+  - Tabela nova do governo: uma vigência nova em `banco/03-tabelas-oficiais.sql` (com a fonte), teste do cálculo com casos da tabela nova.
   - Dinheiro sempre em `tipos.Decimal`, nunca `float64`; comparação e soma em Go.
 
 ### Revisão da rescisão (#704, 16/11/2026)

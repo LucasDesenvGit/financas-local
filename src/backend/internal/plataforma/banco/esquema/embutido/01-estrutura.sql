@@ -624,9 +624,9 @@ CREATE TABLE IF NOT EXISTS HistoricoInvestimento
 CREATE UNIQUE INDEX IF NOT EXISTS UX_HistoricoInvestimento_Investimento_Data ON HistoricoInvestimento (PluggyInvestmentId, Data);
 
 /* ------------------------------------------------------------------ */
-/* Cotação de criptomoedas (#279, ADR 0048)                            */
+/* Cotação de criptomoedas (#279, ADR 0073)                            */
 /* ------------------------------------------------------------------ */
-/* Último negócio em reais no Mercado Bitcoin (API pública), gravado a cada 30 minutos pela API (CriptoHostedService)
+/* Último negócio em reais na Binance (API pública; até 14/11/2026, o Mercado Bitcoin), gravado a cada 30 minutos pela API (CriptoHostedService)
    e guardado por 30 dias, para a tela funcionar sem internet e para a variação em 24 h. Cripto negocia 24 h por dia:
    a chave é moeda + data e hora da fonte (UTC). */
 CREATE TABLE IF NOT EXISTS CotacaoCripto
@@ -719,7 +719,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS UX_SalarioVigencia_Emprego_Inicio ON SalarioVi
 /* ------------------------------------------------------------------ */
 /* Trabalho: tabelas do INSS e do IRRF por vigência (#210, ADR 0065)   */
 /* ------------------------------------------------------------------ */
-/* A tabela de um mês é a da última vigência que começou até ele. Os valores oficiais vêm no 02-dados-iniciais.sql, com
+/* A tabela de um mês é a da última vigência que começou até ele. Os valores oficiais vêm no 03-tabelas-oficiais.sql, com
    a fonte. Faixa: "Ate" é o limite de cima (a última faixa do INSS é o teto; a do IRRF fica sem limite, NULL). */
 CREATE TABLE IF NOT EXISTS InssVigencia
 (

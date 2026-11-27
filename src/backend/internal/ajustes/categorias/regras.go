@@ -13,7 +13,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 )
 
-// RegraDto, na ordem do record do C#.
+// RegraDto, na ordem dos campos do JSON.
 type RegraDto struct {
 	Id                  int64  `json:"id"`
 	Texto               string `json:"texto"`
@@ -170,12 +170,12 @@ func (s *Servico) excluirRegra(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// loteDoReaplicar é o Take(2000) do C#. Variável só para o teste dos vários lotes.
+// loteDoReaplicar é o tamanho do lote (2000). Variável só para o teste dos vários lotes.
 var loteDoReaplicar = 2000
 
 // reaplicar recategoriza todas as transações de categoria automática com as regras de agora e o mapa da Pluggy, acerta
 // o tipo de cada uma e, no fim, as transferências entre contas suas (ADR 0031). Um lote por vez, cada um gravado numa
-// transação do banco, como o SaveChanges por lote do C#.
+// transação do banco, uma por lote.
 func (s *Servico) reaplicar(w http.ResponseWriter, r *http.Request) {
 	rs, err := categorizacao.Carregar(r.Context(), s.db)
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/esquema"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -35,28 +34,6 @@ func bancoDeTeste(t *testing.T) *sql.DB {
 		t.Fatalf("aplicar a estrutura: %v", err)
 	}
 	return db
-}
-
-func TestEsquemaDoSqlcEmDia(t *testing.T) {
-	estrutura, err := os.ReadFile(filepath.Join(raiz, esquema.ArquivoEstrutura))
-	if err != nil {
-		t.Fatal(err)
-	}
-	script, err := os.ReadFile(filepath.Join(raiz, esquema.ArquivoColunas))
-	if err != nil {
-		t.Fatal(err)
-	}
-	esperado, err := esquema.GerarEsquemaSqlc(context.Background(), string(estrutura), string(script))
-	if err != nil {
-		t.Fatal(err)
-	}
-	atual, err := os.ReadFile(filepath.Join(raiz, esquema.ArquivoGerado))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(atual) != esperado {
-		t.Fatal("o esquema do sqlc está velho: o banco/ ou o 2-criar-banco.sh mudou. Rode `go generate ./...` em src/backend")
-	}
 }
 
 func TestAbrirComOsPragmasDoEfCore(t *testing.T) {
@@ -134,39 +111,6 @@ func TestEmTransacao(t *testing.T) {
 	}
 }
 
-func TestConsultasDaConfiguracaoLeemOFormatoDoEfCore(t *testing.T) {
-	ctx := context.Background()
-	db := bancoDeTeste(t)
-	// Como o .NET grava (conferido pela sonda em internal/plataforma/tipos/testdata).
-	_, err := db.ExecContext(ctx, `INSERT INTO Configuracao (Chave, Valor, Protegido, AtualizadoEm) VALUES
-		('Pluggy.ClientSecret', 'CfDJ8...', 1, '2026-10-15 22:55:31.3481471'),
-		('Sincronizacao.IntervaloHoras', NULL, 0, '2026-01-01 00:00:00')`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	q := consultas.New(db)
-
-	segredo, err := q.ObterConfiguracao(ctx, "Pluggy.ClientSecret")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !segredo.Protegido || segredo.AtualizadoEm.String() != "2026-10-15 22:55:31.3481471" {
-		t.Errorf("leu %+v", segredo)
-	}
-
-	todas, err := q.ListarConfiguracoes(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(todas) != 2 || todas[1].Valor != nil {
-		t.Errorf("Valor NULL deveria virar nil: %+v", todas)
-	}
-
-	if _, err := q.ObterConfiguracao(ctx, "NaoExiste"); !errors.Is(err, sql.ErrNoRows) {
-		t.Errorf("chave que não existe deveria dar sql.ErrNoRows: %v", err)
-	}
-}
-
 func TestGoGravaNoFormatoDoEfCore(t *testing.T) {
 	ctx := context.Background()
 	db := bancoDeTeste(t)
@@ -200,27 +144,5 @@ func TestGoGravaNoFormatoDoEfCore(t *testing.T) {
 	}
 	if texto != "1.5" || lidoOpcional != nil {
 		t.Errorf("gravou Valor=%q, Opcional=%v; o EF Core grava \"1.5\" e NULL", texto, lidoOpcional)
-	}
-}
-
-// O sqlc (v1.31.1, motor sqlite) recorta o SQL no lugar errado quando há caractere fora do ASCII antes da consulta
-// (um acento num comentário): a consulta gerada sai quebrada. Texto com acento vai por parâmetro (?), nunca no SQL.
-func TestConsultasSemAcento(t *testing.T) {
-	arquivos, err := filepath.Glob("consultas/sql/*.sql")
-	if err != nil || len(arquivos) == 0 {
-		t.Fatalf("nenhum arquivo de consulta: %v", err)
-	}
-	for _, arquivo := range arquivos {
-		dados, err := os.ReadFile(arquivo)
-		if err != nil {
-			t.Fatal(err)
-		}
-		for i, b := range dados {
-			if b > 127 {
-				linha := 1 + strings.Count(string(dados[:i]), "\n")
-				t.Errorf("%s:%d: caractere fora do ASCII (acento?); o sqlc gera a consulta errada", arquivo, linha)
-				break
-			}
-		}
 	}
 }

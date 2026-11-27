@@ -1,9 +1,9 @@
-// Pacote categorias tem as rotas de três controllers do .NET (#77, épico #70): CategoriasController (api/categorias),
-// RegrasController (api/regras, com o "reaplicar") e RegrasDescricaoController (api/regras-descricao, ADR 0030). A
+// Pacote categorias tem as rotas de api/categorias (#77),
+// api/regras (com o "reaplicar") e api/regras-descricao (ADR 0030). A
 // regra de negócio fica nos pacotes que a sincronização (#83) também usa: categorizacao, regrasdescricao e
-// transferencias. Aqui só o HTTP: ler a entrada como o model binding do ASP.NET, chamar a regra e responder o mesmo JSON.
+// transferencias. Aqui só o HTTP: ler a entrada como o model binding, chamar a regra e responder o mesmo JSON.
 //
-// Login e CSRF são de quem está na frente (o .NET, ou a autenticação do Go sozinho): aqui só chega quem passou.
+// Login e CSRF são de quem está na frente: aqui só chega quem passou.
 package categorias
 
 import (
@@ -63,7 +63,7 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 
 func (s *Servico) agora() tipos.DataHora { return tipos.NovaDataHora(s.relogio.Agora()) }
 
-// idDaRota é o {id:int} do ASP.NET: o que não é um int de 32 bits não casa com a rota e cai no 404 sem corpo do
+// idDaRota: o que não é um int de 32 bits não casa com a rota e cai no 404 sem corpo do
 // fallback de /api.
 func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(strings.TrimPrefix(r.PathValue("id"), "+"), 10, 32)
@@ -85,7 +85,7 @@ func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa stri
 
 /* ----------------------------------------------------------------------------------------------- Categorias */
 
-// CategoriaDto, na ordem do record do C#.
+// CategoriaDto, na ordem dos campos do JSON.
 type CategoriaDto struct {
 	Id             int64   `json:"id"`
 	Nome           string  `json:"nome"`
@@ -291,7 +291,7 @@ func (s *Servico) atualizarCategoria(w http.ResponseWriter, r *http.Request) {
 // refazerTipoDasTransacoes acerta as transações da categoria que trocou de tipo: para transferência, todas viram
 // transferência fora dos relatórios; para despesa ou receita, as que não são transferência lançada pelo site ficam com
 // o tipo pelo sinal (no cartão, entrada é estorno: despesa, ADR 0036) e voltam aos relatórios. AtualizadoEm não muda
-// (o ExecuteUpdate do C# não mexe nele).
+// (o UPDATE em lote não mexe nele).
 func refazerTipoDasTransacoes(ctx context.Context, tx *sql.Tx, categoriaId, tipo int64) error {
 	if tipo == categorizacao.CategoriaTransferencia {
 		_, err := tx.ExecContext(ctx, `UPDATE "Transacao" SET "Tipo" = ?, "IgnorarRelatorios" = 1 WHERE "CategoriaId" = ?`,

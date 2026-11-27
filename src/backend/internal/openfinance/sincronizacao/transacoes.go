@@ -17,7 +17,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Situação da transação (o enum StatusTransacao do C#).
+// Situação da transação.
 const (
 	efetivada int64 = 1
 	pendente  int64 = 2
@@ -31,8 +31,8 @@ const (
 	diasAntesDaPendente   = 2
 )
 
-// sincronizarTransacoes aplica as transações da Pluggy. Tudo é decidido antes de gravar, numa transação só: como o
-// SaveChanges do .NET, a limpeza das pendentes antigas lê o banco sem as mudanças desta rodada.
+// sincronizarTransacoes aplica as transações da Pluggy. Tudo é decidido antes de gravar, numa transação só:
+// a limpeza das pendentes antigas lê o banco sem as mudanças desta rodada.
 func (r *rodada) sincronizarTransacoes(ctx context.Context, conta contaLocal, dataInicial tipos.Data, mapaFaturas map[string]int64) (novas, atualizadas int, err error) {
 	recebidas, err := r.pluggy.ListarTransacoes(ctx, r.sessao, conta.pluggyId, dataInicial)
 	if err != nil {
@@ -134,7 +134,7 @@ func semAsApagadas(lista []*transacoes.Transacao, apagar []int64) []*transacoes.
 	return slices.DeleteFunc(lista, func(t *transacoes.Transacao) bool { return slices.Contains(apagar, t.Id) })
 }
 
-// aplicar passa os dados da Pluggy para a transação, na ordem do C#: a regra de descrição usa o valor, e a categoria usa
+// aplicar passa os dados da Pluggy para a transação: a regra de descrição usa o valor, e a categoria usa
 // a descrição.
 func (r *rodada) aplicar(t *transacoes.Transacao, pt *pluggy.Transacao, nova, ehCartao bool, mapaFaturas map[string]int64) error {
 	recebida := "(sem descrição)"
@@ -206,7 +206,7 @@ func estabelecimento(e *pluggy.Estabelecimento) *string {
 	return limitar(e.Name, 200)
 }
 
-// parcela é o (short?) do C#: o int vira 16 bits sem conferir.
+// parcela: o int vira 16 bits sem conferir.
 func parcela(n *pluggy.Inteiro) *int64 {
 	if n == nil {
 		return nil

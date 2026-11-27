@@ -122,7 +122,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | | |
 |---|---|
 | **O que é** | `CotacaoMoeda` (PTAX), `CotacaoCripto`, `TaxaSelicDiaria`, `IndiceMensal` (como o IFIX) e `CategoriaPluggy` (as categorias que a Pluggy usa e a sua categoria para cada uma). Não são dados seus, a não ser a escolha da categoria |
-| **De onde vem** | Do Banco Central, do Mercado Bitcoin, do Yahoo Finance e da Pluggy |
+| **De onde vem** | Do Banco Central, da Binance, do Yahoo Finance e da Pluggy |
 | **Sai do computador?** | Não: só entram. O que sai para buscá-los está na [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet) |
 | **Por quanto tempo** | Sem prazo |
 | **Como apagar** | Só apagando tudo |

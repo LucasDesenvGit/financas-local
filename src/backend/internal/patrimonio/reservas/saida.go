@@ -12,7 +12,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/cobrancas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -20,9 +19,6 @@ import (
 // Saída de um cofrinho (#691, ADR 0063): o gasto pago direto da reserva, sem passar pela conta, que não chega pelo
 // Open Finance. Vira um lançamento do app na conta, marcado com a reserva (Transacao.ReservaNome): entra nos
 // relatórios como despesa e baixa a estimativa da reserva.
-
-// origemOpenFinance é a OrigemConta do Open Finance: só nela há reservas.
-const origemOpenFinance = 2
 
 // Os erros da saída que voltam com a mensagem para quem usa.
 var (
@@ -46,7 +42,7 @@ type Saida struct {
 
 // RegistrarSaida grava a saída do cofrinho e devolve o id do lançamento. A conta tem de existir e ser do Open
 // Finance, o cofrinho não pode ser o Méli Dólar, e a categoria, se vier, tem de existir.
-func (s *Servico) RegistrarSaida(ctx context.Context, q consultas.DBTX, d Saida) (int64, error) {
+func (s *Servico) RegistrarSaida(ctx context.Context, q banco.DBTX, d Saida) (int64, error) {
 	var origem int64
 	err := q.QueryRowContext(ctx, `SELECT "Origem" FROM "Conta" WHERE "Id" = ?`, d.ContaId).Scan(&origem)
 	switch {
@@ -54,7 +50,7 @@ func (s *Servico) RegistrarSaida(ctx context.Context, q consultas.DBTX, d Saida)
 		return 0, ErrContaInvalida
 	case err != nil:
 		return 0, fmt.Errorf("ler a conta da saída: %w", err)
-	case origem != origemOpenFinance:
+	case origem != tipos.OrigemOpenFinance:
 		return 0, ErrSoOpenFinance
 	}
 	nome := strings.TrimFunc(d.Nome, unicode.IsSpace)

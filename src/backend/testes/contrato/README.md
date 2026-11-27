@@ -33,7 +33,7 @@ CONTRATO_SOMENTE="00-auth,01-parametros" src/backend/testes/contrato/rodar.sh
 Cada execução começa do zero: banco novo, processo novo. O roteiro depende da ordem (o `00-auth` cria o usuário e deixa a sessão `principal` logada para os seguintes), então o padrão é rodar inteiro. Com `CONTRATO_SOMENTE`, mantenha a ordem e os arquivos de que o seu depende.
 
 À mão, sem o roteiro:
-- gere o certificado: `echo contrato | go run ./cmd/financas gerar-certificado -pfx <pasta>/financaslocal.pfx`, que grava também o `<pasta>/financaslocal.pem`, e ponha o caminho e a senha no `appsettings.Production.json` da pasta do `-pasta`, como o `rodar.sh` faz;
+- gere o certificado e a configuração: `go run ./cmd/financas preparar-https -pfx <pasta>/financaslocal.pfx -config <pasta>/appsettings.Production.json`, que grava também o `<pasta>/financaslocal.pem`, como o `rodar.sh` faz;
 - suba o Go: `go run ./cmd/financas -pasta <pasta> -endereco 127.0.0.1:5453 -wwwroot internal/plataforma/servidor/testdata/wwwroot -banco <db> -inicio-do-relogio 2026-10-15T01:00:00Z -aplicar-esquema -rotinas-de-partida`, com `HTTPS_PROXY=http://127.0.0.1:9`;
 - rode `go test ./testes/contrato -count=1 -args -alvo=https://127.0.0.1:5453 -raiz=<pasta>/financaslocal.pem -banco=<db> -inicio=2026-10-15T01:00:00Z -versao=$(go run ./cmd/versao)`.
 
@@ -167,7 +167,7 @@ Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são s
 
 ## O que ficou de fora
 
-- **Integrações externas** (Yahoo, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go, nos pacotes delas, com respostas gravadas. A **Pluggy** entra pela Pluggy falsa.
+- **Integrações externas** (Yahoo, Banco Central, Binance): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go, nos pacotes delas, com respostas gravadas. A **Pluggy** entra pela Pluggy falsa.
 - **Cabeçalhos de segurança, cache e arquivos do front-end:** testes do pacote `internal/plataforma/servidor` (`TestCabecalhosDeSeguranca`, `TestRespostasComoODotnet`).
 - **O que só existe no Windows** (serviço, instalador): continua com o teste do `.msi`.
 - **Relação entre GUIDs:** todo GUID vira o mesmo marcador, então o contrato não confere que duas transações têm o mesmo `TransferenciaGrupo` pelo valor (confere pela contagem e pelos outros campos).

@@ -15,7 +15,7 @@ flowchart TB
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]<br/>Open Finance: extratos, saldos<br/>e investimentos dos bancos"]
     bcb["Banco Central<br/>[Sistema de fora]<br/>Selic e PTAX"]
     cotacoes["Yahoo Finance<br/>[Sistema de fora]<br/>Cotações de ações e FIIs"]
-    mercado["Mercado Bitcoin<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
+    mercado["Binance<br/>[Sistema de fora]<br/>Cotação de criptomoedas"]
     github["GitHub<br/>[Sistema de fora]<br/>Versões novas"]
     noticias["G1, BBC News Brasil e TabNews<br/>[Sistemas de fora]<br/>Notícias, só com o módulo ligado"]
     celular["Seu celular<br/>[Pessoa, na rede de casa]<br/>Só com o acesso pelo celular ligado"]
@@ -52,7 +52,7 @@ flowchart TB
     pluggy["Meu Pluggy / Pluggy<br/>[Sistema de fora]"]
     bcb["Banco Central: Selic e PTAX<br/>[Sistema de fora]"]
     cotacoes["Yahoo Finance<br/>[Sistema de fora]"]
-    mercado["Mercado Bitcoin<br/>[Sistema de fora]"]
+    mercado["Binance<br/>[Sistema de fora]"]
     github["GitHub<br/>[Sistema de fora]"]
     noticias["G1, BBC e TabNews<br/>[Sistemas de fora]"]
 
@@ -243,7 +243,7 @@ As 12 seções do [arc42](https://arc42.org/) e onde cada uma está. O índice s
 | Código Go com as camadas dentro de cada assunto | Uma mudança num assunto fica num pacote; a regra não conhece HTTP; o mapa de contextos é conferido por teste | [0056](adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md) |
 | Back-end em Go, trocado aos poucos | Um executável só, mais leve; a troca do .NET foi um assunto por vez, com volta fácil, e terminou na #86 | [0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) |
 | CSP restritiva, sem script inline | Nada de terceiros carregado no site | [0034](adr/0034-sem-sri-no-build-do-front-end.md) |
-| Saídas de rede só por HTTPS, com o mínimo de dados | Cada domínio novo pede uma ADR e entra na [tabela](SEGURANCA.md#o-que-sai-para-a-internet) | [0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md), por exemplo |
+| Saídas de rede só por HTTPS, com o mínimo de dados | Cada domínio novo pede uma ADR e entra na [tabela](SEGURANCA.md#o-que-sai-para-a-internet) | [0073](adr/0073-cotacao-de-criptomoedas-pela-binance.md), por exemplo |
 
 ## Back-end — `src/backend`
 
@@ -255,7 +255,7 @@ O site em Go ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dot
 - **Segredos** (o Client Secret da Pluggy; o token da brapi saiu na #763, ADR 0072): AES-256-GCM, gravados com o prefixo `v2:` na tabela `Configuracao` (`internal/plataforma/segredos`). A chave fica em `dados/chaves/segredos.chave`: protegida pelo DPAPI no Windows e pela permissão de arquivo no Linux. Os segredos gravados pelo .NET (Data Protection) não são lidos: a tela pede para informá-los de novo.
 - **Tarefas em segundo plano:** câmbio, cripto e a sincronização do Open Finance (`internal/plataforma/tarefas`).
 - **Erros:** os avisos e erros do log vão para a tabela `ErroSistema` (Configurações › Erros, [ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md); `internal/plataforma/erros`, #298).
-- **Banco:** em WAL, no formato que o EF Core gravava (decimal, data e GUID como texto, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)), para os bancos que já existem continuarem os mesmos. Consultas só parametrizadas (`sqlc` ou `?`); dinheiro nunca em `float64`, nem somado ou comparado no SQL.
+- **Banco:** em WAL, no formato que o EF Core gravava (decimal, data e GUID como texto, [ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)), para os bancos que já existem continuarem os mesmos. Consultas só parametrizadas (com `?`); dinheiro nunca em `float64`, nem somado ou comparado no SQL.
 - **Acesso ao banco** é só permissão de arquivo do sistema sobre `dados/`: o SQLite não tem login nem usuário; quem lê e grava é o processo do site, rodando com a conta do serviço. Não há senha de banco em lugar nenhum.
 - **Datas** sempre no fuso de Brasília (`internal/plataforma/relogio`).
 - **Testes** ([ADR 0051](adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): cada regra tem teste unitário em tabela no pacote do assunto, além do caso de contrato do endpoint (`testes/contrato`, #72), cujos esperados vieram do .NET e são a regressão do Go. Consultas se testam num SQLite de verdade num arquivo temporário, com o esquema real; handlers, com `httptest`. Só a biblioteca padrão, sem asserção nem mock de terceiros.
@@ -264,11 +264,11 @@ O código fica num pacote por assunto em `internal/<area>/<assunto>` (são mais 
 
 | Pasta | O que tem |
 |---|---|
-| `cmd/financas` | O ponto de entrada (opções, ligação das peças) e o subcomando `gerar-certificado`. |
+| `cmd/financas` | O ponto de entrada (opções, ligação das peças) e o subcomando `preparar-https`. |
 | `internal/api` | O `ServeMux` com as rotas de todos os assuntos: uma linha por assunto. |
 | `internal/plataforma/servidor` | HTTPS local, arquivos do site, cabeçalhos de segurança (a CSP), erros e o certificado. |
 | `internal/plataforma/autenticacao`, `internal/plataforma/sessao` | Login, sessão, CSRF e limite de tentativas; o usuário logado no contexto. |
-| `internal/plataforma/banco` | SQLite em WAL, transação, consultas do `sqlc` e o esquema ao iniciar. |
+| `internal/plataforma/banco` | SQLite em WAL, transação e o esquema ao iniciar. |
 | `internal/plataforma/segredos` | Os segredos cifrados da `Configuracao`. |
 | `internal/plataforma/tarefas` | As tarefas em segundo plano. |
 | `internal/arquitetura` | O teste de arquitetura (só local): regra sem HTTP e o mapa de contextos. |

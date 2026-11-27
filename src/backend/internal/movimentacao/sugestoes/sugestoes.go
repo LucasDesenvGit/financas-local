@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -23,7 +23,7 @@ const (
 	fracaoConflitosParaAviso = 0.2
 )
 
-// palavrasChave: palavra-chave (sem acento, maiúscula) → o nome da categoria padrão, na ordem do C# (vale a primeira
+// palavrasChave: palavra-chave (sem acento, maiúscula) → o nome da categoria padrão, na ordem de busca (vale a primeira
 // que aparece).
 var palavrasChave = [][2]string{
 	{"SUPERMERCADO", "Mercado"}, {"MERCADO", "Mercado"}, {"ATACADAO", "Mercado"}, {"ASSAI", "Mercado"},
@@ -75,7 +75,7 @@ var palavrasChave = [][2]string{
 	{"PAGAMENTO FATURA", "Pagamento de fatura"}, {"PAG FATURA", "Pagamento de fatura"},
 }
 
-// votos são os pontos de cada categoria, na ordem em que cada uma apareceu: o Dictionary do C# enumera na ordem de
+// votos são os pontos de cada categoria, na ordem em que cada uma apareceu: a enumeração é na ordem de
 // inserção, e essa ordem desempata as categorias de mesmos pontos.
 type votos struct {
 	ordem  []int64
@@ -152,9 +152,9 @@ func primeiro(s ...*string) string {
 }
 
 // montarIndice é o MontarIndiceAsync: as categorias, as regras "contém" e as transações categorizadas dos últimos 730
-// dias. As consultas são as do C#, sem ORDER BY: a ordem do banco desempata as categorias de mesmos pontos, e a mesma
+// dias. As consultas são sem ORDER BY: a ordem do banco desempata as categorias de mesmos pontos, e a mesma
 // consulta no mesmo SQLite dá a mesma ordem.
-func montarIndice(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (*indice, error) {
+func montarIndice(ctx context.Context, q banco.DBTX, hoje tipos.Data) (*indice, error) {
 	ix := &indice{porChave: map[string]*votos{}, porPalavra: map[string]*votos{}, categorias: map[int64]categoria{},
 		porNome: map[string]int64{}, regras: map[string]int64{}}
 	linhas, err := q.QueryContext(ctx, `SELECT "c"."Id", "c"."Nome", "c"."Cor", "c"."Tipo" FROM "Categoria" AS "c"`)
@@ -229,7 +229,7 @@ func montarIndice(ctx context.Context, q consultas.DBTX, hoje tipos.Data) (*indi
 	return ix, linhas.Err()
 }
 
-// OpcaoDto é o OpcaoCategoriaDto do C#.
+// OpcaoDto é uma opção de categoria.
 type OpcaoDto struct {
 	CategoriaId int64  `json:"categoriaId"`
 	Nome        string `json:"nome"`
@@ -243,7 +243,7 @@ type opcao struct {
 	motivo string
 }
 
-// avaliar é o Avaliar do C#: as até 3 opções (a melhor primeiro) e a confiança na primeira. Pesam o histórico da
+// avaliar: as até 3 opções (a melhor primeiro) e a confiança na primeira. Pesam o histórico da
 // mesma chave (3), o da primeira palavra (1,5) e a primeira palavra-chave conhecida (1). Receita não sugere categoria
 // de despesa, e despesa não sugere de receita.
 func (ix *indice) avaliar(t string, receita bool, ignorar *int64) ([]OpcaoDto, string) {
@@ -385,7 +385,7 @@ func (ix *indice) nomeCategoria(id int64) string {
 	return "outra categoria"
 }
 
-// SugestaoDto é o SugestaoCategoriaDto do C#.
+// SugestaoDto é a sugestão de categoria.
 type SugestaoDto struct {
 	Chave         string        `json:"chave"`
 	Exemplo       string        `json:"exemplo"`
@@ -413,7 +413,7 @@ type transacao struct {
 // Grupos é o SugerirGruposAsync: as transações dos últimos dias (sem as transferências do sistema e as de categoria
 // escolhida à mão), agrupadas pela descrição parecida, com a sugestão de cada grupo. Primeiro o que dá para aplicar
 // com segurança (a confiança alta), depois os grupos maiores.
-func Grupos(ctx context.Context, q consultas.DBTX, hoje tipos.Data, somenteSemCategoria bool, dias int) ([]SugestaoDto, error) {
+func Grupos(ctx context.Context, q banco.DBTX, hoje tipos.Data, somenteSemCategoria bool, dias int) ([]SugestaoDto, error) {
 	ix, err := montarIndice(ctx, q, hoje)
 	if err != nil {
 		return nil, err
@@ -511,7 +511,7 @@ func Grupos(ctx context.Context, q consultas.DBTX, hoje tipos.Data, somenteSemCa
 		d.AvisoRegra = ix.avisoRegra(textoRegra, principal)
 		resultado = append(resultado, d)
 	}
-	// O C# ordena pela confiança e depois pela quantidade (ThenByDescending). A segunda não muda nada: os grupos já
+	// A ordem é pela confiança e depois pela quantidade. A segunda não muda nada: os grupos já
 	// vêm do maior para o menor, e a ordenação é estável.
 	ordem := map[string]int{"alta": 0, "media": 1, "baixa": 2, "nenhuma": 3}
 	slices.SortStableFunc(resultado, func(a, b SugestaoDto) int { return ordem[a.Confianca] - ordem[b.Confianca] })
@@ -524,7 +524,7 @@ func mesmoId(a, b *int64) bool { return (a == nil) == (b == nil) && (a == nil ||
 var ErrNaoEncontrada = errors.New("transação não encontrada")
 
 // ParaTransacao é o SugerirParaTransacaoAsync: até 3 categorias para uma transação, menos a que ela já tem.
-func ParaTransacao(ctx context.Context, q consultas.DBTX, hoje tipos.Data, id int64) ([]OpcaoDto, error) {
+func ParaTransacao(ctx context.Context, q banco.DBTX, hoje tipos.Data, id int64) ([]OpcaoDto, error) {
 	var t transacao
 	err := q.QueryRowContext(ctx, `SELECT "Descricao", "DescricaoOriginal", "Estabelecimento", "Valor", "CategoriaId"
 		FROM "Transacao" WHERE "Id" = ?`, id).Scan(&t.descricao, &t.original, &t.estabelecimento, &t.valor, &t.categoria)

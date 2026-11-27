@@ -1,4 +1,4 @@
-// Pacote config lê a mesma configuração que a API .NET lê: appsettings.json, appsettings.<Ambiente>.json (os
+// Pacote config lê a configuração: appsettings.json, appsettings.<Ambiente>.json (os
 // scripts e o .msi geram o appsettings.Production.json) e, quando há "Dados:Pasta" (instalação pelo .msi), o
 // configuracao.json dessa pasta. Assim os scripts não precisam mudar para o Go (#73).
 package config
@@ -126,7 +126,7 @@ func ConferirSoLocal(endereco string) error {
 func mesclarArquivo(arvore map[string]any, caminho string) error {
 	dados, err := os.ReadFile(caminho)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil // opcional, como no .NET
+		return nil // opcional
 	}
 	if err != nil {
 		return fmt.Errorf("ler %s: %w", caminho, err)
@@ -139,7 +139,7 @@ func mesclarArquivo(arvore map[string]any, caminho string) error {
 	return nil
 }
 
-// mesclar põe os valores de novo por cima dos de destino. As chaves não diferenciam maiúsculas, como no .NET.
+// mesclar põe os valores de novo por cima dos de destino. As chaves não diferenciam maiúsculas.
 func mesclar(destino, novo map[string]any) {
 	for chave, valor := range novo {
 		existente := chaveIgual(destino, chave)
@@ -163,7 +163,7 @@ func chaveIgual(m map[string]any, chave string) string {
 	return chave
 }
 
-// texto lê "Secao:Chave" da árvore, como cfg["Secao:Chave"] no .NET. Número e booleano viram texto.
+// texto lê "Secao:Chave" da árvore. Número e booleano viram texto.
 func texto(arvore map[string]any, caminhoChave string) string {
 	var atual any = arvore
 	for _, parte := range strings.Split(caminhoChave, ":") {
@@ -200,7 +200,7 @@ func definir(arvore map[string]any, caminhoChave string, valor string) {
 	atual[ultima] = valor
 }
 
-// caminho resolve um caminho relativo a partir da pasta base. (O .NET resolve a partir da pasta atual do processo;
+// caminho resolve um caminho relativo a partir da pasta base. (Não é a pasta atual do processo;
 // os scripts e o .msi sempre gravam caminhos absolutos, então só muda em desenvolvimento.)
 func caminho(pastaBase, valor, padrao string) string {
 	if valor == "" {
@@ -212,8 +212,8 @@ func caminho(pastaBase, valor, padrao string) string {
 	return filepath.Join(pastaBase, valor)
 }
 
-// pluggyURLBase é o Pluggy:UrlBase, que a variável Pluggy__UrlBase muda como no ASP.NET: o .NET e o Go, que recebe o ambiente
-// dele, falam com a mesma Pluggy (a falsa, no contrato).
+// pluggyURLBase é o Pluggy:UrlBase, que a variável Pluggy__UrlBase muda: o Go recebe o ambiente
+// e fala com a Pluggy configurada (a falsa, no contrato).
 func pluggyURLBase(arvore map[string]any) string {
 	if v, ok := os.LookupEnv("Pluggy__UrlBase"); ok {
 		return v
@@ -224,7 +224,7 @@ func pluggyURLBase(arvore map[string]any) string {
 var variavelWindows = regexp.MustCompile(`%([^%]+)%`)
 
 // expandirVariaveis troca %VARIAVEL% pelo valor, como Environment.ExpandEnvironmentVariables (o .msi grava
-// %ProgramData%\FinancasLocal\dados). Variável que não existe fica como está, também como no .NET.
+// %ProgramData%\FinancasLocal\dados). Variável que não existe fica como está, também.
 func expandirVariaveis(valor string) string {
 	return variavelWindows.ReplaceAllStringFunc(valor, func(trecho string) string {
 		if v, ok := os.LookupEnv(trecho[1 : len(trecho)-1]); ok {

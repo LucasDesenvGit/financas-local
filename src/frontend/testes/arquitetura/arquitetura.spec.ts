@@ -55,6 +55,11 @@ const APRESENTACAO: Record<string, string> = {
   'paginas/movimentacao/transacoes-barra-edicao.component.ts': 'barra "Editando categorias"',
   'paginas/movimentacao/transacoes-barra-lote.component.ts': 'ações nas transações selecionadas',
   'paginas/movimentacao/transacoes-sugestoes.component.ts': 'janela "Sugestões de categoria"',
+  'paginas/movimentacao/contas-agendadas-formulario.component.ts': 'janela "Nova conta a pagar" / "Editar conta"',
+  'paginas/movimentacao/contas-agendadas-pagamento.component.ts': 'janela "Pagar" de Contas a pagar',
+  'paginas/trabalho/holerites-lista.component.ts': 'coluna dos meses e "Ler holerite em PDF" de Holerites',
+  'paginas/trabalho/holerites-senha.component.ts': 'bloco "O PDF tem senha" de Holerites',
+  'paginas/trabalho/holerites-detalhe.component.ts': 'holerite aberto de Holerites (lançamentos e cálculo)',
   'paginas/patrimonio/investimentos-indicadores.component.ts': 'avisos e cards do topo de Investimentos',
   'paginas/patrimonio/investimentos-evolucao.component.ts': 'gráfico "Seu dinheiro na renda variável x na Selic"',
   'paginas/patrimonio/investimentos-analises.component.ts': 'distribuição e rentabilidade em "Mais análises"',
@@ -76,7 +81,7 @@ const PROIBIDOS_NA_APRESENTACAO = [/^core\/api\.service$/, /^@angular\/router$/]
  * verdade; fica aqui até alguém mover. As do AvisosService e dos avisos do sino saíram na #634 (core/ e layout/).
  */
 const EXCECOES_DE_PASTA: Record<string, string> = {
-  'layout/shell.component.ts -> paginas/manual/manual-conteudo':
+  'layout/shell.component.ts -> paginas/manual/ajuda-por-rota':
     'o botão de ajuda leva à seção do Manual da tela (ajudaDaUrl); a função poderia morar no core'
 };
 
@@ -180,7 +185,7 @@ describe('arquitetura do front-end (#476)', () => {
       'app.routes.ts': { imports: ['paginas/painel/painel.component', 'paginas/planejamento/metas.component'], texto: '' },
       'core/api.service.ts': { imports: ['@angular/common/http'], texto: 'inject(HttpClient)' },
       'compartilhado/ui/modal.component.ts': { imports: ['compartilhado/ui/icone.component', 'compartilhado/utilidades'], texto: '' },
-      'layout/shell.component.ts': { imports: ['paginas/manual/manual-conteudo'], texto: '' },
+      'layout/shell.component.ts': { imports: ['paginas/manual/ajuda-por-rota'], texto: '' },
       'paginas/painel/painel.component.ts': { imports: ['core/api.service'], texto: '' },
       'paginas/planejamento/metas.component.ts': { imports: ['paginas/planejamento/metas-plano'], texto: '' },
       ...Object.fromEntries(Object.keys(APRESENTACAO).map((a) => [a, { imports: ['compartilhado/ui/modal.component'], texto: '' }]))
@@ -213,7 +218,7 @@ describe('arquitetura do front-end (#476)', () => {
       ['apresentação que sumiu', (() => { const g = limpo(); delete g['paginas/movimentacao/transacoes-transferencia.component.ts']; return g; })(),
         'regra 8: "paginas/movimentacao/transacoes-transferencia.component.ts" está em APRESENTACAO, mas não existe'],
       ['exceção que sarou', com('layout/shell.component.ts', []),
-        'regra 2-4: a exceção "layout/shell.component.ts -> paginas/manual/manual-conteudo" não acontece mais']
+        'regra 2-4: a exceção "layout/shell.component.ts -> paginas/manual/ajuda-por-rota" não acontece mais']
     ];
     it.each(casos)('%s', (_nome, grafo, mensagem) => {
       const v = violacoes(grafo);

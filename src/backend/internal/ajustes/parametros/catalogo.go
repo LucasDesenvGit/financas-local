@@ -1,6 +1,6 @@
 package parametros
 
-// Tipo é o TipoParametro do C#. No JSON sai como número (1 ou 2), como o enum do .NET sem JsonStringEnumConverter.
+// Tipo é o tipo do parâmetro. No JSON sai como número (1 ou 2), não como texto.
 type Tipo int
 
 const (
@@ -14,13 +14,13 @@ type Definicao struct {
 	Tipo                          Tipo
 	Padrao, Minimo, Maximo        int
 	Unidade                       *string
-	// DoAppsettings diz que o padrão pode vir do appsettings (ChaveAppSettings no C#): Opcoes.Padroes.
+	// DoAppsettings diz que o padrão pode vir do appsettings (ChaveAppSettings): Opcoes.Padroes.
 	DoAppsettings bool
 }
 
 func texto(s string) *string { return &s }
 
-// Catalogo é o ParametroService.Catalogo, na mesma ordem (a da tela). Os textos são copiados do C#: a tela é
+// Catalogo, na ordem da tela. Os textos são os de sempre: a tela é
 // montada a partir deles e o contrato compara.
 var Catalogo = []Definicao{
 	{Chave: "Sincronizacao.Habilitada", Grupo: "Sincronização", Nome: "Sincronização automática",
@@ -82,7 +82,7 @@ var Catalogo = []Definicao{
 		Tipo:      Inteiro, Padrao: 90, Minimo: 7, Maximo: 365, Unidade: texto("dias")},
 }
 
-// definicao procura a chave no catálogo (comparação exata, como o d.Chave == chave do C#).
+// definicao procura a chave no catálogo (comparação exata).
 func definicao(chave string) (Definicao, bool) {
 	for _, d := range Catalogo {
 		if d.Chave == chave {

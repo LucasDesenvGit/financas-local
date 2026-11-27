@@ -15,7 +15,7 @@ Sempre por HTTPS, com o mínimo de dados; quantidades, valores e dados pessoais 
 | `olinda.bcb.gov.br` | cotação PTAX de moedas estrangeiras | só o código da moeda e datas |
 | `query1.finance.yahoo.com` | cotações e proventos de ações e FIIs (fonte gratuita e não oficial; a brapi saiu na #763, [ADR 0072](adr/0072-cotacoes-de-acoes-e-fiis-so-pelo-yahoo-sem-a-brapi.md)) | o código do ativo |
 | `g1.globo.com` / `feeds.bbci.co.uk` / `www.tabnews.com.br` | só com o módulo **Notícias** ligado (vem desligado): as notícias do dia, a cada 45 minutos ([ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) | só o pedido do feed, sem nada seu |
-| `api.mercadobitcoin.net` | cotação de criptomoedas em reais, a cada 30 minutos ([ADR 0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md)) | só os pares fixos (BTC-BRL, ETH-BRL, SOL-BRL, USDT-BRL) |
+| `api.binance.com` | cotação de criptomoedas em reais, a cada 30 minutos ([ADR 0073](adr/0073-cotacao-de-criptomoedas-pela-binance.md); até 14/11/2026, o Mercado Bitcoin) | só os pares fixos (BTCBRL, ETHBRL, SOLBRL, USDTBRL) |
 | `api.github.com` / `github.com` | só o **Gerenciador** do Windows, para achar e baixar a versão nova, conferindo o SHA256 ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)) | só o pedido da página de versões. O gerenciador do Linux não acessa a internet (só na instalação de desenvolvimento, pelo `git`, quando se clica em "Atualizar para a última do develop"; [ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)) |
 
 ## Recomendações
@@ -43,5 +43,5 @@ Sempre por HTTPS, com o mínimo de dados; quantidades, valores e dados pessoais 
 - **Validação de host:** só `localhost`/`127.0.0.1` (e, no servidor do acesso pelo celular, só o IP escolhido), contra DNS rebinding.
 - **Auditoria** em Configurações › Segurança: logins, falhas, bloqueios e saídas, trocas de senha, parâmetros, credenciais da Pluggy, conexões adicionadas e removidas, alterações em lote nas transações (categoria, renomear, regras de descrição), conferências de investimentos e trocos automáticos, o acesso pelo celular ligado e desligado, e o desfazer de cada um.
 - **Erros do sistema** gravados sem dados sensíveis: query strings, tokens, senhas, CPF e valores em R$ viram `[removido]` antes de gravar ([ADR 0022](adr/0022-erros-do-sistema-gravados-no-banco.md)).
-- Consultas ao banco somente parametrizadas (`sqlc` ou `?`), sem SQL montado a partir de texto do usuário.
+- Consultas ao banco somente parametrizadas (com `?`), sem SQL montado a partir de texto do usuário.
 - **Dados de pagamento do Open Finance:** do Pix ou da TED, o nome e o CPF/CNPJ do outro lado não são gravados em campo próprio: fica o meio e se quem pagou e quem recebeu são a mesma pessoa ([ADR 0025](adr/0025-tipo-de-lancamento-pelo-open-finance-e-descricao.md)). A descrição, porém, é guardada como o banco manda e costuma trazer o nome ("PIX ENVIADO FULANO"); veja [Dados pessoais](DADOS-PESSOAIS.md#dados-bancários-da-pluggy).

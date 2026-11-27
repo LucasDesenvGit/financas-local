@@ -17,13 +17,13 @@ type commit struct {
 
 var (
 	// "Merge pull request #12 from dono/feature/x": o merge do botão do GitHub, com o título do PR no corpo.
-	mergeDePR = regexp.MustCompile(`^Merge pull request #\d+ from `)
+	mergeDePR = regexp.MustCompile(`^Merge pull request #(\d+) from `)
 	// Os merges que só trazem a main ou uma release/* de volta (ADR 0070, regra 3): o conteúdo já foi contado. A
 	// origem é o fim do assunto (o "dependabot/.../main/x" ou o "feature/release-notes" não são).
 	voltaDaMain = regexp.MustCompile(`^Merge pull request #\d+ from [^/\s]+/(?:main|release/\S+)$`)
 	voltaLocal  = regexp.MustCompile(`^Merge (?:remote-tracking )?branch '(?:origin/)?(?:main|release/[^']+)'`)
 	// "titulo (#12)": o assunto de um squash do GitHub. Commit direto, sem o número do PR, não é um PR.
-	assuntoDeSquash = regexp.MustCompile(`\(#\d+\)\s*$`)
+	assuntoDeSquash = regexp.MustCompile(`\(#(\d+)\)\s*$`)
 	// feat, feat(escopo), feat(escopo)!: o único tipo que sobe o número do meio.
 	tipoFuncionalidade = regexp.MustCompile(`^\s*feat(?:\([^)]*\))?!?\s*:`)
 )
@@ -48,6 +48,17 @@ func (c commit) titulo() string {
 		}
 	}
 	return c.assunto
+}
+
+// numeroDoPR é o número do PR, do assunto do merge do GitHub ou do squash; "" num commit direto.
+func (c commit) numeroDoPR() string {
+	if m := mergeDePR.FindStringSubmatch(c.assunto); c.pais >= 2 && m != nil {
+		return m[1]
+	}
+	if m := assuntoDeSquash.FindStringSubmatch(c.assunto); m != nil {
+		return m[1]
+	}
+	return ""
 }
 
 // funcionalidade: o título é de feat.

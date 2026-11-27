@@ -28,7 +28,7 @@ Estão no `CONTRIBUINDO.md`, "Testes rápidos", com o porquê: dependência nova
 | Quando | Comando (em `src/frontend`) |
 |---|---|
 | Durante o trabalho | `npx jest testes/jest/<pasta>/<arquivo>.spec.ts`; `npx playwright test -g <tela>` com o build em `dist/` |
-| Antes do push | `npm run test:tipos` e `NAVEGADOR=chromium npm run test:afetados` (`CONTRIBUINDO.md`, "Testes rápidos") |
+| Antes do push | os comandos de "Antes de dizer que terminou", no `SKILL.md` |
 | Mexeu em import, criou arquivo ou pasta | `npm run test:arquitetura` (só local, #476; a CI não roda) |
 | Mudou o que se vê | `FOTOS=<rotas> FOTOS_PASTA=<pasta temporária> npx playwright test fotos`, e olhe os PNGs (skill `testar-no-navegador`) |
 | Falhou só na CI | `CONTRIBUINDO.md`, "Testes rápidos" |

@@ -9,18 +9,19 @@ import (
 
 // Copias diz de onde vem cada arquivo de embutido/ (caminhos a partir de src/backend). O //go:embed só alcança
 // arquivos do próprio módulo (src/backend), e o banco/ fica fora dele: o go generate (esquema/gerar) copia os
-// três arquivos para embutido/, e o TestCopiasEmDia e a CI ("go generate em dia") falham se uma cópia ficar
+// dois arquivos para embutido/, e o TestCopiasEmDia e a CI ("go generate em dia") falham se uma cópia ficar
 // diferente do original. O original continua sendo a fonte única (ADR 0003).
 var Copias = map[string]string{
-	"01-estrutura.sql":      ArquivoEstrutura,
-	"02-dados-iniciais.sql": ArquivoDadosIniciais,
-	"2-criar-banco.sh":      ArquivoColunas,
+	"01-estrutura.sql":        ArquivoEstrutura,
+	"02-dados-iniciais.sql":   ArquivoDadosIniciais,
+	"03-tabelas-oficiais.sql": ArquivoTabelasOficiais,
 }
 
-// Scripts são os três textos que o EsquemaBanco lê: a estrutura, os dados iniciais e o 2-criar-banco.sh (de onde
-// saem as colunas novas).
+// Scripts são o que o AplicarEsquema lê: a estrutura, os dados iniciais (só em banco novo), as tabelas oficiais (a
+// cada partida, ADR 0065) e as colunas novas.
 type Scripts struct {
-	Estrutura, DadosIniciais, CriarBanco string
+	Estrutura, DadosIniciais, TabelasOficiais string
+	Colunas                                   []ColunaNova
 }
 
 // Texto lê o arquivo como o EsquemaBanco.Ler: o StreamReader em UTF-8 descarta a marca de ordem de bytes (BOM) do

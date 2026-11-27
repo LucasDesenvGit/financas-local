@@ -11,7 +11,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
@@ -92,7 +91,7 @@ func compararOpcional(a, b *string) int {
 	return texto.CompararNaCultura(*a, *b)
 }
 
-// alterarAtiva liga ou desliga a conexão. Sem o parâmetro "ativa", vale false, como o bool do [FromQuery] no .NET.
+// alterarAtiva liga ou desliga a conexão. Sem o parâmetro "ativa", vale false.
 func (s *Servico) alterarAtiva(w http.ResponseWriter, r *http.Request) {
 	id, ok := idDaRota(w, r)
 	if !ok {
@@ -144,7 +143,7 @@ func (s *Servico) removerConexao(w http.ResponseWriter, r *http.Request) {
 		s.erroInterno(w, r, "ler a conexão", err)
 		return
 	}
-	login, err := auditoria.Login(ctx, consultas.New(s.db))
+	login, err := auditoria.Login(ctx, s.db)
 	if err != nil {
 		s.erroInterno(w, r, "ler o login", err)
 		return
@@ -166,7 +165,7 @@ func (s *Servico) removerConexao(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 		}
-		return auditoria.Registrar(ctx, consultas.New(tx), r, s.agora(), "ConexaoRemovida", login)
+		return auditoria.Registrar(ctx, tx, r, s.agora(), "ConexaoRemovida", login)
 	})
 	if err != nil {
 		s.erroInterno(w, r, "remover a conexão", err)

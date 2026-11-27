@@ -118,6 +118,7 @@ if (-not $SoPacote) {
     $pastaInstalador = Join-Path $Publicado "instalador"
     New-Item -ItemType Directory -Path $pastaInstalador -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "configurar.ps1") -Destination $pastaInstalador -Force
+    Copy-Item -LiteralPath (Join-Path $Raiz "scripts\windows\comum.ps1") -Destination $pastaInstalador -Force
     Copy-Item -LiteralPath (Join-Path $Raiz "src\gerenciador-go\icone.ico") -Destination $pastaInstalador -Force
 
 }

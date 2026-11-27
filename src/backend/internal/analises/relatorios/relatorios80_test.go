@@ -114,7 +114,7 @@ func TestProjecao(t *testing.T) {
 	s := NovoServico(db, r)
 	corrente := fab.Conta()
 	investimento := fab.Conta(func(c *testeapoio.Conta) { c.Tipo = 4 })
-	cartao := fab.Conta(func(c *testeapoio.Conta) { c.Tipo, c.Origem = tipoContaCartao, origemOpenFinance })
+	cartao := fab.Conta(func(c *testeapoio.Conta) { c.Tipo, c.Origem = tipoContaCartao, tipos.OrigemOpenFinance })
 	mercado := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Mercado" })
 
 	p, err := s.Projecao(t.Context(), 2, nil)
