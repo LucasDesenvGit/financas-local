@@ -1,6 +1,6 @@
 import { SituacaoHolerite, TipoLancamentoHolerite as T } from '../../../src/app/core/modelos';
 import {
-  ehPorHora, ehProvento, lancamentoNovo, paraSalvar, rotuloTipo, textoSituacao, trocarTipo
+  ehPorHora, ehProvento, estadoDoFormulario, lancamentoNovo, paraSalvar, rotuloTipo, textoSituacao, trocarTipo
 } from '../../../src/app/paginas/trabalho/holerites';
 import { ajudaDaUrl } from '../../../src/app/paginas/manual/manual-conteudo';
 
@@ -50,5 +50,14 @@ describe('Trabalho › Holerites (#211)', () => {
     expect(ajudaDaUrl('/trabalho/salario')).toEqual({ capitulo: 'trabalho', secao: 'salario' });
     expect(ajudaDaUrl('/transacoes?categoria=1')).toEqual({ capitulo: 'transacoes' });
     expect(ajudaDaUrl('/manual/contas')).toBeNull();
+  });
+
+  it('o estado do formulário muda com os dias e com os lançamentos, e não com o id nem com o espaço da descrição', () => {
+    const l = { ...lancamentoNovo(T.HoraExtra), quantidade: 2 };
+    const base = estadoDoFormulario(22, 8, [l]);
+    expect(estadoDoFormulario(22, 8, [{ ...l }])).toBe(base);
+    expect(estadoDoFormulario(22, 8, [{ ...l, descricao: ' ' }])).toBe(base);
+    expect(estadoDoFormulario(21, 8, [l])).not.toBe(base);
+    expect(estadoDoFormulario(22, 8, [{ ...l, quantidade: 3 }])).not.toBe(base);
   });
 });

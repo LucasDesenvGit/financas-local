@@ -28,6 +28,14 @@ case "$(uname -m)" in
         ;;
 esac
 
+# ---------------------------------------------------------------- systemctl do host no Flatpak (#789)
+# No terminal de um app em Flatpak (ex.: o VS Code) nao ha systemctl: o do host e chamado pelo flatpak-spawn. Os
+# scripts seguem usando 'systemctl' e 'command -v systemctl' (que acha a funcao). Fora do Flatpak, nada muda.
+if [[ "$SO" == linux ]] && ! command -v systemctl >/dev/null 2>&1 && command -v flatpak-spawn >/dev/null 2>&1 \
+   && { [[ -e /.flatpak-info ]] || [[ "${container:-}" == flatpak ]]; }; then
+    systemctl() { flatpak-spawn --host systemctl "$@"; }
+fi
+
 # ---------------------------------------------------------------- Pastas (mesma convencao do antigo comum.ps1)
 Raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 Ferramentas="$Raiz/ferramentas"
