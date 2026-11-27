@@ -9,7 +9,12 @@
 #   versões "· desenvolvimento" abaixo dela, até a última publicada
 #   (exclusive), um nível abaixo ("### X.Y.Z — data", "#### Correções") e
 #   sem o "· desenvolvimento". Sem a seção da versão, a "[Não publicado]".
-#   Ambiente: VERSAO (ex.: 3.3.5), GITHUB_REPOSITORY.
+#   Na seção da versão, "#### Outras mudanças" lista pelo título as PRs
+#   dela sem arquivo em changelog.d/ (CI, testes, Dependabot; ADR 0070,
+#   #757), desde a tag anterior: `go run ./cmd/versao -sem-changelog`.
+#   Ambiente: VERSAO (ex.: 3.3.5), GITHUB_REPOSITORY; GITHUB_SHA (a tag;
+#   sem ele, o HEAD). Precisa do histórico do git e do Go. Para testar sem
+#   eles: PRS_SEM_CHANGELOG=<arquivo com o que o -sem-changelog imprimiria>.
 #
 # --desenvolvimento (#294): notas do pré-lançamento "desenvolvimento".
 #   Além de "tudo desde a última versão publicada" (as seções
@@ -141,6 +146,22 @@ if [[ "$modo" == "--desenvolvimento" ]]; then
     fi
 fi
 
+# --versao (#757): as PRs da versão que não trouxeram arquivo para changelog.d/, pelo título, desde a tag anterior (a
+# mais nova alcançável que não é a desta versão; sem nenhuma, desde a base). Entram no fim da seção da versão.
+outras=""
+if [[ "$modo" == "--versao" ]]; then
+    if [[ -n "${PRS_SEM_CHANGELOG:-}" ]]; then
+        sem_changelog="$(cat "$PRS_SEM_CHANGELOG")"
+    else
+        raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+        ref="${GITHUB_SHA:-HEAD}"
+        anterior="$(git -C "$raiz" describe --tags --abbrev=0 --match 'v[0-9]*' --exclude "v$VERSAO" "$ref" 2>/dev/null || true)"
+        sem_changelog="$(cd "$raiz/src/backend" && go run ./cmd/versao -ref "$ref" -publicada -sem-changelog ${anterior:+-desde "$anterior"})"
+    fi
+    sem_changelog="${sem_changelog//$'\r'/}"
+    [[ -z "${sem_changelog//[[:space:]]/}" ]] || outras="#### Outras mudanças"$'\n'"${sem_changelog%$'\n'}"$'\n'
+fi
+
 # As seções do CHANGELOG, um nível abaixo ("## [2.26.1] — data" vira "### 2.26.1 — data", e "### Correções",
 # "#### Correções"; o sub-item "- Técnico: ..." de cada entrada fica de fora, #722), do topo até a última versão publicada (a primeira sem "· desenvolvimento"), que fica de fora.
 # --versao: começa na seção da versão (ou na "[Não publicado]"), a publicada entra, e tira o "· desenvolvimento" dos
@@ -148,13 +169,20 @@ fi
 # O awk lê o arquivo (e não um pipe): ele sai ao chegar na última versão publicada, e um cat que sobrasse escrevendo
 # num pipe fechado derrubaria o script (SIGPIPE com pipefail). Do CHANGELOG.md vai só o que começa na primeira versão:
 # o título e a explicação do formato, lá em cima, ficariam grudados na última seção que veio de changelog.d/.
-LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
-    # Junta a seção que acabou, se ela couber inteira com o link; se não, para ali.
+# As "Outras mudanças" vão pelo ENVIRON, e não pelo -v, que interpretaria as barras invertidas de um título.
+OUTRAS="$outras" LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
+    # Junta a seção que acabou, se ela couber inteira com o link; se não, para ali. A primeira (a da versão, no
+    # --versao) leva as "Outras mudanças" no fim, antes da linha em branco que a separa da próxima.
     function fechar() {
         if (secao == "") return
+        if (outras != "") {
+            sub(/\n+$/, "\n", secao)
+            secao = secao "\n" outras "\n"; outras = ""
+        }
         if (usado + length(secao) + length(link) + 2 > resto) { cortou = 1; return }
         saida = saida secao; usado += length(secao); secao = ""
     }
+    BEGIN { outras = ENVIRON["OUTRAS"] }
     { sub(/\r$/, "") }
     /^## \[/ {
         if (f) {
@@ -175,6 +203,7 @@ LC_ALL=C awk -v versao="$versao" -v resto="$resto" -v link="$link" '
     f { secao = secao $0 "\n" }
     END {
         if (!acabou) fechar()
+        if (outras != "") saida = saida (saida == "" ? "" : "\n") outras # nenhuma seção: a lista não some
         if (versao != "") {
             sub(/\n+$/, "", saida)
             if (cortou) saida = (saida == "" ? link : saida "\n\n" link)

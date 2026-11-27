@@ -12,6 +12,9 @@ import (
 // pastaDoChangelog tem um arquivo por PR (ADR 0070): changelog.d/<nome-da-branch>.md.
 const pastaDoChangelog = "changelog.d"
 
+// arquivoDoChangelog é o que o lancar-versao.sh monta na publicação; antes da ADR 0070, cada PR escrevia nele.
+const arquivoDoChangelog = "CHANGELOG.md"
+
 // tiposDoChangelog é a ordem dos títulos de tipo nas seções; um título fora da lista vai depois, na ordem em que apareceu.
 var tiposDoChangelog = []string{"### Funcionalidades", "### Correções", "### Publicação e documentação"}
 
@@ -126,7 +129,7 @@ func gravarPublicacao(r repositorio, secao string, entradas []entrada) error {
 	if len(entradas) == 0 {
 		return fmt.Errorf("%s/ está sem entradas: escreva ao menos uma (publicar sem nada a dizer deixaria as notas vazias)", pastaDoChangelog)
 	}
-	caminho := filepath.Join(r.raiz, "CHANGELOG.md")
+	caminho := filepath.Join(r.raiz, arquivoDoChangelog)
 	atual, err := os.ReadFile(caminho)
 	if err != nil {
 		return err
@@ -134,7 +137,7 @@ func gravarPublicacao(r repositorio, secao string, entradas []entrada) error {
 	if err := os.WriteFile(caminho, []byte(inserirSecao(string(atual), secao)), 0o644); err != nil {
 		return err
 	}
-	if _, err := r.git("add", "--", "CHANGELOG.md"); err != nil {
+	if _, err := r.git("add", "--", arquivoDoChangelog); err != nil {
 		return err
 	}
 	for _, e := range entradas {
