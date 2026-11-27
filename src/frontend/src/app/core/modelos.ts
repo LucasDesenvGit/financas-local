@@ -979,8 +979,13 @@ export interface ConfirmarHoleritePdf {
 export interface HoleritePdfGravado { holerite: Holerite; desfazer: string; }
 
 /** #214: o 13º salário do ano (estimativa). */
-/** valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). */
-export interface ParcelaDecimo { valor: number; data: string; informada: boolean; valorInformado: boolean; comFerias?: boolean; }
+/**
+ * valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). dataInformada: a
+ * data veio da pessoa (sem ela, é o 30/11 padrão ou a das férias; #750).
+ */
+export interface ParcelaDecimo {
+  valor: number; data: string; informada: boolean; valorInformado: boolean; dataInformada: boolean; comFerias?: boolean;
+}
 export interface DecimoTerceiro {
   ano: number; avos: number; salarioBase: number; mediaVariaveis: number; total: number;
   primeira: ParcelaDecimo; inss: CalculoInss; irrf: CalculoIrrf; segunda: ParcelaDecimo; liquido: number;
