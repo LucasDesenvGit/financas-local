@@ -27,13 +27,14 @@ import (
 
 // Mensagens que a pessoa vê.
 const (
-	MensagemSemRescisao  = "Estágio e PJ não têm as verbas da rescisão da CLT."
-	MensagemSemTabela    = "Ainda não há tabela do INSS ou do IRRF para o mês da saída."
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
-	MensagemTipo         = "Escolha o tipo: sem justa causa, pedido de demissão, acordo, justa causa ou fim da experiência."
-	MensagemAviso        = "Escolha o aviso: trabalhado ou indenizado."
-	MensagemSaida        = "A saída vai da admissão em diante, com o salário do mês cadastrado."
-	MensagemJaRegistrada = "A rescisão deste emprego já está registrada: desfaça antes de registrar outra."
+	MensagemSemRescisao      = "Estágio e PJ não têm as verbas da rescisão da CLT."
+	MensagemSemTabela        = "Ainda não há tabela do INSS ou do IRRF para o mês da saída."
+	MensagemJSONInvalido     = "Os dados enviados não estão no formato esperado."
+	MensagemTipo             = "Escolha o tipo: sem justa causa, pedido de demissão, acordo, justa causa ou fim da experiência."
+	MensagemAviso            = "Escolha o aviso: trabalhado ou indenizado."
+	MensagemSaida            = "A saída vai da admissão em diante, com o salário do mês cadastrado."
+	MensagemJaRegistrada     = "A rescisão deste emprego já está registrada: desfaça antes de registrar outra."
+	MensagemSaqueAniversario = "O saque-aniversário vai como true ou false."
 )
 
 // Servico simula e registra a rescisão.
@@ -71,8 +72,11 @@ func avisoDoTipo(tipo, aviso int64) int64 {
 	return aviso
 }
 
-// Simular calcula a rescisão do emprego com o tipo, o aviso e a data de saída.
-func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, saida tipos.Data) (Calculo, error) {
+// Simular calcula a rescisão do emprego com o tipo, o aviso e a data de saída. saqueAniversario é a resposta da pessoa
+// (#751): nil, o site deduz dos saques do FGTS (houve saque-aniversário até a saída); informado, vale ele. Deduzir não
+// basta: quem pede para voltar ao saque-rescisão segue no aniversário por 24 meses (Lei 8.036, art. 20-C), e quem
+// voltou continua com o saque antigo no histórico.
+func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, saida tipos.Data, saqueAniversario *bool) (Calculo, error) {
 	if !TipoConhecido(tipo) {
 		return Calculo{}, erroDeValidacao(MensagemTipo)
 	}
@@ -152,6 +156,9 @@ func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, sai
 		return Calculo{}, err
 	}
 	entrada.SaldoFgts, entrada.BaseMultaFgts, entrada.SaqueAniversario = g.Saldo, g.BaseDaMulta, g.SaqueAniversario
+	if saqueAniversario != nil {
+		entrada.SaqueAniversario = *saqueAniversario
+	}
 	return Calcular(entrada), nil
 }
 
@@ -192,11 +199,11 @@ type Comparacao struct {
 
 // Comparar simula os cinco tipos na mesma data: a dispensa e o acordo com o aviso indenizado; o pedido de demissão
 // com o aviso trabalhado.
-func (s *Servico) Comparar(ctx context.Context, empregoId int64, saida tipos.Data) ([]Comparacao, error) {
+func (s *Servico) Comparar(ctx context.Context, empregoId int64, saida tipos.Data, saqueAniversario *bool) ([]Comparacao, error) {
 	avisos := map[int64]int64{SemJustaCausa: AvisoIndenizado, PedidoDemissao: AvisoTrabalhado, Acordo: AvisoIndenizado}
 	lista := []Comparacao{}
 	for tipo := SemJustaCausa; tipo <= FimExperiencia; tipo++ {
-		c, err := s.Simular(ctx, empregoId, tipo, avisos[tipo], saida)
+		c, err := s.Simular(ctx, empregoId, tipo, avisos[tipo], saida, saqueAniversario)
 		if err != nil {
 			return nil, err
 		}
@@ -207,13 +214,13 @@ func (s *Servico) Comparar(ctx context.Context, empregoId int64, saida tipos.Dat
 }
 
 // Registrar guarda a rescisão real (o cálculo de agora, congelado) e põe a data de saída no emprego.
-func (s *Servico) Registrar(ctx context.Context, empregoId, tipo, aviso int64, saida tipos.Data) (Calculo, error) {
+func (s *Servico) Registrar(ctx context.Context, empregoId, tipo, aviso int64, saida tipos.Data, saqueAniversario *bool) (Calculo, error) {
 	if _, err := s.Registrada(ctx, empregoId); err == nil {
 		return Calculo{}, errRegistrada
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return Calculo{}, err
 	}
-	c, err := s.Simular(ctx, empregoId, tipo, aviso, saida)
+	c, err := s.Simular(ctx, empregoId, tipo, aviso, saida, saqueAniversario)
 	if err != nil {
 		return Calculo{}, err
 	}
@@ -222,6 +229,16 @@ func (s *Servico) Registrar(ctx context.Context, empregoId, tipo, aviso int64, s
 		return Calculo{}, err
 	}
 	err = banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
+		// A conferência que conta é esta, dentro da transação (#751): a de cima poupa a simulação, mas dois "Registrar"
+		// juntos passavam os dois por ela, e o 2º caía na chave do EmpregoId com 500. A transação é BEGIN IMMEDIATE: o 2º
+		// espera o 1º e vê a rescisão gravada.
+		var existe int
+		switch err := tx.QueryRowContext(ctx, `SELECT 1 FROM "Rescisao" WHERE "EmpregoId" = ?`, empregoId).Scan(&existe); {
+		case err == nil:
+			return errRegistrada
+		case !errors.Is(err, sql.ErrNoRows):
+			return fmt.Errorf("ler a rescisão: %w", err)
+		}
 		// A saída que o emprego já tinha fica guardada, para o desfazer devolver (revisão do #704).
 		var anterior *tipos.Data
 		if err := tx.QueryRowContext(ctx, `SELECT "Saida" FROM "Emprego" WHERE "Id" = ?`, empregoId).Scan(&anterior); err != nil {
@@ -330,9 +347,24 @@ func saidaDaQuery(r *http.Request) (tipos.Data, bool) {
 	return d, err == nil
 }
 
-// simularHTTP: ?tipo=1&aviso=2&saida=2026-12-15.
+// saqueDaQuery lê o ?saqueAniversario=true|false (#751): sem ele, nil (o site deduz); fora disso, ok falso.
+func saqueDaQuery(r *http.Request) (*bool, bool) {
+	texto := r.URL.Query().Get("saqueAniversario")
+	if texto == "" {
+		return nil, true
+	}
+	v, err := strconv.ParseBool(texto)
+	return &v, err == nil
+}
+
+// simularHTTP: ?tipo=1&aviso=2&saida=2026-12-15[&saqueAniversario=false].
 func (s *Servico) simularHTTP(w http.ResponseWriter, r *http.Request) {
 	saida, ok := saidaDaQuery(r)
+	saque, okSaque := saqueDaQuery(r)
+	if !okSaque {
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemSaqueAniversario)
+		return
+	}
 	tipo, errTipo := strconv.ParseInt(r.URL.Query().Get("tipo"), 10, 64)
 	aviso, errAviso := strconv.ParseInt(r.URL.Query().Get("aviso"), 10, 64)
 	if !ok || errTipo != nil {
@@ -342,7 +374,7 @@ func (s *Servico) simularHTTP(w http.ResponseWriter, r *http.Request) {
 	if errAviso != nil {
 		aviso = SemAviso
 	}
-	c, err := s.Simular(r.Context(), idDe(r), tipo, aviso, saida)
+	c, err := s.Simular(r.Context(), idDe(r), tipo, aviso, saida, saque)
 	s.responder(w, r, http.StatusOK, c, err)
 }
 
@@ -352,7 +384,12 @@ func (s *Servico) compararHTTP(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusBadRequest, "Informe a data de saída (AAAA-MM-DD).")
 		return
 	}
-	lista, err := s.Comparar(r.Context(), idDe(r), saida)
+	saque, okSaque := saqueDaQuery(r)
+	if !okSaque {
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemSaqueAniversario)
+		return
+	}
+	lista, err := s.Comparar(r.Context(), idDe(r), saida, saque)
 	s.responder(w, r, http.StatusOK, lista, err)
 }
 
@@ -375,15 +412,16 @@ func (s *Servico) registrarHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var dto struct {
-		Tipo  int64       `json:"tipo"`
-		Aviso int64       `json:"aviso"`
-		Saida *tipos.Data `json:"saida"`
+		Tipo             int64       `json:"tipo"`
+		Aviso            int64       `json:"aviso"`
+		Saida            *tipos.Data `json:"saida"`
+		SaqueAniversario *bool       `json:"saqueAniversario"` // a resposta da pessoa; sem ela, o site deduz (#751)
 	}
 	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(&dto); err != nil || dto.Saida == nil {
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
 		return
 	}
-	c, err := s.Registrar(r.Context(), idDe(r), dto.Tipo, dto.Aviso, *dto.Saida)
+	c, err := s.Registrar(r.Context(), idDe(r), dto.Tipo, dto.Aviso, *dto.Saida, dto.SaqueAniversario)
 	s.responder(w, r, http.StatusCreated, c, err)
 }
 
