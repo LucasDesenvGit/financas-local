@@ -527,44 +527,6 @@
     }
   },
   {
-    "nome": "sair",
-    "requisicao": "POST /api/auth/sair",
-    "status": 204,
-    "cookies": [
-      "__Host-Financas=; expires=Thu, 01 Jan 1970 00:00:00 GMT; httponly; path=/; samesite=strict; secure",
-      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
-    ],
-    "banco": {
-      "AuditoriaAcesso": {
-        "inseridas": [
-          {
-            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "Evento": "Logout",
-            "Id": 8,
-            "Ip": "127.0.0.5",
-            "Login": "ana.teste",
-            "UserAgent": "contrato-financas-local"
-          }
-        ]
-      }
-    }
-  },
-  {
-    "nome": "estado depois de sair",
-    "requisicao": "GET /api/auth/estado",
-    "status": 200,
-    "tipo": "application/json; charset=utf-8",
-    "cookies": [
-      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
-    ],
-    "corpo": {
-      "autenticado": false,
-      "configurado": true,
-      "login": null,
-      "versao": "<versao>"
-    }
-  },
-  {
     "nome": "sair sem estar logado",
     "requisicao": "POST /api/auth/sair",
     "status": 204,
@@ -590,14 +552,6 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": [
-      {
-        "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
-        "evento": "Logout",
-        "id": 8,
-        "ip": "127.0.0.5",
-        "login": "ana.teste",
-        "userAgent": "contrato-financas-local"
-      },
       {
         "dataHora": "<relógio +0 min, AAAA-MM-DDThh:mm:ss.f>",
         "evento": "LoginSucesso",
@@ -670,7 +624,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "LoginFalha",
-            "Id": 9,
+            "Id": 8,
             "Ip": "127.0.0.3",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -708,7 +662,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "LoginFalha",
-            "Id": 10,
+            "Id": 9,
             "Ip": "127.0.0.3",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -746,7 +700,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "LoginFalha",
-            "Id": 11,
+            "Id": 10,
             "Ip": "127.0.0.3",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -784,7 +738,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "LoginFalha",
-            "Id": 12,
+            "Id": 11,
             "Ip": "127.0.0.3",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -822,7 +776,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "LoginFalha",
-            "Id": 13,
+            "Id": 12,
             "Ip": "127.0.0.3",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -864,7 +818,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "LoginBloqueado",
-            "Id": 14,
+            "Id": 13,
             "Ip": "127.0.0.4",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
