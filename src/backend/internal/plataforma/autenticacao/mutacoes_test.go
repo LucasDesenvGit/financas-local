@@ -36,15 +36,17 @@ func cookieAssinado(dados []byte) string {
 // Pega: "|| s.Usuario <= 0" virando "&&" e "<= 0" virando "< 0".
 func TestSessaoAssinadaComConteudoInvalido(t *testing.T) {
 	agora := time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC)
-	expira := agora.Add(time.Hour).Unix()
+	emitido, expira := agora.Unix(), agora.Add(time.Hour).Unix() // com o "e", o teto (#68) não recusa antes do usuário
 	for nome, dados := range map[string]string{
-		"JSON quebrado com usuário": `{"u":1,"x":` + fmt.Sprint(expira),
-		"usuário 0":                 fmt.Sprintf(`{"u":0,"x":%d}`, expira),
-		"usuário negativo":          fmt.Sprintf(`{"u":-1,"x":%d}`, expira),
+		"JSON quebrado com usuário": fmt.Sprintf(`{"u":1,"e":%d,"x":`, emitido) + fmt.Sprint(expira),
+		"usuário 0":                 fmt.Sprintf(`{"u":0,"e":%d,"x":%d}`, emitido, expira),
+		"usuário negativo":          fmt.Sprintf(`{"u":-1,"e":%d,"x":%d}`, emitido, expira),
+		"usuário 1 (o controle)":    fmt.Sprintf(`{"u":1,"e":%d,"x":%d}`, emitido, expira),
 	} {
+		valeria := nome == "usuário 1 (o controle)"
 		t.Run(nome, func(t *testing.T) {
-			if s, ok := lerSessao(chaveDeTeste, cookieAssinado([]byte(dados)), agora); ok {
-				t.Errorf("aceitou: %+v", s)
+			if s, ok := lerSessao(chaveDeTeste, cookieAssinado([]byte(dados)), agora); ok != valeria {
+				t.Errorf("valeu=%v, esperado %v: %+v", ok, valeria, s)
 			}
 		})
 	}
