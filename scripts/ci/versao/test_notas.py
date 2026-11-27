@@ -39,11 +39,14 @@ def um_nivel_abaixo(texto):
 
 
 class NotasDaVersao(unittest.TestCase):
-    def gerar(self, conteudo, versao="2.9.0", limite=None, crlf=False):
+    def gerar(self, conteudo, versao="2.9.0", limite=None, crlf=False, sem_changelog=""):
         with tempfile.TemporaryDirectory() as pasta:
             texto = conteudo.replace("\n", "\r\n") if crlf else conteudo
             Path(pasta, "CHANGELOG.md").write_text(texto, encoding="utf-8", newline="")
-            env = dict(os.environ, VERSAO=versao, GITHUB_REPOSITORY="dono/repo")
+            # O que o `go run ./cmd/versao -sem-changelog` imprimiria (#757): sem o git e sem o Go.
+            Path(pasta, "sem-changelog.md").write_text(sem_changelog, encoding="utf-8", newline="")
+            env = dict(os.environ, VERSAO=versao, GITHUB_REPOSITORY="dono/repo",
+                       PRS_SEM_CHANGELOG=str(Path(pasta, "sem-changelog.md")))
             if limite is not None:
                 env["LIMITE_NOTAS"] = str(limite)
             r = subprocess.run([shutil.which("bash") or "bash", str(SCRIPT), "--versao"], cwd=pasta, env=env,
@@ -116,6 +119,21 @@ class NotasDaVersao(unittest.TestCase):
         self.assertEqual(resto, "### 2.9.0 — 2026-11-05\n\n#### Correções\n\n- **A** (#1). Muda.\n- **B** (#2).\n"
                                 "  - Sem Técnico: aqui, que fica.\n")
 
+    def test_prs_sem_arquivo_entram_pelo_titulo_no_fim_da_secao_da_versao(self):
+        # #757 (ADR 0070): CI, testes e Dependabot não têm arquivo em changelog.d/; as notas os listam pelo título.
+        conteudo = changelog(1, 2)
+        resto = self.gerar(conteudo, sem_changelog="- ci: x (#5)\n- build(deps): y \\ z (#6)\n").split(MUDOU, 1)[1]
+        versao, depois = resto.split("### 2.8.1 —", 1)
+        self.assertTrue(versao.endswith("Mudança 1 da 2.9.0, com um texto comprido o bastante para pesar nas notas.\n\n"
+                                        "#### Outras mudanças\n- ci: x (#5)\n- build(deps): y \\ z (#6)\n\n"), versao)
+        self.assertNotIn("Outras mudanças", depois)
+        self.assertNotIn("Outras mudanças", self.gerar(conteudo))
+        self.assertNotIn("Outras mudanças", self.gerar(conteudo, sem_changelog="\n"))
+
+    def test_prs_sem_arquivo_com_a_versao_como_unica_secao(self):
+        conteudo = "# Changelog\n\n" + secao("2.9.0", 1, rotulo="")
+        resto = self.gerar(conteudo, sem_changelog="- test: y (#9)\r\n", crlf=True).split(MUDOU, 1)[1]
+        self.assertTrue(resto.endswith("pesar nas notas.\n\n#### Outras mudanças\n- test: y (#9)\n"), resto)
 
 
 def secao_desenvolvimento(versao, linhas):

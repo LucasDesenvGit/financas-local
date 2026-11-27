@@ -149,26 +149,52 @@ func (r repositorio) arquivosDoChangelog(ref string) ([]string, error) {
 // quemAcrescentou diz, para cada arquivo de changelog.d/, o commit da linha principal que o acrescentou por último
 // (o merge do PR que o trouxe).
 func (r repositorio) quemAcrescentou(ref string) (map[string]string, error) {
-	saida, err := r.git("log", "--first-parent", "-m", "--diff-filter=A", "--name-only",
-		"--format="+separadorDeCommit+"%H", ref, "--", pastaDoChangelog+"/")
+	acrescimos, err := r.acrescimos(ref)
 	if err != nil {
 		return nil, err
 	}
 	autores := map[string]string{}
+	for _, a := range acrescimos {
+		for _, arquivo := range a.arquivos {
+			if _, jaTem := autores[arquivo]; !jaTem { // do mais novo para o mais antigo: vale o primeiro
+				autores[arquivo] = a.hash
+			}
+		}
+	}
+	return autores, nil
+}
+
+// acrescimo é um commit da linha principal que acrescentou entradas a changelog.d/, com elas.
+type acrescimo struct {
+	hash     string
+	arquivos []string
+}
+
+// acrescimos lista, do mais novo para o mais antigo, os commits da linha principal da faixa (um ref ou "a..b") que
+// acrescentaram entradas a changelog.d/ (o LEIA-ME.md não conta).
+func (r repositorio) acrescimos(faixa string) ([]acrescimo, error) {
+	saida, err := r.git("log", "--first-parent", "-m", "--diff-filter=A", "--name-only",
+		"--format="+separadorDeCommit+"%H", faixa, "--", pastaDoChangelog+"/")
+	if err != nil {
+		return nil, err
+	}
+	var lista []acrescimo
 	for registro := range strings.SplitSeq(saida, separadorDeCommit) {
 		linhas := strings.Split(strings.TrimSpace(registro), "\n")
 		if linhas[0] == "" {
 			continue
 		}
+		a := acrescimo{hash: linhas[0]}
 		for _, arquivo := range linhas[1:] {
-			if arquivo = strings.TrimSpace(arquivo); arquivo != "" {
-				if _, jaTem := autores[arquivo]; !jaTem { // do mais novo para o mais antigo: vale o primeiro
-					autores[arquivo] = linhas[0]
-				}
+			if arquivo = strings.TrimSpace(arquivo); ehEntradaDoChangelog(arquivo) {
+				a.arquivos = append(a.arquivos, arquivo)
 			}
 		}
+		if len(a.arquivos) > 0 {
+			lista = append(lista, a)
+		}
 	}
-	return autores, nil
+	return lista, nil
 }
 
 // conteudoEm lê um arquivo no commit.
