@@ -20,9 +20,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// origemManual é a origem das operações lançadas à mão.
-const origemManual = 1
-
 // fonteManual é a FonteCotacao do preço informado à mão.
 const fonteManual = "Manual"
 
@@ -296,7 +293,7 @@ func (s *Servico) gravarCriacao(ctx context.Context, c *criacao, o Operacao) (in
 		}
 		res, err := tx.ExecContext(ctx, `INSERT INTO "OperacaoAtivo" ("AtivoId", "Tipo", "Data", "Quantidade", "PrecoUnitario", "Taxas", "Cambio",
 			"Observacao", "Origem", "CriadoEm") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, c.ativoId, o.Tipo, o.Data, o.Quantidade, o.PrecoUnitario,
-			o.Taxas, o.Cambio, o.Observacao, origemManual, agora)
+			o.Taxas, o.Cambio, o.Observacao, tipos.OrigemManual, agora)
 		if err != nil {
 			return fmt.Errorf("gravar a operação: %w", err)
 		}

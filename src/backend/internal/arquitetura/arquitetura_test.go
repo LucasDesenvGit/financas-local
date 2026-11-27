@@ -129,7 +129,7 @@ var dependencias = []struct {
 		"internal/movimentacao/sugestoes", "internal/movimentacao/transacoes"},
 		"as contas a pagar listam pela base dos relatórios, conciliam e lançam a despesa do pagamento (#79)"},
 	{"internal/movimentacao/conferenciabanco", []string{"internal/movimentacao/bancos", "internal/patrimonio/cambio", "internal/patrimonio/carteira", "internal/movimentacao/contas",
-		"internal/movimentacao/faturas", "internal/patrimonio/reservas"}, "a conferência do banco compara os saldos de todos esses (#445)"},
+		"internal/movimentacao/faturas", "internal/patrimonio/reservas", "internal/movimentacao/transacoes"}, "a conferência do banco compara os saldos de todos esses (#445) e lê o tipo da transação (Despesa)"},
 	{"internal/movimentacao/contas", []string{"internal/movimentacao/bancos", "internal/movimentacao/faturas"}, "a conta mostra o banco e a fatura do cartão"},
 	{"internal/patrimonio/cotacoes", []string{"internal/patrimonio/cambio"}, "cotação em dólar convertida pela PTAX"},
 	{"internal/patrimonio/cripto", nil, "Mercado Bitcoin; só os transversais"},

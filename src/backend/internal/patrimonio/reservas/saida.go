@@ -20,9 +20,6 @@ import (
 // Open Finance. Vira um lançamento do app na conta, marcado com a reserva (Transacao.ReservaNome): entra nos
 // relatórios como despesa e baixa a estimativa da reserva.
 
-// origemOpenFinance é a OrigemConta do Open Finance: só nela há reservas.
-const origemOpenFinance = 2
-
 // Os erros da saída que voltam com a mensagem para quem usa.
 var (
 	ErrSoOpenFinance     = errors.New("O cofrinho tem de ser de uma conta do Open Finance.")
@@ -53,7 +50,7 @@ func (s *Servico) RegistrarSaida(ctx context.Context, q banco.DBTX, d Saida) (in
 		return 0, ErrContaInvalida
 	case err != nil:
 		return 0, fmt.Errorf("ler a conta da saída: %w", err)
-	case origem != origemOpenFinance:
+	case origem != tipos.OrigemOpenFinance:
 		return 0, ErrSoOpenFinance
 	}
 	nome := strings.TrimFunc(d.Nome, unicode.IsSpace)

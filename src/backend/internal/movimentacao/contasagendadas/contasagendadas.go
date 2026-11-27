@@ -24,13 +24,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// origemManual e origemOpenFinance são a OrigemConta: o "Pagar" lança a despesa na manual, e na do Open Finance só
-// pelo cofrinho (#691; sem ele, a despesa chega pela sincronização).
-const (
-	origemManual      = 1
-	origemOpenFinance = 2
-)
-
 // Servico são as contas a pagar.
 type Servico struct {
 	db         *sql.DB
@@ -145,7 +138,7 @@ func (s *Servico) ultimosSemDespesa(ctx context.Context, hoje tipos.Data) (map[i
 		FROM "ContaAgendada" AS a INNER JOIN "Conta" AS c ON c."Id" = a."ContaId"
 		WHERE a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND NOT c."Arquivada" AND c."IncluirNoSaldo"
 		AND a."UltimoPagamentoEm" IS NOT NULL
-		AND a."UltimoPagamentoEm" >= ? AND a."UltimoPagamentoEm" <= ?`, origemOpenFinance, hoje.SomarDias(-diasSemDespesa), hoje)
+		AND a."UltimoPagamentoEm" >= ? AND a."UltimoPagamentoEm" <= ?`, tipos.OrigemOpenFinance, hoje.SomarDias(-diasSemDespesa), hoje)
 	if err != nil {
 		return nil, fmt.Errorf("ler os pagamentos pelo cofrinho sem despesa: %w", err)
 	}
@@ -651,7 +644,9 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	escolhido := aparado(reserva.Valor)
-	if escolhido != nil && (!lancar.Valor || origem != origemOpenFinance || c.FormaCobranca == relatorios.FormaCartaoCredito) {
+	// O "Pagar" lança a despesa na conta manual, e na do Open Finance só pelo cofrinho (#691; sem ele, a despesa chega
+	// pela sincronização).
+	if escolhido != nil && (!lancar.Valor || origem != tipos.OrigemOpenFinance || c.FormaCobranca == relatorios.FormaCartaoCredito) {
 		respostas.Mensagem(w, http.StatusBadRequest, "O pagamento pelo cofrinho lança a despesa numa conta do Open Finance, "+
 			"fora do cartão.")
 		return
@@ -662,8 +657,8 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 		c.ReservaNome = escolhido
 		desde = reservaDesde(antes, c, s.hoje())
 	}
-	peloCofrinho := lancar.Valor && c.ReservaNome != nil && origem == origemOpenFinance
-	if lancar.Valor && !peloCofrinho && origem != origemManual {
+	peloCofrinho := lancar.Valor && c.ReservaNome != nil && origem == tipos.OrigemOpenFinance
+	if lancar.Valor && !peloCofrinho && origem != tipos.OrigemManual {
 		respostas.Mensagem(w, http.StatusBadRequest, "Para lançar a despesa, vincule uma conta manual. Em contas do Open "+
 			"Finance o pagamento chega pela sincronização.")
 		return
