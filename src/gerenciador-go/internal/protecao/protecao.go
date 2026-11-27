@@ -4,7 +4,7 @@
 package protecao
 
 import (
-	"path/filepath"
+	"path"
 	"strings"
 )
 
@@ -66,7 +66,8 @@ func OrigemDoMonte(saida string) string {
 	if i := strings.IndexByte(o, '['); i >= 0 {
 		o = o[:i]
 	}
-	if !strings.HasPrefix(o, "/dev/") || filepath.Clean(o) != o {
+	// A saída é do findmnt: caminho do Linux, com "/" em qualquer sistema (o filepath.Clean trocaria por "\" no Windows).
+	if !strings.HasPrefix(o, "/dev/") || path.Clean(o) != o {
 		return ""
 	}
 	return o
