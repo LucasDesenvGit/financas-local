@@ -81,7 +81,7 @@ func (s *Servico) ContasNoSaldo(ctx context.Context) ([]ContaDoSaldo, error) {
 	return lista, linhas.Err()
 }
 
-// Projecao é o ProjecaoAsync do C#: o mês a mês com base no histórico. saldos são os de contas.Saldos (o
+// Projecao: o mês a mês com base no histórico. saldos são os de contas.Saldos (o
 // CalcularSaldosAsync), que o pacote de regra não importa.
 //   - receitas futuras: a média mensal das receitas dos últimos meses completos (até 6), em duas casas;
 //   - despesas futuras: a média das despesas à vista (sem parcelados) mais as parcelas já contratadas do mês (#165);
@@ -266,7 +266,7 @@ func somasPorCategoria(lancamentos []Lancamento, passa func(Lancamento) bool) []
 	return grupos
 }
 
-// agruparPorCategoria é o AgruparPorCategoriaAsync do C#: as somas viram despesas líquidas de estornos (o valor negado,
+// agruparPorCategoria: as somas viram despesas líquidas de estornos (o valor negado,
 // ADR 0036), a subcategoria soma na categoria pai, e só fica quem passou de zero; "Sem categoria" (sem Id, ou com uma
 // categoria que não existe) vai por último, se passou de zero.
 func agruparPorCategoria(grupos []somaPorCategoria, categorias map[int64]categoriaLida) []ValorCategoriaDto {

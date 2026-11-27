@@ -27,7 +27,7 @@ const (
 var nomesDoTipo = map[string]int64{"despesa": transacoes.Despesa, "receita": transacoes.Receita,
 	"transferencia": transacoes.Transferencia}
 
-// consulta lê a query como o model binding do ASP.NET: cada parâmetro que não vira o tipo é um erro do 400 automático,
+// consulta lê a query como o model binding: cada parâmetro que não vira o tipo é um erro do 400 automático,
 // com o nome do parâmetro.
 type consulta struct {
 	r     *http.Request
@@ -238,7 +238,7 @@ func (s *Servico) maioresDespesas(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista)
 }
 
-// patrimonio é o PatrimonioAtualAsync do C# e a reserva líquida da saúde financeira, com os totais de crédito:
+// patrimonio é o patrimônio atual e a reserva líquida da saúde financeira, com os totais de crédito:
 //   - patrimônio: as contas que entram no saldo (o cartão só com a dívida: −max(0, −saldo)) mais os investimentos
 //     (carteira, Open Finance e reservas) menos o saldo devedor de financiamentos e de empréstimos;
 //   - reserva líquida: as contas que não são cartão (só o saldo positivo), mais os investimentos do Open Finance das

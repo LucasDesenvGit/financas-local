@@ -1,4 +1,4 @@
-// Pacote selic é o SelicService do C# (#82): a taxa Selic oficial do Banco Central, para comparar rentabilidades. A
+// Pacote selic (#82): a taxa Selic oficial do Banco Central, para comparar rentabilidades. A
 // série 11 do SGS é a Selic diária (% ao dia), e a 432, a meta (% ao ano). Os dados ficam guardados no banco local, e só
 // datas saem do computador.
 package selic
@@ -19,8 +19,8 @@ type Taxa struct {
 
 // Serie é a SerieSelic: os fatores acumulados da Selic diária.
 //
-// O acumulado é float64 de propósito, a exceção à regra de nunca usar float64 em valor: é um fator, e não dinheiro, e o
-// C# o calcula em double. Em decimal, o número daria diferente na 15ª casa e mudaria os centavos da comparação com a
+// O acumulado é float64 de propósito, a exceção à regra de nunca usar float64 em valor: é um fator, e não dinheiro, e
+// o cálculo é em double. Em decimal, o número daria diferente na 15ª casa e mudaria os centavos da comparação com a
 // Selic.
 type Serie struct {
 	datas     []tipos.Data
@@ -51,7 +51,7 @@ func (s *Serie) UltimaData() *tipos.Data {
 	return &s.datas[len(s.datas)-1]
 }
 
-// Fator é o fator de correção da Selic, com as taxas dos dias em [de, ate). Como o (decimal) do C#, guarda 15 dígitos;
+// Fator é o fator de correção da Selic, com as taxas dos dias em [de, ate). Guarda 15 dígitos;
 // fator fora do decimal é o tipos.ErrEstouro.
 func (s *Serie) Fator(de, ate tipos.Data) (tipos.Decimal, error) {
 	if !ate.Depois(de) || s.Vazia() {

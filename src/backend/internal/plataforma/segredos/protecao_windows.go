@@ -11,7 +11,7 @@ import (
 var entropia = []byte("FinancasLocal.Segredos.v2")
 
 // proteger cifra a chave com o DPAPI da conta que roda o programa (CryptProtectData): só essa conta, neste
-// computador, consegue abrir o arquivo. É a mesma proteção que o .NET usa hoje nas chaves do Data Protection.
+// computador, consegue abrir o arquivo.
 func proteger(chave []byte) ([]byte, error) {
 	var saida windows.DataBlob
 	err := windows.CryptProtectData(blob(chave), nil, blob(entropia), 0, nil, windows.CRYPTPROTECT_UI_FORBIDDEN, &saida)

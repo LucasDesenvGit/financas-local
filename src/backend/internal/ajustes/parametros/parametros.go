@@ -1,4 +1,4 @@
-// Pacote parametros é o ParametroService e o ParametrosController do .NET (#76): a Parametrização do site (o
+// Pacote parametros (#76): a Parametrização do site (o
 // catálogo de parâmetros, a gravação que valida tudo antes e o diagnóstico do sistema).
 package parametros
 
@@ -19,7 +19,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 )
 
-// iniciadoEm é o Process.GetCurrentProcess().StartTime do .NET: a hora em que o processo subiu (do sistema, e não do
+// iniciadoEm é a hora em que o processo subiu (do sistema, e não do
 // relógio de negócio: é diagnóstico).
 var iniciadoEm = time.Now()
 
@@ -45,7 +45,7 @@ func Novo(o Opcoes) *Servico {
 	return &Servico{o: o, config: configuracao.Novo(o.DB, o.Relogio)}
 }
 
-// ParametroDto, na ordem das propriedades do record do C#.
+// ParametroDto, na ordem dos campos do JSON.
 type ParametroDto struct {
 	Chave     string  `json:"chave"`
 	Grupo     string  `json:"grupo"`
@@ -59,8 +59,8 @@ type ParametroDto struct {
 	Unidade   *string `json:"unidade"`
 }
 
-// InfoSistemaDto, na ordem do record do C#. DotNet e SistemaOperacional dizem o ambiente do Go (a versão do Go e o
-// sistema): o nome da propriedade fica o do .NET, que a tela lê.
+// InfoSistemaDto, na ordem dos campos do JSON. DotNet e SistemaOperacional dizem o ambiente do Go (a versão do Go e o
+// sistema): o nome da propriedade (dotNet) é o que a tela lê.
 type InfoSistemaDto struct {
 	Versao              string                 `json:"versao"`
 	DotNet              string                 `json:"dotNet"`
@@ -89,7 +89,7 @@ func PadroesDoAppsettings(cfg config.Config) map[string]int {
 	}
 }
 
-// Padrao é o Padrao(p) do C#: o do appsettings, quando o parâmetro existia lá antes, ou o do catálogo.
+// Padrao: o do appsettings, quando o parâmetro existia lá antes, ou o do catálogo.
 func (s *Servico) Padrao(d Definicao) int {
 	if n, ok := s.o.Padroes[d.Chave]; ok && d.DoAppsettings {
 		return n
@@ -232,7 +232,7 @@ func (s *Servico) InfoSistema(ctx context.Context) (InfoSistemaDto, error) {
 	return info, nil
 }
 
-// normalizar é o Normalizar do C#: o texto gravado como 1/0 (booleano) ou como inteiro limitado à faixa; false se
+// normalizar: o texto gravado como 1/0 (booleano) ou como inteiro limitado à faixa; false se
 // não se lê.
 func normalizar(d Definicao, texto string) (int, bool) {
 	if d.Tipo == Booleano {

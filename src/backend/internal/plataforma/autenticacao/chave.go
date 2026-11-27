@@ -10,8 +10,8 @@ import (
 )
 
 // ArquivoChave é o arquivo, na pasta das chaves (Seguranca:PastaChaves, a dados/chaves), com a chave que assina o
-// cookie da sessão e o token CSRF do Go. É do Go: o .NET continua com as chaves do Data Protection na mesma pasta, e
-// o cookie de um não vale no outro (todos saem da conta na troca, #85).
+// cookie da sessão e o token CSRF do Go. É do Go: as chaves antigas do Data Protection, se houver, ficam na mesma pasta, e
+// o cookie de uma não vale na outra (todos saem da conta na troca, #85).
 const ArquivoChave = "sessao-go.chave"
 
 const tamanhoChaveAssinatura = 32

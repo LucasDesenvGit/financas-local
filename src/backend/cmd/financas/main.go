@@ -1,6 +1,6 @@
-// Comando financas é o site do Finanças Local (épico #70, ADR 0049): serve o Angular com os mesmos cabeçalhos,
-// cache e erros do .NET de antes (#73) e atende /api com o login do Go (#75): sessão, CSRF e limite de tentativas
-// na frente de todas as rotas. Desde a #85 é o site, e desde a #86 o .NET saiu. Instalado, roda como serviço do
+// Comando financas é o site do Finanças Local (épico #70, ADR 0049): serve o Angular com os cabeçalhos,
+// cache e erros (#73) e atende /api com o login do Go (#75): sessão, CSRF e limite de tentativas
+// na frente de todas as rotas. Desde a #85 é o site. Instalado, roda como serviço do
 // sistema (#84: Serviço do Windows, ou systemd no Linux), com -aplicar-esquema -rotinas-de-partida. Em
 // desenvolvimento:
 //
@@ -121,7 +121,7 @@ func rodar(ctx context.Context) error {
 	}
 
 	// Desligado por padrão (o contrato e o desenvolvimento usam um banco pronto); a linha do serviço instalado liga.
-	// A assinatura (PRAGMA user_version) é a mesma do EsquemaBanco do .NET de antes: não repete a cópia nem a atualização.
+	// A assinatura (PRAGMA user_version) é a mesma das versões anteriores: não repete a cópia nem a atualização.
 	if *aplicar {
 		if err := banco.AplicarEsquema(ctx, cfg.BancoCaminho, rel, log); err != nil {
 			return err
@@ -137,7 +137,7 @@ func rodar(ctx context.Context) error {
 	}
 	defer db.Close()
 	// #444: as rotinas de partida (regras padrão novas, entradas nos cartões, transferências...). Desligadas por padrão;
-	// a linha do serviço instalado liga. Erro numa rotina só é registrado, como no .NET de antes.
+	// a linha do serviço instalado liga. Erro numa rotina só é registrado.
 	if *partidaSo {
 		partida.Executar(ctx, partida.Opcoes{DB: db, Relogio: rel, Log: log})
 	}

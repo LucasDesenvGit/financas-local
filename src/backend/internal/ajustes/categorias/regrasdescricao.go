@@ -15,7 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// RegraDescricaoDto, na ordem do record do C#, com quantas transações têm o nome dado pela regra.
+// RegraDescricaoDto, na ordem dos campos do JSON, com quantas transações têm o nome dado pela regra.
 type RegraDescricaoDto struct {
 	Id                  int64          `json:"id"`
 	Texto               string         `json:"texto"`
@@ -71,7 +71,7 @@ func (s *Servico) listarRegrasDescricao(w http.ResponseWriter, r *http.Request) 
 }
 
 // previa é o GET /api/regras-descricao/previa?texto=&tipo=&valorMinimo=&valorMaximo=: quantas transações de nome
-// automático uma regra nova renomearia, e alguns exemplos. Os parâmetros são lidos como o model binding do ASP.NET lê a
+// automático uma regra nova renomearia, e alguns exemplos. Os parâmetros são lidos como o model binding lê a
 // query (cultura invariante); o que não vira o tipo é o 400 automático, com o nome do parâmetro.
 func (s *Servico) previa(w http.ResponseWriter, r *http.Request) {
 	erros := map[string][]string{}
@@ -193,7 +193,7 @@ func (s *Servico) atualizarRegraDescricao(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
-	// O C# procura a regra (404) antes do Invalida (400); os atributos, o model binding confere antes de tudo.
+	// A regra é procurada (404) antes do Invalida (400); os atributos, o model binding confere antes de tudo.
 	var existe bool
 	if err := s.db.QueryRowContext(r.Context(), `SELECT EXISTS (SELECT 1 FROM "RegraDescricao" WHERE "Id" = ?)`, id).Scan(&existe); err != nil {
 		s.erroInterno(w, r, "editar regra de descrição", err)
@@ -226,7 +226,7 @@ func (s *Servico) atualizarRegraDescricao(w http.ResponseWriter, r *http.Request
 }
 
 // lerAtributosDaRegraDescricao é só a parte do model binding (os atributos), para o 404 da regra que não existe vir
-// depois do 400 dos atributos e antes do Invalida, como no C#.
+// depois do 400 dos atributos e antes do Invalida.
 func lerAtributosDaRegraDescricao(w http.ResponseWriter, r *http.Request) (struct{}, bool) {
 	faixa := &respostas.Faixa{Minimo: 0.01, Maximo: 999999999}
 	return struct{}{}, respostas.LerObjeto(w, r, &respostas.CampoTexto{Propriedade: "Texto", Minimo: 2, Maximo: 200},

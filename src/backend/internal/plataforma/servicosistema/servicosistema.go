@@ -1,5 +1,4 @@
-// Pacote servicosistema faz o executável rodar como serviço do sistema (#84): o que UseWindowsService e UseSystemd fazem no
-// Program.cs do .NET.
+// Pacote servicosistema faz o executável rodar como serviço do sistema (#84).
 //
 // No Linux, o systemd para o serviço com SIGTERM e guarda no journald o que sai na saída de erro: o processo não precisa
 // saber que é serviço. No Windows, o processo conversa com o gerenciador de serviços e escreve no Log de Eventos, porque
@@ -17,7 +16,7 @@ import (
 	"syscall"
 )
 
-// Nome é o do serviço: FinancasLocal no Windows, financaslocal.service no systemd. É o mesmo do .NET, para a atualização
+// Nome é o do serviço: FinancasLocal no Windows, financaslocal.service no systemd. É o mesmo das versões anteriores, para a atualização
 // substituir o serviço em vez de criar outro.
 const Nome = "FinancasLocal"
 
@@ -40,7 +39,7 @@ type registroDeEventos interface {
 	Error(id uint32, mensagem string) error
 }
 
-// paraEventos manda ao Log de Eventos os avisos e erros (Logging:EventLog em Warning, como no appsettings do .NET) e passa
+// paraEventos manda ao Log de Eventos os avisos e erros (Logging:EventLog em Warning, como no appsettings) e passa
 // tudo ao próximo handler. O texto sai de um TextHandler por nível: é ele que guarda os atributos do WithAttrs e do
 // WithGroup, e o Log de Eventos separa aviso de erro.
 type paraEventos struct {

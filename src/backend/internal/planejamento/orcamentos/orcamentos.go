@@ -1,4 +1,4 @@
-// Package orcamentos são os orçamentos do mês (#79): o OrcamentosController do C# (as 6 rotas de /api/orcamentos) e a
+// Package orcamentos são os orçamentos do mês (#79): as 6 rotas de /api/orcamentos e a
 // sugestão por categoria (#39, o SugestaoOrcamentoService). A lista do mês é a base dos relatórios (#447,
 // relatorios.OrcamentosDoMes).
 package orcamentos
@@ -60,12 +60,12 @@ func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa stri
 	servidor.ResponderErroInterno(w)
 }
 
-// ResultadoDto é o ResultadoAplicacaoDto do C# (o nome do campo vem de outra tela: é a contagem do que foi gravado).
+// ResultadoDto (o nome do campo vem de outra tela: é a contagem do que foi gravado).
 type ResultadoDto struct {
 	TransacoesAtualizadas int `json:"transacoesAtualizadas"`
 }
 
-// periodo lê o ?ano= e o ?mes= (o int? do C#: sem vir, o de hoje em Brasília) e confere o período. Devolve false se
+// periodo lê o ?ano= e o ?mes= (sem vir, o de hoje em Brasília) e confere o período. Devolve false se
 // já respondeu: 400 do model binding (não é número) ou "Período inválido.".
 func (s *Servico) periodo(w http.ResponseWriter, r *http.Request) (ano, mes int, ok bool) {
 	hoje := relogio.Hoje(s.relogio)
@@ -94,7 +94,7 @@ func (s *Servico) periodo(w http.ResponseWriter, r *http.Request) (ano, mes int,
 	return ano, mes, true
 }
 
-// listar é a lista do mês, pelo nome da categoria (a ordem pt-BR do C#; o empate fica na ordem da base).
+// listar é a lista do mês, pelo nome da categoria (a ordem pt-BR; o empate fica na ordem da base).
 func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
 	ano, mes, ok := s.periodo(w, r)
 	if !ok {
@@ -221,7 +221,7 @@ func (s *Servico) aplicarSugestao(w http.ResponseWriter, r *http.Request) {
 	ids := map[int64]bool{}
 	for _, campos := range itens.Itens {
 		if campos == nil {
-			s.erroInterno(w, r, "aplicar a sugestão", errors.New("item nulo na lista")) // o NullReferenceException do C#
+			s.erroInterno(w, r, "aplicar a sugestão", errors.New("item nulo na lista")) // o item nulo não pode ser lido
 			return
 		}
 		x := item{campos[0].(*respostas.CampoInteiro).Valor, campos[1].(*respostas.CampoDecimal).Valor}

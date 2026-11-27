@@ -1,4 +1,4 @@
-// Pacote tipolancamento é o TipoLancamentoService do .NET (#111, ADR 0025): como o dinheiro entrou ou saiu (compra
+// Pacote tipolancamento (#111, ADR 0025): como o dinheiro entrou ou saiu (compra
 // no cartão, Pix, pagamento de fatura…), calculado na hora, nesta ordem: transferência lançada pelo sistema; o tipo de
 // operação que o banco informa (Transacao.MeioPagamento), com "mesma titularidade" para separar Pix para você de Pix
 // para outra pessoa; e, sem isso, a descrição, por palavras inteiras. Quando nada indica, "outro".
@@ -11,7 +11,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Tipo é o enum TipoLancamento do C#.
+// Tipo é o tipo do lançamento.
 type Tipo int64
 
 const (
@@ -36,7 +36,7 @@ const (
 	Dinheiro              Tipo = 18
 )
 
-// Grupos são os do filtro "Lançamento" da tela de Transações (o código na URL → os tipos), como no C#.
+// Grupos são os do filtro "Lançamento" da tela de Transações (o código na URL → os tipos).
 var Grupos = map[string][]Tipo{
 	"cartao":         {CompraCartao, EstornoCartao},
 	"debito":         {CompraDebito},
@@ -54,7 +54,7 @@ var Grupos = map[string][]Tipo{
 	"outros":         {Outro},
 }
 
-// Tipos de conta (o enum TipoConta do C#) que mudam a classificação.
+// Tipos de conta que mudam a classificação.
 const (
 	ContaCorrente = 1
 	CartaoCredito = 3

@@ -1,4 +1,4 @@
-// Package contasagendadas são as contas a pagar (#79): o ContasAgendadasController do C# (as 9 rotas de
+// Package contasagendadas são as contas a pagar (#79, as 9 rotas de
 // /api/contas-agendadas), os avisos das recorrentes (#158, ADR 0043) e as sugestões do extrato (#62, #205, #241). A
 // conciliação com o extrato fica no internal/movimentacao/cobrancas, que a partida (#444) e a sincronização (#83) também chamam.
 package contasagendadas
@@ -63,7 +63,7 @@ func (s *Servico) hoje() tipos.Data { return relogio.Hoje(s.relogio) }
 
 func (s *Servico) agora() tipos.DataHora { return tipos.NovaDataHora(s.relogio.Agora()) }
 
-// idDaRota é o {id:int} do C#: o que não é número de 32 bits não casa com a rota, e a resposta é 404 sem corpo.
+// idDaRota: o que não é número de 32 bits não casa com a rota, e a resposta é 404 sem corpo.
 func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(strings.TrimPrefix(r.PathValue("id"), "+"), 10, 32)
 	if err != nil {
@@ -73,7 +73,7 @@ func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	return id, true
 }
 
-// erroInterno é o 500 do .NET, com o erro no log; requisição cancelada não responde nem registra.
+// erroInterno responde 500, com o erro no log; requisição cancelada não responde nem registra.
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
 	if errors.Is(err, context.Canceled) || r.Context().Err() != nil {
 		return
@@ -465,7 +465,7 @@ func (s *Servico) criar(w http.ResponseWriter, r *http.Request) {
 	s.salvar(w, r, 0, d)
 }
 
-// atualizar é o PUT: a conta a pagar que não existe é 404, antes da validação (como no C#).
+// atualizar é o PUT: a conta a pagar que não existe é 404, antes da validação.
 func (s *Servico) atualizar(w http.ResponseWriter, r *http.Request) {
 	id, ok := idDaRota(w, r)
 	if !ok {
@@ -561,7 +561,7 @@ func (s *Servico) ligarExtrato(w http.ResponseWriter, r *http.Request) {
 	if !respostas.LerObjeto(w, r, &chave) {
 		return
 	}
-	// O "Informe a sugestão do extrato." do C# não chega a valer: o [Required] já recusa a chave só com espaços.
+	// O "Informe a sugestão do extrato." não chega a valer: o [Required] já recusa a chave só com espaços.
 	s.mudarChave(w, r, id, aparado(chave.Valor))
 }
 
@@ -596,7 +596,7 @@ func (s *Servico) excluir(w http.ResponseWriter, r *http.Request) {
 	s.responderAlteradas(w, r, res)
 }
 
-// responderAlteradas: nenhuma linha alterada é 404 (o ExecuteUpdate e o ExecuteDelete do C#).
+// responderAlteradas: nenhuma linha alterada é 404.
 func (s *Servico) responderAlteradas(w http.ResponseWriter, r *http.Request, res sql.Result) {
 	n, err := res.RowsAffected()
 	switch {

@@ -13,7 +13,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Naturezas de gasto (o enum NaturezaGasto do C#).
+// Naturezas de gasto.
 const (
 	NaturezaEssencial    = 1
 	NaturezaEstiloDeVida = 2
@@ -117,7 +117,7 @@ type raiz struct {
 	natureza  *int64
 }
 
-// PainelAnual é o PainelAnualAsync do C#: o ano comparado com outro, mês a mês, com o patrimônio estimado no fim de
+// PainelAnual: o ano comparado com outro, mês a mês, com o patrimônio estimado no fim de
 // cada mês, as categorias pela raiz, a distribuição da renda pela natureza e a saúde financeira.
 //   - mesLimite: 12 no ano passado, o mês atual no ano atual, 0 no ano futuro; o resumo soma os meses até ele, e o do
 //     ano de comparação, os mesmos meses (no mínimo janeiro) e o ano inteiro;

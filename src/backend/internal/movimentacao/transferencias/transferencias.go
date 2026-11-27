@@ -1,4 +1,4 @@
-// Pacote transferencias é o TransferenciasService do .NET (ADR 0031): transferência só fica fora dos relatórios quando
+// Pacote transferencias (ADR 0031): transferência só fica fora dos relatórios quando
 // é entre contas suas. Vale para a categoria genérica "Transferências", que recebe as transferências do Open Finance.
 // Cada lançamento dela é entre contas suas (fora dos relatórios) quando foi lançado pelo site, o banco informa o mesmo
 // titular, tem o par em outra conta sua (mesmo valor, sinal oposto, até DiasDoPar dias), é dinheiro de uma reserva ou,
@@ -32,7 +32,7 @@ const DiasDoPar = 5
 // ChaveMeuNome é o seu nome como aparece nos Pix (Configuracao, #172).
 const ChaveMeuNome = "Transferencias.MeuNome"
 
-// categoriasDeTransferencia são as categorias do tipo transferência, por Id (o C# lê sem ORDER BY: pelo Id).
+// categoriasDeTransferencia são as categorias do tipo transferência, por Id (sem ORDER BY: pelo Id).
 func categoriasDeTransferencia(ctx context.Context, q banco.DBTX) ([]struct {
 	id   int64
 	nome string
@@ -166,7 +166,7 @@ func PalavrasDoNome(nome *string) []string {
 	return []string{palavras[0], palavras[len(palavras)-1]}
 }
 
-// CitaONome: a descrição tem o primeiro e o último nome como palavras inteiras. Como o C#, que olha um char por vez,
+// CitaONome: a descrição tem o primeiro e o último nome como palavras inteiras. O texto é olhado um char por vez:
 // um caractere fora do plano básico vira dois espaços (as metades do par UTF-16 não são letra).
 func CitaONome(descricao *string, palavras []string) bool {
 	d := ""
@@ -248,7 +248,7 @@ func pagamentosDeFatura(ctx context.Context, q banco.DBTX, cartoes map[int64]boo
 	slices.SortStableFunc(candidatos, porDataEId)
 	de, ate := candidatos[0].Data.SomarDias(-DiasDoPar), maiorData(candidatos).SomarDias(DiasDoPar)
 
-	// O C# não tem ORDER BY: vale a ordem do índice IX_Transacao_Conta_Data (ContaId, Data DESC), que a consulta dele
+	// Sem ORDER BY: vale a ordem do índice IX_Transacao_Conta_Data (ContaId, Data DESC), que as outras consultas do assunto
 	// e esta usam. Aqui ela fica escrita, sem custo (o plano é o mesmo), para o empate não depender do plano.
 	argumentos = []any{}
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Data", "Valor" FROM "Transacao" WHERE "ContaId" IN (`+
@@ -359,7 +359,7 @@ func pareados(ctx context.Context, q banco.DBTX, lancamentos []*transacoes.Trans
 	return usados, nil
 }
 
-// chaveDoValor agrupa pelo valor sem a escala, como a igualdade do decimal do C# (10.0 == 10.00).
+// chaveDoValor agrupa pelo valor sem a escala, como a igualdade do decimal (10.0 == 10.00).
 func chaveDoValor(v tipos.Decimal) string { return v.Decimal().String() }
 
 func porDataEId(a, b *transacoes.Transacao) int {

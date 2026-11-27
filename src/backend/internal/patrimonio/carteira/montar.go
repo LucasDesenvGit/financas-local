@@ -26,7 +26,7 @@ const (
 	validadeDaCotacao = 4 * time.Hour
 	// limiteDeMeses é o tamanho máximo da evolução mensal.
 	limiteDeMeses = 240
-	// tipoContaInvestimento é o TipoConta.Investimento do C#.
+	// tipoContaInvestimento é o tipo de conta de investimento.
 	tipoContaInvestimento = 4
 )
 
@@ -89,7 +89,7 @@ func NovoServicoDeAcertos(db *sql.DB, rel relogio.Relogio, log *slog.Logger) *Se
 	return &Servico{db: db, config: configuracao.Novo(db, rel), relogio: rel, log: log}
 }
 
-// SelicResumoDto é o do C#.
+// SelicResumoDto é um formato enviado à tela.
 type SelicResumoDto struct {
 	MetaAnual        *tipos.Decimal `json:"metaAnual"`
 	Acumulado12Meses *tipos.Decimal `json:"acumulado12Meses"`
@@ -97,13 +97,13 @@ type SelicResumoDto struct {
 	AtualizadaAte    *tipos.Data    `json:"atualizadaAte"`
 }
 
-// UltimoProventoDto é o do C#.
+// UltimoProventoDto é um formato enviado à tela.
 type UltimoProventoDto struct {
 	DataCom      tipos.Data    `json:"dataCom"`
 	ValorPorCota tipos.Decimal `json:"valorPorCota"`
 }
 
-// PosicaoAtivoDto é o do C#, na ordem do record: preço médio, preço atual, anterior e último provento na moeda do ativo;
+// PosicaoAtivoDto, na ordem dos campos do JSON: preço médio, preço atual, anterior e último provento na moeda do ativo;
 // custo, valores e resultados em reais.
 type PosicaoAtivoDto struct {
 	Id                       int64              `json:"id"`
@@ -139,7 +139,7 @@ type PosicaoAtivoDto struct {
 	Segmento                 *string            `json:"segmento"`
 }
 
-// TotaisRendaVariavelDto é o do C#.
+// TotaisRendaVariavelDto é um formato enviado à tela.
 type TotaisRendaVariavelDto struct {
 	ValorMercado             tipos.Decimal  `json:"valorMercado"`
 	Custo                    tipos.Decimal  `json:"custo"`
@@ -155,7 +155,7 @@ type TotaisRendaVariavelDto struct {
 	ResultadoSelicPercentual *tipos.Decimal `json:"resultadoSelicPercentual"`
 }
 
-// EvolucaoCarteiraDto é o do C#.
+// EvolucaoCarteiraDto é um formato enviado à tela.
 type EvolucaoCarteiraDto struct {
 	Ano             int            `json:"ano"`
 	Mes             int            `json:"mes"`
@@ -164,13 +164,13 @@ type EvolucaoCarteiraDto struct {
 	ValorMercado    *tipos.Decimal `json:"valorMercado"`
 }
 
-// DistribuicaoInvestimentoDto é o do C#.
+// DistribuicaoInvestimentoDto é um formato enviado à tela.
 type DistribuicaoInvestimentoDto struct {
 	Nome  string        `json:"nome"`
 	Valor tipos.Decimal `json:"valor"`
 }
 
-// InvestimentoComparadoDto é o do C#: saldo, valor aplicado e rentabilidade na moeda do investimento; SaldoEmReais é nil
+// InvestimentoComparadoDto: saldo, valor aplicado e rentabilidade na moeda do investimento; SaldoEmReais é nil
 // sem cotação guardada da moeda.
 type InvestimentoComparadoDto struct {
 	Id                int64          `json:"id"`
@@ -197,7 +197,7 @@ type InvestimentoComparadoDto struct {
 	NomePersonalizado *string        `json:"nomePersonalizado"`
 }
 
-// CarteiraDto é o do C#.
+// CarteiraDto é um formato enviado à tela.
 type CarteiraDto struct {
 	Selic                     SelicResumoDto                `json:"selic"`
 	RendaVariavel             TotaisRendaVariavelDto        `json:"rendaVariavel"`
@@ -217,7 +217,7 @@ type CarteiraDto struct {
 	CotasDiferentes           []string                      `json:"cotasDiferentes"`
 }
 
-// OperacaoAtivoDto é o do C#.
+// OperacaoAtivoDto é um formato enviado à tela.
 type OperacaoAtivoDto struct {
 	Id                int64          `json:"id"`
 	AtivoId           int64          `json:"ativoId"`

@@ -26,7 +26,7 @@ const (
 	anosDoExtrato = 10
 	// diasDeDuplicata: a operação de mesmo ativo e tipo até tantos dias do lançamento faz dele uma possível duplicata.
 	diasDeDuplicata = 3
-	// origemExtrato é o OrigemOperacao.Extrato do C#.
+	// origemExtrato é a origem das operações vindas do extrato.
 	origemExtrato = 3
 	// maiorQuantidadeNoTexto: número maior que isso, no texto, não é quantidade.
 	maiorQuantidadeNoTexto = 10000000
@@ -43,7 +43,7 @@ var (
 	regexTicker = regexp.MustCompile(`\b([A-Z]{4}(?:11|12|13|31|32|33|34|35|39|3|4|5|6|7|8))F?\b`)
 	regexData   = regexp.MustCompile(`\b\d{1,2}/\d{1,2}(/\d{2,4})?\b`)
 	regexMilhar = regexp.MustCompile(`^\d{1,3}(\.\d{3})+$`)
-	// As alternativas do número, na ordem do C#. O RE2 não tem o "(?<![\d,.])...(?![\d,.])": quem confere as pontas é
+	// As alternativas do número. O RE2 não tem o "(?<![\d,.])...(?![\d,.])": quem confere as pontas é
 	// numerosDoTexto.
 	formasDeNumero = []*regexp.Regexp{
 		regexp.MustCompile(`^\d{1,3}(?:\.\d{3})+(?:,\d+)?`), regexp.MustCompile(`^\d+,\d+`), regexp.MustCompile(`^\d+\.\d+`), regexp.MustCompile(`^\d+`),
@@ -59,7 +59,7 @@ var (
 	termosDoOriginal  = []string{"REND", "DIVID", "PROVENT", "JCP", "JUROS", "AMORT"}
 )
 
-// ehPalavra é o \w do .NET, que é de Unicode.
+// ehPalavra é o \w, que aqui é de Unicode.
 func ehPalavra(r rune) bool {
 	return unicode.IsLetter(r) || unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Nd, r) || unicode.Is(unicode.Pc, r)
 }
@@ -224,7 +224,7 @@ func (s *Servico) ProventosRecebidos(ctx context.Context) ([]ProventoRecebido, e
 	return lista, nil
 }
 
-// SugestaoExtratoDto é o do C#. Origem: "extrato", "quantidade do extrato", "preço do extrato", "cotação do dia" ou nil
+// SugestaoExtratoDto é um formato enviado à tela. Origem: "extrato", "quantidade do extrato", "preço do extrato", "cotação do dia" ou nil
 // (preencher).
 type SugestaoExtratoDto struct {
 	TransacaoId       int64          `json:"transacaoId"`
@@ -257,7 +257,7 @@ func fechamentoEm(fechamentos []cotacoes.Fechamento, data tipos.Data) *tipos.Dec
 	return &valor
 }
 
-// emOrdemDeData deixa os fechamentos pela data, com o último de cada dia (o SortedDictionary do C#).
+// emOrdemDeData deixa os fechamentos pela data, com o último de cada dia.
 func emOrdemDeData(serie []cotacoes.Fechamento) []cotacoes.Fechamento {
 	ordenada := slices.Clone(serie)
 	slices.SortStableFunc(ordenada, func(a, b cotacoes.Fechamento) int { return cmp.Compare(a.Data.NumeroDoDia(), b.Data.NumeroDoDia()) })
@@ -595,8 +595,8 @@ func camposDoItemDoExtrato() []respostas.Campo {
 		&respostas.CampoDecimal{Propriedade: "Taxas", Faixa: &respostas.Faixa{Minimo: 0, Maximo: 10000000}}}
 }
 
-// itensDaLista lê os itens já validados. O item null chega ao C# como null, e ele para com o 500. A etapa é a da rota: o
-// registro de erros soma as linhas com a mesma mensagem, e o C# tem uma linha por rota.
+// itensDaLista lê os itens já validados. O item nulo para com o 500. A etapa é a da rota: o
+// registro de erros soma as linhas com a mesma mensagem, e há uma linha por rota.
 func (s *Servico) itensDaLista(w http.ResponseWriter, r *http.Request, etapa string, campos [][]respostas.Campo) ([]ItemDoExtrato, bool) {
 	lista := make([]ItemDoExtrato, 0, len(campos))
 	for _, c := range campos {

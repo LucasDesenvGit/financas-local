@@ -44,7 +44,7 @@ var (
 	formaCartao        = int64(relatorios.FormaCartaoCredito)
 )
 
-// SugestaoDto é o SugestaoContaAgendadaDto do C#, na ordem do record: um pagamento recorrente do extrato que ainda não
+// SugestaoDto, na ordem dos campos do JSON: um pagamento recorrente do extrato que ainda não
 // está em Contas a pagar. ProximoVencimento nunca é passado (#62); VencimentoSemPagamento é o vencimento esperado que
 // já passou sem o pagamento aparecer.
 type SugestaoDto struct {
@@ -194,7 +194,7 @@ func (s *Servico) Sugerir(ctx context.Context, hoje tipos.Data) ([]SugestaoDto, 
 	return resultado[:min(len(resultado), maximoSugestoes)], nil
 }
 
-// decimalFixo é uma constante decimal do C# (0.05m), lida uma vez.
+// decimalFixo é uma constante decimal (0.05), lida uma vez.
 func decimalFixo(t string) tipos.Decimal {
 	d, err := tipos.NovoDecimal(t)
 	if err != nil {
@@ -224,7 +224,7 @@ type grupo struct {
 	itens   []lancamento
 }
 
-// agrupar é o GroupBy((Chave, DaRegra)) do C#, na ordem em que cada grupo aparece pela primeira vez. A compra parcelada
+// agrupar agrupa por (Chave, DaRegra), na ordem em que cada grupo aparece pela primeira vez. A compra parcelada
 // no cartão que veio sem os campos de parcela ("PARC 3/10") não entra.
 func agrupar(lancamentos []lancamento, regrasPorValor map[int64]bool) []grupo {
 	var grupos []grupo
@@ -315,7 +315,7 @@ func avaliar(chave, chaveTexto string, todos []lancamento, hoje, desdeMensal tip
 	for i, l := range itens {
 		dias[i] = tipos.DecimalDeInteiro(int64(l.data.Dia()))
 	}
-	dia := int(mediana(dias).Decimal().IntPart()) // o (int) do C# corta as casas
+	dia := int(mediana(dias).Decimal().IntPart()) // corta as casas
 
 	var esperado, proximo tipos.Data
 	if recorrencia == relatorios.RecorrenciaAnual {
@@ -424,7 +424,7 @@ func datas(lista []lancamento) []tipos.Data {
 }
 
 // ehMensal: pago recentemente, em pelo menos minimoMeses meses distintos, sem ser gasto frequente (mais de ~1,5 por
-// mês) e cobrindo pelo menos 60% dos meses do intervalo. datas: mais recente primeiro. As frações do C# (decimal) viram
+// mês) e cobrindo pelo menos 60% dos meses do intervalo. datas: mais recente primeiro. As frações viram
 // contas inteiras equivalentes: n > m × 1,5 é 2n > 3m; m / intervalo ≥ 0,6 é 10m ≥ 6 × intervalo.
 func ehMensal(datas []tipos.Data, hoje tipos.Data) bool {
 	if len(datas) == 0 || datas[0].Antes(hoje.SomarDias(-diasSemPagamento)) {
@@ -469,15 +469,15 @@ func ehDebitoAutomatico(descricao string) bool {
 	return strings.Contains(t, " DEB AUT") || strings.Contains(t, " DEBITO AUT")
 }
 
-// parcela é o `\b\d{1,2}\s*/\s*\d{1,2}\b|\bPARC(ELA)?\b` do C# (IgnoreCase). No .NET o \d é qualquer dígito Unicode e
-// o \s inclui os separadores Unicode (o espaço não separável dos extratos): as classes abaixo são as mesmas. O \b do
-// .NET também é Unicode, e o do Go só ASCII: as bordas são conferidas à mão, em temBorda.
+// parcela é o `\b\d{1,2}\s*/\s*\d{1,2}\b|\bPARC(ELA)?\b` (IgnoreCase). O \d é qualquer dígito Unicode e
+// o \s inclui os separadores Unicode (o espaço não separável dos extratos): as classes abaixo são as mesmas. O \b da
+// regra também é Unicode, e o do Go só ASCII: as bordas são conferidas à mão, em temBorda.
 var parcela = regexp.MustCompile(`(?i)\p{Nd}{1,2}[\t\n\v\f\r\x{85}\p{Z}]*/[\t\n\v\f\r\x{85}\p{Z}]*\p{Nd}{1,2}|PARC(?:ELA)?`)
 
 // parcelaNoTexto (#158): compra parcelada no cartão que veio sem os campos de parcela ("PARC 3/10", "3/10").
 func parcelaNoTexto(descricao string) bool {
 	for _, m := range parcela.FindAllStringIndex(descricao, -1) {
-		// O .NET tenta em cada posição; o Go devolve o casamento mais à esquerda e mais curto possível dentro das
+		// A regra tenta em cada posição; o Go devolve o casamento mais à esquerda e mais curto possível dentro das
 		// alternativas. Aqui basta que algum trecho que casa tenha borda dos dois lados.
 		for inicio := m[0]; inicio < m[1]; inicio++ {
 			for fim := m[1]; fim > inicio; fim-- {
@@ -491,7 +491,7 @@ func parcelaNoTexto(descricao string) bool {
 	return false
 }
 
-// palavraNET é o \w do .NET: letra, dígito, marca, conectivo ou o "_".
+// palavraNET: letra, dígito, marca, conectivo ou o "_".
 func palavraNET(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Pc, r)
 }
@@ -550,7 +550,7 @@ func maisLonga(palavras []string) (string, bool) {
 	return melhor, true
 }
 
-// cortar é o s[..Math.Min(s.Length, n)] do C#, em chars UTF-16.
+// cortar corta o texto em até n chars UTF-16.
 func cortar(s string, n int) string {
 	if texto.TamanhoUtf16(s) <= n {
 		return s
@@ -578,7 +578,7 @@ func extremos(valores []tipos.Decimal) (menor, maior tipos.Decimal) {
 	return menor, maior
 }
 
-// maiorQue é o diferenca / base > limite do C#, com a divisão do decimal (base nunca é zero aqui).
+// maiorQue é diferenca / base > limite, com a divisão do decimal (base nunca é zero aqui).
 func maiorQue(diferenca, base, limite tipos.Decimal) bool {
 	q, err := tipos.Dividir(diferenca, base)
 	return err == nil && q.Decimal().GreaterThan(limite.Decimal())
@@ -703,7 +703,7 @@ func (s *Servico) lerLancamentos(ctx context.Context, desde, hoje tipos.Data) ([
 			&l.categoriaNome, &l.contaId, &l.contaNome, &l.contaTipo, &l.regraDescricaoId); err != nil {
 			return nil, fmt.Errorf("ler lançamento das sugestões: %w", err)
 		}
-		// O valor é texto no banco: o "menor que zero" é conferido aqui, com decimal (no C#, no SQL, antes do Take).
+		// O valor é texto no banco: o "menor que zero" é conferido aqui, com decimal.
 		if l.valor.Decimal().IsNegative() && len(lista) < maximoDeLancamentos {
 			lista = append(lista, l)
 		}

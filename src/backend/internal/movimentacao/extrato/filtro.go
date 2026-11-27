@@ -9,7 +9,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// filtro é o FiltroTransacoesDto do C#, lido da query ([FromQuery]).
+// filtro é o filtro de transações, lido da query.
 type filtro struct {
 	Inicio, Fim        *tipos.Data
 	ContaId            *int64
