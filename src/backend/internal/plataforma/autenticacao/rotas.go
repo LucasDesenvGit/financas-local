@@ -14,6 +14,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/sessao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
@@ -234,13 +235,13 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	req := daRequisicao(ctx)
-	usuario, err := usuarioPorId(ctx, a.o.DB, req.usuario())
+	usuario, confere, err := usuarioComSenha(ctx, a.o.DB, req.usuario(), *atual.Valor)
 	if err != nil {
 		a.erroInterno(w, r, "alterar a senha", err)
 		return
 	}
-	if VerificarHash(usuario.SenhaHash, *atual.Valor) == SenhaErrada {
-		respostas.Mensagem(w, http.StatusBadRequest, "A senha atual não confere.")
+	if !confere {
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemSenhaAtualErrada)
 		return
 	}
 	if problema := validarSenha(*nova.Valor, usuario.Login); problema != "" {
@@ -262,6 +263,31 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// MensagemSenhaAtualErrada é o 400 de quem pede a senha atual e recebe outra (alterar a senha, parâmetros de
+// segurança).
+const MensagemSenhaAtualErrada = "A senha atual não confere."
+
+// ConfereSenha diz se a senha é a do usuário logado na requisição (sessao.Usuario): a conferência da senha atual do
+// alterar-senha, para quem pede a senha antes de mudar algo de segurança (#68). Sem usuário logado, não confere. Como
+// no alterar-senha, a senha errada não conta como tentativa de login: quem chega aqui já entrou.
+func ConfereSenha(ctx context.Context, q banco.DBTX, senha string) (bool, error) {
+	id, ok := sessao.Usuario(ctx)
+	if !ok {
+		return false, nil
+	}
+	_, confere, err := usuarioComSenha(ctx, q, id, senha)
+	return confere, err
+}
+
+// usuarioComSenha lê o usuário e diz se a senha é a dele (certa, mesmo que o hash precise ser refeito).
+func usuarioComSenha(ctx context.Context, q banco.DBTX, id int64, senha string) (Usuario, bool, error) {
+	usuario, err := usuarioPorId(ctx, q, id)
+	if err != nil {
+		return Usuario{}, false, err
+	}
+	return usuario, VerificarHash(usuario.SenhaHash, senha) != SenhaErrada, nil
 }
 
 // auditoria devolve os 100 registros mais novos.

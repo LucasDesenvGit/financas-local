@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/sessao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
@@ -205,6 +206,40 @@ func TestTrocaDeSenhaDerrubaAOutraSessao(t *testing.T) {
 	}
 	celular.esperar(t, "POST", "/api/auth/entrar", credenciais{"ana.teste", "Senha-Forte-123"}, 401, "inválidos")
 	celular.esperar(t, "POST", "/api/auth/entrar", credenciais{"ana.teste", "Outra-Senha-456"}, 200, `"autenticado":true`)
+}
+
+// Regra (#68): ConfereSenha confere a senha do usuário logado na requisição, como o alterar-senha; sem usuário logado,
+// não confere, e usuário que não existe no banco é erro.
+func TestConfereSenhaDoUsuarioLogado(t *testing.T) {
+	a := novoAmbiente(t)
+	a.navegador().esperar(t, "POST", "/api/auth/configurar", credenciais{"ana.teste", "Senha-Forte-123"}, 200, `"autenticado":true`)
+	var id int64
+	if err := a.auth.o.DB.QueryRowContext(t.Context(), `SELECT "Id" FROM "Usuario"`).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	casos := []struct {
+		nome    string
+		usuario int64
+		senha   string
+		confere bool
+		erro    bool
+	}{
+		{"senha certa", id, "Senha-Forte-123", true, false},
+		{"senha errada", id, "Senha-Forte-124", false, false},
+		{"senha vazia", id, "", false, false},
+		{"sem usuário logado", 0, "Senha-Forte-123", false, false},
+		{"usuário que não existe", id + 1, "Senha-Forte-123", false, true},
+	}
+	for _, c := range casos {
+		ctx := t.Context()
+		if c.usuario != 0 {
+			ctx = sessao.ComUsuario(ctx, c.usuario)
+		}
+		confere, err := ConfereSenha(ctx, a.auth.o.DB, c.senha)
+		if confere != c.confere || (err != nil) != c.erro {
+			t.Errorf("%s: %v (%v), esperado %v", c.nome, confere, err, c.confere)
+		}
+	}
 }
 
 func TestSessaoExpiraERenova(t *testing.T) {

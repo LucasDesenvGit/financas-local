@@ -8,19 +8,32 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/autenticacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
+
+// senhaDosTestes é a senha do usuário dos testes; o hash é feito uma vez só (são 100 mil iterações).
+const senhaDosTestes = "Senha-Forte-123"
+
+var hashDosTestes = sync.OnceValue(func() string {
+	hash, err := autenticacao.GerarHash(senhaDosTestes)
+	if err != nil {
+		panic(err)
+	}
+	return hash
+})
 
 // novo monta o serviço num banco novo (com as configurações iniciais) e o mux com as rotas.
 func novo(t *testing.T, r relogio.Relogio) (*sql.DB, *http.ServeMux) {
 	t.Helper()
 	db := testeapoio.NovoBanco(t)
 	if _, err := db.ExecContext(t.Context(), `INSERT INTO "Usuario" ("Id", "Login", "SenhaHash", "CarimboSeguranca", "TentativasFalhas", "CriadoEm")
-		VALUES (?, 'ana.teste', 'x', '00000000-0000-0000-0000-000000000001', 0, '2026-10-01 00:00:00')`, testeapoio.UsuarioDosTestes); err != nil {
+		VALUES (?, 'ana.teste', ?, '00000000-0000-0000-0000-000000000001', 0, '2026-10-01 00:00:00')`, testeapoio.UsuarioDosTestes, hashDosTestes()); err != nil {
 		t.Fatal(err)
 	}
 	mux := http.NewServeMux()
@@ -102,14 +115,14 @@ func TestListarTemOCatalogoNaOrdem(t *testing.T) {
 	}
 	testeapoio.ConferirJSON(t, mustJSON(t, lista[0]), `{"chave":"Sincronizacao.Habilitada","grupo":"Sincronização",
 		"nome":"Sincronização automática","descricao":"Busca os dados dos bancos sozinha, no intervalo abaixo. Desligada, só sincroniza pelo botão.",
-		"tipo":2,"valor":1,"padrao":1,"minimo":null,"maximo":null,"unidade":null}`)
+		"tipo":2,"valor":1,"padrao":1,"minimo":null,"maximo":null,"unidade":null,"pedeSenha":false}`)
 	testeapoio.ConferirJSON(t, mustJSON(t, lista[8]), `{"chave":"Seguranca.DiasRetencaoAuditoria","grupo":"Segurança",
 		"nome":"Guardar o histórico de acessos por",
 		"descricao":"Entradas, saídas e trocas de senha mais antigas que isso (com o IP e o navegador) são apagadas sozinhas, uma vez por dia.",
-		"tipo":1,"valor":180,"padrao":180,"minimo":30,"maximo":730,"unidade":"dias"}`) // #530
+		"tipo":1,"valor":180,"padrao":180,"minimo":30,"maximo":730,"unidade":"dias","pedeSenha":true}`) // #530, #68
 	testeapoio.ConferirJSON(t, mustJSON(t, lista[9]), `{"chave":"Orcamento.MetaPoupanca","grupo":"Orçamentos","nome":"Meta de poupança",
 		"descricao":"Quanto da renda a sugestão de orçamentos reserva para guardar ou investir antes de distribuir o resto (regra 50/30/20: pelo menos 20%).",
-		"tipo":1,"valor":20,"padrao":20,"minimo":0,"maximo":60,"unidade":"% da renda"}`)
+		"tipo":1,"valor":20,"padrao":20,"minimo":0,"maximo":60,"unidade":"% da renda","pedeSenha":false}`)
 }
 
 func mustJSON(t *testing.T, v any) []byte {
@@ -259,9 +272,9 @@ func TestSalvarCorpo(t *testing.T) {
 		{"valores não é objeto", `{"valores":[1]}`, 400, erroJSON(`$.valores`)},
 		{"corpo não é objeto", `[1]`, 400, erroJSON(`$`)},
 		{"o erro de tipo vem antes do erro de sintaxe depois dele", `{"valores":{"A.b":1.5}, x}`, 400, erroJSON(`$.valores['A.b']`)},
-		{"texto com sinal vale, e o nome não liga para maiúsculas", `{"VALORES":{"Seguranca.MinutosBloqueio":"+0020"}}`, 200, ""},
-		{"propriedade a mais é ignorada, a repetida fica com o último", `{"outra":{"x":[1,{"y":2}]},"valores":{"Seguranca.MinutosBloqueio":9999},"valores":{"Seguranca.MinutosBloqueio":21}}`, 200, ""},
-		{"chave repetida fica com o último valor", `{"valores":{"Seguranca.MinutosBloqueio":0,"Seguranca.MinutosBloqueio":22}}`, 200, ""},
+		{"texto com sinal vale, e o nome não liga para maiúsculas", `{"VALORES":{"Sincronizacao.DiasRetroativos":"+0020"}}`, 200, ""},
+		{"propriedade a mais é ignorada, a repetida fica com o último", `{"outra":{"x":[1,{"y":2}]},"valores":{"Sincronizacao.DiasRetroativos":9999},"valores":{"Sincronizacao.DiasRetroativos":21}}`, 200, ""},
+		{"chave repetida fica com o último valor", `{"valores":{"Sincronizacao.DiasRetroativos":0,"Sincronizacao.DiasRetroativos":22}}`, 200, ""},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
@@ -286,17 +299,72 @@ func erroJSON(caminho string) string {
 		string(erros) + `}`
 }
 
+// Regra (#68): mudar um parâmetro de segurança (o grupo "Segurança": tentativas, bloqueio e histórico de acessos) pede
+// a senha atual do usuário logado. Sem ela, ou com ela errada, nada é gravado, nem a auditoria; mandar o mesmo valor,
+// ou só parâmetros de outros grupos, não pede. A senha errada não conta como tentativa de login (como no alterar-senha).
+func TestSalvarSegurancaPedeASenha(t *testing.T) {
+	const semSenha = `{"mensagem":"Informe a senha atual para mudar os parâmetros de segurança."}`
+	const senhaErrada = `{"mensagem":"A senha atual não confere."}`
+	casos := []struct {
+		nome, corpo string
+		status      int
+		esperado    string
+		grava       string // a chave que tem de ficar gravada (vazio: nada muda)
+	}{
+		{"tentativas sem a senha", `{"valores":{"Seguranca.MaximoTentativasLogin":20}}`, 400, semSenha, ""},
+		{"bloqueio sem a senha", `{"valores":{"Seguranca.MinutosBloqueio":1}}`, 400, semSenha, ""},
+		{"histórico de acessos sem a senha", `{"valores":{"Seguranca.DiasRetencaoAuditoria":30}}`, 400, semSenha, ""},
+		{"senha vazia é sem a senha", `{"valores":{"Seguranca.MinutosBloqueio":1},"senhaAtual":""}`, 400, semSenha, ""},
+		{"senha nula é sem a senha", `{"valores":{"Seguranca.MinutosBloqueio":1},"senhaAtual":null}`, 400, semSenha, ""},
+		{"senha errada", `{"valores":{"Seguranca.MinutosBloqueio":1},"senhaAtual":"nao-e-esta"}`, 400, senhaErrada, ""},
+		{"junto com outro grupo, nada é gravado", `{"valores":{"Painel.DiasProximosVencimentos":20,"Seguranca.MaximoTentativasLogin":3}}`, 400, semSenha, ""},
+		{"senha que não é texto", `{"valores":{"Seguranca.MinutosBloqueio":1},"senhaAtual":123}`, 400, erroJSON(`$.senhaAtual`), ""},
+		{"valor fora da faixa vem antes da senha", `{"valores":{"Seguranca.MinutosBloqueio":0}}`, 400,
+			`{"mensagem":"Tempo de bloqueio: informe um valor entre 1 e 1440 minutos."}`, ""},
+		{"senha certa grava", `{"SENHAATUAL":"Senha-Forte-123","valores":{"Seguranca.MinutosBloqueio":1}}`, 200, "", "Seguranca.MinutosBloqueio"},
+		{"o mesmo valor não pede a senha", `{"valores":{"Seguranca.MaximoTentativasLogin":7}}`, 200, "", "Seguranca.MaximoTentativasLogin"},
+		{"outro grupo não pede a senha", `{"valores":{"Painel.DiasProximosVencimentos":20}}`, 200, "", "Painel.DiasProximosVencimentos"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			db, mux := novo(t, testeapoio.RelogioDosTestes())
+			r := testeapoio.Chamar(t, mux, "PUT", "/api/parametros", c.corpo)
+			r.ConferirStatus(t, c.status)
+			if c.esperado != "" {
+				testeapoio.ConferirJSON(t, r.Corpo, c.esperado)
+			}
+			if _, gravou := configuracoes(t, db)[c.grava]; c.grava != "" && !gravou {
+				t.Errorf("%s não foi gravado", c.grava)
+			}
+			if c.grava == "" {
+				for _, chave := range []string{"Seguranca.MaximoTentativasLogin", "Seguranca.MinutosBloqueio", "Seguranca.DiasRetencaoAuditoria", "Painel.DiasProximosVencimentos"} {
+					if v, gravou := configuracoes(t, db)[chave]; gravou {
+						t.Errorf("gravou %s = %q sem a senha certa", chave, v)
+					}
+				}
+				if a := auditorias(t, db); len(a) != 0 {
+					t.Errorf("auditoria gravada sem a senha certa: %q", a)
+				}
+			}
+			var tentativas int
+			if err := db.QueryRowContext(t.Context(), `SELECT "TentativasFalhas" FROM "Usuario"`).Scan(&tentativas); err != nil || tentativas != 0 {
+				t.Errorf("tentativas de login = %d (%v), esperado 0", tentativas, err)
+			}
+		})
+	}
+}
+
 // Regra: o valor repetido e o com sinal chegam ao banco como o .NET gravaria.
 func TestSalvarRepetidoESinal(t *testing.T) {
 	db, mux := novo(t, testeapoio.RelogioDosTestes())
 	// A repetida no meio: o que vem depois dela também é lido (o teste de mutação, #373, mostrou que só a repetida no
 	// fim não pegava um "break" no lugar do "continue").
 	testeapoio.Chamar(t, mux, "PUT", "/api/parametros",
-		`{"valores":{"Seguranca.MinutosBloqueio":0,"Seguranca.MinutosBloqueio":"+022","Painel.DiasProximosVencimentos":20}}`).ConferirStatus(t, http.StatusOK)
+		`{"valores":{"Sincronizacao.DiasRetroativos":0,"Sincronizacao.DiasRetroativos":"+022","Painel.DiasProximosVencimentos":20}}`).ConferirStatus(t, http.StatusOK)
 	if v := configuracoes(t, db)["Painel.DiasProximosVencimentos"]; !strings.HasPrefix(v, "20|0|") {
 		t.Errorf("o valor depois da chave repetida não foi gravado: %q", v)
 	}
-	if v := configuracoes(t, db)["Seguranca.MinutosBloqueio"]; !strings.HasPrefix(v, "22|0|") {
+	if v := configuracoes(t, db)["Sincronizacao.DiasRetroativos"]; !strings.HasPrefix(v, "22|0|") {
 		t.Errorf("gravado %q, esperado 22", v)
 	}
 }
