@@ -5,6 +5,11 @@ import { ManualComponent } from '../../../src/app/paginas/manual/manual.componen
 
 /** Abre o manual pelo roteador de verdade (capítulo, âncora e busca na URL). */
 export async function abrirManual(url = '/manual') {
+  // O print do Manual segue o tema, que lê prefers-color-scheme; o jsdom não tem matchMedia.
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true, writable: true,
+    value: () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined })
+  });
   TestBed.configureTestingModule({
     providers: [provideRouter([
       { path: 'manual', component: ManualComponent },

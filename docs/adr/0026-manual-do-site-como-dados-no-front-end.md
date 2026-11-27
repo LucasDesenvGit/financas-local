@@ -1,6 +1,6 @@
 # 0026. Manual do site como dados no front-end, com testes que o mantêm em dia
 
-- **Status:** Aceita
+- **Status:** Aceita (em parte substituída pela [0071](0071-manual-do-site-com-prints-gerados-das-telas.md): o "sem prints")
 - **Data:** 2026-10-17 (issue #113)
 - **Relacionadas:** [0013](0013-testes-do-front-end-com-jest.md) (Jest), [0018](0018-estado-da-tela-na-url-e-detalhe-por-navegacao.md) (estado na URL), [0020](0020-glossario-unico-com-balao-na-top-layer.md) (glossário único)
 
@@ -54,7 +54,7 @@ O manual é um arquivo de dados, `paginas/manual/manual-conteudo.ts`:
 
 **Ajuda em cada tela:** o botão "Ajuda" na barra de cima abre a seção da tela aberta (`AJUDA_POR_ROTA` / `ajudaDaUrl`). Fica num lugar só, na barra, em vez de repetido em cada página.
 
-**Sem prints nesta versão:** o "Abrir a tela" leva à tela de verdade, já filtrada quando faz sentido.
+**Prints:** a 0026 não os tinha; desde a [0071](0071-manual-do-site-com-prints-gerados-das-telas.md) a seção pode ter um (`print`), gerado da tela. O "Abrir a tela" continua levando à tela de verdade, já filtrada quando faz sentido.
 
 **Testes de regressão:**
 - toda tela do menu (`MENU`, exportado do shell) tem capítulo;

@@ -22,6 +22,8 @@ export interface SecaoManual {
   /** Para que serve, em uma frase. */
   paraQueServe: string;
   passos: string[];
+  /** Print da tela (ADR 0071): `imagens/manual/<id>-claro.webp` e `-escuro.webp`, gerados por `npm run prints:manual`. Complementa os passos, nunca os substitui. */
+  print?: { id: string; alt: string };
   /** "Abrir a tela": leva direto, já filtrada quando faz sentido (detalhe por navegação). */
   abrir?: LinkManual[];
   dicas?: string[];
@@ -75,6 +77,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'conhecendo-a-tela',
         titulo: 'Conhecendo a tela',
         paraQueServe: 'Saber onde ficam o menu, o status da sincronização e as ferramentas que valem em qualquer tela.',
+        print: { id: 'conhecendo-a-tela', alt: 'Menu lateral com os grupos de telas, a barra de cima com Ajuda, avisos e status da sincronização, e o começo do Painel.' },
         passos: [
           'À esquerda fica o menu com todas as telas, separadas por assunto: o Painel no topo; Movimentação (Transações, Contas e cartões, Contas a pagar); Planejamento (Orçamentos, Metas); Patrimônio (Investimentos, Empréstimos e financiamentos); Análises (Relatórios, Visão anual, Projeção); Ajustes (Categorias e regras, Configurações); e o Manual no rodapé.',
           'Clique no nome de um grupo (ou use Enter ou Espaço) para mostrar ou esconder as telas dele. A seta indica se o grupo está aberto (para baixo) ou fechado (para o lado), e vários grupos podem ficar abertos ao mesmo tempo. Na primeira vez, todos vêm abertos; feche os que você não usa. A escolha fica salva neste navegador.',
@@ -241,6 +244,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'credenciais',
         titulo: 'Client ID e Client Secret',
         paraQueServe: 'As credenciais que deixam o Finanças Local buscar os seus dados na Pluggy.',
+        print: { id: 'credenciais', alt: 'Configurações, aba Open Finance: os campos Client ID e Client Secret e os botões Testar conexão e Salvar.' },
         passos: [
           'Em dashboard.pluggy.ai, crie uma conta de desenvolvedor.',
           'Adicione o conector “MeuPluggy” e crie uma aplicação de desenvolvimento.',
@@ -310,6 +314,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'tipos-de-conta',
         titulo: 'Contas do Open Finance e contas manuais',
         paraQueServe: 'Entender de onde vem o saldo de cada conta e quando criar uma conta à mão.',
+        print: { id: 'tipos-de-conta', alt: 'Contas e cartões: resumo de saldo, faturas e dívida, os botões Conferir com o banco e Conta manual, e o início da lista de contas.' },
         passos: [
           'Contas do Open Finance aparecem sozinhas depois da sincronização; saldo, limite e tipo vêm do banco.',
           'Para dinheiro em espécie, banco sem Open Finance ou um controle separado, use “+ Conta manual”.',
@@ -368,6 +373,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'conferir-banco',
         titulo: 'Conferir com o banco',
         paraQueServe: 'Ver se o site bate com o app de cada banco e, quando não bate, por quê.',
+        print: { id: 'conferir-banco', alt: 'Conferir com o banco: tabela de contas com o saldo no site, o campo para informar o valor do app do banco e o resultado.' },
         passos: [
           'Em Contas e cartões, clique em “Conferir com o banco”.',
           'Abra o app de cada banco e digite o valor que aparece lá: o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
@@ -416,6 +422,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'filtros',
         titulo: 'Filtrar e buscar',
         paraQueServe: 'Encontrar rápido as transações que importam.',
+        print: { id: 'filtros', alt: 'Transações com os botões do topo, os filtros de período, conta, categoria, tipo e lançamento, e a caixa de busca.' },
         passos: [
           'Escolha o período em “De” e “Até” (o padrão é o mês atual).',
           'Filtre por conta, por uma ou várias categorias (inclusive “Sem categoria”), por tipo (despesas, receitas, transferências) e por “Lançamento” (Pix, compras no cartão, pagamento de fatura…).',
@@ -433,6 +440,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'etiquetas',
         titulo: 'O que cada etiqueta quer dizer',
         paraQueServe: 'Entender cada transação sem precisar abri-la.',
+        print: { id: 'etiquetas', alt: 'Lista de transações com data, descrição, etiqueta de tipo, categoria, conta e valor.' },
         passos: [
           'Antes do nome, o selo do serviço quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber, TIM, Mercado Livre…); senão, o selo pelo tipo do lançamento (o do Pix em “Pix enviado” e “Pix recebido”; o logo do banco em “Pagamento de fatura”, quando o texto cita o banco); senão, o ícone da categoria (ex.: talheres em Alimentação, maleta em Salário); e, sem categoria, o ícone do tipo, o mesmo da etiqueta. O mesmo selo aparece no Painel e em Contas a pagar.',
           'A primeira etiqueta diz como o dinheiro entrou ou saiu: “Compra no cartão”, “Pix enviado”, “Entre suas contas”, “Pagamento de fatura”, “Boleto ou débito automático”…',
@@ -492,6 +500,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'lancamento-manual',
         titulo: 'Lançamento manual e transferência',
         paraQueServe: 'Registrar o que o banco não informa, como gastos em dinheiro ou uma compra paga direto de um cofrinho.',
+        print: { id: 'lancamento-manual', alt: 'Janela Novo lançamento com tipo, conta, data, valor, descrição, categoria, observação e as caixas de marcar.' },
         passos: [
           'Crie antes uma conta manual (ex.: “Carteira”) em Contas e cartões.',
           'Em Transações, clique em “+ Lançamento”: tipo, conta, data, valor, descrição e categoria.',
@@ -564,6 +573,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'modo-edicao',
         titulo: 'Várias de uma vez: “Editar categorias”',
         paraQueServe: 'Arrumar dezenas de transações rápido, sem abrir uma por uma.',
+        print: { id: 'modo-edicao', alt: 'Lista de transações no modo de edição, com uma lista suspensa de categoria em cada linha.' },
         passos: [
           'Em Transações, filtre o que quer arrumar (ex.: o mês, “Sem categoria”).',
           'Clique em “✎ Editar categorias”. Cada linha ganha um seletor de categoria.',
@@ -661,6 +671,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'criar-regra',
         titulo: 'Criar uma regra',
         paraQueServe: 'Categorizar sozinho o que se repete.',
+        print: { id: 'criar-regra', alt: 'Aba Regras automáticas de Categorias e regras, com o botão Regra, a tabela de regras e a seção de regras de descrição.' },
         passos: [
           'Abra Categorias e regras › “Regras automáticas” e clique em “+ Regra”.',
           'Em “Quando a descrição”, escolha “contém”, “começa com” ou “é igual a”.',
@@ -717,6 +728,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'criar-categoria',
         titulo: 'Criar e organizar categorias',
         paraQueServe: 'Ter as categorias do seu jeito.',
+        print: { id: 'criar-categoria', alt: 'Janela Nova categoria com nome, tipo, subcategoria de, natureza do gasto, cor e a caixa Ativa.' },
         passos: [
           'Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.',
           'Dê um “Nome”, escolha o “Tipo” (despesa, receita ou transferência) e uma cor.',
@@ -759,6 +771,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'definir-limites',
         titulo: 'Definir os limites do mês',
         paraQueServe: 'Combinar consigo mesmo quanto gastar em cada categoria.',
+        print: { id: 'definir-limites', alt: 'Orçamentos do mês: totais orçado, gasto e disponível e a tabela de categorias com o campo de limite de cada uma.' },
         passos: [
           'Abra Orçamentos e escolha o mês no seletor.',
           'Na coluna “Limite (R$)”, digite o limite de cada categoria. Em branco = sem orçamento.',
@@ -804,6 +817,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'criar-meta',
         titulo: 'Criar uma meta',
         paraQueServe: 'Dar nome, valor e prazo a um objetivo.',
+        print: { id: 'criar-meta', alt: 'Janela Nova meta com nome, valor alvo, data alvo, conta, valor inicial, quanto guardar por mês, ícone e cor.' },
         passos: [
           'Abra Metas e clique em “+ Nova meta”.',
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
@@ -876,6 +890,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'cadastrar-conta',
         titulo: 'Cadastrar uma conta a pagar',
         paraQueServe: 'Ser lembrado dos vencimentos no Painel.',
+        print: { id: 'cadastrar-conta', alt: 'Janela Nova conta a pagar com descrição, valor, vencimento, recorrência, categoria, como é cobrada e conta de pagamento.' },
         passos: [
           'Abra Contas a pagar e clique em “+ Nova conta”.',
           'Informe a descrição, o valor, o “Próximo vencimento” e a recorrência (mensal, anual ou única).',
@@ -922,6 +937,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'assinaturas-recorrentes',
         titulo: 'Assinaturas e recorrentes: onde cada cobrança cai',
         paraQueServe: 'Ver de uma vez qual assinatura cai em qual cartão e qual débito automático sai de qual conta, e quanto vai por mês.',
+        print: { id: 'assinaturas-recorrentes', alt: 'Aba Assinaturas e recorrentes de Contas a pagar, com os totais por mês e por ano e as contas em que cada cobrança cai.' },
         passos: [
           'Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.',
           'No topo: quanto vai por mês e por ano nas cobranças que se repetem (a anual entra dividida por 12).',
@@ -1011,6 +1027,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'painel',
         titulo: 'Painel',
         paraQueServe: 'Responder “como estou hoje?” e “como está este mês?”.',
+        print: { id: 'painel', alt: 'Começo do Painel: a situação de hoje, com patrimônio líquido, saldo em contas, dívida dos cartões e investimentos.' },
         passos: [
           '“Situação hoje”: patrimônio, saldo em contas, dívida total nos cartões, investimentos e próximos vencimentos — não muda com o mês escolhido.',
           'O card “Fatura em aberto” soma a fatura que ainda recebe compras (a do mês, enquanto não fecha; depois, a próxima) dos cartões em que “Fatura no Painel” está ligado, em Contas e cartões; “ver detalhes” mostra a de cada cartão.',
@@ -1030,6 +1047,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'visao-anual',
         titulo: 'Visão anual',
         paraQueServe: 'Responder “como foi o meu ano?”.',
+        print: { id: 'visao-anual', alt: 'Visão anual com o seletor de ano e de comparação e os primeiros indicadores de saúde financeira, como taxa de poupança e reserva de emergência.' },
         passos: [
           'Poupança acumulada, patrimônio estimado e para onde vai a sua renda (50/30/20).',
           'Despesas e receitas mês a mês, comparação de categorias com outro ano e o mapa de gastos.',
@@ -1042,6 +1060,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'relatorios-tela',
         titulo: 'Relatórios',
         paraQueServe: 'Responder “para onde foi o meu dinheiro?”.',
+        print: { id: 'relatorios-tela', alt: 'Relatórios com os filtros de período e de visão e os totais de receitas, despesas e saldo do período.' },
         passos: [
           'Fluxo de caixa mensal: barras de receitas e despesas de cada mês e, por cima delas, a linha lilás do saldo acumulado, com um ponto em cada mês. O valor de cada ponto está na última coluna da tabela, "Saldo acumulado".',
           'Despesas (ou receitas) por categoria no período.',
@@ -1053,6 +1072,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'projecao',
         titulo: 'Projeção',
         paraQueServe: 'Responder “quanto vou ter no fim do mês (e nos próximos)?”.',
+        print: { id: 'projecao', alt: 'Projeção com a escolha de 3, 6 ou 12 meses, receita e despesa médias, disponível hoje e saldo previsto.' },
         passos: [
           'Os meses seguintes usam a média das receitas, a média das despesas à vista e as parcelas já contratadas.',
           'O mês atual junta o que já aconteceu com a média do que falta.',
@@ -1085,6 +1105,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'carteira',
         titulo: 'Carteira de renda variável',
         paraQueServe: 'Acompanhar ações, FIIs, ETFs e BDRs com preço médio e proventos.',
+        print: { id: 'carteira', alt: 'Investimentos: botões do topo e os resumos de total investido, renda variável, carteira contra a Selic, proventos e Selic.' },
         passos: [
           'Abra Investimentos e clique em “+ Lançar compra/venda”.',
           'Informe o código da B3 (ex.: MXRF11), a quantidade, o preço pago e a data.',
@@ -1179,6 +1200,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'mes-a-mes',
         titulo: 'Mês a mês dos FIIs',
         paraQueServe: 'Acompanhar cada mês da carteira de FIIs como no app da corretora: quanto entrou, quanto rendeu e quanto as cotas valorizaram.',
+        print: { id: 'mes-a-mes', alt: 'Gráfico Mês a mês dos FIIs, com os rendimentos e a valorização de cada mês, e o começo da tabela com os aportes.' },
         passos: [
           'Abra Investimentos › FIIs e desça até “Mês a mês”. Escolha “12 meses” ou “24 meses”.',
           'O gráfico mostra, por mês, os rendimentos e a valorização; os aportes ficam na tabela, para um aporte grande não achatar o resto. A frase acima dele resume o último mês.',
@@ -1223,6 +1245,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'reservas',
         titulo: 'Reservas (cofrinhos do Mercado Pago)',
         paraQueServe: 'Contar no patrimônio o dinheiro guardado em cofrinhos e reservas da conta.',
+        print: { id: 'reservas', alt: 'Aba Reservas de Investimentos: tabela com cada reserva, a conta, o guardado, o retirado, o saldo e a base do saldo.' },
         passos: [
           'Quando o banco informa pelo Open Finance o valor de uma reserva, pelo nome, ele vale: só essa reserva aparece como “informado pelo banco” e não precisa de conferência.',
           'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
@@ -1325,14 +1348,15 @@ export const MANUAL: CapituloManual[] = [
           'Abra Trabalho › Holerites, escolha o mês e clique em “Abrir o holerite do mês”. O salário vem do Trabalho › Salário, proporcional se você entrou ou saiu no meio do mês (o mês tem 30 dias, como na folha).',
           'Os lançamentos que você marcou “Repetir nos próximos meses” no último holerite (plano de saúde, pensão) já vêm no mês novo.',
           '“+ Lançamento” acrescenta: horas extras (as horas e o percentual, 50% ou 100%), adicional noturno (as horas, 20% se não disser), outro provento (bônus, PLR, comissão, ajuda de custo: marque se tem INSS e IRRF), vale-transporte (o custo do mês; o desconto fica em até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outro desconto (marque se deduz do IR).',
-          '“Dias úteis” e “Domingos e feriados” vêm do calendário: segunda a sábado; os domingos e os feriados nacionais de data fixa (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12). Acerte os outros feriados (os estaduais, os municipais e os de data móvel). No mês da admissão ou da saída, conte só os dias do período em que você trabalhou. Eles calculam o DSR, o descanso pago sobre as horas extras e o adicional noturno.',
+          '“Dias úteis” e “Domingos e feriados” vêm do calendário: segunda a sábado; os domingos e os feriados nacionais de data fixa (1/1, 21/4, 1/5, 7/9, 12/10, 2/11, 15/11, 20/11 e 25/12). Acerte os outros feriados: os estaduais, os municipais e os de data móvel, como a Sexta-feira Santa, que muda de data a cada ano e é feriado em quase todo o país. No mês da admissão ou da saída, conte só os dias do período em que você trabalhou. Eles calculam o DSR, o descanso pago sobre as horas extras e o adicional noturno.',
           '“Salvar e calcular” mostra o holerite: cada provento e desconto com a referência, o INSS, o IRRF (com a dedução que der menos imposto e a redução da Lei 15.270/2025), os totais, o líquido e o FGTS do mês (que a empresa deposita, sem sair do salário).',
-          '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes.',
+          '“Fechar o mês” congela os números: um aumento ou uma tabela nova depois não mudam o mês fechado. “Reabrir” volta a calcular com o salário e as tabelas de agora, e fica nos acessos recentes. Se o mês ficou sem salário ou fora do emprego (a saída corrigida para antes dele, por exemplo), o site não reabre, para não perder os números guardados: corrija o salário ou o emprego antes. O holerite lido do PDF reabre sempre (volta para a estimativa do site, que fica sem o cálculo nesse caso), e aí pode ser excluído.',
           'A lista à esquerda mostra cada mês, aberto ou fechado, com o líquido. O holerite aberto fica no endereço da página, então o voltar do navegador funciona.',
           '“Recebido na conta”: ligue ao holerite o crédito do salário que caiu na conta. Em “Parece o salário”, o site sugere os créditos do dia 15 do mês ao dia 15 do seguinte, dizendo por quê (valor perto do líquido, o banco marcou como salário, cita o empregador, na conta do salário); “Outros créditos do período” deixa ligar qualquer outro. Um holerite pode vir em vários créditos (adiantamento e saldo), e um crédito pode pagar mais de um holerite (o site liga só o que falta do líquido).',
           'A tela mostra quanto foi recebido e a diferença para o líquido estimado. A transação ligada que estava sem categoria passa para “Salário”, como escolha sua. “Desligar” desfaz.',
           'O site só sugere um crédito com um motivo forte: o valor perto do líquido, o banco marcou como salário ou cita o empregador. Um crédito pequeno (abaixo de 20% do líquido) não conta como “parte”, e a transferência entre contas suas nunca é sugerida; os dois ficam em “Outros créditos do período”.',
-          'Se o banco trocar o código do crédito ligado (a transação pendente que vira efetivada), a ligação fica e o site religa sozinho na transação nova (mesma conta, mesmo valor, até 5 dias de diferença). Enquanto isso, o crédito aparece com o aviso “sumiu na sincronização”. O crédito ligado que virou débito também aparece com o aviso, não conta, e dá para desligar.',
+          'Se o banco trocar o código do crédito ligado (a transação pendente que vira efetivada), a ligação fica e o site religa sozinho na transação nova (mesma conta, mesmo valor, até 5 dias de diferença). Enquanto isso, o crédito aparece com o aviso “sumiu na sincronização”. O crédito ligado que virou débito também aparece com o aviso, não conta, e dá para desligar. Se o banco baixar o valor do crédito para menos do que você ligou, conta só o valor novo, com o aviso: desligue e ligue de novo.',
+          'Apagar a transação ligada (só a lançada à mão se apaga) não desliga: o site procura outra igual, como na troca do banco, o que resolve o lançamento duplicado. Para não ligar a nenhuma, use “Desligar”.',
           '“Ler holerite em PDF” preenche o mês com o PDF que a empresa manda: escolha um ou vários (o ano de uma vez). Se o PDF tiver senha (parte do CPF, a data de nascimento), o site pede; ela só abre o arquivo e não é guardada.',
           'A prévia mostra cada linha do PDF: o tipo que o site deu (salário, horas extras, DSR, INSS, IRRF, vale-transporte, plano de saúde, adiantamento…), o valor e o trecho do PDF de onde saiu. A situação diz “reconhecido”, “reconhecido pelo que você escolheu antes” ou “escolha o tipo”. Dá para trocar o tipo, corrigir o valor ou deixar a linha de fora.',
           'A prova real confere a soma de cada coluna com o total impresso e proventos menos descontos com o líquido. Se não bater, ela diz qual total e por quanto: o leitor errou alguma linha, ou alguma ficou de fora.',
@@ -1343,7 +1367,7 @@ export const MANUAL: CapituloManual[] = [
           'Rubrica que o site não conhece (“escolha o tipo”): ela vem sem tipo, e o “Confirmar e gravar” espera você escolher (ou deixar a linha de fora). Escolha uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida. Vale também para a que você corrigiu.',
           'O PDF é lido no seu computador, sem nenhum serviço de fora, e não fica guardado: só os valores do holerite.',
           'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
-          'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',
+          'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. Nessas horas, não lance também o adicional noturno: os 80% já o contam, e lançar os dois paga a noite duas vezes. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',
           'O mês tem 30 dias, como na folha: quem entra no dia 15 recebe 16 dias (30 − 15 + 1), também em fevereiro.',
           'O holerite não é receita: a receita continua sendo a transação do salário na conta. Ligar o crédito ao holerite só explica esse dinheiro, e os relatórios contam a receita uma vez só.'
         ],
@@ -1361,7 +1385,7 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Saber quanto vem de 13º, em quais datas, e quanto já veio adiantado.',
         passos: [
           'Abra Trabalho › 13º salário e escolha o ano em ‹ ›.',
-          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano. As horas de cada mês valem pelo salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor. O mês sem holerite entra como zero, e a tela avisa quantos meses têm.',
+          'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano. O mês da admissão ou da saída com menos de 15 dias não conta avo, e as horas dele também ficam fora da média. As horas de cada mês valem pelo salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor. O mês sem holerite entra como zero, e a tela avisa quantos meses têm.',
           'A 1ª parcela, até 30/11, é metade do 13º, sem desconto. A 2ª, até 20/12, é o 13º menos o INSS, o IRRF e a 1ª parcela.',
           'O IR do 13º é separado do salário: só as deduções da lei (INSS e dependentes), e a redução da Lei 15.270/2025 também vale para ele.',
           'Se a 1ª parcela veio antes (com as férias) ou num valor diferente, informe em “A 1ª parcela que veio”: a 2ª é recalculada. Só a data, sem o valor, mantém a metade calculada. “Voltar ao padrão” desfaz.',
@@ -1402,7 +1426,7 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Abra Trabalho › FGTS. O saldo é estimado mês a mês desde a admissão: 8% da base do INSS do holerite do mês (ou do salário, sem holerite), mais 8% do 13º (a 1ª parcela no mês em que foi paga, o resto em dezembro) e das férias (com o 1/3) no mês em que começam, corrigido a 3% ao ano. Os dias de férias saem do salário do mês: as férias já pagam esses dias.',
           'Com mais de um emprego CLT, escolha o emprego no alto da tela: o FGTS de um emprego antigo continua lá, e depois da saída o saldo segue corrigido, sem depósito.',
-          'Em “Lançar”, escolha “Saldo que vi no app do FGTS” e digite o saldo do app: a estimativa recomeça dali, e a tela mostra a diferença entre o app e o que o site estimava. A empresa deposita o FGTS do mês até o dia 20 do mês seguinte: o site soma depois da conferência os depósitos que o app ainda não mostrava naquele dia. Diferença grande pode ser depósito que a empresa não fez.',
+          'Em “Lançar”, escolha “Saldo que vi no app do FGTS” e digite o saldo do app: a estimativa recomeça dali, e a tela mostra a diferença entre o app e o que o site estimava. A empresa deposita o FGTS do mês até o dia 20 do mês seguinte (até 02/2024, até o dia 7): o site soma depois da conferência os depósitos que o app ainda não mostrava naquele dia, e a tela diz quanto somou. Por isso o saldo pode passar do que você digitou. Diferença grande pode ser depósito que a empresa não fez.',
           'Saque: escolha o motivo (rescisão, saque-aniversário, compra de imóvel ou outro). Distribuição de resultados: o valor que a Caixa creditou.',
           '“Os últimos meses” mostra a correção, o depósito, os saques e o saldo de cada mês; “conferido” marca o mês em que o saldo é o do app.',
           '“Excluir” apaga um lançamento, e o saldo é recalculado.'
@@ -1410,7 +1434,9 @@ export const MANUAL: CapituloManual[] = [
         dicas: [
           'O FGTS não entra no patrimônio do Painel nem nos relatórios: é seu, mas só sai em casos da lei. O saque entra pela transação na conta, como qualquer crédito.',
           'A correção oficial é a TR mais 3% ao ano; a TR fica de fora da estimativa. Por isso, confira com o app de vez em quando.',
-          'Com o saque-aniversário, se você for demitido sem justa causa, sai só a multa de 40%: o saldo fica bloqueado.'
+          'Com o saque-aniversário, se você for demitido sem justa causa, sai só a multa de 40%: o saldo fica bloqueado.',
+          'As férias pagas em dobro (tiradas depois do prazo) não têm FGTS sobre a dobra, só sobre as férias e o 1/3 normais.',
+          'No ano em que você sai do emprego, o FGTS do 13º não aparece aqui: ele vem no depósito da rescisão.'
         ],
         erros: ['“Estágio e PJ não têm FGTS”: o emprego cadastrado não é CLT.'],
         abrir: [{ rotulo: 'Abrir o FGTS', rota: '/trabalho/fgts' }]
@@ -1424,6 +1450,8 @@ export const MANUAL: CapituloManual[] = [
           '“A conta” mostra as verbas: o saldo de salário, o aviso prévio indenizado (30 dias mais 3 por ano de casa, até 90; no acordo, a metade), o 13º e as férias proporcionais (com o 1/3) e as férias vencidas (em dobro, se o prazo para tirar passou). E os descontos: INSS e IRRF do saldo de salário e do 13º, a 1ª parcela do 13º que já veio e, no pedido de demissão sem cumprir o aviso, 30 dias de salário.',
           'O aviso indenizado conta como tempo de serviço: a data projetada aparece e vale para o 13º e as férias.',
           'O FGTS: o saldo estimado até o mês antes da saída (Trabalho › FGTS), o depósito da rescisão (o mês da saída, o aviso e o 13º; saindo depois de 20/12, também o FGTS do 13º do ano, que vence em 20/01), a multa (40% na dispensa sem justa causa, 20% no acordo) sobre todos os depósitos, sem descontar os saques, e quanto dá para sacar (tudo, 80% no acordo, nada no pedido de demissão e na justa causa; com o saque-aniversário, só a multa). E se pode haver seguro-desemprego.',
+          'Se você conferiu o saldo no app do FGTS no mês da saída, até o dia dela, a rescisão usa esse saldo no lugar da estimativa.',
+          '“Estou no saque-aniversário do FGTS” vem marcado pelo que o site viu nos seus saques. Se você voltou ao saque-rescisão, desmarque: a conta refaz na hora, e o registro guarda a sua resposta.',
           'O aviso indenizado conta como tempo de serviço: se ele passa do ano, o 13º ganha os avos do ano seguinte. Saindo depois de 20/12, o 13º do ano já veio inteiro e não entra. No acordo, o aviso é pago pela metade, com o meio dia.',
           '“Comparar os tipos” mostra, na mesma data, quanto cai na conta e quanto sai do FGTS em cada tipo.',
           '“Registrar esta rescisão” guarda a conta como está e fecha o emprego na data de saída. “Desfazer o registro” reabre.'
@@ -1484,6 +1512,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'modulos',
         titulo: 'Módulos',
         paraQueServe: 'Ligar só as partes do site que vão além do básico das finanças e que você quer usar. Desligado, o módulo some do menu, não roda nada em segundo plano e não acessa a internet.',
+        print: { id: 'modulos', alt: 'Configurações, aba Módulos: interruptor do módulo Notícias, desligado, com a explicação do que ele acessa.' },
         passos: [
           'Abra Configurações › Módulos.',
           'Cada módulo mostra o que faz e se acessa a internet (e para onde). Ligue ou desligue pelo interruptor: vale na hora, sem recarregar a página, e em qualquer navegador.',
@@ -1491,13 +1520,14 @@ export const MANUAL: CapituloManual[] = [
           'Desligar não apaga nada: os dados do módulo ficam guardados e voltam quando você ligar de novo.',
           'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).'
         ],
-        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). Clique em “Tentar de novo”; enquanto isso, as telas dos módulos ficam fora do menu.'],
+        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). O aviso aparece no menu e em Configurações › Módulos: clique em “Tentar de novo”, que diz “Tentando…” enquanto lê. Enquanto isso, as telas dos módulos ficam fora do menu.'],
         abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       },
       {
         id: 'aparencia',
         titulo: 'Aparência',
         paraQueServe: 'Deixar o site com as suas cores.',
+        print: { id: 'aparencia', alt: 'Configurações, aba Aparência: as paletas de cores Lavanda, Oceano, Floresta, Grafite, Pôr do sol e Sua cor.' },
         passos: [
           'Abra Configurações › Aparência.',
           'Escolha uma paleta pronta (cada uma tem versão clara e escura) ou uma cor personalizada.',
@@ -1509,6 +1539,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'seguranca',
         titulo: 'Segurança',
         paraQueServe: 'Trocar a senha e ver os acessos recentes.',
+        print: { id: 'seguranca', alt: 'Configurações, aba Segurança: formulário para alterar a senha e a lista de acessos recentes.' },
         passos: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
@@ -1521,6 +1552,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'acesso-pelo-celular',
         titulo: 'Acesso pelo celular',
         paraQueServe: 'Abrir o site no celular, na mesma rede Wi-Fi de casa. Vem desligado: assim, o site só abre neste computador.',
+        print: { id: 'acesso-pelo-celular', alt: 'Bloco Acesso pelo celular com o aviso de segurança, o endereço do computador na rede e o botão para ligar.' },
         passos: [
           'Abra Configurações › Segurança e, em “Acesso pelo celular”, escolha o endereço deste computador na rede (o do Wi-Fi ou do cabo da sua casa).',
           'Clique em “Ligar o acesso pelo celular” e confirme. Ligado, qualquer aparelho da sua rede chega à tela de entrar: use uma senha forte e não ligue em rede pública (café, aeroporto).',
@@ -1539,6 +1571,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'erros-do-sistema',
         titulo: 'Erros do sistema',
         paraQueServe: 'Ver o que deu errado (sincronização, cotações, telas) sem procurar em logs.',
+        print: { id: 'erros-do-sistema', alt: 'Configurações, aba Erros: filtros de situação, origem, nível e datas e a tabela de erros do sistema.' },
         passos: [
           'Abra Configurações › Erros.',
           'Filtre por situação, origem, nível e período. O mesmo erro repetido aparece uma vez, com quantas vezes aconteceu.',

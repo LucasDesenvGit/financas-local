@@ -290,6 +290,21 @@ func TestLigarRodaATarefaNaHora(t *testing.T) {
 	emAndamento.Wait()
 }
 
+// Regressão (#750): só a passagem de desligado para ligado acorda a tarefa. Três PUT seguidos com {"ligado":true} davam
+// três ciclos, cada um uma busca na internet (Notícias).
+func TestLigarDeNovoNaoAcordaATarefa(t *testing.T) {
+	t.Parallel()
+	cat, mux := novoCatalogo(t, exemplo()) // nasce desligado
+	sinal := make(chan struct{}, 10)
+	cat.sinais["exemplo"] = []chan struct{}{sinal}
+	for _, corpo := range []string{`{"ligado":true}`, `{"ligado":true}`, `{"ligado":true}`, `{"ligado":false}`, `{"ligado":false}`, `{"ligado":true}`} {
+		testeapoio.Chamar(t, mux, "PUT", "/api/modulos/exemplo", corpo).ConferirStatus(t, http.StatusOK)
+	}
+	if n := len(sinal); n != 2 {
+		t.Errorf("a tarefa foi acordada %d vezes; quer 2 (a 1ª ligada e a religada depois de desligar)", n)
+	}
+}
+
 // moduloLento é o de exemplo com a tarefa de atraso e intervalo de uma hora.
 type moduloLento struct{ *moduloDeTeste }
 
