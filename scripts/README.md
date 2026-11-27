@@ -20,6 +20,11 @@ quem não usa terminal.
 caminhos no clone (`src/gerenciador-go/internal/desenvolvimento/`), e o crontab e o Agendador de Tarefas guardam o
 caminho do `geral/4-backup.sh`.
 
+**O que muda junto:** no Windows, as etapas 1 e 3 existem só no `windows/instalar-windows.ps1` (as pastas e mensagens
+comuns, no `windows/comum.ps1`), e o `2-criar-banco.sh` e o `4-backup.sh` têm de continuar rodando no Git Bash. Serviço,
+certificado e pastas de dados existem também no `instalador/configurar.ps1` (`.msi`,
+[ADR 0029](../docs/adr/0029-instalador-msi-com-wix-gerado-pela-ci.md)): confira se mudam juntos.
+
 ## Instalação e operação (`geral/`, `windows/`, `linux/`)
 
 | Script | O que faz | Quem roda |
