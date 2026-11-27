@@ -16,9 +16,9 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// URLPadrao é a API pública v4 do Mercado Bitcoin (ADR 0048), a mesma do Program.cs: sem chave; só os pares fixos
-// saem do computador.
-const URLPadrao = "https://api.mercadobitcoin.net/api/v4/"
+// URLPadrao é a API pública de dados de mercado da Binance (ADR 0073, no lugar do Mercado Bitcoin da 0048, que bloqueia
+// quem não é navegador desde 14/11/2026, #762): sem chave; só os pares fixos saem do computador.
+const URLPadrao = "https://api.binance.com/api/v3/"
 
 const (
 	tempoLimite     = 20 * time.Second
@@ -26,11 +26,22 @@ const (
 	tamanhoMaximo   = 1 << 20 // 1 MB: a resposta dos 4 pares tem menos de 1 KB
 )
 
-// ErrRede é a HttpRequestException do .NET: sem internet, fonte fora do ar ou status de erro. A tarefa a trata como
-// aviso (tenta de novo no próximo ciclo); o resto é erro.
-var ErrRede = errors.New("falha ao consultar o Mercado Bitcoin")
+var (
+	// ErrRede é a HttpRequestException do .NET: sem internet, fonte fora do ar (5xx), tempo esgotado ou limite de
+	// pedidos (408 e 429). A tarefa a trata como aviso (tenta de novo no próximo ciclo); o resto é erro.
+	ErrRede = errors.New("falha ao consultar a Binance")
+	// ErrRecusa é a fonte que respondeu e recusou o pedido (os outros 4xx): o bloqueio do WAF (403), o país (451), o
+	// banimento do IP depois de passar do limite (418), um caminho que mudou. Não é falta de internet e não passa sozinho
+	// no próximo ciclo, então a tarefa a registra como erro, uma vez (#762: era o 403 do Mercado Bitcoin).
+	ErrRecusa = errors.New("a Binance recusou o pedido")
+)
 
-// Cliente consulta o Mercado Bitcoin. Só HTTPS: a URL base é configurável para os testes.
+// ehRecusa: um 4xx que não é passageiro (o 408 e o 429 são).
+func ehRecusa(status int) bool {
+	return status >= 400 && status < 500 && status != http.StatusRequestTimeout && status != http.StatusTooManyRequests
+}
+
+// Cliente consulta a Binance. Só HTTPS: a URL base é configurável para os testes.
 type Cliente struct {
 	base *url.URL
 	http *http.Client
@@ -40,10 +51,10 @@ type Cliente struct {
 func NovoCliente(urlBase string, cliente *http.Client) (*Cliente, error) {
 	base, err := url.Parse(urlBase)
 	if err != nil {
-		return nil, fmt.Errorf("URL do Mercado Bitcoin inválida %q: %w", urlBase, err)
+		return nil, fmt.Errorf("URL da Binance inválida %q: %w", urlBase, err)
 	}
 	if base.Scheme != "https" {
-		return nil, fmt.Errorf("a URL do Mercado Bitcoin deve usar HTTPS: %q", urlBase)
+		return nil, fmt.Errorf("a URL da Binance deve usar HTTPS: %q", urlBase)
 	}
 	if !strings.HasSuffix(base.Path, "/") {
 		base.Path += "/"
@@ -60,14 +71,18 @@ type Negocio struct {
 	DataHora time.Time
 }
 
-// UltimosNegocios consulta o último negócio das moedas numa chamada só ("tickers?symbols=BTC-BRL,ETH-BRL,...").
-// Devolve só as moedas pedidas com preço positivo e data válida, pela moeda.
+// UltimosNegocios consulta o último negócio das moedas numa chamada só: o ticker de 24 h, na forma curta
+// (`ticker/24hr?symbols=["BTCBRL",...]&type=MINI`, peso 2 de 6000 por minuto). Devolve só as moedas pedidas com preço
+// positivo e data válida, pela moeda.
 func (c *Cliente) UltimosNegocios(ctx context.Context, moedas []string) (map[string]Negocio, error) {
 	pares := make([]string, len(moedas))
 	for i, m := range moedas {
-		pares[i] = m + "-BRL"
+		pares[i] = `"` + m + `BRL"`
 	}
-	relativo, err := url.Parse("tickers?symbols=" + strings.Join(pares, ","))
+	consulta := url.Values{}
+	consulta.Set("symbols", "["+strings.Join(pares, ",")+"]")
+	consulta.Set("type", "MINI")
+	relativo, err := url.Parse("ticker/24hr?" + consulta.Encode())
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +97,9 @@ func (c *Cliente) UltimosNegocios(ctx context.Context, moedas []string) (map[str
 		return nil, fmt.Errorf("%w: %w", ErrRede, err)
 	}
 	defer resp.Body.Close()
+	if ehRecusa(resp.StatusCode) {
+		return nil, fmt.Errorf("%w: status %d", ErrRecusa, resp.StatusCode)
+	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("%w: status %d", ErrRede, resp.StatusCode)
 	}
@@ -90,11 +108,11 @@ func (c *Cliente) UltimosNegocios(ctx context.Context, moedas []string) (map[str
 		return nil, fmt.Errorf("%w: %w", ErrRede, err)
 	}
 	if len(corpo) > tamanhoMaximo {
-		return nil, errors.New("a resposta do Mercado Bitcoin passou do tamanho máximo")
+		return nil, errors.New("a resposta da Binance passou do tamanho máximo")
 	}
 	var itens []map[string]json.RawMessage
 	if !bytes.HasPrefix(bytes.TrimSpace(corpo), []byte("[")) || json.Unmarshal(corpo, &itens) != nil {
-		return nil, errors.New("resposta inesperada do Mercado Bitcoin (não é uma lista)")
+		return nil, errors.New("resposta inesperada da Binance (não é uma lista)")
 	}
 
 	acompanhadas := map[string]bool{}
@@ -103,12 +121,11 @@ func (c *Cliente) UltimosNegocios(ctx context.Context, moedas []string) (map[str
 	}
 	lidas := map[string]Negocio{}
 	for _, item := range itens {
-		par := texto(item, "pair")
-		moeda, ok := strings.CutSuffix(par, "-BRL")
+		moeda, ok := strings.CutSuffix(texto(item, "symbol"), "BRL")
 		if !ok || !acompanhadas[moeda] {
 			continue
 		}
-		preco, ok := decimalDoItem(item, "last")
+		preco, ok := decimalDoItem(item, "lastPrice")
 		if !ok || !preco.Decimal().IsPositive() {
 			continue
 		}
@@ -129,7 +146,7 @@ func texto(item map[string]json.RawMessage, nome string) string {
 	return s
 }
 
-// decimalDoItem: o Mercado Bitcoin manda os preços como texto ("419184.00000000"); número também vale, como no .NET.
+// decimalDoItem: a Binance manda os preços como texto ("372650.00000000"); número também vale, como no .NET.
 func decimalDoItem(item map[string]json.RawMessage, nome string) (tipos.Decimal, bool) {
 	bruto, ok := item[nome]
 	if !ok {
@@ -156,10 +173,10 @@ func decimalDoItem(item map[string]json.RawMessage, nome string) (tipos.Decimal,
 	return d, true
 }
 
-// dataHoraDoItem lê "date", o último negócio. A especificação diz nanossegundos, mas a resposta vem em segundos (10
-// dígitos); como no .NET, aceita os três pelo tamanho do número.
+// dataHoraDoItem lê "closeTime", o fim da janela de 24 h, que é o instante do último negócio. A Binance manda em
+// milissegundos; segundos e nanossegundos também valem, pelo tamanho do número, como no cliente do Mercado Bitcoin.
 func dataHoraDoItem(item map[string]json.RawMessage) (time.Time, bool) {
-	bruto, ok := item["date"]
+	bruto, ok := item["closeTime"]
 	if !ok {
 		return time.Time{}, false
 	}

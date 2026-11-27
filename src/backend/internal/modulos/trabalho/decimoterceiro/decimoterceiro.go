@@ -109,7 +109,8 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 	if !ok {
 		return Resposta{}, errForaDoAno
 	}
-	soma, meses, err := s.holerites.VariaveisDoAno(ctx, empregoId, ano, salario.SalarioBruto)
+	inicio, fim := MesesComAvo(ano, e.Admissao, e.Saida) // o mês sem avo não pesa na média (#750)
+	soma, meses, err := s.holerites.VariaveisEntre(ctx, empregoId, inicio, fim, salario.SalarioBruto)
 	if err != nil {
 		return Resposta{}, err
 	}
@@ -160,7 +161,10 @@ func (s *Servico) DefinirPrimeira(ctx context.Context, empregoId int64, ano int,
 	if em != nil && em.Ano() != ano {
 		return Resposta{}, erroDeValidacao(fmt.Sprintf("A 1ª parcela do 13º de %d é paga em %d.", ano, ano))
 	}
-	if valor != nil && valor.Decimal().GreaterThan(atual.Calculo.Total.Decimal()) {
+	// A 1ª não passa do total, mas só quando o valor muda (#750): quem informou 3000 e viu o total cair para 2800 (um
+	// holerite apagado) recebia 400 ao trocar só a data, e tinha de corrigir o valor antes.
+	mudouOValor := valor != nil && (!atual.Calculo.Primeira.ValorInformado || !valor.Decimal().Equal(atual.Calculo.Primeira.Valor.Decimal()))
+	if mudouOValor && valor.Decimal().GreaterThan(atual.Calculo.Total.Decimal()) {
 		return Resposta{}, erroDeValidacao("A 1ª parcela não passa do 13º do ano inteiro (" + reais(atual.Calculo.Total.Decimal()) + ").")
 	}
 	_, err = s.db.ExecContext(ctx, `INSERT INTO "DecimoTerceiro" ("EmpregoId", "Ano", "PrimeiraParcelaEm", "PrimeiraParcelaValor", "AtualizadoEm")

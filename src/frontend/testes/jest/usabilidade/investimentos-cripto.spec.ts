@@ -6,14 +6,14 @@ import { PrivacidadeService } from '../../../src/app/core/privacidade.service';
 import { InvestimentosCriptoComponent, MOEDAS_CRIPTO } from '../../../src/app/paginas/patrimonio/investimentos-cripto.component';
 
 /**
- * #279 (ADR 0048): criptomoedas em reais em Investimentos, pelo último negócio no Mercado Bitcoin guardado pela API.
+ * #279 (ADR 0073, antes a 0048): criptomoedas em reais em Investimentos, pelo último negócio na Binance guardado pela API.
  * Data e hora sempre à vista (Nielsen 1); variação em 24 h com o sinal em texto, não só na cor (WCAG 1.4.1); sem
  * variação quando não há dado de 24 h antes (o site não inventa número); "criptomoeda" com ⓘ (Nielsen 2); aviso
  * quando a cotação passou de 2 horas; não segue "ocultar valores" (cotação é pública).
  */
 const AGORA = Date.parse('2026-10-21T12:00:00Z');
 const cripto = (moeda: string, preco: number, variacao24h: number | null, dataHora = '2026-10-21T11:45:00Z'): CotacaoCripto =>
-  ({ moeda, preco, dataHora, variacao24h, fonte: 'Mercado Bitcoin' });
+  ({ moeda, preco, dataHora, variacao24h, fonte: 'Binance' });
 
 function abrir(resposta: unknown, ocultar = false) {
   TestBed.configureTestingModule({
@@ -40,7 +40,7 @@ describe('Investimentos: criptomoedas em reais (#279)', () => {
     expect(el.querySelector('h2')!.textContent).toBe('Criptomoedas');
     const [btc, eth, sol, usdt] = linhas();
     // #329: a fonte em cada linha, antes da data e hora (como o "PTAX de …" do câmbio).
-    expect(btc).toMatch(/^BTC Bitcoin R\$ 419\.262,00 \+2,04% em 24 h Mercado Bitcoin · \d{2}\/10 \d{2}:45$/);
+    expect(btc).toMatch(/^BTC Bitcoin R\$ 419\.262,00 \+2,04% em 24 h Binance · \d{2}\/10 \d{2}:45$/);
     expect(el.querySelector('.desatualizada')).toBeNull();
     expect(eth).toContain('−1,37% em 24 h');
     expect(sol).toContain('0,00% em 24 h');
@@ -76,7 +76,7 @@ describe('Investimentos: criptomoedas em reais (#279)', () => {
     expect(linhas()[0]).toContain('R$ 419.262,00');
     expect(el.querySelector('.aviso-cripto')!.textContent).toContain('21/10');
     // #329: a própria linha diz que a cotação está velha.
-    expect(linhas()[0]).toContain('Mercado Bitcoin');
+    expect(linhas()[0]).toContain('Binance');
     expect(linhas()[0]).toContain('· desatualizada');
     expect(el.querySelector('.data-cripto')!.classList).toContain('desatualizada');
   });

@@ -66,3 +66,32 @@ test('Configurações › Módulos: a lista que não veio, e tentar de novo', as
   await bloco.getByRole('button', { name: 'Tentar de novo' }).click();
   await expect(bloco.getByRole('switch', { name: 'Exemplo' })).toBeVisible();
 });
+
+/**
+ * #750: a lista que não veio aparece também no menu, para quem não abre Configurações › Módulos nem a tela de um
+ * módulo. O "Tentar de novo" de lá diz "Tentando…" enquanto lê, e o grupo do módulo volta ao menu quando dá certo.
+ */
+test('Menu: a lista de módulos que não veio, e tentar de novo ali', async ({ page, problemas, isMobile }) => {
+  problemas.ignorar('503');
+  const trabalho = { id: 'trabalho', nome: 'Trabalho', descricao: 'Salário e holerites.', acessaInternet: false, destinos: [], ligado: true };
+  let falhar = true;
+  let responder: (() => void) | null = null;
+  await page.route('**/api/modulos', async (rota) => {
+    if (falhar) return rota.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+    await new Promise<void>((r) => (responder = r)); // segura a resposta: dá para ver o "Tentando…"
+    return rota.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([trabalho]) });
+  });
+  await page.goto('/painel');
+  if (isMobile) await page.getByRole('button', { name: 'Menu de navegação' }).click(); // o aviso vai na gaveta
+  const menu = page.getByRole('navigation', { name: 'Menu principal' });
+  const aviso = menu.getByRole('status');
+  await expect(aviso).toContainText('Não deu para ler os módulos: as telas deles estão fora do menu.');
+  await expect(menu.getByRole('button', { name: 'Trabalho' })).toHaveCount(0);
+  falhar = false;
+  await aviso.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(aviso.getByRole('button', { name: 'Tentando…' })).toBeDisabled();
+  await expect.poll(() => responder !== null).toBe(true);
+  responder!();
+  await expect(aviso).toHaveCount(0);
+  await expect(menu.getByRole('button', { name: 'Trabalho' })).toBeVisible();
+});

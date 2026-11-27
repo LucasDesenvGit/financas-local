@@ -134,34 +134,34 @@ func TestUltimas(t *testing.T) {
 		{"variação contra 24 h antes, com a escala do C#", []testeapoio.CotacaoCripto{
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(13, 21, 0)), Preco: testeapoio.Valor("612345.67")},
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(14, 21, 0)), Preco: testeapoio.Valor("618900.12")},
-		}, `[{"moeda":"BTC","preco":618900.12,"dataHora":"2026-10-14T21:00:00Z","variacao24h":1.07,"fonte":"Mercado Bitcoin"}]`},
+		}, `[{"moeda":"BTC","preco":618900.12,"dataHora":"2026-10-14T21:00:00Z","variacao24h":1.07,"fonte":"Binance"}]`},
 		// O EF Core grava 110 como "110.0": o C# lê de volta com uma casa, e a conta fica com ela (10.0, e não 10.00).
 		{"variação exata fica com a escala natural", []testeapoio.CotacaoCripto{
 			{Moeda: "ETH", DataHora: tipos.NovaDataHora(utc(13, 21, 0)), Preco: testeapoio.Valor("100")},
 			{Moeda: "ETH", DataHora: tipos.NovaDataHora(utc(14, 21, 0)), Preco: testeapoio.Valor("110")},
-		}, `[{"moeda":"ETH","preco":110.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":10.0,"fonte":"Mercado Bitcoin"}]`},
+		}, `[{"moeda":"ETH","preco":110.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":10.0,"fonte":"Binance"}]`},
 		{"queda", []testeapoio.CotacaoCripto{
 			{Moeda: "SOL", DataHora: tipos.NovaDataHora(utc(13, 21, 0)), Preco: testeapoio.Valor("900")},
 			{Moeda: "SOL", DataHora: tipos.NovaDataHora(utc(14, 21, 0)), Preco: testeapoio.Valor("850.5")},
-		}, `[{"moeda":"SOL","preco":850.5,"dataHora":"2026-10-14T21:00:00Z","variacao24h":-5.50,"fonte":"Mercado Bitcoin"}]`},
+		}, `[{"moeda":"SOL","preco":850.5,"dataHora":"2026-10-14T21:00:00Z","variacao24h":-5.50,"fonte":"Binance"}]`},
 		{"empate entre 23 h e 25 h: fica a mais recente", []testeapoio.CotacaoCripto{
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(13, 20, 0)), Preco: testeapoio.Valor("200")}, // 25 h
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(13, 22, 0)), Preco: testeapoio.Valor("100")}, // 23 h
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(14, 21, 0)), Preco: testeapoio.Valor("150")},
-		}, `[{"moeda":"BTC","preco":150.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":50.0,"fonte":"Mercado Bitcoin"}]`},
+		}, `[{"moeda":"BTC","preco":150.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":50.0,"fonte":"Binance"}]`},
 		{"fora da janela de 22 a 26 h: sem variação", []testeapoio.CotacaoCripto{
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(13, 18, 59)), Preco: testeapoio.Valor("100")}, // 26 h e 1 min
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(13, 23, 1)), Preco: testeapoio.Valor("100")},  // 21 h e 59 min
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(14, 21, 0)), Preco: testeapoio.Valor("150")},
-		}, `[{"moeda":"BTC","preco":150.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Mercado Bitcoin"}]`},
+		}, `[{"moeda":"BTC","preco":150.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Binance"}]`},
 		{"site desligado há mais de 2 dias: a última, mesmo antiga", []testeapoio.CotacaoCripto{
 			{Moeda: "USDT", DataHora: tipos.NovaDataHora(utc(1, 9, 30)), Preco: testeapoio.Valor("5.41")},
-		}, `[{"moeda":"USDT","preco":5.41,"dataHora":"2026-10-01T09:30:00Z","variacao24h":null,"fonte":"Mercado Bitcoin"}]`},
+		}, `[{"moeda":"USDT","preco":5.41,"dataHora":"2026-10-01T09:30:00Z","variacao24h":null,"fonte":"Binance"}]`},
 		{"na ordem da tela, não a do banco", []testeapoio.CotacaoCripto{
 			{Moeda: "USDT", DataHora: tipos.NovaDataHora(utc(14, 21, 0)), Preco: testeapoio.Valor("5.41")},
 			{Moeda: "BTC", DataHora: tipos.NovaDataHora(utc(14, 21, 0)), Preco: testeapoio.Valor("618900.12")},
-		}, `[{"moeda":"BTC","preco":618900.12,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Mercado Bitcoin"},` +
-			`{"moeda":"USDT","preco":5.41,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Mercado Bitcoin"}]`},
+		}, `[{"moeda":"BTC","preco":618900.12,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Binance"},` +
+			`{"moeda":"USDT","preco":5.41,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Binance"}]`},
 		{"nada guardado: lista vazia", nil, `[]`},
 	}
 	for _, c := range casos {
