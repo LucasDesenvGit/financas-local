@@ -1,10 +1,11 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { Route } from '@angular/router';
 import { rotas } from '../../../src/app/app.routes';
 import { GLOSSARIO } from '../../../src/app/compartilhado/glossario/glossario';
 import { telasDoMenu } from '../../../src/app/layout/shell.component';
-import { MANUAL, ajudaDaUrl } from '../../../src/app/paginas/manual/manual-conteudo';
+import { ajudaDaUrl } from '../../../src/app/paginas/manual/ajuda-por-rota';
+import { MANUAL } from '../../../src/app/paginas/manual/manual-conteudo';
 import { MEDIDAS_PRINTS } from '../../../src/app/paginas/manual/prints-manual';
 import { abrirManual } from '../apoio/manual';
 
@@ -56,6 +57,26 @@ describe('Regressão: Manual acompanha o site', () => {
     expect(ajudaDaUrl('/configuracoes?aba=erros')).toEqual({ capitulo: 'configuracoes' });
     expect(ajudaDaUrl('/painel')).toEqual({ capitulo: 'relatorios', secao: 'painel' });
     expect(ajudaDaUrl('/manual/contas#historico-faturas')).toBeNull();
+  });
+
+  it('o texto do Manual não entra no bundle inicial: nenhum import estático a partir do main.ts chega a ele (#755)', () => {
+    // Os import() das rotas são lazy; o resto, seguido a partir do main.ts, vai para o main-*.js que toda página baixa.
+    const src = resolve(__dirname, '../../../src');
+    const vistos = new Set<string>();
+    const fila = [join(src, 'main.ts')];
+    while (fila.length) {
+      const arquivo = fila.pop()!;
+      if (vistos.has(arquivo)) continue;
+      vistos.add(arquivo);
+      for (const [, caminho] of readFileSync(arquivo, 'utf8').matchAll(/^(?:import|export)\s[^;]*?from\s+'(\.[^']+)'/gm)) {
+        const destino = resolve(dirname(arquivo), caminho);
+        fila.push(existsSync(`${destino}.ts`) ? `${destino}.ts` : join(destino, 'index.ts'));
+      }
+    }
+    const iniciais = [...vistos].map((a) => relative(src, a).split(sep).join('/'));
+    expect(iniciais).toContain('app/layout/shell.component.ts');
+    expect(iniciais).toContain('app/paginas/manual/ajuda-por-rota.ts');
+    expect(iniciais).not.toContain('app/paginas/manual/manual-conteudo.ts');
   });
 
   it('a busca vai para a URL com replaceUrl, e apagar tira o parâmetro', async () => {
