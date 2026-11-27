@@ -17,46 +17,38 @@ Vale em toda tarefa, de qualquer pessoa: é um app local, de um usuário só, e 
 
 ## O que é o projeto
 
-Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux (scripts bash no Linux, PowerShell ou `.msi` no Windows, [ADR 0012](docs/adr/0012-instalador-do-windows-em-powershell.md)): back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema: Serviço do Windows ou systemd; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22, banco SQLite local (`dados/sql/FinancasLocal.db`). Dados bancários chegam via Open Finance através do **Meu Pluggy**. Veja [README.md](README.md) para a visão funcional completa (painel, transações, orçamentos, metas, investimentos, relatórios) e [docs/ARQUITETURA.md](docs/ARQUITETURA.md) para o diagrama de camadas. O porquê das decisões está nas ADRs em [docs/adr/](docs/adr/README.md). **O mapa das pastas para pessoas** é o README de cada uma (`src/backend`, `src/frontend`, `src/gerenciador-go`, `banco`, `instalador`, `docs`): pasta principal nova ganha o dela, de 10 a 20 linhas, apontando para o `docs/ARQUITETURA.md` em vez de repetir (#657).
+Sistema de gerenciamento financeiro pessoal que roda inteiro localmente, em Windows ou Linux (scripts bash no Linux, PowerShell ou `.msi` no Windows, [ADR 0012](docs/adr/0012-instalador-do-windows-em-powershell.md)): back-end em Go (`src/backend`, um executável só, que roda como serviço do sistema; o .NET saiu na #86 e está na tag `v-ultimo-dotnet`), front-end Angular 22 publicado no `wwwroot` ao lado dele (mesma origem, sem CORS, cookies `__Host-`), banco SQLite local (`dados/sql/FinancasLocal.db`) e o gerenciador (`src/gerenciador-go/`, a janela do Windows e do Linux, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)). Dados bancários chegam via Open Finance através do **Meu Pluggy**. A visão funcional está no [README.md](README.md); camadas, pastas e diagramas, no [docs/ARQUITETURA.md](docs/ARQUITETURA.md); o porquê das decisões, nas [ADRs](docs/adr/README.md). Cada pasta principal tem um README curto que aponta para o `docs/ARQUITETURA.md` em vez de repetir: pasta principal nova ganha o dela (#657).
 
 ## Comandos
 
 ```bash
-cd src/backend && go test -race ./...                      # back-end Go ("Antes de subir" do src/backend/README.md)
-cd src/frontend && npm run build                              # front-end (produção)
+cd src/backend && go test -race ./...                         # Go (o resto em "Antes de subir", no src/backend/README.md)
 cd src/frontend && npm run test:tipos && npm test             # Jest
-cd src/frontend && NAVEGADOR=chromium npm run test:afetados   # antes do push: Jest + navegador só no que mudou (#286)
+cd src/frontend && NAVEGADOR=chromium npm run test:afetados   # antes do push: Jest, build e navegador só no que mudou
 cd src/frontend && npm start                                  # front-end em dev (http://localhost:4200, proxy /api -> API)
-scripts/geral/2-criar-banco.sh                                # banco (sem migrations)
-scripts/geral/3-publicar-atualizar.sh                         # compila, publica, certificado e serviço do sistema
-scripts/geral/instalar.sh                                     # etapas 1-3 (no Windows, repassa para scripts/windows/instalar-windows.ps1; sem bash: instalar-windows.cmd, ADR 0012)
+scripts/geral/instalar.sh                                     # instala ou atualiza (etapas 1-3; no Windows, repassa para o .ps1)
 ```
 
-O que a CI roda, os testes rápidos e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Desenvolvimento e pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md).
-
-**O `.msi` não é gerado no PR, só no merge para o develop** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador-go/`, `src/backend/cmd/financas/` ou `src/backend/internal/plataforma/banco/esquema_banco.go`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou. Mudança só de CI vai num PR `ci:` ou `ci(escopo):` (ADR 0070), sem produto junto.
+O que a CI roda, os testes e os limites de tempo: [CONTRIBUINDO.md](CONTRIBUINDO.md#o-que-a-ci-roda). Instalar pelo código e as pastas: [docs/INSTALACAO-PELO-CODIGO.md](docs/INSTALACAO-PELO-CODIGO.md). Os scripts: [scripts/README.md](scripts/README.md).
 
 ## Testes
 
-- **Front-end:** cada comportamento testado num lugar só, lógica no Jest e desenho, CSS, rota e CSP no navegador; regras, tempos e pegadinhas em [CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci). **Mudou tela, CSS, rota ou chamada da API? Use a skill `testar-no-navegador`** antes de dizer que terminou, e a `revisar-no-celular` (largura, toque, alvo de 24 px, teclado virtual; #328) em toda mudança de tela. Mexeu em teste ou em CI: tempo antes e depois no PR.
-- **Go: toda regra nasce com teste** ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md)): unitário em tabela, SQLite real, `httptest`, só a biblioteca padrão; bug corrigido ganha teste que falha antes. Detalhes em [CONTRIBUINDO.md, "Testes do back-end (Go)"](CONTRIBUINDO.md#testes-do-back-end-go).
-- **Mexeu em import, pacote ou pasta nova** (Go ou front-end): rode o teste de arquitetura, `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura` (#476). Ele é só local, por decisão de 29/10/2026, e a CI não o roda. Dependência nova de propósito entra na tabela do teste, com o motivo, no mesmo PR.
+- **Toda regra do Go nasce com teste** ([ADR 0051](docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md); como, em [CONTRIBUINDO.md](CONTRIBUINDO.md#testes-do-back-end-go)), e bug corrigido, no Go ou no front-end, ganha teste que falha antes da correção.
+- **Front-end:** cada comportamento testado num lugar só ([CONTRIBUINDO.md, "Testes rápidos"](CONTRIBUINDO.md#testes-rápidos-padrões-de-ci)). **Mudou tela, CSS, rota ou chamada da API? Use as skills `testar-no-navegador` e `revisar-no-celular`** (#328) antes de dizer que terminou.
+- **Mexeu em import, pacote ou pasta nova** (Go ou front-end): rode o teste de arquitetura, que a CI não roda (#476): `go test -tags arquitetura ./internal/arquitetura/` e `npm run test:arquitetura`.
+- **Mexeu em teste ou em CI:** tempo antes e depois no PR. Mudança que mexe numa meta dos [requisitos não funcionais](docs/REQUISITOS-NAO-FUNCIONAIS.md) (memória, tamanho, partida) também mede antes e depois.
 
 ## Arquitetura (detalhes em docs/ARQUITETURA.md)
 
-Angular é publicado no `wwwroot`, ao lado do executável do Go (`financas-go`): mesma origem, sem CORS, cookies `__Host-`. Um pacote por assunto em `src/backend/internal/<area>/<assunto>` (áreas iguais às do front-end, mais `openfinance` e `plataforma`), rotas juntadas em `internal/api` ([ADR 0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md)); pastas em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
-
-- **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente. Página grande ([ADR 0059](docs/adr/0059-paginas-grandes-divididas-em-tela-apresentacao-e-funcoes-puras.md)): a tela guarda o estado e fala com a API, os componentes de apresentação só recebem `input()` e avisam por `output()`, e a regra vai para funções puras em `<tela>.ts`, testadas sem `TestBed`.
-- **Gerenciador** (`src/gerenciador-go/`, a janela do Windows e do Linux em Go com o Wails, [ADR 0052](docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)): o de C# saiu na #86.
+- **Front-end** (`src/frontend/src/app`): componente novo com `changeDetection: ChangeDetectionStrategy.Eager`. Desde o Angular 22 o padrão é OnPush, mas o app roda com zone.js e muitas telas guardam estado em campos comuns: sem `Eager`, a tela pode não atualizar, sem erro nenhum. HTTP só pelo `ApiService` (`core/api.service.ts`), nunca `HttpClient` no componente. O resto: skill `angular-no-projeto`.
+- **Go** (`src/backend`): o roteiro de todo trabalho é a skill `go-no-projeto` (pacote por assunto, rotas, testes, banco); dinheiro e módulos em "Código Go", abaixo.
 
 ## Banco (sem migrations, SQLite)
 
-- `banco/01-estrutura.sql` é idempotente (`CREATE TABLE/INDEX IF NOT EXISTS`, tabela nova no fim, conferido pelo `scripts/ci/banco/verificar-sql.py`); `02-dados-iniciais.sql` traz o padrão. O site aplica os dois ao iniciar (`-aplicar-esquema`, `internal/plataforma/banco/esquema_banco.go`, com uma cópia embutida dos scripts que o `go generate` mantém em dia). Nunca apagar/renomear coluna em uso sem bloco de transição.
-- **Coluna nova numa tabela existente:** uma linha no fim de `ColunasNovas`, em `src/backend/internal/plataforma/banco/esquema/colunas_novas.go` (Go, não no SQL nem no bash), e a mesma definição no `CREATE TABLE`. Os scripts de instalação e o site chamam o executável (`aplicar-esquema`, #723); nenhum lê lista de colunas.
-- **Mudou a estrutura:** o SQL, `colunas_novas.go` (se for coluna nova), `go generate ./...` em `src/backend` (a cópia embutida), `python3 scripts/dev/gerar-diagrama-banco.py` (tabela nova entra em `ASSUNTOS`) e `feat(banco)!:` no commit. Passos em [docs/BANCO-DE-DADOS.md](docs/BANCO-DE-DADOS.md).
+- **Mudou a estrutura** (tabela, coluna, índice)? Siga [docs/BANCO-DE-DADOS.md, "Como alterar a estrutura"](docs/BANCO-DE-DADOS.md#como-alterar-a-estrutura).
 - **Dado pessoal novo:** tabela ou coluna com dado pessoal, ou dado novo que sai do computador, entra em [docs/DADOS-PESSOAIS.md](docs/DADOS-PESSOAIS.md) no mesmo PR.
 - **Mudou a cópia, o WAL, a pasta `dados/` ou as chaves?** Atualize o [guia de operação](docs/OPERACAO.md) no mesmo PR, e os passos de restaurar dos workflows "Teste de instalação" (#468) e "Versão (instalador .msi)" (#527), que seguem o guia.
-- **Scripts (#154):** `scripts/geral/` é o bash do Linux e do macOS; no Windows, o `instalar.sh`, o `3-publicar-atualizar.sh` e o `parar.sh` só repassam para o `.ps1` de `scripts/windows/`, e só o `2-criar-banco.sh` e o `4-backup.sh` rodam em bash (Git Bash); `scripts/windows/` e `scripts/linux/`, o que só roda num deles; `scripts/dev/`, as ferramentas de quem desenvolve; `scripts/ci/` (em `versao/`, `go/`, `front/` e `banco/`), o que a CI roda; os `.cmd` na raiz. O índice de todos, com quem roda cada um, é o [scripts/README.md](scripts/README.md): script novo ou movido entra nele. As etapas 1 e 3 do Windows existem só no `instalar-windows.ps1` (e as pastas e mensagens comuns, no `scripts/windows/comum.ps1`); mudou o `2-criar-banco.sh`? O `.ps1` lê dele a lista de colunas novas, e o `4-backup.sh` precisa continuar rodando no Git Bash. Serviço, certificado ou pastas de dados também existem no `instalador/configurar.ps1` (.msi, ADR 0029): confira se mudam juntos.
+- **Script novo, movido ou mudado:** o índice [scripts/README.md](scripts/README.md) diz quem roda cada um e o que muda junto (Windows, `.msi`); script novo ou movido entra nele.
 
 ## Decisões de arquitetura (ADRs) — obrigatório
 
@@ -70,16 +62,14 @@ As decisões ficam em `docs/adr/` (índice, critérios e ciclo de vida em [docs/
 
 Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoint que só segue padrões já registrados.
 
-**Requisitos não funcionais** ([docs/REQUISITOS-NAO-FUNCIONAIS.md](docs/REQUISITOS-NAO-FUNCIONAIS.md)): mudança que mexe numa meta (memória, tamanho, partida) mede antes e depois no PR, como já se faz com o tempo dos testes. Partida e telas: `python3 scripts/dev/medir-desempenho.py --api <pasta publicada>`.
-
 **Diagramas sempre junto** ([ADR 0055](docs/adr/0055-documentacao-de-arquitetura-em-diagramas-mermaid.md)): mudou um contêiner, uma saída de rede ou uma fronteira? Atualize os diagramas de Contexto, de Contêineres e de implantação em `docs/ARQUITETURA.md` **no mesmo PR**, como o Manual (#177). Pacote novo em `src/backend/internal/` entra na tabela do [diagrama de Componentes](docs/arquitetura/componentes.md) (#464; o teste de arquitetura local confere). Termo novo do domínio entra na lista de [`docs/arquitetura/dominio.md`](docs/arquitetura/dominio.md), e estado novo (enum, `Status`) atualiza o diagrama de estados de lá.
 
 ## Convenções de código
 
-- **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta. O teste `manual.spec.ts` já exige uma seção por tela.
+- **Manual do site sempre junto (#177):** toda mudança que o usuário vê (tela nova ou alterada, fluxo, cálculo que muda um número, texto de botão) atualiza o Manual (`src/frontend/src/app/paginas/manual/manual-conteudo.ts`) **no mesmo PR**: a seção da tela, os passos e os termos. Se a mudança não aparece para o usuário (refatoração, bug interno), escrever "Manual: não se aplica" na descrição do PR. A CI (job "manual do site") avisa quando falta.
 - Nomes em português em todo o código (`XxxService` no Angular, `Servico` e `NovoServico` no Go, `XxxDto`, `SalvarXxxDto`).
 - Consultas ao banco **só parametrizadas** (com `?`), nunca SQL montado a partir de texto do usuário.
-- **Código Go:** assunto novo ganha pacote em `src/backend/internal/<area>/<assunto>` e uma linha em `internal/api`, com casos de contrato (`testes/contrato`). **Funcionalidade nova fora do núcleo financeiro é módulo** ([ADR 0064](docs/adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)): implementa o contrato do `internal/plataforma/modulos`, fica em `internal/modulos/<id>` e segue o checklist do épico #190. **Dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. O resto (bibliotecas, consultas, formato do banco, estilo, camadas) está na skill `go-no-projeto` e nas ADRs [0049](docs/adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) e [0056](docs/adr/0056-arquitetura-do-codigo-go-camadas-por-assunto-e-ddd-estrategico.md).
+- **Código Go:** **dinheiro nunca em `float64`**, nem `SUM`/`ORDER BY`/`<`/`>` no SQL em coluna de dinheiro (é `TEXT`): somar e comparar em Go, com decimal. **Funcionalidade nova fora do núcleo financeiro é módulo** ([ADR 0064](docs/adr/0064-modulos-compilados-no-executavel-e-ligados-no-banco.md)): implementa o contrato do `internal/plataforma/modulos`, fica em `internal/modulos/<id>` e segue o checklist do épico #190. O resto: skill `go-no-projeto`.
 - Segredos (Client Secret da Pluggy) ficam **criptografados na tabela `Configuracao`** (`internal/plataforma/segredos`: AES-256-GCM, prefixo `v2:`) — nunca em arquivo de config nem devolvidos pela API.
 - Formatação: `.editorconfig`.
 
@@ -89,26 +79,25 @@ Não precisa de ADR: bugfix, refatoração local, ajuste visual, tela ou endpoin
 
 ## Skills e agentes do projeto (`.claude/`)
 
-- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go (funcionalidade nova, mudança, revisão). Como um assunto era no C#: a tag `v-ultimo-dotnet` (o épico #70 terminou na #86). O agente `dev-go` carrega a `go-no-projeto`; serve para analisar, criar ou revisar assuntos em paralelo (#560).
-- **Angular:** a skill `angular-no-projeto` é o roteiro de todo trabalho no front-end (tela nova, mudança, avaliação de UI/UX, revisão); a `testar-no-navegador` confere a tela pronta. O agente `dev-angular` carrega as duas, para avaliar telas em paralelo (um agente por tela), implementar ou revisar (#559).
+- **Go:** a skill `go-no-projeto` é o roteiro de todo trabalho em Go; o agente `dev-go` a carrega, para analisar, criar ou revisar assuntos em paralelo (#560).
+- **Angular:** a skill `angular-no-projeto` é o roteiro de todo trabalho no front-end; a `testar-no-navegador` confere a tela pronta. O agente `dev-angular` carrega as duas, um por tela (#559).
 - **Pedido grande demais para uma vez só:** ofereça a skill `trabalho-longo` em uma frase quando o pedido cita mais de uma issue ou PR, ou um épico; quando é a 2ª issue ou PR na mesma conversa, ou a conversa já foi resumida; ou quando a pessoa fala em "deixar rodando" ou "continuar depois". Não repita se já houver agendamento (`CronList`) ou se a pessoa recusou. O hook `lembrar-trabalho-longo.sh` lembra sozinho em parte desses casos (#280).
 
 ## Git / commits
 
-Conventional Commits em português (fluxo de branches, comandos e Project em [CONTRIBUINDO.md](CONTRIBUINDO.md)). Escopos usados: `api`, `web`, `banco`, `scripts`, `open-finance`, `investimentos`, `relatorios`. Branch `main` é protegida (só recebe merge de `develop`/`hotfix/*`); trabalho novo parte de `develop` em `feature/<assunto>` ou `fix/<assunto>`.
+Conventional Commits em português ([tipos e escopos](CONTRIBUINDO.md#mensagens-de-commit)). Trabalho novo parte do `develop`, em `feature/<assunto>` ou `fix/<assunto>`; a `main` é protegida ([branches](CONTRIBUINDO.md#branches)). Mudança só de CI vai num PR `ci:` ou `ci(escopo):`, sem produto junto.
 
-**Versão: ninguém a sobe no PR** ([ADR 0070](docs/adr/0070-versao-calculada-no-build-e-changelog-um-arquivo-por-pr.md)): o número é calculado no build (`go run ./cmd/versao`, em `src/backend`) a partir do `<VersaoBase>` do `Directory.Build.props` e dos merges do `develop` (`feat` sobe o do meio, o resto o último), então o **título do PR no tipo certo** decide o número. Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior): pergunte ao usuário e troque a `<VersaoBase>` para `X+1.0.0` no PR.
+- **Versão: ninguém a sobe no PR.** O número é calculado no build, e o **tipo do título do PR** o decide (`feat` sobe o do meio, o resto o último). Quebra de verdade (o usuário precisa fazer algo à mão, ou não dá para voltar à versão anterior): pergunte ao usuário antes ([CONTRIBUINDO.md, "Versão e CHANGELOG"](CONTRIBUINDO.md#versão-e-changelog)).
+- **CHANGELOG:** `feat` e `fix` levam um arquivo `changelog.d/<nome-da-branch>.md` ([formato](changelog.d/LEIA-ME.md)); não mexa no `CHANGELOG.md`.
+- **O `.msi` não é gerado no PR** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)). PR que mexe em `instalador/`, `src/gerenciador-go/`, `src/backend/cmd/financas/` ou `src/backend/internal/plataforma/banco/esquema_banco.go`: rode o workflow "Versão (instalador .msi)" à mão na branch antes do merge e diga no PR que rodou.
 
-**CHANGELOG: um arquivo por PR em `changelog.d/<nome-da-branch>.md`** (formato em `changelog.d/LEIA-ME.md`), obrigatório em `feat` e `fix`; não mexa no `CHANGELOG.md` (a publicação o monta: `scripts/dev/lancar-versao.sh`). A CI confere o formato (`python3 scripts/ci/versao/verificar-changelog.py`).
-
-**Issues** (o branch padrão é o `develop`, #142):
-- Todo PR para o `develop` leva `Closes #N` na descrição: o GitHub vincula o PR à issue e a fecha no merge.
-- **Branch nova:** de preferência criada pela issue, com `gh issue develop <N> --base develop --name feature/<assunto> --checkout`.
-- **Issue nova já nasce no nome de quem pediu** (`gh issue create --assignee @me`, ou o login de quem pediu). **Exceção, os épicos:** o épico e as histórias dele não são atribuídos a ninguém, nem ao criar, nem depois, nem ao ligar uma história ao épico. Só a história que uma pessoa **pega**, pedindo aqui, vai para o nome dela, com a etiqueta "em progresso". Se o usuário pedir para não atribuir uma issue a ele, não atribua.
+**Issues** (comandos em [CONTRIBUINDO.md](CONTRIBUINDO.md#branches)):
+- Todo PR para o `develop` leva `Closes #N` na descrição. Branch nova, de preferência criada pela issue: `gh issue develop <N> --base develop --name feature/<assunto> --checkout`.
+- **Issue nova já nasce no nome de quem pediu** (`gh issue create --assignee @me`, ou o login de quem pediu). **Exceção, os épicos:** o épico e as histórias dele não são atribuídos a ninguém, nem ao criar, nem depois, nem ao ligar uma história ao épico. Só a história que uma pessoa **pega**, pedindo aqui, vai para o nome dela. Se o usuário pedir para não atribuir uma issue a ele, não atribua.
 - **Antes de trabalhar numa issue:** atribuir a quem pediu e pôr a etiqueta "em progresso" (`gh issue edit <N> --add-assignee @me --add-label "em progresso"`). Ao fechar, tirar a etiqueta.
-- **Dependência entre issues vai no GitHub, não só no texto:** issue que só pode começar depois de outra pronta ganha *blocked by* (comando em [CONTRIBUINDO.md](CONTRIBUINDO.md#branches)), além do "Depende de: #N" no texto. Vale ao criar uma issue, ao montar as histórias de um épico e ao descobrir uma dependência nova. Só dependência real: "de preferência antes" não bloqueia, e ligar ao épico (sub-issue) não substitui o *blocked by*.
+- **Dependência real entre issues vai no GitHub**, como *blocked by*, além do "Depende de: #N" no texto: ao criar uma issue, ao montar as histórias de um épico e ao descobrir uma dependência nova. "De preferência antes" não bloqueia, e ligar ao épico (sub-issue) não substitui o *blocked by*.
 - **Não sabe o número da issue:** pergunte ao usuário. Se não houver issue, ofereça criar uma.
-- **Backlog e andamento** ficam no Project "ClaudioFinancas" ([users/LucasDesenvGit/projects/2](https://github.com/users/LucasDesenvGit/projects/2)): consulte quando a conversa for sobre backlog, andamento ou o que falta (campos e comandos em [CONTRIBUINDO.md](CONTRIBUINDO.md#backlog-no-project)).
+- **Backlog e andamento** ficam no Project "ClaudioFinancas" ([users/LucasDesenvGit/projects/2](https://github.com/users/LucasDesenvGit/projects/2)): consulte quando a conversa for sobre backlog, andamento ou o que falta ([campos e comandos](CONTRIBUINDO.md#backlog-no-project)).
 
 ## Segurança (específico deste projeto — não genérico)
 
