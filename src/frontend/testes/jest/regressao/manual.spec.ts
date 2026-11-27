@@ -46,10 +46,36 @@ describe('Regressão: Manual acompanha o site', () => {
       const secoes = capitulo.secoes.map((s) => s.id);
       expect(new Set(secoes).size).toBe(secoes.length);
       for (const secao of capitulo.secoes) {
-        expect(secao.passos.length).toBeGreaterThan(0);
+        expect(secao.topicos.length).toBeGreaterThan(0);
         for (const termo of secao.termos ?? []) expect(GLOSSARIO[termo]).toBeDefined();
       }
     }
+  });
+
+  // #817, ADR 0071: o Manual é objetivo. 1 a 4 tópicos curtos, passo a passo só com poucos itens; o resto vai em "Mais detalhes".
+  // (#817: os outros capítulos entram na próxima etapa, quando forem reescritos.)
+  describe('seções objetivas (#817)', () => {
+    const CAPITULOS_CONVERTIDOS = ['primeiros-passos', 'transacoes', 'relatorios'];
+    const secoes = MANUAL.filter((c) => CAPITULOS_CONVERTIDOS.includes(c.id)).flatMap((c) => c.secoes.map((s) => ({ onde: `${c.id}/${s.id}`, s })));
+
+    it('os capítulos convertidos existem', () => {
+      expect(secoes.length).toBeGreaterThan(15);
+    });
+
+    it('de 1 a 4 tópicos, de até 120 caracteres cada, e no máximo 6 passos (também curtos)', () => {
+      for (const { onde, s } of secoes) {
+        expect([onde, s.topicos.length >= 1 && s.topicos.length <= 4]).toEqual([onde, true]);
+        expect(s.topicos.filter((x) => x.length > 120).map((x) => `${onde}: ${x}`)).toEqual([]);
+        if (s.passos) {
+          expect([onde, s.passos.length >= 1 && s.passos.length <= 6]).toEqual([onde, true]);
+          expect(s.passos.filter((x) => x.length > 120).map((x) => `${onde}: ${x}`)).toEqual([]);
+        }
+      }
+    });
+
+    it('a linha "para que serve" é uma frase só e curta', () => {
+      for (const { onde, s } of secoes) expect([onde, s.paraQueServe.length <= 160]).toEqual([onde, true]);
+    });
   });
 
   it('o botão "Ajuda" acha a tela pela URL, com filtros e âncoras', () => {
