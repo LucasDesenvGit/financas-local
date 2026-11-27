@@ -14,20 +14,20 @@ import (
 
 // Testes que faltavam, achados pelo teste de mutação (#422).
 
-// Regra: a URL base sem a barra no fim ganha a barra, como o BaseAddress do HttpClient (sem ela, o "tickers" trocaria
+// Regra: a URL base sem a barra no fim ganha a barra, como o BaseAddress do HttpClient (sem ela, o "ticker/24hr" trocaria
 // o último pedaço do caminho).
 func TestURLBaseSemBarraNoFim(t *testing.T) {
 	t.Parallel()
-	mercado := testeapoio.NovoServicoDeFora(t)
-	mercado.Em("GET", "*", testeapoio.RespostaDeFora{Corpo: `[]`})
-	c, err := NovoCliente(mercado.URL()+"/api/v4", mercado.Cliente())
+	binance := testeapoio.NovoServicoDeFora(t)
+	binance.Em("GET", "*", testeapoio.RespostaDeFora{Corpo: `[]`})
+	c, err := NovoCliente(binance.URL()+"/api/v3", binance.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := c.UltimosNegocios(context.Background(), []string{"BTC"}); err != nil {
 		t.Fatal(err)
 	}
-	if pedido := mercado.URIs()[0]; pedido != "/api/v4/tickers?symbols=BTC-BRL" {
+	if pedido := binance.URIs()[0]; pedido != "/api/v3/ticker/24hr?symbols=%5B%22BTCBRL%22%5D&type=MINI" {
 		t.Errorf("endereço %s", pedido)
 	}
 }
@@ -36,7 +36,7 @@ func TestURLBaseSemBarraNoFim(t *testing.T) {
 // exatamente o tamanho máximo também.
 func TestRespostaNasBordas(t *testing.T) {
 	t.Parallel()
-	item := `[{"pair":"BTC-BRL","last":"1","date":1792858672}]`
+	item := `[{"symbol":"BTCBRL","lastPrice":"1","closeTime":1792858672}]`
 	casos := []struct {
 		nome   string
 		status int
@@ -49,7 +49,7 @@ func TestRespostaNasBordas(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			cliente, _ := mercadoGravado(t, testeapoio.RespostaDeFora{Status: c.status, Corpo: c.corpo})
+			cliente, _ := binanceGravada(t, testeapoio.RespostaDeFora{Status: c.status, Corpo: c.corpo})
 			negocios, err := cliente.UltimosNegocios(context.Background(), []string{"BTC"})
 			if err != nil || len(negocios) != 1 {
 				t.Errorf("%d moedas, erro %v", len(negocios), err)
@@ -63,13 +63,13 @@ func TestRespostaNasBordas(t *testing.T) {
 func TestItemIgnoradoAntesDeUmValido(t *testing.T) {
 	t.Parallel()
 	corpo := `[
-		{"pair":"DOGE-BRL","last":"1","date":1792858672},
-		{"pair":"BTC-BRL","last":"0","date":1792858672},
-		{"pair":"ETH-BRL","last":"1","date":0},
-		{"pair":"BTC-BRL","last":"2","date":1792858672},
-		{"pair":"SOL-BRL","last":"3","date":1792858672}
+		{"symbol":"DOGEBRL","lastPrice":"1","closeTime":1792858672},
+		{"symbol":"BTCBRL","lastPrice":"0","closeTime":1792858672},
+		{"symbol":"ETHBRL","lastPrice":"1","closeTime":0},
+		{"symbol":"BTCBRL","lastPrice":"2","closeTime":1792858672},
+		{"symbol":"SOLBRL","lastPrice":"3","closeTime":1792858672}
 	]`
-	c, _ := mercadoGravado(t, testeapoio.RespostaDeFora{Corpo: corpo})
+	c, _ := binanceGravada(t, testeapoio.RespostaDeFora{Corpo: corpo})
 	negocios, err := c.UltimosNegocios(context.Background(), Moedas)
 	if err != nil {
 		t.Fatal(err)
@@ -127,8 +127,8 @@ func TestUltimasComUmaRecenteEOutraAntiga(t *testing.T) {
 	}
 	obtido, _ := json.Marshal(ultimas.Cotacoes)
 	testeapoio.ConferirJSON(t, obtido,
-		`[{"moeda":"BTC","preco":618900.12,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Mercado Bitcoin"},`+
-			`{"moeda":"ETH","preco":11594.0,"dataHora":"2026-10-01T09:30:00Z","variacao24h":null,"fonte":"Mercado Bitcoin"}]`)
+		`[{"moeda":"BTC","preco":618900.12,"dataHora":"2026-10-14T21:00:00Z","variacao24h":null,"fonte":"Binance"},`+
+			`{"moeda":"ETH","preco":11594.0,"dataHora":"2026-10-01T09:30:00Z","variacao24h":null,"fonte":"Binance"}]`)
 }
 
 // Regra: entre as candidatas da janela de 22 a 26 h, vale a mais perto de 24 h antes, mesmo que seja a mais antiga.
@@ -148,5 +148,5 @@ func TestVariacaoContraAMaisPertoDe24h(t *testing.T) {
 	}
 	obtido, _ := json.Marshal(ultimas.Cotacoes)
 	testeapoio.ConferirJSON(t, obtido,
-		`[{"moeda":"BTC","preco":150.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":50.0,"fonte":"Mercado Bitcoin"}]`)
+		`[{"moeda":"BTC","preco":150.0,"dataHora":"2026-10-14T21:00:00Z","variacao24h":50.0,"fonte":"Binance"}]`)
 }

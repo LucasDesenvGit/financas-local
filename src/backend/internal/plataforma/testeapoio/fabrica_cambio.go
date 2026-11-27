@@ -29,7 +29,7 @@ func (f *Fabrica) CotacaoMoeda(ajustes ...func(*CotacaoMoeda)) CotacaoMoeda {
 	return c
 }
 
-// CotacaoCripto é uma linha de CotacaoCripto (Entidades/Cambio.cs): o último negócio no Mercado Bitcoin.
+// CotacaoCripto é uma linha de CotacaoCripto (Entidades/Cambio.cs): o último negócio na Binance.
 type CotacaoCripto struct {
 	Moeda        string         // BTC, ETH, SOL, USDT
 	DataHora     tipos.DataHora // a da fonte, em UTC
