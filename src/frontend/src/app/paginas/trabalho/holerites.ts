@@ -58,3 +58,8 @@ export function paraSalvar(lista: LancamentoHolerite[]): LancamentoHolerite[] {
 export function textoSituacao(s: SituacaoHolerite): string {
   return s === SituacaoHolerite.Fechado ? 'Fechado' : 'Aberto';
 }
+
+/** O texto do que está no formulário (dias e lançamentos), para saber se a pessoa mexeu desde o que foi salvo. */
+export function estadoDoFormulario(diasUteis: number, diasDescanso: number, lancamentos: LancamentoHolerite[]): string {
+  return JSON.stringify([diasUteis, diasDescanso, paraSalvar(lancamentos)]);
+}
