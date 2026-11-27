@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,6 +22,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/icones"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/preferencias"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/protecao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/restauracao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/situacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/tela"
@@ -76,6 +78,9 @@ type gerenciador struct {
 	// O acesso pelo celular (#684): o que está fazendo ("ligar", "desligar" ou "") e o aviso da última vez.
 	celularMudando string
 	avisoCelular   string
+	// Onde fica a pasta de dados (#68): lido uma vez, ao abrir.
+	discoSemCriptografia bool
+	dadosNaNuvem         bool
 
 	bandeja      *application.SystemTray
 	itemSituacao *application.MenuItem
@@ -115,6 +120,7 @@ func (g *gerenciador) iniciar(comJanela bool) {
 		g.atualizarSituacao()
 		go g.procurarClone()
 		go g.verSemLogin()
+		go g.verProtecao()
 		// Como o IniciarAsync do C#: depois da primeira situação (que diz a versão do site), procura a versão nova.
 		if g.inst.PeloMsi && preferencias.ProcurarAoAbrir() {
 			go g.procurar()
@@ -155,6 +161,9 @@ func (g *gerenciador) tela() tela.Tela {
 
 		CelularMudando: g.celularMudando,
 		AvisoCelular:   g.avisoCelular,
+
+		DiscoSemCriptografia: g.discoSemCriptografia,
+		DadosNaNuvem:         g.dadosNaNuvem,
 	}
 }
 
@@ -357,6 +366,15 @@ func (g *gerenciador) verSemLogin() {
 	semLogin := lerSemLogin()
 	g.trava.Lock()
 	g.semLogin = semLogin
+	g.trava.Unlock()
+}
+
+// verProtecao confere o disco e a nuvem da pasta de dados (#68), que no Windows leva um instante (o PowerShell).
+func (g *gerenciador) verProtecao() {
+	semCriptografia := protecao.SemCriptografia(g.inst.PastaDados)
+	naNuvem := protecao.NaNuvem(g.inst.PastaDados, os.Getenv)
+	g.trava.Lock()
+	g.discoSemCriptografia, g.dadosNaNuvem = semCriptografia, naNuvem
 	g.trava.Unlock()
 }
 

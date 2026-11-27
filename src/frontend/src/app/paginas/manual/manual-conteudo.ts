@@ -1586,7 +1586,7 @@ export const MANUAL: CapituloManual[] = [
           'Pelo gerenciador (Windows e Linux): abra “Mais opções”, clique em “Salvar uma cópia do banco…” e escolha onde guardar (pendrive, disco externo, nuvem). No Windows, ele pede permissão de administrador.',
           'Instalou pelos scripts? Você também pode rodar scripts/geral/4-backup.sh (de preferência agendado), que copia o banco para a pasta “backups” do projeto. Copie essa pasta de vez em quando para um disco externo ou outro lugar seguro.',
           'A cópia tem todos os seus dados financeiros: guarde em lugar seguro.',
-          'Ative a criptografia do disco (BitLocker no Windows, LUKS no Linux): o arquivo do banco não é criptografado.'
+          'Ative a criptografia do disco (BitLocker no Windows, LUKS no Linux) e não deixe a pasta de dados numa pasta da nuvem (OneDrive, Dropbox, Google Drive): o banco e as cópias não são criptografados. O gerenciador avisa, em “Mais opções”, quando vê um desses casos.'
         ]
       },
       {

@@ -20,7 +20,9 @@ Sempre por HTTPS, com o mínimo de dados; quantidades, valores e dados pessoais 
 
 ## Recomendações
 
-- Ative a criptografia do disco (**BitLocker** no Windows, **LUKS** no Linux): o arquivo do banco não é criptografado.
+- Ative a criptografia do disco (**BitLocker** no Windows, **LUKS** no Linux): o banco e as cópias não são criptografados, e quem levar o computador ou o disco lê tudo.
+- Não instale numa pasta sincronizada com a nuvem (OneDrive, Dropbox, Google Drive, iCloud): o banco e as cópias da pasta `dados` iriam sem criptografia para lá, e a sincronização pode estragar o banco aberto.
+- O gerenciador avisa, em **Mais opções**, quando tem certeza de que o disco da pasta `dados` está sem criptografia ou de que ela está numa pasta da nuvem (#68). Ele só avisa: não recusa nada.
 - De vez em quando, salve uma cópia do banco pelo gerenciador (**Mais opções**) num pendrive ou disco externo.
 - Vai ligar o **acesso pelo celular**? Use uma senha forte (quem está no seu Wi-Fi chega à tela de entrar), ligue só na rede de casa e reserve o IP do computador no roteador.
 
