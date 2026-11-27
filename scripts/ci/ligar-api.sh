@@ -8,8 +8,8 @@
 # - numa pasta temporária, o appsettings.json do src/backend e um
 #   appsettings.Production.json com o banco, as chaves e o certificado ali
 #   dentro (o banco é criado pelo -aplicar-esquema);
-# - o certificado feito pelo próprio executável (gerar-certificado), como
-#   nos scripts de instalação, em 127.0.0.1:5080;
+# - o certificado e o appsettings feitos pelo próprio executável
+#   (preparar-https), como nos scripts de instalação, em 127.0.0.1:5080;
 # - a mesma linha do serviço: -aplicar-esquema -rotinas-de-partida.
 # Espera GET /api/auth/estado responder 200 com "configurado"; desliga.
 #
@@ -34,17 +34,10 @@ cp "$raiz/src/backend/appsettings.json" "$pasta/appsettings.json"
 mkdir -p "$pasta/dados/sql" "$pasta/dados/chaves" "$pasta/wwwroot"
 echo '<!doctype html><title>teste</title>' >"$pasta/wwwroot/index.html"
 
-# Certificado descartável, só para este teste: a senha é aleatória, vai pela entrada padrão e some com a pasta.
-senha="$(head -c 18 /dev/urandom | base64 | tr -d '/+=')"
-printf '%s' "$senha" | "$pasta/financas-go" gerar-certificado -pfx "$pasta/dados/chaves/financaslocal.pfx" >/dev/null
-cat >"$pasta/appsettings.Production.json" <<JSON
-{
-  "Banco": { "Caminho": "$pasta/dados/sql/FinancasLocal.db" },
-  "Seguranca": { "PastaChaves": "$pasta/dados/chaves" },
-  "Kestrel": { "Endpoints": { "Https": { "Url": "$url",
-    "Certificate": { "Path": "$pasta/dados/chaves/financaslocal.pfx", "Password": "$senha" } } } }
-}
-JSON
+# O HTTPS como na instalação (#775): a senha do certificado descartável é aleatória, fica só no appsettings.Production.json
+# e some com a pasta.
+"$pasta/financas-go" preparar-https -pfx "$pasta/dados/chaves/financaslocal.pfx" -config "$pasta/appsettings.Production.json" \
+    -url "$url" -banco "$pasta/dados/sql/FinancasLocal.db" -chaves "$pasta/dados/chaves" >/dev/null
 
 "$pasta/financas-go" -pasta "$pasta" -aplicar-esquema -rotinas-de-partida >"$log" 2>&1 &
 pid=$!

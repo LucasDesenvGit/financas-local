@@ -20,9 +20,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// origemManual é o OrigemOperacao.Manual do C#.
-const origemManual = 1
-
 // fonteManual é a FonteCotacao do preço informado à mão.
 const fonteManual = "Manual"
 
@@ -141,7 +138,7 @@ func (s *Servico) operacoesDoAtivo(ctx context.Context, id int64) ([]Operacao, e
 	return lista, linhas.Err()
 }
 
-// vendaPossivel é o VendaPossivelAsync: nenhuma venda, em ordem cronológica, passa da quantidade em carteira. O C# desempata
+// vendaPossivel: nenhuma venda, em ordem cronológica, passa da quantidade em carteira. O desempate é
 // pelo Id, mas operações do mesmo dia e tipo só somam ou só subtraem: a ordem entre elas não muda o resultado.
 func vendaPossivel(operacoes []Operacao) bool {
 	ordenadas := slices.Clone(operacoes)
@@ -296,7 +293,7 @@ func (s *Servico) gravarCriacao(ctx context.Context, c *criacao, o Operacao) (in
 		}
 		res, err := tx.ExecContext(ctx, `INSERT INTO "OperacaoAtivo" ("AtivoId", "Tipo", "Data", "Quantidade", "PrecoUnitario", "Taxas", "Cambio",
 			"Observacao", "Origem", "CriadoEm") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, c.ativoId, o.Tipo, o.Data, o.Quantidade, o.PrecoUnitario,
-			o.Taxas, o.Cambio, o.Observacao, origemManual, agora)
+			o.Taxas, o.Cambio, o.Observacao, tipos.OrigemManual, agora)
 		if err != nil {
 			return fmt.Errorf("gravar a operação: %w", err)
 		}

@@ -1,6 +1,6 @@
 // Pacote cambio é o câmbio (ADR 0007, #81): a PTAX do Banco Central guardada no banco para funcionar sem internet,
-// o conversor para reais e as rotas de /api/cambio. Porte do CambioService, do ConversorMoeda, do CambioController e
-// do CambioHostedService do .NET, com o mesmo comportamento (o contrato, casos/02-cambio.json, confere).
+// o conversor para reais e as rotas de /api/cambio.
+// O contrato (casos/02-cambio.json) confere o comportamento.
 package cambio
 
 import (
@@ -40,7 +40,7 @@ const (
 	// intervaloDeConsultaHoje: hoje sem boletim (antes das ~13h, fim de semana, feriado), a API só é consultada de novo
 	// depois deste tempo, para não bater nela a cada chamada.
 	intervaloDeConsultaHoje = 30 * time.Minute
-	// pausaEntreMoedas: gentileza com a API pública, como o Task.Delay(200) do .NET.
+	// pausaEntreMoedas: gentileza com a API pública.
 	pausaEntreMoedas = 200 * time.Millisecond
 )
 
@@ -83,7 +83,7 @@ type Guardada struct {
 	Venda  tipos.Decimal
 }
 
-// ResultadoAtualizacao é o ResultadoAtualizacaoCambio do .NET.
+// ResultadoAtualizacao é o resultado da atualização do câmbio.
 type ResultadoAtualizacao struct {
 	Novas, Corrigidas int
 	Falhas            []string
@@ -164,7 +164,7 @@ func (s *Servico) ListarMoedas(ctx context.Context) ([]Moeda, error) {
 		return config.DefinirData(ctx, chaveMoedasEm, agora)
 	})
 	if err != nil {
-		// No .NET, a gravação está no mesmo try da consulta: o erro vira aviso, e segue a lista guardada.
+		// A gravação está no mesmo tratamento da consulta: o erro vira aviso, e segue a lista guardada.
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
@@ -174,7 +174,7 @@ func (s *Servico) ListarMoedas(ctx context.Context) ([]Moeda, error) {
 	return moedas, nil
 }
 
-// moedasGuardadas lê a lista guardada; texto que não é a lista vale lista vazia, como o Desserializar do .NET.
+// moedasGuardadas lê a lista guardada; texto que não é a lista vale lista vazia.
 func (s *Servico) moedasGuardadas(ctx context.Context) ([]Moeda, error) {
 	texto, err := s.config.Obter(ctx, chaveMoedas)
 	if err != nil {
@@ -184,7 +184,7 @@ func (s *Servico) moedasGuardadas(ctx context.Context) ([]Moeda, error) {
 	if texto == nil || strings.TrimSpace(*texto) == "" {
 		return moedas, nil
 	}
-	// O .NET grava com o JsonSerializer padrão: chaves "Codigo" e "Nome", com maiúscula.
+	// A lista é gravada com as chaves "Codigo" e "Nome", com maiúscula.
 	var guardadas []struct{ Codigo, Nome string }
 	if err := json.Unmarshal([]byte(*texto), &guardadas); err != nil {
 		return moedas, nil
@@ -195,8 +195,8 @@ func (s *Servico) moedasGuardadas(ctx context.Context) ([]Moeda, error) {
 	return moedas, nil
 }
 
-// jsonDasMoedas escreve a lista como o JsonSerializer.Serialize(moedas) do .NET: "Codigo" e "Nome" com maiúscula e
-// o que não é ASCII escapado (o "ó" de "Dólar" vira a barra, a letra u e 00F3), para o .NET ler e o texto no banco ser o mesmo.
+// jsonDasMoedas escreve a lista com "Codigo" e "Nome" com maiúscula e
+// o que não é ASCII escapado (o "ó" de "Dólar" vira a barra, a letra u e 00F3), para o texto no banco ser o mesmo que já está gravado.
 func jsonDasMoedas(moedas []Moeda) (string, error) {
 	type comoNoDotnet struct{ Codigo, Nome string }
 	lista := make([]comoNoDotnet, len(moedas))

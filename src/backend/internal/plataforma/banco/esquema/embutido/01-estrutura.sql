@@ -719,7 +719,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS UX_SalarioVigencia_Emprego_Inicio ON SalarioVi
 /* ------------------------------------------------------------------ */
 /* Trabalho: tabelas do INSS e do IRRF por vigência (#210, ADR 0065)   */
 /* ------------------------------------------------------------------ */
-/* A tabela de um mês é a da última vigência que começou até ele. Os valores oficiais vêm no 02-dados-iniciais.sql, com
+/* A tabela de um mês é a da última vigência que começou até ele. Os valores oficiais vêm no 03-tabelas-oficiais.sql, com
    a fonte. Faixa: "Ate" é o limite de cima (a última faixa do INSS é o teto; a do IRRF fica sem limite, NULL). */
 CREATE TABLE IF NOT EXISTS InssVigencia
 (

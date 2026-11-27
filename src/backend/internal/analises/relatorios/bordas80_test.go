@@ -29,7 +29,7 @@ func TestProjecaoBordas(t *testing.T) {
 	fab := testeapoio.NovaFabrica(t, db, r)
 	conta := fab.Conta()
 	manual := fab.Conta(func(c *testeapoio.Conta) { c.Tipo = tipoContaCartao })
-	openFinance := fab.Conta(func(c *testeapoio.Conta) { c.Tipo, c.Origem = tipoContaCartao, origemOpenFinance })
+	openFinance := fab.Conta(func(c *testeapoio.Conta) { c.Tipo, c.Origem = tipoContaCartao, tipos.OrigemOpenFinance })
 	falsaSem := fab.Categoria(func(c *testeapoio.Categoria) { c.Nome = "Sem categoria" })
 	for m := 4; m <= 9; m++ {
 		despesaDoMes(fab, conta, falsaSem, testeapoio.Dia(2026, monthOf(m), 2), "-6.0")

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -23,14 +22,13 @@ const mensagemNaoEncontrado = "Registro não encontrado."
 // Servico é o ErrosController.
 type Servico struct {
 	db      *sql.DB
-	q       *consultas.Queries
 	fila    *Fila
 	relogio relogio.Relogio
 	log     *slog.Logger
 }
 
 func NovoServico(db *sql.DB, fila *Fila, r relogio.Relogio, log *slog.Logger) *Servico {
-	return &Servico{db: db, q: consultas.New(db), fila: fila, relogio: r, log: log}
+	return &Servico{db: db, fila: fila, relogio: r, log: log}
 }
 
 // Registrar põe as 5 rotas de api/erros no mux. Login e CSRF são de quem está na frente (a autenticação do Go
@@ -43,7 +41,7 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("POST /api/erros/front-end", s.registrarDoFrontEnd)
 }
 
-// ErroSistemaDto, na ordem do record do C#. Datas em UTC, com "Z" (o Utc do controller).
+// ErroSistemaDto, na ordem dos campos do JSON. Datas em UTC, com "Z" (o Utc do controller).
 type ErroSistemaDto struct {
 	Id          int64                  `json:"id"`
 	PrimeiraEm  configuracao.Instante  `json:"primeiraEm"`
@@ -96,7 +94,7 @@ func (s *Servico) Listar(ctx context.Context, f filtro) (PaginaErrosDto, error) 
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM "ErroSistema" WHERE `+onde, args...).Scan(&p.Total); err != nil {
 		return p, err
 	}
-	// O Skip((Pagina - 1) * TamanhoPagina) do C# é conta de int: passa do limite e dá a volta, como aqui.
+	// A conta (Pagina - 1) * TamanhoPagina é de int: passa do limite e dá a volta.
 	pular := int32(int64(f.pagina-1) * int64(f.tamanhoPagina))
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "PrimeiraEm", "UltimaEm", "Ocorrencias", "Nivel", "Origem", "Mensagem",
 		"Rota", "Usuario", "Resolvido", "ResolvidoEm"
@@ -234,7 +232,7 @@ func (s *Servico) registrarDoFrontEnd(w http.ResponseWriter, r *http.Request) {
 	if !respostas.LerTextos(w, r, mensagem, detalhe, rota) {
 		return
 	}
-	login, err := auditoria.Login(r.Context(), s.q)
+	login, err := auditoria.Login(r.Context(), s.db)
 	if err != nil {
 		s.erroInterno(w, r, "front-end", err)
 		return

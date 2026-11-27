@@ -1,4 +1,4 @@
-// Pacote bancos é o BancoService do C# (ADR 0024): o catálogo de bancos que a tela de Contas sabe identificar e o banco
+// Pacote bancos (ADR 0024): o catálogo de bancos que a tela de Contas sabe identificar e o banco
 // que vale para cada conta (o escolhido, o da conta do cartão ou o detectado pelos nomes).
 package bancos
 
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -16,13 +16,13 @@ import (
 const Outro = "outro"
 
 // Definicao é um banco do catálogo. Os códigos são os de compartilhado/bancos/bancos.ts no front-end, que desenha o selo de
-// cada um: banco novo entra nos dois lugares (e no C#, enquanto ele existir).
+// cada um: banco novo entra nos dois lugares.
 type Definicao struct {
 	Codigo, Nome string
 	Termos       []string
 }
 
-// Catalogo, na ordem do C#: a detecção fica com o primeiro que bate.
+// Catalogo: a detecção fica com o primeiro que bate.
 var Catalogo = []Definicao{
 	{"nubank", "Nubank", []string{"nubank", "nu pagamentos", "nu financeira", "nuconta", "ultravioleta"}},
 	{"itau", "Itaú", []string{"itau", "itaucard", "unibanco", "personnalite", "uniclass"}},
@@ -75,9 +75,9 @@ func Nome(codigo *string) *string {
 // Detectar devolve o primeiro banco do catálogo com um termo que aparece como palavra inteira, sem acento nem
 // maiúscula, em algum dos textos (na ordem: o nome da instituição antes do nome da conta); nil quando nenhum bate.
 //
-// No C# é a regex \b(termos)\b sobre o texto normalizado. Depois de normalizado, ele só tem letras, dígitos e um espaço
+// A regra é a regex \b(termos)\b sobre o texto normalizado. Depois de normalizado, ele só tem letras, dígitos e um espaço
 // entre as palavras, e a fronteira de palavra só pode estar num espaço ou nas pontas: o termo entre espaços é o mesmo.
-// O \b do Go seria só ASCII, e o do .NET vale para qualquer letra.
+// O \b do Go seria só ASCII, e a regra vale para qualquer letra.
 func Detectar(textos ...*string) *string {
 	for _, texto := range textos {
 		if texto == nil {
@@ -97,7 +97,7 @@ func Detectar(textos ...*string) *string {
 }
 
 // normalizar é o Normalizar do BancoService: decompõe (FormD), descarta as marcas (Mn), troca o que não é letra nem
-// dígito por espaço, passa para minúscula (ToLowerInvariant), junta os espaços e apara. O C# olha um char (UTF-16) por
+// dígito por espaço, passa para minúscula (ToLowerInvariant), junta os espaços e apara. O texto é olhado um char (UTF-16) por
 // vez: o caractere fora do plano básico, como o "𝐧" matemático, chega em duas metades que não são letra, e vira espaço.
 func normalizar(texto string) string {
 	var sb strings.Builder
@@ -157,7 +157,7 @@ func Efetivos(contas []ContaParaBanco) map[int64]*string {
 }
 
 // Carregar é o BancosAsync do ContaService: o banco que vale para cada conta, com o nome da instituição da conexão.
-func Carregar(ctx context.Context, q consultas.DBTX) (map[int64]*string, error) {
+func Carregar(ctx context.Context, q banco.DBTX) (map[int64]*string, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT c."Id", c."Nome", x."NomeInstituicao", c."Banco", c."ContaVinculadaId"
 		FROM "Conta" AS c LEFT JOIN "ConexaoBancaria" AS x ON c."ConexaoBancariaId" = x."Id"`)
 	if err != nil {

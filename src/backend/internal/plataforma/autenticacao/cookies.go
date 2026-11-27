@@ -15,7 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Os nomes dos cookies são os do .NET (ConstantesSeguranca, no Seguranca.cs até a #86): o Angular lê o do CSRF pelo
+// Os nomes dos cookies são fixos: o Angular lê o do CSRF pelo
 // nome, e o prefixo __Host- obriga Secure, Path=/ e nenhum Domain.
 const (
 	CookieSessao           = "__Host-Financas"
@@ -56,8 +56,8 @@ func valorSessao(chave []byte, s conteudoSessao) string {
 	return b64.EncodeToString(dados) + "." + b64.EncodeToString(assinar(chave, usoSessao, dados))
 }
 
-// lerSessao confere a assinatura (em tempo constante) e a validade. Qualquer problema é "sem sessão", como o cookie
-// do .NET que não abre: quem pediu continua anônimo.
+// lerSessao confere a assinatura (em tempo constante) e a validade. Qualquer problema é "sem sessão":
+// quem pediu continua anônimo.
 func lerSessao(chave []byte, valor string, agora time.Time) (conteudoSessao, bool) {
 	parteDados, parteAssinatura, ok := strings.Cut(valor, ".")
 	if !ok {
@@ -78,14 +78,14 @@ func lerSessao(chave []byte, valor string, agora time.Time) (conteudoSessao, boo
 	return s, true
 }
 
-// precisaRenovar é a renovação deslizante do cookie do .NET (SlidingExpiration): passou da metade da janela, sai um
+// precisaRenovar é a renovação deslizante do cookie: passou da metade da janela, sai um
 // cookie novo, com a janela inteira de novo.
 func (s conteudoSessao) precisaRenovar(agora time.Time) bool {
 	return agora.Unix()-s.Emitido > s.Expira-agora.Unix()
 }
 
 // cookieBase tem os atributos de todos os cookies do site: Secure, Path=/, SameSite=Strict (o __Host- exige os dois
-// primeiros). Sem Expires: some quando o navegador fecha, como o IsPersistent = false do .NET.
+// primeiros). Sem Expires: some quando o navegador fecha.
 func cookieBase(nome, valor string, httpOnly bool) *http.Cookie {
 	return &http.Cookie{Name: nome, Value: valor, Path: "/", Secure: true, HttpOnly: httpOnly, SameSite: http.SameSiteStrictMode}
 }
@@ -111,7 +111,7 @@ func novoSegredoAntifalsificacao() (string, error) {
 }
 
 // tokenCsrf é o token que vai no cookie legível e volta no cabeçalho X-XSRF-TOKEN: o HMAC do segredo do cookie
-// HttpOnly e do usuário. Ligado ao usuário, como o do .NET: o token de quem ainda não entrou não vale depois do
+// HttpOnly e do usuário. Ligado ao usuário: o token de quem ainda não entrou não vale depois do
 // login, e por isso ele é reemitido no login e na saída.
 func tokenCsrf(chave []byte, segredo string, usuario int64) string {
 	return b64.EncodeToString(assinar(chave, usoCsrf, []byte(segredo+"\x00"+strconv.FormatInt(usuario, 10))))

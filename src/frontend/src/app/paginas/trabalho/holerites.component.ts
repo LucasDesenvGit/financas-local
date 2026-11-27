@@ -1,6 +1,4 @@
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AvisosService } from '../../core/avisos.service';
@@ -8,16 +6,13 @@ import { mensagemDeErro } from '../../core/erro.interceptor';
 import {
   Emprego, Holerite, LancamentoHolerite, OrigemHolerite, PreviaHoleritePdf, ResumoHolerite, SituacaoHolerite, TipoLancamentoHolerite
 } from '../../core/modelos';
-import { MoedaPipe } from '../../compartilhado/moeda.pipe';
-import { CampoValorComponent } from '../../compartilhado/ui/campo-valor.component';
 import { ConfirmacaoService } from '../../compartilhado/ui/confirmacao.service';
-import { ListaSuspensaDirective } from '../../compartilhado/ui/lista-suspensa.directive';
-import { MesAno, SeletorMesComponent } from '../../compartilhado/ui/seletor-mes.component';
-import {
-  TIPOS_DESCONTO, TIPOS_PROVENTO, ehPorHora, ehProvento, lancamentoNovo, paraSalvar, rotuloTipo, textoSituacao, trocarTipo
-} from './holerites';
+import { MesAno } from '../../compartilhado/ui/seletor-mes.component';
+import { estadoDoFormulario, lancamentoNovo, paraSalvar, trocarTipo } from './holerites';
 import { empregoAtual, mesDaApi, nomeDoMes } from './salario';
-import { RecebimentoHoleriteComponent } from './recebimento-holerite.component';
+import { HoleritesDetalheComponent } from './holerites-detalhe.component';
+import { HoleritesListaComponent } from './holerites-lista.component';
+import { HoleritesSenhaComponent } from './holerites-senha.component';
 import { HoleritePdfPreviaComponent } from './holerite-pdf-previa.component';
 import { LinhaPrevia, linhasDaPrevia, mesDoPdf, motivoDaRecusa, paraBase64, paraConfirmar, problemaDoArquivo } from './holerite-pdf';
 
@@ -28,11 +23,12 @@ import { LinhaPrevia, linhasDaPrevia, mesDoPdf, motivoDaRecusa, paraBase64, para
  * (?holerite=), para o voltar do navegador funcionar (ADR 0018). Estimativa, não holerite; não é receita.
  * #228 (ADR 0068): "Ler holerite em PDF" (um ou vários) mostra a prévia de cada um, e só grava com "Confirmar", com
  * "Desfazer" no aviso (Nielsen 3). O lido do PDF fica marcado na lista e no holerite (Nielsen 1).
+ * #777 (ADR 0059): a tela guarda o estado e fala com a API; a lista, a senha do PDF e o holerite aberto são componentes
+ * de apresentação (`holerites-*.component.ts`) e a regra está em `holerites.ts`.
  */
 @Component({
   selector: 'app-trabalho-holerites',
-  imports: [FormsModule, DatePipe, RouterLink, MoedaPipe, CampoValorComponent, ListaSuspensaDirective, SeletorMesComponent,
-    RecebimentoHoleriteComponent, HoleritePdfPreviaComponent],
+  imports: [RouterLink, HoleritesListaComponent, HoleritesSenhaComponent, HoleritesDetalheComponent, HoleritePdfPreviaComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <header class="cabecalho-pagina"><h1>Holerites</h1></header>
@@ -46,185 +42,29 @@ import { LinhaPrevia, linhasDaPrevia, mesDoPdf, motivoDaRecusa, paraBase64, para
     } @else {
       <p class="texto-suave aviso-estimativa">Estimativa, não holerite: confira com o da empresa. Nada daqui entra nos relatórios.</p>
       <div class="grade-lateral">
-        <section class="painel-bloco" aria-labelledby="titulo-meses">
-          <h2 id="titulo-meses">{{ emprego()!.empregador }}</h2>
-          <div class="novo-holerite">
-            <app-seletor-mes [valor]="mesNovo()" (mudou)="mesNovo.set($event)" />
-            <button type="button" class="botao botao-primario" [disabled]="ocupado()" (click)="criar()">Abrir o holerite do mês</button>
-          </div>
-          <div class="ler-pdf">
-            <label class="botao seletor-pdf" [class.desabilitado]="ocupado()">Ler holerite em PDF
-              <input type="file" class="so-leitor" accept="application/pdf,.pdf" multiple [disabled]="ocupado()" (change)="escolherPdfs($event)"></label>
-            <p class="texto-suave">Um ou vários (o ano de uma vez). Lido no seu computador; o PDF não fica guardado.</p>
-          </div>
-          @if (lista().length) {
-            <ul class="lista-meses">
-              @for (r of lista(); track r.id) {
-                <li>
-                  <button type="button" class="item-mes" [class.ativo]="r.id === aberto()?.id" [attr.aria-current]="r.id === aberto()?.id ? 'true' : null"
-                    (click)="abrir(r.id)">
-                    <span class="mes-nome">{{ nome(r.mes) }}</span>
-                    <span class="etiqueta" [class.etiqueta-suave]="r.situacao === Situacao.Aberto">{{ situacao(r.situacao) }}@if (r.origem === Origem.LidoDoPdf) { · lido do PDF }</span>
-                    <span class="mes-liquido">{{ r.liquido === null ? 'sem cálculo' : (r.liquido | currency) }}</span>
-                  </button>
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="vazio">Nenhum holerite ainda. Escolha o mês e clique em “Abrir o holerite do mês”.</p>
-          }
-        </section>
+        <app-holerites-lista [empregador]="emprego()!.empregador" [lista]="lista()" [abertoId]="aberto()?.id ?? null" [mesNovo]="mesNovo()"
+          [ocupado]="ocupado()" (mesNovoMudou)="mesNovo.set($event)" (criar)="criar()" (abrir)="abrir($event)" (escolherPdfs)="escolherPdfs($event)" />
 
         @if (pedindoSenha()) {
-          <section class="painel-bloco" aria-labelledby="titulo-senha-pdf">
-            <h2 id="titulo-senha-pdf">O PDF tem senha</h2>
-            <form class="senha-pdf" (ngSubmit)="abrirComSenha()" #fs="ngForm">
-              <label>Senha de {{ arquivoAtual() }}
-                <input type="password" name="senhaPdf" autocomplete="off" [(ngModel)]="senhaPdf" required></label>
-              <p class="texto-suave">Costuma ser parte do CPF ou a data de nascimento. Ela só abre o arquivo: não é guardada.</p>
-              <div class="rodape-form">
-                <button type="button" class="botao" [disabled]="ocupado()" (click)="pularPdf()">{{ fila().length ? 'Pular este' : 'Cancelar' }}</button>
-                <span class="cresce"></span>
-                <button class="botao botao-primario" [disabled]="fs.invalid || ocupado()">Abrir</button>
-              </div>
-            </form>
-          </section>
+          <app-holerites-senha [arquivo]="arquivoAtual()" [restantes]="fila().length" [ocupado]="ocupado()"
+            (abrirComSenha)="lerPdf($event)" (pular)="pularPdf()" />
         } @else if (previa(); as p) {
           <app-holerite-pdf-previa [previa]="p" [linhas]="linhasPdf()" [mes]="mesPdf()" [arquivo]="arquivoAtual()"
             [restantes]="fila().length" [ocupado]="ocupado()" (linhasMudaram)="linhasPdf.set($event)" (mesMudou)="mudarMesPdf($event)"
             (confirmar)="confirmarPdf()" (cancelar)="pularPdf()" />
         } @else if (aberto(); as h) {
-          <section class="painel-bloco" aria-labelledby="titulo-holerite">
-            <div class="cabecalho-bloco">
-              <h2 id="titulo-holerite">{{ nome(h.mes) }} <span class="etiqueta" [class.etiqueta-suave]="!fechado()">{{ situacao(h.situacao) }}</span>
-                @if (lido()) { <span class="etiqueta etiqueta-sucesso">Lido do PDF</span> }</h2>
-            </div>
-            @if (h.aviso) { <p class="aviso-inline">{{ h.aviso }}</p> }
-
-            @if (!fechado()) {
-              <form (ngSubmit)="salvar()" #fh="ngForm" class="formulario">
-                <div class="dias-dsr">
-                  <label>Dias úteis <input name="uteis" type="number" inputmode="numeric" min="1" max="31" [(ngModel)]="diasUteis" required></label>
-                  <label>Domingos e feriados <input name="descanso" type="number" inputmode="numeric" min="0" max="31" [(ngModel)]="diasDescanso" required></label>
-                  <p class="texto-suave">Para o DSR das horas extras. Acerte os feriados do mês.</p>
-                </div>
-                <div class="lancamentos">
-                  @for (l of lancamentos(); track $index; let i = $index) {
-                    <fieldset class="lancamento">
-                      <legend class="so-leitor">Lançamento {{ i + 1 }}</legend>
-                      <label>Tipo
-                        <select [name]="'tipo' + i" [ngModel]="l.tipo" (ngModelChange)="mudarTipo(i, $event)">
-                          <optgroup label="Proventos">@for (t of tiposProvento; track t.valor) { <option [ngValue]="t.valor">{{ t.rotulo }}</option> }</optgroup>
-                          <optgroup label="Descontos">@for (t of tiposDesconto; track t.valor) { <option [ngValue]="t.valor">{{ t.rotulo }}</option> }</optgroup>
-                        </select>
-                      </label>
-                      <label>Descrição (opcional) <input [name]="'descricao' + i" [(ngModel)]="l.descricao" maxlength="100"></label>
-                      @if (porHora(l.tipo)) {
-                        <label>Horas <input [name]="'horas' + i" type="number" inputmode="decimal" min="0.01" max="300" step="0.01" [(ngModel)]="l.quantidade" required></label>
-                        <label>Percentual (%) <input [name]="'pct' + i" type="number" inputmode="decimal" min="0.01" max="300" step="0.01" [(ngModel)]="l.percentual" required></label>
-                      } @else {
-                        <label>{{ l.tipo === Tipo.ValeTransporte ? 'Custo do mês (opcional)' : 'Valor' }}
-                          <app-campo-valor [name]="'valor' + i" [(ngModel)]="l.valor" [obrigatorio]="l.tipo !== Tipo.ValeTransporte" [minimo]="0.01" /></label>
-                      }
-                      <div class="marcas">
-                        @if (l.tipo === Tipo.OutroProvento) {
-                          <label class="caixa"><input type="checkbox" [name]="'inss' + i" [(ngModel)]="l.incideInss"> Tem INSS</label>
-                          <label class="caixa"><input type="checkbox" [name]="'irrf' + i" [(ngModel)]="l.incideIrrf"> Tem IRRF</label>
-                        }
-                        @if (l.tipo === Tipo.OutroDesconto) {
-                          <label class="caixa"><input type="checkbox" [name]="'deduz' + i" [(ngModel)]="l.deduzIrrf"> Deduz do IR</label>
-                        }
-                        <label class="caixa"><input type="checkbox" [name]="'recorrente' + i" [(ngModel)]="l.recorrente"> Repetir nos próximos meses</label>
-                        <button type="button" class="botao botao-pequeno" (click)="remover(i)">Remover<span class="so-leitor"> o lançamento {{ i + 1 }}</span></button>
-                      </div>
-                    </fieldset>
-                  }
-                </div>
-                <div class="rodape-form">
-                  <button type="button" class="botao" (click)="acrescentar()">+ Lançamento</button>
-                  <span class="cresce"></span>
-                  <button class="botao botao-primario" [disabled]="fh.invalid || ocupado()">Salvar e calcular</button>
-                </div>
-              </form>
-            } @else if (lido()) {
-              <p class="texto-suave">Lido do PDF em {{ h.fechadoEm | date: 'dd/MM/yyyy' }}: vale o que a empresa pagou. Reabrir volta para a estimativa
-                do site@if (h.lancamentos.length) { , com os lançamentos que você tinha posto }.</p>
-            } @else if (h.lancamentos.length) {
-              <p class="texto-suave">Fechado em {{ h.fechadoEm | date: 'dd/MM/yyyy' }}. Para mudar, reabra.</p>
-            }
-
-            @if (h.calculo; as c) {
-              <div class="tabela-rolagem">
-                <table class="tabela holerite">
-                  <caption class="so-leitor">Holerite de {{ nome(h.mes) }}</caption>
-                  <thead><tr><th scope="col">Descrição</th><th scope="col" class="direita">Proventos</th>
-                    <th scope="col" class="direita">Descontos</th></tr></thead>
-                  <tbody>
-                    @for (p of c.proventos; track $index) {
-                      <tr><td>{{ p.descricao }}@if (p.referencia) { <span class="detalhe texto-suave">{{ p.referencia }}</span> }</td>
-                        <td class="direita">{{ p.valor | currency }}</td><td></td></tr>
-                    }
-                    @for (d of c.descontos; track $index) {
-                      <tr><td>{{ d.descricao }}@if (d.referencia) { <span class="detalhe texto-suave">{{ d.referencia }}</span> }</td>
-                        <td></td><td class="direita">{{ d.valor | currency }}</td></tr>
-                    }
-                  </tbody>
-                  <tfoot>
-                    <tr><th scope="row">Totais</th><td class="direita">{{ c.totalProventos | currency }}</td>
-                      <td class="direita">{{ c.totalDescontos | currency }}</td></tr>
-                    <tr class="liquido"><th scope="row" colspan="2">{{ lido() ? 'Líquido' : 'Líquido estimado' }}</th><td class="direita">{{ c.liquido | currency }}</td></tr>
-                  </tfoot>
-                </table>
-              </div>
-              <p class="texto-suave">Salário de {{ c.salarioContratual | currency }} ({{ c.diasTrabalhados }} de 30 dias), hora a {{ c.valorHora | currency }}.
-                @if (!c.semEncargos) { Base do INSS: {{ c.baseInss | currency }}. FGTS do mês (a empresa deposita, não sai do salário): {{ c.fgtsDoMes | currency }}. }
-              </p>
-            }
-            <div class="rodape-form">
-              @if (fechado()) {
-                <button type="button" class="botao" [disabled]="ocupado()" (click)="reabrir()">Reabrir</button>
-              } @else {
-                <button type="button" class="botao botao-perigo" [disabled]="ocupado()" (click)="excluir()">Excluir</button>
-                <span class="cresce"></span>
-                <button type="button" class="botao" [disabled]="ocupado() || !h.calculo || mudou()" (click)="fechar()">Fechar o mês</button>
-              }
-            </div>
-            @if (!fechado() && mudou()) { <p class="texto-suave">Salve antes de fechar.</p> }
-            <app-recebimento-holerite [holeriteId]="h.id" [versao]="h.situacao + ':' + (h.calculo?.liquido ?? '')" />
-          </section>
+          <app-holerites-detalhe [holerite]="h" [lancamentos]="lancamentos()" [mudou]="mudou()" [ocupado]="ocupado()"
+            [(diasUteis)]="diasUteis" [(diasDescanso)]="diasDescanso" (salvar)="salvar()" (fechar)="fechar()" (reabrir)="reabrir()"
+            (excluir)="excluir()" (acrescentar)="acrescentar()" (remover)="remover($event)" (mudarTipo)="mudarTipo($event.indice, $event.tipo)" />
         }
       </div>
     }
   `,
-  styles: [`
+  styles: `
     .grade-lateral { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 2.4fr); gap: 16px; align-items: start; }
     @media (max-width: 900px) { .grade-lateral { grid-template-columns: minmax(0, 1fr); } }
-    .novo-holerite { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
-    .lista-meses { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-    .item-mes { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; text-align: left; padding: 8px 10px;
-      border: 1px solid var(--linha); border-radius: 10px; background: var(--superficie); color: inherit; cursor: pointer; min-height: 44px; }
-    .item-mes.ativo { border-color: var(--primaria); background: var(--primaria-suave); }
-    .mes-liquido { grid-column: 1 / -1; font-variant-numeric: tabular-nums; color: var(--texto-suave); }
-    .dias-dsr { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-    .dias-dsr input { width: 7em; }
-    .lancamentos { display: grid; gap: 10px; }
-    .lancamento { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; border: 1px solid var(--linha); border-radius: 10px; padding: 10px; margin: 0; }
-    .lancamento input[type=number] { width: 7em; }
-    .marcas { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    .marcas .caixa { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; min-height: 24px; }
-    .holerite tfoot th, .holerite tfoot td { font-weight: 600; }
-    .holerite .detalhe { display: block; font-size: 0.8rem; }
-    .holerite td.direita { white-space: nowrap; }
-    @media (max-width: 600px) { .holerite th, .holerite td { padding: 8px 6px; } }
-    .holerite .liquido td, .holerite .liquido th { border-top: 1px solid var(--linha); }
     .aviso-estimativa { margin-top: 0; }
-    .ler-pdf { margin-bottom: 12px; }
-    .ler-pdf p { margin: 4px 0 0; }
-    .seletor-pdf { position: relative; display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
-    .seletor-pdf:focus-within { outline: 2px solid var(--primaria); outline-offset: 2px; }
-    .seletor-pdf.desabilitado { opacity: 0.6; cursor: default; }
-    .senha-pdf input { max-width: 20em; }
-  `]
+  `
 })
 export class TrabalhoHoleritesComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -232,15 +72,6 @@ export class TrabalhoHoleritesComponent implements OnInit {
   private readonly confirmacao = inject(ConfirmacaoService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
-
-  readonly Tipo = TipoLancamentoHolerite;
-  readonly Situacao = SituacaoHolerite;
-  readonly Origem = OrigemHolerite;
-  readonly tiposProvento = TIPOS_PROVENTO;
-  readonly tiposDesconto = TIPOS_DESCONTO;
-  readonly porHora = ehPorHora;
-  readonly nome = nomeDoMes;
-  readonly situacao = textoSituacao;
 
   readonly carregando = signal(true);
   readonly ocupado = signal(false);
@@ -258,11 +89,10 @@ export class TrabalhoHoleritesComponent implements OnInit {
   readonly arquivoAtual = signal('');
   readonly fila = signal<File[]>([]);
   private conteudoPdf = '';
-  senhaPdf = '';
   readonly lancamentos = signal<LancamentoHolerite[]>([]);
   readonly mesNovo = signal<MesAno>({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 });
-  diasUteis = 0;
-  diasDescanso = 0;
+  readonly diasUteis = signal(0);
+  readonly diasDescanso = signal(0);
   /** O texto do que está salvo, para saber se a pessoa mexeu (e pedir para salvar antes de fechar). */
   private salvo = '';
 
@@ -285,7 +115,7 @@ export class TrabalhoHoleritesComponent implements OnInit {
   }
 
   private estado(): string {
-    return JSON.stringify([this.diasUteis, this.diasDescanso, paraSalvar(this.lancamentos())]);
+    return estadoDoFormulario(this.diasUteis(), this.diasDescanso(), this.lancamentos());
   }
 
   private recarregarLista(): void {
@@ -296,8 +126,8 @@ export class TrabalhoHoleritesComponent implements OnInit {
 
   private mostrar(h: Holerite): void {
     this.aberto.set(h);
-    this.diasUteis = h.diasUteis;
-    this.diasDescanso = h.diasDescanso;
+    this.diasUteis.set(h.diasUteis);
+    this.diasDescanso.set(h.diasDescanso);
     this.lancamentos.set(h.lancamentos.map((l) => ({ ...l })));
     this.salvo = this.estado();
     this.router.navigate([], { relativeTo: this.rota, queryParams: { holerite: h.id }, replaceUrl: true });
@@ -333,7 +163,7 @@ export class TrabalhoHoleritesComponent implements OnInit {
     const h = this.aberto();
     if (!h) return;
     this.ocupado.set(true);
-    this.api.salvarHolerite(h.id, this.diasUteis, this.diasDescanso, paraSalvar(this.lancamentos())).subscribe({
+    this.api.salvarHolerite(h.id, this.diasUteis(), this.diasDescanso(), paraSalvar(this.lancamentos())).subscribe({
       next: (novo) => { this.ocupado.set(false); this.mostrar(novo); this.recarregarLista(); this.avisos.sucesso('Holerite calculado.'); },
       error: (err) => { this.ocupado.set(false); this.avisos.erro(mensagemDeErro(err)); }
     });
@@ -389,7 +219,6 @@ export class TrabalhoHoleritesComponent implements OnInit {
   private proximoPdf(): void {
     this.previa.set(null);
     this.pedindoSenha.set(false);
-    this.senhaPdf = '';
     this.conteudoPdf = '';
     const [arquivo, ...resto] = this.fila();
     this.fila.set(resto);
@@ -408,7 +237,7 @@ export class TrabalhoHoleritesComponent implements OnInit {
     );
   }
 
-  private lerPdf(senha: string): void {
+  lerPdf(senha: string): void {
     const e = this.emprego();
     if (!e) return;
     this.ocupado.set(true);
@@ -424,7 +253,6 @@ export class TrabalhoHoleritesComponent implements OnInit {
         this.ocupado.set(false);
         if (motivoDaRecusa(err) === 'senha') {
           if (senha) this.avisos.erro(mensagemDeErro(err));
-          this.senhaPdf = '';
           this.pedindoSenha.set(true);
           return;
         }
@@ -432,10 +260,6 @@ export class TrabalhoHoleritesComponent implements OnInit {
         this.proximoPdf();
       }
     });
-  }
-
-  abrirComSenha(): void {
-    this.lerPdf(this.senhaPdf);
   }
 
   /** "Cancelar" ou "Pular este": nada é gravado, e vem o próximo da fila. */
@@ -487,7 +311,4 @@ export class TrabalhoHoleritesComponent implements OnInit {
       error: (err) => this.avisos.erro(mensagemDeErro(err))
     });
   }
-
-  ehProvento = ehProvento;
-  rotulo = rotuloTipo;
 }

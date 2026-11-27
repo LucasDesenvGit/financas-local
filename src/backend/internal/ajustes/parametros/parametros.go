@@ -1,4 +1,4 @@
-// Pacote parametros é o ParametroService e o ParametrosController do .NET (#76): a Parametrização do site (o
+// Pacote parametros (#76): a Parametrização do site (o
 // catálogo de parâmetros, a gravação que valida tudo antes e o diagnóstico do sistema).
 package parametros
 
@@ -14,13 +14,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/config"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/configuracao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 )
 
-// iniciadoEm é o Process.GetCurrentProcess().StartTime do .NET: a hora em que o processo subiu (do sistema, e não do
+// iniciadoEm é a hora em que o processo subiu (do sistema, e não do
 // relógio de negócio: é diagnóstico).
 var iniciadoEm = time.Now()
 
@@ -39,15 +38,14 @@ type Opcoes struct {
 
 type Servico struct {
 	o      Opcoes
-	q      *consultas.Queries
 	config *configuracao.Servico
 }
 
 func Novo(o Opcoes) *Servico {
-	return &Servico{o: o, q: consultas.New(o.DB), config: configuracao.Novo(o.DB, o.Relogio)}
+	return &Servico{o: o, config: configuracao.Novo(o.DB, o.Relogio)}
 }
 
-// ParametroDto, na ordem das propriedades do record do C#.
+// ParametroDto, na ordem dos campos do JSON.
 type ParametroDto struct {
 	Chave     string  `json:"chave"`
 	Grupo     string  `json:"grupo"`
@@ -61,8 +59,8 @@ type ParametroDto struct {
 	Unidade   *string `json:"unidade"`
 }
 
-// InfoSistemaDto, na ordem do record do C#. DotNet e SistemaOperacional dizem o ambiente do Go (a versão do Go e o
-// sistema): o nome da propriedade fica o do .NET, que a tela lê.
+// InfoSistemaDto, na ordem dos campos do JSON. DotNet e SistemaOperacional dizem o ambiente do Go (a versão do Go e o
+// sistema): o nome da propriedade (dotNet) é o que a tela lê.
 type InfoSistemaDto struct {
 	Versao              string                 `json:"versao"`
 	DotNet              string                 `json:"dotNet"`
@@ -91,7 +89,7 @@ func PadroesDoAppsettings(cfg config.Config) map[string]int {
 	}
 }
 
-// Padrao é o Padrao(p) do C#: o do appsettings, quando o parâmetro existia lá antes, ou o do catálogo.
+// Padrao: o do appsettings, quando o parâmetro existia lá antes, ou o do catálogo.
 func (s *Servico) Padrao(d Definicao) int {
 	if n, ok := s.o.Padroes[d.Chave]; ok && d.DoAppsettings {
 		return n
@@ -115,15 +113,9 @@ func (s *Servico) ObterInteiro(ctx context.Context, chave string) (int, error) {
 // Listar é o ListarAsync: cada parâmetro do catálogo com o valor gravado (sem os segredos), ou o padrão quando não
 // há valor ou ele não se lê.
 func (s *Servico) Listar(ctx context.Context) ([]ParametroDto, error) {
-	linhas, err := s.q.ListarConfiguracoes(ctx)
+	gravados, err := s.gravados(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listar as configurações: %w", err)
-	}
-	gravados := map[string]*string{}
-	for _, c := range linhas {
-		if !c.Protegido {
-			gravados[c.Chave] = c.Valor
-		}
 	}
 	lista := make([]ParametroDto, 0, len(Catalogo))
 	for _, d := range Catalogo {
@@ -142,6 +134,31 @@ func (s *Servico) Listar(ctx context.Context) ([]ParametroDto, error) {
 		lista = append(lista, dto)
 	}
 	return lista, nil
+}
+
+// gravados são os valores da Configuracao que não são segredo, pela chave.
+func (s *Servico) gravados(ctx context.Context) (map[string]*string, error) {
+	linhas, err := s.o.DB.QueryContext(ctx, `SELECT "Chave", "Valor" FROM "Configuracao" WHERE "Protegido" = 0`)
+	if err != nil {
+		return nil, err
+	}
+	defer linhas.Close()
+	gravados := map[string]*string{}
+	for linhas.Next() {
+		var chave string
+		var valor *string
+		if err := linhas.Scan(&chave, &valor); err != nil {
+			return nil, err
+		}
+		gravados[chave] = valor
+	}
+	return gravados, linhas.Err()
+}
+
+// contar é o COUNT(*) da consulta dada (uma constante deste pacote, nunca texto de fora).
+func (s *Servico) contar(ctx context.Context, consulta string) (n int64, err error) {
+	err = s.o.DB.QueryRowContext(ctx, consulta).Scan(&n)
+	return n, err
 }
 
 // validar é a primeira metade do SalvarAsync: as mensagens de erro, na ordem dos valores enviados.
@@ -200,13 +217,13 @@ func (s *Servico) InfoSistema(ctx context.Context) (InfoSistemaDto, error) {
 		tamanho := arquivo.Size()
 		info.TamanhoBancoBytes = &tamanho
 	}
-	if info.Contas, err = s.q.ContarContas(ctx); err != nil {
+	if info.Contas, err = s.contar(ctx, `SELECT COUNT(*) FROM "Conta"`); err != nil {
 		return InfoSistemaDto{}, fmt.Errorf("contar as contas: %w", err)
 	}
-	if info.Transacoes, err = s.q.ContarTransacoes(ctx); err != nil {
+	if info.Transacoes, err = s.contar(ctx, `SELECT COUNT(*) FROM "Transacao"`); err != nil {
 		return InfoSistemaDto{}, fmt.Errorf("contar as transações: %w", err)
 	}
-	if info.ConexoesAtivas, err = s.q.ContarConexoesAtivas(ctx); err != nil {
+	if info.ConexoesAtivas, err = s.contar(ctx, `SELECT COUNT(*) FROM "ConexaoBancaria" WHERE "Ativa" = 1`); err != nil {
 		return InfoSistemaDto{}, fmt.Errorf("contar as conexões: %w", err)
 	}
 	if info.UltimaSincronizacao, err = s.config.ObterData(ctx, configuracao.UltimaSincronizacaoGeral); err != nil {
@@ -215,7 +232,7 @@ func (s *Servico) InfoSistema(ctx context.Context) (InfoSistemaDto, error) {
 	return info, nil
 }
 
-// normalizar é o Normalizar do C#: o texto gravado como 1/0 (booleano) ou como inteiro limitado à faixa; false se
+// normalizar: o texto gravado como 1/0 (booleano) ou como inteiro limitado à faixa; false se
 // não se lê.
 func normalizar(d Definicao, texto string) (int, bool) {
 	if d.Tipo == Booleano {

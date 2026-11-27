@@ -47,8 +47,8 @@ type Ativo struct {
 	Proventos         []Provento
 }
 
-// conta faz as contas que podem falhar (as exceções do decimal do C#) guardando o primeiro erro, para a fórmula ficar
-// legível como a do C#. Quem usa confere o err no fim.
+// conta faz as contas que podem falhar guardando o primeiro erro, para a fórmula ficar
+// legível. Quem usa confere o err no fim.
 type conta struct{ err error }
 
 // anotar guarda o primeiro erro.
@@ -117,7 +117,7 @@ func ordenarParaPosicao(operacoes []Operacao) []Operacao {
 	return ordenadas
 }
 
-// Calcular é o Calcular do C#: processa as operações até a data (nil, todas). A venda sai pelo preço médio e nunca passa
+// Calcular: processa as operações até a data (nil, todas). A venda sai pelo preço médio e nunca passa
 // da quantidade em carteira; o lucro vai em reais pelo câmbio do dia da venda, e por isso inclui a variação da moeda.
 func Calcular(operacoes []Operacao, ate *tipos.Data) (Posicao, error) {
 	var p Posicao

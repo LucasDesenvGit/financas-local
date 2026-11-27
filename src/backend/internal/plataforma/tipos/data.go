@@ -10,11 +10,11 @@ import (
 
 const (
 	formatoData            = "2006-01-02"
-	formatoDataHoraNoBanco = "2006-01-02 15:04:05.9999999" // a fração some quando é zero, como no EF Core
+	formatoDataHoraNoBanco = "2006-01-02 15:04:05.9999999" // a fração some quando é zero
 	formatoDataHoraNoJSON  = "2006-01-02T15:04:05.9999999"
 )
 
-// Data é o DateOnly do C#: só ano, mês e dia, sem fuso (ex.: a data de uma transação, no fuso de Brasília).
+// Data: só ano, mês e dia, sem fuso (ex.: a data de uma transação, no fuso de Brasília).
 // No banco e no JSON: "2026-10-15".
 type Data struct {
 	t time.Time // sempre meia-noite em UTC; o fuso não significa nada aqui
@@ -50,7 +50,7 @@ func (d Data) Igual(o Data) bool { return d.t.Equal(o.t) }
 // SomarDias devolve a data n dias depois (ou antes, com n negativo).
 func (d Data) SomarDias(n int) Data { return Data{t: d.t.AddDate(0, 0, n)} }
 
-// SomarAnos é o DateOnly.AddYears do C#: o dia que não existe no ano de chegada vira o último do mês (29/02/2024 +
+// SomarAnos soma anos: o dia que não existe no ano de chegada vira o último do mês (29/02/2024 +
 // 1 ano = 28/02/2025). O AddDate do Go passaria para 01/03.
 func (d Data) SomarAnos(n int) Data {
 	ano, mes := d.Ano()+n, d.Mes()
@@ -58,13 +58,10 @@ func (d Data) SomarAnos(n int) Data {
 	return NovaData(ano, mes, min(d.Dia(), ultimo))
 }
 
-// SomarMeses é o DateOnly.AddMonths do C#: o dia que não existe no mês de chegada vira o último dia dele (31/01 + 1
+// SomarMeses soma meses: o dia que não existe no mês de chegada vira o último dia dele (31/01 + 1
 // mês = 28/02, ou 29/02 em ano bissexto; 31/03 - 1 mês = 28/02). O AddDate do Go passaria para o mês seguinte
 // (31/01 + 1 mês = 03/03). Cada soma parte da data recebida: somar um mês duas vezes a 31/01 dá 28/03, e não 31/03.
-// O C# lança exceção quando o resultado sai do ano 1 a 9999; aqui o resultado não é conferido.
-// O DateOnly.AddMonths chama o DateTime.AddMonths, que descreve a regra do último dia válido do mês:
-// https://learn.microsoft.com/dotnet/api/system.datetime.addmonths (Remarks) e
-// https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/DateOnly.cs
+// Não há exceção quando o resultado sai do ano 1 a 9999; aqui o resultado não é conferido.
 func (d Data) SomarMeses(n int) Data {
 	// O time.Date normaliza o mês fora de 1 a 12 (inclusive o negativo): dia 1 do mês de chegada, sem estourar.
 	primeiro := time.Date(d.Ano(), d.Mes()+time.Month(n), 1, 0, 0, 0, 0, time.UTC)
@@ -75,7 +72,7 @@ func (d Data) SomarMeses(n int) Data {
 // diaNumeroDe1970 é o DateOnly.DayNumber de 01/01/1970: os dias desde 01/01/0001, que é o dia 0.
 const diaNumeroDe1970 = 719162
 
-// NumeroDoDia é o DateOnly.DayNumber do C#: quantos dias passaram desde 01/01/0001 (o dia 0). A diferença entre dois
+// NumeroDoDia: quantos dias passaram desde 01/01/0001 (o dia 0). A diferença entre dois
 // números é o número de dias entre as datas (a conta "dias para vencer").
 func (d Data) NumeroDoDia() int { return int(d.t.Unix()/86400) + diaNumeroDe1970 }
 
@@ -116,18 +113,18 @@ func (d *Data) UnmarshalJSON(dados []byte) error {
 	return d.lerTexto(texto)
 }
 
-// DataHora é o DateTime do C# como o EF Core guarda no SQLite: a hora "de parede", sem fuso.
+// DataHora é a hora "de parede" que o banco guarda, sem fuso.
 //
 // Quem grava decide o que ela significa: carimbos (CriadoEm, AtualizadoEm) são UTC; horários de negócio são de
-// Brasília. Converta antes de criar (pacote relogio). A precisão é a do C#: 100 ns (7 casas).
+// Brasília. Converta antes de criar (pacote relogio). A precisão é de 100 ns (7 casas).
 //
-// No banco: "2026-10-15 22:55:31.3481471". No JSON: "2026-10-15T22:55:31.3481471", sem "Z", porque o EF Core lê
-// o valor de volta sem fuso (DateTimeKind.Unspecified).
+// No banco: "2026-10-15 22:55:31.3481471". No JSON: "2026-10-15T22:55:31.3481471", sem "Z", porque o valor lido de volta
+// do banco não tem fuso.
 type DataHora struct {
 	t time.Time // sempre em UTC, guardando os números da hora de parede
 }
 
-// NovaDataHora guarda a hora de parede de t (ignora o fuso dele) com a precisão do C#.
+// NovaDataHora guarda a hora de parede de t (ignora o fuso dele) com a precisão de 100 ns.
 func NovaDataHora(t time.Time) DataHora {
 	parede := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), time.UTC)
 	return DataHora{t: parede.Truncate(100 * time.Nanosecond)}
@@ -148,7 +145,7 @@ func LerDataHora(texto string) (DataHora, error) {
 func (d DataHora) Tempo() time.Time { return d.t }
 func (d DataHora) String() string   { return d.t.Format(formatoDataHoraNoBanco) }
 
-// Value grava no formato do EF Core (driver.Valuer).
+// Value grava no formato do banco (driver.Valuer).
 func (d DataHora) Value() (driver.Value, error) { return d.String(), nil }
 
 // Scan lê do banco (sql.Scanner).
@@ -179,7 +176,7 @@ func (d DataHora) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.t.Format(formatoDataHoraNoJSON))
 }
 
-// DataHoraUtc é o DateTime com Kind Utc: o DateTime.UtcNow que o C# acabou de gravar e devolve da memória, no criar e
+// DataHoraUtc é o carimbo em UTC que acabou de ser gravado e é devolvido da memória, no criar e
 // no editar. No JSON, com "Z" no fim ("2026-10-15T01:00:00.1234567Z"); lido de volta do banco, o mesmo carimbo vem sem
 // fuso, como DataHora.
 type DataHoraUtc struct{ DataHora }

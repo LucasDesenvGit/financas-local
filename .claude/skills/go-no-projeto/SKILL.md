@@ -20,7 +20,7 @@ Você escreve e revisa o Go do projeto, que é o back-end inteiro desde a #86 (o
 | Testes (onde mora cada um, pronto quando, proibido, mutação, fuzz, cobertura) | [ADR 0051](../../../docs/adr/0051-testes-do-back-end-em-go-cada-regra-com-teste.md) e `CONTRIBUINDO.md`, "Testes do back-end (Go)" |
 | Apoio dos testes (banco temporário, fábrica, relógio, `Chamar`, serviço de fora) | [`internal/plataforma/testeapoio/README.md`](../../../src/backend/internal/plataforma/testeapoio/README.md) |
 | Rota nova, ligar no site, rodar, antes de subir | [`src/backend/README.md`](../../../src/backend/README.md) |
-| Banco no formato do EF Core, `sqlc`, esquema | [`internal/plataforma/banco/README.md`](../../../src/backend/internal/plataforma/banco/README.md) e `docs/BANCO-DE-DADOS.md` |
+| Banco no formato do EF Core, consultas à mão, esquema | [`internal/plataforma/banco/README.md`](../../../src/backend/internal/plataforma/banco/README.md) e `docs/BANCO-DE-DADOS.md` |
 | Gerenciador em Go (`src/gerenciador-go`) | [ADR 0052](../../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md): outro módulo, com bibliotecas próprias; o estilo daqui vale |
 
 ## Referências (leia quando o passo pedir)
@@ -38,9 +38,9 @@ Todo o back-end é Go: assunto novo ganha um pacote, e mudança num assunto fica
 
 1. **Issue e branch** como em todo PR (`CLAUDE.md`, "Git / commits"). **Issue feita em partes:** branch com `git switch -c`, sem `gh issue develop`: a branch criada pela issue fica ligada a ela, e o merge da parte 1 a fecha mesmo sem `Closes` (#583). Só a última parte fecha a issue.
 2. **ADR antes do código** quando a funcionalidade trouxer dependência, saída de rede, tabela além da rotina ou padrão novo (`CLAUDE.md`, "Decisões de arquitetura").
-3. **Banco:** tabela nova em `banco/01-estrutura.sql` (o Go só cria tabela por esses scripts, no `-aplicar-esquema`), `go generate ./...` e `docs/BANCO-DE-DADOS.md`. Consulta pelo `sqlc` (`internal/plataforma/banco/consultas/sql`, depois `go generate ./...`) ou com `?`.
-4. **Pacote `internal/<area>/<assunto>`** com HTTP → regra → banco dentro (ADR 0056), a linha do assunto em `dependencias` do teste de arquitetura, com o motivo, o pacote na tabela de `docs/arquitetura/componentes.md` (o mesmo teste confere) e o termo novo em `docs/arquitetura/dominio.md`.
-5. **Rotas** pelo `Registrar(mux, ...)` do pacote e uma linha em `internal/api/api.go` (README do Go, "Rota nova"), com os casos de contrato num número livre de `20` a `89`.
+3. **Banco:** mudança de estrutura pelo `docs/BANCO-DE-DADOS.md`, "Como alterar a estrutura" (o Go nunca cria tabela no código, só pelos scripts de `banco/`). Consulta escrita à mão, no pacote do assunto, com `?` (ADR 0074).
+4. **Pacote `internal/<area>/<assunto>`** com HTTP → regra → banco dentro (ADR 0056, [o padrão de um assunto](../../../src/backend/internal/README.md)), a linha do assunto em `dependencias` do teste de arquitetura, com o motivo, o pacote na tabela de `docs/arquitetura/componentes.md` (o mesmo teste confere) e o termo novo em `docs/arquitetura/dominio.md`.
+5. **Rotas** pelo `Registrar(mux, ...)` do pacote e uma linha em `internal/api/api.go` (README do Go, "Rota nova"), com os casos de contrato num número livre de `20` a `89`. **Corpo do pedido:** código novo lê com `respostas.LerObjeto`/`LerTextos` (o 400 em português, por campo, em `errors`; `estilo.md`, "Validação de entrada", #710), como os 36 arquivos de rota que já usam; o `json.Decoder` com `{mensagem}` do Trabalho (`internal/modulos/trabalho/*`) fica onde está, e quem mexer num pacote segue a forma dele.
 6. **Testes** pela ADR 0051: tabela por regra, SQLite real, `httptest` e, se tiver cliente externo, `testeapoio.NovoServicoDeFora`. Pacote novo nasce com 80% de cobertura (`verificar-cobertura-go.py`) e entra em `scripts/ci/go/mutacao-go.txt` (com regra de negócio ou dinheiro) **ou** em `scripts/ci/go/mutacao-go-fora.txt`, com o motivo. Fora dos dois, o PR o mede sem piso e o aviso da CI dá a linha a pôr na lista, com a eficácia medida (#716).
 7. **Front-end, Manual, diagramas** (ADR 0055) e `docs/DADOS-PESSOAIS.md` se houver dado pessoal novo: no mesmo PR, como manda o `CLAUDE.md`.
 
@@ -69,4 +69,4 @@ python3 ../../scripts/ci/go/mutacao-go.py internal/<area>/<assunto>   # pacote c
 
 ## Como entregar
 
-Separe o que conferiu no código (com `arquivo:linha`) do que é julgamento seu, diga o que rodou e o resultado (inclusive o que falhou ou não rodou), e o que ficou de fora, com o motivo. PR: o checklist do `CONTRIBUINDO.md` e do modelo de PR; merge só com o "pode" de quem pediu, dado naquele momento e para aquele PR (OK antigo ou de outro PR não vale). Quem quiser a trava também no Claude Code põe `"permissions": {"ask": ["Bash(gh pr merge *)"]}` no próprio `~/.claude/settings.json`.
+Separe o que conferiu no código (com `arquivo:linha`) do que é julgamento seu, diga o que rodou e o resultado (inclusive o que falhou ou não rodou), e o que ficou de fora, com o motivo. PR: o checklist do modelo de PR (`.github/pull_request_template.md`); merge só com o "pode" de quem pediu, dado naquele momento e para aquele PR (OK antigo ou de outro PR não vale). Quem quiser a trava também no Claude Code põe `"permissions": {"ask": ["Bash(gh pr merge *)"]}` no próprio `~/.claude/settings.json`.

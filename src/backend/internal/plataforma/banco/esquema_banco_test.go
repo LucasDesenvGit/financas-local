@@ -32,12 +32,10 @@ import (
 // testdata/entradas-esquema/*.gz: o Go aplica exatamente esses, e o teste não fica velho quando o banco/ muda.
 
 type gabaritoEsquema struct {
-	Pragmas        map[string]string `json:"pragmas"`
-	Entradas       map[string]string `json:"entradas"`
-	Assinaturas    map[string]int32  `json:"assinaturas"`
-	TextoDeLeitura string            `json:"textoDeLeitura"`
-	Leitura        []string          `json:"leitura"`
-	Cenarios       struct {
+	Pragmas     map[string]string `json:"pragmas"`
+	Entradas    map[string]string `json:"entradas"`
+	Assinaturas map[string]int32  `json:"assinaturas"`
+	Cenarios    struct {
 		Novo struct {
 			Banco  despejo  `json:"banco"`
 			Copias []string `json:"copias"`
@@ -132,7 +130,7 @@ func lerGabaritoEsquema(t *testing.T) (gabaritoEsquema, esquema.Scripts) {
 	return g, esquema.Scripts{
 		Estrutura:     entrada("01-estrutura.sql"),
 		DadosIniciais: entrada("02-dados-iniciais.sql"),
-		CriarBanco:    entrada("2-criar-banco.sh"),
+		Colunas:       colunasDoGabarito(entrada("2-criar-banco.sh")),
 	}
 }
 
@@ -145,7 +143,7 @@ func hashTexto[T string | []byte](conteudo T) string {
 
 func TestAssinaturaIgualAoDotnet(t *testing.T) {
 	g, scripts := lerGabaritoEsquema(t)
-	colunas := esquema.LerColunasNovas(scripts.CriarBanco)
+	colunas := scripts.Colunas
 	casos := map[string]int32{
 		"scripts":        esquema.Assinatura(scripts.Estrutura, colunas),
 		"scriptsComCrlf": esquema.Assinatura(strings.ReplaceAll(scripts.Estrutura, "\n", "\r\n"), colunas),
@@ -165,17 +163,6 @@ func TestAssinaturaIgualAoDotnet(t *testing.T) {
 	}
 }
 
-func TestLeituraDasLinhasIgualAoDotnet(t *testing.T) {
-	g, _ := lerGabaritoEsquema(t)
-	var got []string
-	for _, c := range esquema.LerColunasNovas(g.TextoDeLeitura) {
-		got = append(got, c.Tabela+"|"+c.Coluna+"|"+c.Definicao)
-	}
-	if !slices.Equal(got, g.Leitura) {
-		t.Errorf("linhas lidas pelo Go:\n%q\npelo .NET:\n%q", got, g.Leitura)
-	}
-}
-
 func TestTextoTiraOBOM(t *testing.T) {
 	if got := esquema.Texto([]byte("\xEF\xBB\xBFCREATE")); got != "CREATE" {
 		t.Errorf("Texto = %q, o StreamReader do .NET tira o BOM", got)
@@ -186,9 +173,9 @@ func TestTextoTiraOBOM(t *testing.T) {
 
 func TestCopiasEmDia(t *testing.T) {
 	embutidos := map[string][]byte{
-		"01-estrutura.sql":      embutido.Estrutura,
-		"02-dados-iniciais.sql": embutido.DadosIniciais,
-		"2-criar-banco.sh":      embutido.CriarBanco,
+		"01-estrutura.sql":        embutido.Estrutura,
+		"02-dados-iniciais.sql":   embutido.DadosIniciais,
+		"03-tabelas-oficiais.sql": embutido.TabelasOficiais,
 	}
 	if len(embutidos) != len(esquema.Copias) {
 		t.Fatalf("o embutido tem %d arquivos e o esquema.Copias %d", len(embutidos), len(esquema.Copias))
@@ -592,8 +579,7 @@ func TestAplicarEsquemaComOsScriptsEmbutidos(t *testing.T) {
 	if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
 		t.Fatal(err)
 	}
-	embutidos := esquema.Scripts{Estrutura: string(embutido.Estrutura), CriarBanco: string(embutido.CriarBanco)}
-	assinatura := esquema.Assinatura(embutidos.Estrutura, esquema.LerColunasNovas(embutidos.CriarBanco))
+	assinatura := esquema.Assinatura(string(embutido.Estrutura), esquema.ColunasNovas)
 	if d := despejar(t, caminho); d.UserVersion != int64(assinatura) {
 		t.Errorf("user_version = %d, esperado %d", d.UserVersion, assinatura)
 	}
@@ -617,6 +603,87 @@ func TestAplicarEsquemaComOsScriptsEmbutidos(t *testing.T) {
 	}
 }
 
+// #805 (ADR 0065): quem atualiza só pelo serviço (AplicarEsquema, o do site) recebe a vigência nova do INSS e do IRRF
+// em banco existente, com a assinatura em dia ou não, sem recriar categoria apagada e sem cópia de backup a mais.
+func TestAplicarEsquemaRecolocaTabelasOficiaisEmBancoExistente(t *testing.T) {
+	ctx := context.Background()
+	semInss2026 := "DELETE FROM InssFaixa WHERE Inicio = '2026-01-01'; DELETE FROM InssVigencia WHERE Inicio = '2026-01-01';" +
+		"DELETE FROM IrrfFaixa WHERE Inicio = '2026-01-01'; DELETE FROM IrrfVigencia WHERE Inicio = '2026-01-01';"
+	for _, c := range []struct {
+		nome       string
+		preparar   string // o que o teste faz no banco depois de criado
+		copiasApos int    // cópias "antes da atualização" depois do AplicarEsquema
+	}{
+		{"assinatura em dia", "", 0},
+		{"assinatura velha", "PRAGMA user_version = 7;", 1},
+	} {
+		t.Run(c.nome, func(t *testing.T) {
+			caminho := filepath.Join(t.TempDir(), "dados", "sql", "FinancasLocal.db")
+			if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+				t.Fatal(err)
+			}
+			executar(t, caminho, semInss2026+c.preparar)
+			if n := contar(t, caminho, "SELECT COUNT(*) FROM InssVigencia WHERE Inicio = '2026-01-01'"); n != 0 {
+				t.Fatal("o teste devia partir de um banco sem a vigência de 2026")
+			}
+			executar(t, caminho, "DELETE FROM RegraCategorizacao WHERE CategoriaId IN (SELECT Id FROM Categoria WHERE Nome = 'Moradia'); DELETE FROM Categoria WHERE Nome = 'Moradia';")
+			categorias := contar(t, caminho, "SELECT COUNT(*) FROM Categoria")
+
+			for i := range 2 { // duas vezes: a segunda não duplica nada
+				if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+					t.Fatalf("passada %d: %v", i+1, err)
+				}
+				for consulta, esperado := range map[string]int{
+					"SELECT COUNT(*) FROM InssVigencia":                          2,
+					"SELECT COUNT(*) FROM InssFaixa WHERE Inicio = '2026-01-01'": 4,
+					"SELECT COUNT(*) FROM IrrfVigencia":                          2,
+					"SELECT COUNT(*) FROM IrrfFaixa WHERE Inicio = '2026-01-01'": 5,
+					"SELECT COUNT(*) FROM Categoria WHERE Nome = 'Moradia'":      0, // apagada, não volta
+					"SELECT COUNT(*) FROM Categoria":                             categorias,
+				} {
+					if n := contar(t, caminho, consulta); n != esperado {
+						t.Errorf("passada %d: %s = %d, esperado %d", i+1, consulta, n, esperado)
+					}
+				}
+			}
+			copias, err := os.ReadDir(filepath.Join(filepath.Dir(caminho), "..", "backups"))
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				t.Fatal(err)
+			}
+			if len(copias) != c.copiasApos {
+				t.Errorf("%d cópias de backup, esperado %d", len(copias), c.copiasApos)
+			}
+		})
+	}
+}
+
+// #723: o erro do esquema e o dos dados iniciais chegam a quem chamou (o script de instalação para nele).
+func TestAplicarEsquemaEDadosDevolveOErro(t *testing.T) {
+	ctx := context.Background()
+	for _, c := range []struct {
+		nome     string
+		preparar func(t *testing.T) string
+		trecho   string
+	}{
+		{"o caminho é uma pasta", func(t *testing.T) string { return t.TempDir() }, ""},
+		{"o banco em dia sem a tabela Categoria", func(t *testing.T) string {
+			caminho := filepath.Join(t.TempDir(), "dados", "sql", "FinancasLocal.db")
+			if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+				t.Fatal(err)
+			}
+			executar(t, caminho, "PRAGMA foreign_keys = OFF; DROP TABLE Categoria;")
+			return caminho
+		}, "02-dados-iniciais.sql"},
+	} {
+		t.Run(c.nome, func(t *testing.T) {
+			err := AplicarEsquemaEDados(ctx, c.preparar(t), instanteDosTestes, semLog())
+			if err == nil || !strings.Contains(err.Error(), c.trecho) {
+				t.Errorf("erro = %v, esperado um erro com %q", err, c.trecho)
+			}
+		})
+	}
+}
+
 func contar(t *testing.T, caminho, consulta string) int {
 	t.Helper()
 	db, err := Abrir(context.Background(), caminho)
@@ -629,17 +696,6 @@ func contar(t *testing.T, caminho, consulta string) int {
 		t.Fatal(err)
 	}
 	return n
-}
-
-func TestAplicarEsquemaSemColunasNovas(t *testing.T) {
-	caminho := filepath.Join(t.TempDir(), "FinancasLocal.db")
-	err := aplicarEsquema(context.Background(), caminho, esquema.Scripts{Estrutura: "CREATE TABLE A (Id INTEGER);"}, instanteDosTestes, semLog())
-	if err == nil || !strings.Contains(err.Error(), "nenhuma coluna nova") {
-		t.Fatalf("sem linhas adicionar_coluna_se_ausente deveria falhar como o .NET; erro: %v", err)
-	}
-	if _, err := os.Stat(caminho); !errors.Is(err, fs.ErrNotExist) {
-		t.Error("o banco não deveria ser criado")
-	}
 }
 
 func TestPastaDasCopias(t *testing.T) {

@@ -14,13 +14,13 @@ import (
 )
 
 // arquivoComHash diz quais arquivos do build do Angular ganham cache de um ano: os que têm o hash no nome. O
-// esbuild do Angular gera o hash com maiúsculas, minúsculas, "_" e "-" (chunk-BZ-xW7Tm.js). É a regra da #305,
-// que só o .NET tinha: o Go ficou com a antiga, -[A-Z0-9]{8}, e só 3 de 35 arquivos ganhavam o cache (#618).
+// esbuild do Angular gera o hash com maiúsculas, minúsculas, "_" e "-" (chunk-BZ-xW7Tm.js). É a regra da #305.
+// A antiga, -[A-Z0-9]{8}, deixava só 3 de 35 arquivos com cache (#618).
 var arquivoComHash = regexp.MustCompile(`-[A-Za-z0-9_-]{8}\.(js|css)$`)
 
-// tiposDeConteudo são os tipos que o .NET (FileExtensionContentTypeProvider) manda para as extensões que existem
+// tiposDeConteudo são os tipos mandados para as extensões que existem
 // no wwwroot, conferidos no site rodando em 21/10/2026. O Go mandaria "; charset=utf-8" em alguns. Extensão nova
-// no build do Angular entra aqui com o tipo conferido no .NET; sem tipo, o arquivo não é servido (como no .NET).
+// no build do Angular entra aqui com o tipo conferido; sem tipo, o arquivo não é servido.
 var tiposDeConteudo = map[string]string{
 	".css":         "text/css",
 	".html":        "text/html",
@@ -31,10 +31,10 @@ var tiposDeConteudo = map[string]string{
 	".webmanifest": "application/manifest+json",
 }
 
-// arquivosDoSite serve o wwwroot (o Angular) como o UseDefaultFiles + UseStaticFiles + MapFallbackToFile do .NET:
-//   - arquivo que existe: com o tipo, o ETag e o Last-Modified do .NET, e o Cache-Control da regra acima;
+// arquivosDoSite serve o wwwroot (o Angular):
+//   - arquivo que existe: com o tipo, o ETag e o Last-Modified, e o Cache-Control da regra acima;
 //   - caminho sem extensão (rota do Angular, ex.: /transacoes): o index.html, sem Cache-Control;
-//   - o resto (arquivo que não existe, método que não é GET/HEAD): 401 sem corpo. No .NET é a política de login
+//   - o resto (arquivo que não existe, método que não é GET/HEAD): 401 sem corpo. É a política de login
 //     obrigatório que responde, porque nenhuma rota atende; o esqueleto devolve o mesmo até a autenticação (#75).
 type arquivosDoSite struct {
 	raiz fs.FS
@@ -67,8 +67,8 @@ func (a *arquivosDoSite) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	semCorpo(w, http.StatusUnauthorized)
 }
 
-// servir manda o arquivo, se ele existe e tem tipo conhecido. comCache diz se põe o Cache-Control (o fallback do
-// .NET não põe).
+// servir manda o arquivo, se ele existe e tem tipo conhecido. comCache diz se põe o Cache-Control (o fallback
+// não põe).
 func (a *arquivosDoSite) servir(w http.ResponseWriter, r *http.Request, nome string, comCache bool) bool {
 	tipo, conhecido := tiposDeConteudo[strings.ToLower(path.Ext(nome))]
 	if !conhecido {
@@ -102,7 +102,7 @@ func (a *arquivosDoSite) servir(w http.ResponseWriter, r *http.Request, nome str
 	return true
 }
 
-// etagComoDotnet é o ETag do StaticFileMiddleware: o horário de modificação (cortado no segundo) em "file time"
+// etagComoDotnet é o ETag: o horário de modificação (cortado no segundo) em "file time"
 // do Windows (intervalos de 100 ns desde 1601), com XOR do tamanho, em hexadecimal. Conferido contra o site.
 func etagComoDotnet(modificado time.Time, tamanho int64) string {
 	const segundosDe1601Ate1970 = 11_644_473_600

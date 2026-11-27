@@ -64,7 +64,7 @@ func (s *Servico) conferir(w http.ResponseWriter, r *http.Request) {
 	if data.Valor != nil {
 		dia = *data.Valor
 	}
-	// O "Informe o nome da reserva." do C# não chega a valer: o [Required] já recusa o nome só com espaços.
+	// O "Informe o nome da reserva." não chega a valer: o [Required] já recusa o nome só com espaços.
 	if dia.Depois(hoje) {
 		respostas.Mensagem(w, http.StatusBadRequest, "A data da conferência não pode estar no futuro.")
 		return
@@ -115,7 +115,7 @@ func (s *Servico) registrarSaida(w http.ResponseWriter, r *http.Request) {
 }
 
 // removerConferencia é o DELETE /api/reservas/conferencia?contaId=&nome=: o saldo volta a ser só a soma dos
-// lançamentos do extrato. O nome é obrigatório (o string sem "?" do C#, que o ASP.NET trata como [Required]; vazio ou
+// lançamentos do extrato. O nome é obrigatório (vazio ou
 // só espaços vira null); a conta sem vir é 0.
 func (s *Servico) removerConferencia(w http.ResponseWriter, r *http.Request) {
 	erros := map[string][]string{}

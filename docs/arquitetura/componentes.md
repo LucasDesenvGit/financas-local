@@ -27,7 +27,7 @@ flowchart TB
         nucleomodulos["modulos<br/>[Componente]<br/>Catálogo, liga/desliga e a guarda<br/>das rotas e tarefas dos módulos"]
         clientes["Clientes de fora<br/>[Componentes: HTTPS]<br/>Pluggy, PTAX, Selic, cotações e cripto"]
         transversais["Transversais<br/>[Componentes]<br/>Auditoria, erros do sistema,<br/>Configuracao, segredos e versão"]
-        base["Base<br/>[Componentes]<br/>Banco (sqlc, esquema, transação),<br/>respostas, tipos, texto e relógio"]
+        base["Base<br/>[Componentes]<br/>Banco (esquema, transação),<br/>respostas, tipos, texto e relógio"]
     end
 
     banco[("Banco<br/>[SQLite em WAL]")]
@@ -71,7 +71,7 @@ Os pacotes de `src/backend`, cada um em um componente só. O componente é o pap
 
 | Componente | Pacotes | O que fazem | Grupo no teste |
 |---|---|---|---|
-| Ponto de entrada | `cmd/financas` | As opções (`-aplicar-esquema`, `-rotinas-de-partida`), a ligação das peças e o subcomando `gerar-certificado`. | montador |
+| Ponto de entrada | `cmd/financas` | As opções (`-aplicar-esquema`, `-rotinas-de-partida`), a ligação das peças e o subcomando `preparar-https`. | montador |
 | Cálculo da versão | `cmd/versao` | O programa que dá o número da versão (ADR 0070): parte do `<VersaoBase>` do `Directory.Build.props` e sobe a cada merge do `develop` pelo tipo do título do PR; monta o CHANGELOG do que ainda não foi publicado a partir de `changelog.d/` e a seção da publicação. Fica fora do site: só a biblioteca padrão e o `git`; quem o chama são os scripts de instalação, o `gerar-msi.ps1`, o workflow do `.msi`, o contrato e o gerenciador. | montador |
 | Serviço do sistema | `internal/plataforma/servicosistema` | Roda como Serviço do Windows ou systemd e para com o sinal. | base |
 | Servidor | `internal/plataforma/servidor` | HTTPS local, filtro de hosts, cabeçalhos de segurança (a CSP), pânico, limite de 1 MB no corpo, os arquivos do site e o certificado. | base |
@@ -88,7 +88,7 @@ Os pacotes de `src/backend`, cada um em um componente só. O componente é o pap
 | Módulo Notícias | `internal/modulos/noticias`, `internal/modulos/noticias/fontes` | O módulo das notícias (#10, ADR 0067): o `noticias` implementa o contrato, guarda as notícias e tem a tarefa de 45 minutos; o `fontes` busca e lê o RSS do G1 e da BBC News Brasil e a API do TabNews, com as defesas da ADR. Rotas em `/api/noticias`. | módulo |
 | Clientes de fora | `internal/openfinance/pluggy`, `internal/patrimonio/cotacoes`, `internal/patrimonio/selic` | HTTPS para a Pluggy (ADR 0006), o Yahoo Finance e a Selic do Banco Central. A PTAX e a Binance moram no `cambio` e no `cripto`. | assunto |
 | Transversais | `internal/plataforma/auditoria`, `internal/plataforma/configuracao`, `internal/plataforma/erros`, `internal/plataforma/segredos`, `internal/plataforma/versao` | Auditoria, a tabela `Configuracao`, os erros do sistema (ADR 0022, com as rotas de Configurações › Erros), os segredos cifrados e a versão. | transversal |
-| Base | `internal/plataforma/banco`, `internal/plataforma/banco/consultas`, `internal/plataforma/banco/esquema`, `internal/plataforma/banco/esquema/embutido`, `internal/plataforma/config`, `internal/plataforma/relogio`, `internal/plataforma/respostas`, `internal/plataforma/texto`, `internal/plataforma/tipos` | O SQLite em WAL, a transação, as consultas do `sqlc`, o esquema ao iniciar com a cópia embutida dos scripts, os appsettings, o fuso de Brasília, as respostas HTTP de sempre e os tipos no formato do banco. | base |
+| Base | `internal/plataforma/banco`, `internal/plataforma/banco/esquema`, `internal/plataforma/banco/esquema/embutido`, `internal/plataforma/config`, `internal/plataforma/relogio`, `internal/plataforma/respostas`, `internal/plataforma/texto`, `internal/plataforma/tipos` | O SQLite em WAL, a transação, o esquema ao iniciar com a cópia embutida dos scripts, os appsettings, o fuso de Brasília, as respostas HTTP de sempre e os tipos no formato do banco. | base |
 | Só para teste e geração | `internal/arquitetura`, `internal/plataforma/testeapoio`, `internal/plataforma/banco/esquema/gerar`, `testes/contrato`, `testes/contrato/pluggyfalsa` | O teste de arquitetura, o apoio aos testes, o `go generate` da cópia embutida e os casos de contrato com a Pluggy falsa. Nada disso entra no executável. | montador ou base |
 
 ### Onde fica a regra de cada assunto

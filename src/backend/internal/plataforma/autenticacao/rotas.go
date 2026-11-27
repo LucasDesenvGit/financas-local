@@ -13,7 +13,6 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -34,7 +33,7 @@ type estadoDto struct {
 	Versao      string  `json:"versao"`
 }
 
-// auditoriaDto é a AuditoriaAcesso como o .NET a devolve (a entidade, em camelCase).
+// auditoriaDto é a AuditoriaAcesso a devolve (a entidade, em camelCase).
 type auditoriaDto struct {
 	Id        int64          `json:"id"`
 	DataHora  tipos.DataHora `json:"dataHora"`
@@ -57,7 +56,7 @@ func (a *Autenticacao) Registrar(mux *http.ServeMux) {
 // estado diz se já há usuário e se a sessão está ativa, e emite o token CSRF.
 func (a *Autenticacao) estado(w http.ResponseWriter, r *http.Request) {
 	req := daRequisicao(r.Context())
-	configurado, err := a.q.ExisteUsuario(r.Context())
+	configurado, err := existeUsuario(r.Context(), a.o.DB)
 	if err != nil {
 		a.erroInterno(w, r, "estado", err)
 		return
@@ -82,7 +81,7 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	existe, err := a.q.ExisteUsuario(ctx)
+	existe, err := existeUsuario(ctx, a.o.DB)
 	if err != nil {
 		a.erroInterno(w, r, "configurar", err)
 		return
@@ -102,18 +101,14 @@ func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	agora := a.agoraDb()
-	usuario := consultas.Usuario{Login: loginLimpo, SenhaHash: hash, CarimboSeguranca: tipos.NovoGuid(), UltimoLoginEm: &agora, CriadoEm: agora}
+	usuario := Usuario{Login: loginLimpo, SenhaHash: hash, CarimboSeguranca: tipos.NovoGuid(), UltimoLoginEm: &agora, CriadoEm: agora}
 	err = banco.EmTransacao(ctx, a.o.DB, func(tx *sql.Tx) error {
-		q := a.q.WithTx(tx)
-		id, err := q.InserirUsuario(ctx, consultas.InserirUsuarioParams{
-			Login: usuario.Login, SenhaHash: usuario.SenhaHash, CarimboSeguranca: usuario.CarimboSeguranca,
-			UltimoLoginEm: usuario.UltimoLoginEm, CriadoEm: usuario.CriadoEm,
-		})
+		id, err := inserirUsuario(ctx, tx, usuario)
 		usuario.Id = id
 		if err != nil {
 			return err
 		}
-		return a.auditar(ctx, q, r, "Configuracao", &loginLimpo)
+		return a.auditar(ctx, tx, r, "Configuracao", &loginLimpo)
 	})
 	if err != nil {
 		a.erroInterno(w, r, "configurar", err)
@@ -135,11 +130,11 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	loginLimpo := strings.TrimSpace(*login.Valor)
-	usuario, err := a.q.ObterUsuarioPorLogin(ctx, loginLimpo)
+	usuario, err := usuarioPorLogin(ctx, a.o.DB, loginLimpo)
 	if errors.Is(err, sql.ErrNoRows) {
 		// Confere a senha mesmo assim, contra um hash qualquer: o tempo da resposta não revela se o usuário existe.
 		VerificarHash(a.hashDeMentira(), *senha.Valor)
-		if err := a.auditar(ctx, a.q, r, "LoginFalha", &loginLimpo); err != nil {
+		if err := a.auditar(ctx, a.o.DB, r, "LoginFalha", &loginLimpo); err != nil {
 			a.erroInterno(w, r, "auditar", err)
 			return
 		}
@@ -153,7 +148,7 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 
 	agora := a.o.Relogio.Agora()
 	if usuario.BloqueadoAte != nil && usuario.BloqueadoAte.Tempo().After(agora) {
-		if err := a.auditar(ctx, a.q, r, "LoginBloqueado", &loginLimpo); err != nil {
+		if err := a.auditar(ctx, a.o.DB, r, "LoginBloqueado", &loginLimpo); err != nil {
 			a.erroInterno(w, r, "auditar", err)
 			return
 		}
@@ -208,7 +203,7 @@ func (a *Autenticacao) sair(w http.ResponseWriter, r *http.Request) {
 	req := daRequisicao(r.Context())
 	if req.sessao != nil {
 		login := req.sessao.Login
-		if err := a.auditar(r.Context(), a.q, r, "Logout", &login); err != nil {
+		if err := a.auditar(r.Context(), a.o.DB, r, "Logout", &login); err != nil {
 			a.erroInterno(w, r, "auditar", err)
 			return
 		}
@@ -231,7 +226,7 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	req := daRequisicao(ctx)
-	usuario, err := a.q.ObterUsuarioPorId(ctx, req.usuario())
+	usuario, err := usuarioPorId(ctx, a.o.DB, req.usuario())
 	if err != nil {
 		a.erroInterno(w, r, "alterar a senha", err)
 		return
@@ -263,21 +258,17 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 
 // auditoria devolve os 100 registros mais novos.
 func (a *Autenticacao) auditoria(w http.ResponseWriter, r *http.Request) {
-	registros, err := a.q.ListarAuditoria(r.Context())
+	registros, err := ultimosAcessos(r.Context(), a.o.DB)
 	if err != nil {
 		a.erroInterno(w, r, "auditoria", err)
 		return
 	}
-	saida := make([]auditoriaDto, 0, len(registros)) // lista vazia sai [], nunca null
-	for _, x := range registros {
-		saida = append(saida, auditoriaDto{Id: x.Id, DataHora: x.DataHora, Evento: x.Evento, Login: x.Login, Ip: x.Ip, UserAgent: x.UserAgent})
-	}
-	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, saida)
+	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, registros)
 }
 
 // iniciarSessao é o EntrarAsync: cookie de sessão novo e o token CSRF reemitido para o usuário (ele é ligado a quem
 // está logado).
-func (a *Autenticacao) iniciarSessao(w http.ResponseWriter, req *requisicao, u consultas.Usuario) error {
+func (a *Autenticacao) iniciarSessao(w http.ResponseWriter, req *requisicao, u Usuario) error {
 	agora := a.o.Relogio.Agora()
 	s := conteudoSessao{Usuario: u.Id, Login: u.Login, Carimbo: u.CarimboSeguranca, Emitido: agora.Unix(), Expira: agora.Add(a.duracao).Unix()}
 	definirSessao(w, a.o.Chave, s)
@@ -300,22 +291,18 @@ func (a *Autenticacao) emitirCsrf(w http.ResponseWriter, req *requisicao) error 
 	return nil
 }
 
-// salvarComAuditoria grava o usuário e o registro de auditoria juntos, como o SaveChanges do .NET.
-func (a *Autenticacao) salvarComAuditoria(ctx context.Context, r *http.Request, u consultas.Usuario, evento string, login *string) error {
+// salvarComAuditoria grava o usuário e o registro de auditoria juntos.
+func (a *Autenticacao) salvarComAuditoria(ctx context.Context, r *http.Request, u Usuario, evento string, login *string) error {
 	return banco.EmTransacao(ctx, a.o.DB, func(tx *sql.Tx) error {
-		q := a.q.WithTx(tx)
-		if err := q.AtualizarUsuario(ctx, consultas.AtualizarUsuarioParams{
-			SenhaHash: u.SenhaHash, CarimboSeguranca: u.CarimboSeguranca, TentativasFalhas: u.TentativasFalhas,
-			BloqueadoAte: u.BloqueadoAte, UltimoLoginEm: u.UltimoLoginEm, Id: u.Id,
-		}); err != nil {
+		if err := atualizarUsuario(ctx, tx, u); err != nil {
 			return err
 		}
-		return a.auditar(ctx, q, r, evento, login)
+		return a.auditar(ctx, tx, r, evento, login)
 	})
 }
 
 // auditar grava o evento na auditoria, com a hora do relógio da autenticação.
-func (a *Autenticacao) auditar(ctx context.Context, q *consultas.Queries, r *http.Request, evento string, login *string) error {
+func (a *Autenticacao) auditar(ctx context.Context, q banco.DBTX, r *http.Request, evento string, login *string) error {
 	return auditoria.Registrar(ctx, q, r, a.agoraDb(), evento, login)
 }
 
@@ -331,20 +318,19 @@ func (a *Autenticacao) parametros(ctx context.Context) (maximo, minutos int, err
 
 func (a *Autenticacao) inteiro(ctx context.Context, chave string, padrao, minimo, maximo int) (int, error) {
 	valor := padrao
-	c, err := a.q.ObterConfiguracao(ctx, chave)
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-	case err != nil:
+	gravado, err := valorDaConfiguracao(ctx, a.o.DB, chave)
+	if err != nil {
 		return 0, err
-	case c.Valor != nil:
-		if n, err := strconv.Atoi(strings.TrimSpace(*c.Valor)); err == nil {
+	}
+	if gravado != nil {
+		if n, err := strconv.Atoi(strings.TrimSpace(*gravado)); err == nil {
 			valor = n
 		}
 	}
 	return min(max(valor, minimo), maximo), nil
 }
 
-// hashDeMentira é o _hashFicticio do .NET: o hash de uma senha aleatória, feito uma vez só.
+// hashDeMentira: o hash de uma senha aleatória, feito uma vez só.
 func (a *Autenticacao) hashDeMentira() string {
 	a.hashFicticioUmaVez.Do(func() {
 		a.hashFicticio, _ = GerarHash(tipos.NovoGuid().String())

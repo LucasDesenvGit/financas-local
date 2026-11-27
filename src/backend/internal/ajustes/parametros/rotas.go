@@ -12,7 +12,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Registrar põe as rotas do ParametrosController no mux. Login e CSRF são de quem está na frente (o .NET, ou a
+// Registrar põe as rotas dos parâmetros no mux. Login e CSRF são de quem está na frente (a
 // autenticação do Go sozinho): aqui só chega quem passou.
 func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("GET /api/parametros", s.listar)
@@ -57,13 +57,12 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	err := banco.EmTransacao(ctx, s.o.DB, func(tx *sql.Tx) error {
-		q := s.q.WithTx(tx)
-		login, err := auditoria.Login(ctx, q)
+		login, err := auditoria.Login(ctx, tx)
 		if err != nil {
 			return err
 		}
-		// Como no .NET, a auditoria é registrada antes dos valores, e as duas coisas vão juntas no mesmo SaveChanges.
-		if err := auditoria.Registrar(ctx, q, r, tipos.NovaDataHora(s.o.Relogio.Agora()), "ParametrosAlterados", login); err != nil {
+		// A auditoria é registrada antes dos valores, e as duas coisas vão juntas, numa gravação só.
+		if err := auditoria.Registrar(ctx, tx, r, tipos.NovaDataHora(s.o.Relogio.Agora()), "ParametrosAlterados", login); err != nil {
 			return err
 		}
 		return s.gravar(ctx, tx, dto.valores)

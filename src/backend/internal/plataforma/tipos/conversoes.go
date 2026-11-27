@@ -7,14 +7,14 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// dois64 é 2^64 em float64: o que o (double)decimal do .NET usa para juntar as duas partes do número.
+// dois64 é 2^64 em float64: o que junta as duas partes do número.
 const dois64 = 1.8446744073709552e+19
 
 // mascara64 são os 64 bits de baixo do número sem a vírgula.
 var mascara64 = new(big.Int).SetUint64(math.MaxUint64)
 
-// ParaFloat64 é o (double)decimal do .NET. Não é para dinheiro: existe porque o fator da Selic é calculado em double no
-// C#, e o mesmo número só sai com as mesmas contas. O float64(...) no meio impede o compilador de fundir a multiplicação
+// ParaFloat64 converte para double. Não é para dinheiro: existe porque o fator da Selic é calculado em double,
+// e o mesmo número só sai com as mesmas contas. O float64(...) no meio impede o compilador de fundir a multiplicação
 // com a soma numa só operação (FMA), que arredondaria uma vez a menos.
 func (d Decimal) ParaFloat64() float64 {
 	c := new(big.Int).Abs(d.v.Coefficient())
@@ -27,7 +27,7 @@ func (d Decimal) ParaFloat64() float64 {
 	return f
 }
 
-// DecimalDeFloat64 é o (decimal)double do .NET (o VarDecFromR8), que guarda só 15 dígitos significativos: arredonda o
+// DecimalDeFloat64 converte um double e guarda só 15 dígitos significativos: arredonda o
 // número para um inteiro de 15 dígitos e tira os zeros à direita. Fora do decimal (NaN e infinito inclusive), ErrEstouro.
 func DecimalDeFloat64(x float64) (Decimal, error) {
 	// A escala máxima é 10^28, pouco mais de 2^93: com o expoente abaixo de -94, o número arredonda para zero.
@@ -76,12 +76,12 @@ func decimalDoSinal(m *big.Int, x float64, casas int) Decimal {
 	return Decimal{v: decimal.NewFromBigInt(m, int32(-casas))}
 }
 
-// ehEspaco é o espaço do parser de números do .NET: só o espaço e os controles de \t a \r.
+// ehEspaco: só o espaço e os controles de \t a \r.
 func ehEspaco(c byte) bool { return c == ' ' || (c >= '\t' && c <= '\r') }
 
 // LerNumero é o decimal.TryParse com NumberStyles.Number e a cultura invariante: espaços nas pontas, um sinal antes ou
 // depois do número, ponto decimal e vírgula de milhar depois do primeiro dígito. Casas demais arredondam pelo método
-// bancário, e o número que não cabe no decimal do C# é recusado.
+// bancário, e o número que não cabe no decimal é recusado.
 func LerNumero(texto string) (Decimal, bool) {
 	i, n := 0, len(texto)
 	for i < n && ehEspaco(texto[i]) {
@@ -141,7 +141,7 @@ numero:
 }
 
 // caber arredonda o número m / 10^casas pelo método bancário para a maior escala, até 28, em que ele cabe nos 96 bits do
-// decimal do C#, como as contas do C# fazem. Tira as casas sempre a partir do número inteiro, para não arredondar duas
+// decimal. Tira as casas sempre a partir do número inteiro, para não arredondar duas
 // vezes. false se nem sem casas ele couber.
 func caber(m *big.Int, casas int) (*big.Int, int, bool) {
 	for escala := min(casas, casasMaximas); escala >= 0; escala-- {

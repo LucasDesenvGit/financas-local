@@ -15,10 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 # #255 (ADR 0047): o antigo job "build" virou quatro, em paralelo (o tempo do PR é o do mais lento, não a soma):
-# "o que mudou" decide; "API e banco", "front-end: Jest" e "front-end: navegador" (em 2 partes) rodam juntos. No PR, só
-# os testes afetados pelo que mudou; no push do develop/main, tudo. #231 (ADR 0049): o job "Go" roda junto, só quando
-# o PR mexe no que o Go lê. Caches: node_modules, build do Angular, Jest e o Chromium do Playwright. #86: sem o
-# .NET; o contrato e o teste de inicialização sobem o Go.
+# "o que mudou" decide; "API e banco", "front-end: Jest" e "front-end: navegador" (em 2 partes) rodam juntos. O
+# front-end roda inteiro quando muda (#774). #231 (ADR 0049): o job "Go" roda junto, só quando o PR mexe no que o Go
+# lê. Caches: node_modules, build do Angular, Jest e o Chromium do Playwright. #86: sem o .NET; o contrato e o teste de
+# inicialização sobem o Go.
 jobs:
   # #177: aviso (não bloqueia) quando o PR muda telas ou endpoints sem atualizar o Manual do site.
   # ADR 0070: a versão é calculada no build (não há mais o check "versão subiu"), e o CHANGELOG é um arquivo por PR em
@@ -48,16 +48,13 @@ jobs:
       - name: Teste das notas dos Releases
         run: python3 -B scripts/ci/versao/test_notas.py
 
-  # #255: no PR, o que rodar (scripts/ci/front/testes-afetados.py); fora do PR, tudo. O porquê vai no resumo da execução.
+  # #255: no PR, quais jobs rodar pelo que mudou; fora do PR, todos. O porquê vai no resumo da execução.
   mudancas:
     name: o que mudou
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      frontend: ${{ steps.afetados.outputs.frontend }}
-      tudo: ${{ steps.afetados.outputs.tudo }}
-      playwright: ${{ steps.afetados.outputs.playwright }}
-      jest: ${{ steps.afetados.outputs.jest }}
+      frontend: ${{ steps.frontend.outputs.frontend }}
       go: ${{ steps.go.outputs.go }}
       gerenciador: ${{ steps.gerenciador.outputs.gerenciador }}
       contrato: ${{ steps.contrato.outputs.contrato }}
@@ -65,16 +62,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Testes afetados
-        id: afetados
+      # #774 (ADR 0047): Jest e navegador rodam inteiros quando o front-end muda; escolher os afetados não poupava
+      # tempo. A CSP que os testes no navegador aplicam vem do intermediarios.go (ADR 0041).
+      - name: Front-end afetado
+        id: frontend
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            python3 scripts/ci/front/testes-afetados.py --base "origin/${{ github.base_ref }}"
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
+              grep -qE '^(src/frontend/|src/backend/internal/plataforma/servidor/intermediarios\.go$|\.github/workflows/ci\.yml$)'; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
           else
-            python3 scripts/ci/front/testes-afetados.py
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+            echo "O front-end não mudou: Jest e navegador ficam de fora." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      # #231: o Go também lê o esquema (banco/, 2-criar-banco.sh).
+      # #231: o Go também lê o esquema (banco/).
       # #370/#371: e os scripts da cobertura e do tempo, que rodam no job dele. #457: e o das regras de ouro, com a lista
       # de exceções e o teste dele.
       - name: Go afetado
@@ -83,7 +86,7 @@ jobs:
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
-              grep -qE '^(src/backend/|banco/|scripts/geral/2-criar-banco\.sh$|scripts/ci/go/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
+              grep -qE '^(src/backend/|banco/|scripts/ci/go/(verificar-(cobertura|tempo-testes|regras)-go\.py|test_verificar_regras_go\.py|regras-go-excecoes\.txt)$|\.github/workflows/ci\.yml$)'; then
             echo "go=true" >> "$GITHUB_OUTPUT"
           else
             echo "go=false" >> "$GITHUB_OUTPUT"
@@ -111,7 +114,7 @@ jobs:
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "contrato=true" >> "$GITHUB_OUTPUT"
           elif git diff --name-only "origin/${{ github.base_ref }}...HEAD" |
-              grep -qE '^(src/backend/|banco/|scripts/geral/(2-criar-banco|comum)\.sh$|\.github/workflows/ci\.yml$)'; then
+              grep -qE '^(src/backend/|banco/|\.github/workflows/ci\.yml$)'; then
             echo "contrato=true" >> "$GITHUB_OUTPUT"
           else
             echo "contrato=false" >> "$GITHUB_OUTPUT"
@@ -153,6 +156,7 @@ jobs:
           rm -f /tmp/ci-financaslocal.db
           sqlite3 /tmp/ci-financaslocal.db < banco/01-estrutura.sql
           sqlite3 /tmp/ci-financaslocal.db < banco/02-dados-iniciais.sql
+          sqlite3 /tmp/ci-financaslocal.db < banco/03-tabelas-oficiais.sql
 
   # #231 (ADR 0049): o back-end em Go. Os mesmos comandos do "Antes de subir" do src/backend/README.md.
   go:
@@ -212,7 +216,7 @@ jobs:
           fi
           python3 ../../scripts/ci/go/verificar-cobertura-go.py "$RUNNER_TEMP/cobertura.out" cobertura-minima.txt "${base[@]}"
 
-      # O sqlc compila com cgo (o gcc já vem no runner). Falha se uma consulta .sql mudou sem gerar o código Go.
+      # Falha se a cópia embutida dos scripts do banco/ ficou velha (a #723 pode tirar este passo).
       - name: Código gerado em dia (go generate)
         run: |
           go generate ./...
@@ -445,7 +449,7 @@ jobs:
 
       - name: Testes do front-end (Jest)
         working-directory: src/frontend
-        run: npm test -- --ci --cacheDirectory=.jest-cache --json --outputFile=jest-resultado.json ${{ needs.mudancas.outputs.jest }}
+        run: npm test -- --ci --cacheDirectory=.jest-cache --json --outputFile=jest-resultado.json
 
       # #204: trava de desempenho. Arquivo de teste acima de 20 s ou suíte acima de 150 s falha (aviso a partir de
       # 10 s por arquivo). Ver "Testes rápidos" no CONTRIBUINDO.md.
@@ -506,11 +510,10 @@ jobs:
         working-directory: src/frontend
         run: npx playwright install --with-deps chromium
 
-      # #255: os testes divididos em 2 partes, em máquinas diferentes; no PR, só os afetados (a parte que não tem nenhum
-      # passa sem rodar nada).
+      # #255: os testes divididos em 2 partes, em máquinas diferentes.
       - name: Testes no navegador (Playwright)
         working-directory: src/frontend
-        run: npx playwright test --shard=${{ matrix.parte }}/2 --pass-with-no-tests ${{ needs.mudancas.outputs.playwright }}
+        run: npx playwright test --shard=${{ matrix.parte }}/2
 
       - name: Relatório dos testes no navegador
         if: failure()

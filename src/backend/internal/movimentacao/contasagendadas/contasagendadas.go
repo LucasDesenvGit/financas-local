@@ -1,4 +1,4 @@
-// Package contasagendadas são as contas a pagar (#79): o ContasAgendadasController do C# (as 9 rotas de
+// Package contasagendadas são as contas a pagar (#79, as 9 rotas de
 // /api/contas-agendadas), os avisos das recorrentes (#158, ADR 0043) e as sugestões do extrato (#62, #205, #241). A
 // conciliação com o extrato fica no internal/movimentacao/cobrancas, que a partida (#444) e a sincronização (#83) também chamam.
 package contasagendadas
@@ -22,13 +22,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
-)
-
-// origemManual e origemOpenFinance são a OrigemConta: o "Pagar" lança a despesa na manual, e na do Open Finance só
-// pelo cofrinho (#691; sem ele, a despesa chega pela sincronização).
-const (
-	origemManual      = 1
-	origemOpenFinance = 2
 )
 
 // Servico são as contas a pagar.
@@ -63,7 +56,7 @@ func (s *Servico) hoje() tipos.Data { return relogio.Hoje(s.relogio) }
 
 func (s *Servico) agora() tipos.DataHora { return tipos.NovaDataHora(s.relogio.Agora()) }
 
-// idDaRota é o {id:int} do C#: o que não é número de 32 bits não casa com a rota, e a resposta é 404 sem corpo.
+// idDaRota: o que não é número de 32 bits não casa com a rota, e a resposta é 404 sem corpo.
 func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(strings.TrimPrefix(r.PathValue("id"), "+"), 10, 32)
 	if err != nil {
@@ -73,7 +66,7 @@ func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	return id, true
 }
 
-// erroInterno é o 500 do .NET, com o erro no log; requisição cancelada não responde nem registra.
+// erroInterno responde 500, com o erro no log; requisição cancelada não responde nem registra.
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
 	if errors.Is(err, context.Canceled) || r.Context().Err() != nil {
 		return
@@ -145,7 +138,7 @@ func (s *Servico) ultimosSemDespesa(ctx context.Context, hoje tipos.Data) (map[i
 		FROM "ContaAgendada" AS a INNER JOIN "Conta" AS c ON c."Id" = a."ContaId"
 		WHERE a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND NOT c."Arquivada" AND c."IncluirNoSaldo"
 		AND a."UltimoPagamentoEm" IS NOT NULL
-		AND a."UltimoPagamentoEm" >= ? AND a."UltimoPagamentoEm" <= ?`, origemOpenFinance, hoje.SomarDias(-diasSemDespesa), hoje)
+		AND a."UltimoPagamentoEm" >= ? AND a."UltimoPagamentoEm" <= ?`, tipos.OrigemOpenFinance, hoje.SomarDias(-diasSemDespesa), hoje)
 	if err != nil {
 		return nil, fmt.Errorf("ler os pagamentos pelo cofrinho sem despesa: %w", err)
 	}
@@ -465,7 +458,7 @@ func (s *Servico) criar(w http.ResponseWriter, r *http.Request) {
 	s.salvar(w, r, 0, d)
 }
 
-// atualizar é o PUT: a conta a pagar que não existe é 404, antes da validação (como no C#).
+// atualizar é o PUT: a conta a pagar que não existe é 404, antes da validação.
 func (s *Servico) atualizar(w http.ResponseWriter, r *http.Request) {
 	id, ok := idDaRota(w, r)
 	if !ok {
@@ -561,7 +554,7 @@ func (s *Servico) ligarExtrato(w http.ResponseWriter, r *http.Request) {
 	if !respostas.LerObjeto(w, r, &chave) {
 		return
 	}
-	// O "Informe a sugestão do extrato." do C# não chega a valer: o [Required] já recusa a chave só com espaços.
+	// O "Informe a sugestão do extrato." não chega a valer: o [Required] já recusa a chave só com espaços.
 	s.mudarChave(w, r, id, aparado(chave.Valor))
 }
 
@@ -596,7 +589,7 @@ func (s *Servico) excluir(w http.ResponseWriter, r *http.Request) {
 	s.responderAlteradas(w, r, res)
 }
 
-// responderAlteradas: nenhuma linha alterada é 404 (o ExecuteUpdate e o ExecuteDelete do C#).
+// responderAlteradas: nenhuma linha alterada é 404.
 func (s *Servico) responderAlteradas(w http.ResponseWriter, r *http.Request, res sql.Result) {
 	n, err := res.RowsAffected()
 	switch {
@@ -651,7 +644,9 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	escolhido := aparado(reserva.Valor)
-	if escolhido != nil && (!lancar.Valor || origem != origemOpenFinance || c.FormaCobranca == relatorios.FormaCartaoCredito) {
+	// O "Pagar" lança a despesa na conta manual, e na do Open Finance só pelo cofrinho (#691; sem ele, a despesa chega
+	// pela sincronização).
+	if escolhido != nil && (!lancar.Valor || origem != tipos.OrigemOpenFinance || c.FormaCobranca == relatorios.FormaCartaoCredito) {
 		respostas.Mensagem(w, http.StatusBadRequest, "O pagamento pelo cofrinho lança a despesa numa conta do Open Finance, "+
 			"fora do cartão.")
 		return
@@ -662,8 +657,8 @@ func (s *Servico) pagar(w http.ResponseWriter, r *http.Request) {
 		c.ReservaNome = escolhido
 		desde = reservaDesde(antes, c, s.hoje())
 	}
-	peloCofrinho := lancar.Valor && c.ReservaNome != nil && origem == origemOpenFinance
-	if lancar.Valor && !peloCofrinho && origem != origemManual {
+	peloCofrinho := lancar.Valor && c.ReservaNome != nil && origem == tipos.OrigemOpenFinance
+	if lancar.Valor && !peloCofrinho && origem != tipos.OrigemManual {
 		respostas.Mensagem(w, http.StatusBadRequest, "Para lançar a despesa, vincule uma conta manual. Em contas do Open "+
 			"Finance o pagamento chega pela sincronização.")
 		return

@@ -7,7 +7,7 @@ import (
 // DiasRecentes é até quantos dias para trás uma parcela conta como "recente" (base da projeção).
 const DiasRecentes = 45
 
-// Parcela é uma parcela de compra no cartão, como o ParcelasFuturas.Parcela do C#.
+// Parcela é uma parcela de compra no cartão.
 type Parcela struct {
 	Id            int64
 	ContaId       int64
@@ -41,10 +41,10 @@ func chaveDe(p Parcela) chave {
 	return chave{p.ContaId, p.Total, reais, Compra(p.Descricao)}
 }
 
-// Projetar é o ParcelasFuturas.Projetar do C# (#165): as parcelas com data depois de hoje entram como são (o banco já
+// Projetar (#165): as parcelas com data depois de hoje entram como são (o banco já
 // mandou); de cada compra, só a parcela de maior número projeta as que faltam, mês a mês, as que caem depois de hoje.
 // parcelas são as de qualquer conta com data a partir de hoje − DiasRecentes, inclusive as de data futura. As
-// compras saem na ordem em que aparecem (o GroupBy do LINQ), e a de maior número é a primeira delas (o MaxBy).
+// compras saem na ordem em que aparecem, e a de maior número é a primeira delas.
 func Projetar(parcelas []Parcela, hoje tipos.Data) []Futura {
 	var validas []Parcela
 	for _, p := range parcelas {

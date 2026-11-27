@@ -8,8 +8,6 @@ Confere o que vira CHANGELOG (ADR 0070, #294):
    ./cmd/versao), e quem escreve a entrada não sabe qual vai ser. O LEIA-ME.md da pasta não é entrada.
 2. No PR (com TITULO_PR e BASE): título feat ou fix traz um arquivo novo em changelog.d/. As outras (CI, testes,
    documentação interna, Dependabot) podem não ter; as notas as listam pelo título.
-3. CHANGELOG.md (o histórico e as seções que o lancar-versao.sh junta): sem título de tipo repetido na mesma versão,
-   sem versão repetida e as versões em ordem (a mais nova em cima).
 
    Cada entrada tem até ~60 palavras para quem usa; o que passa disso (o sub-item "  - Técnico: ..." não conta) é só
    aviso, nunca barra (#722, "Simples e enxuto").
@@ -18,9 +16,9 @@ As notas dos Releases e a janela "O que mudou" do gerenciador saem destes arquiv
 para quem atualiza.
 
 Uso na CI:   BASE=develop TITULO_PR="fix(api): ..." python3 scripts/ci/versao/verificar-changelog.py
-Local:       python3 scripts/ci/versao/verificar-changelog.py            (sem BASE e TITULO_PR, só os itens 1 e 3)
-Corrigir:    python3 scripts/ci/versao/verificar-changelog.py --corrigir  (junta os tipos repetidos do CHANGELOG.md, na
-                                                                      ordem em que cada um apareceu primeiro)
+Local:       python3 scripts/ci/versao/verificar-changelog.py            (sem BASE e TITULO_PR, só o item 1)
+
+O CHANGELOG.md só o `cmd/versao -publicar` escreve (#721): este script não o confere.
 """
 import io
 import os
@@ -133,92 +131,7 @@ def problemas_do_pr(titulo, novos):
     return []
 
 
-# ---- CHANGELOG.md -----------------------------------------------------------------------------------------------
-
-
-def partes(texto):
-    """[(cabeçalho da versão ou None, [linhas antes do primeiro ###], [(título ###, [linhas])])]."""
-    versoes = []
-    atual = None
-    for linha in texto.split('\n'):
-        if linha.startswith('## '):
-            atual = [linha, [], []]
-            versoes.append(atual)
-        elif atual is None:
-            versoes.append(atual := [None, [linha], []])
-        elif linha.startswith('### '):
-            atual[2].append([linha.strip(), []])
-        elif atual[2]:
-            atual[2][-1][1].append(linha)
-        else:
-            atual[1].append(linha)
-    return versoes
-
-
-def repetidas(versoes):
-    achadas = []
-    for cabecalho, _, secoes in versoes:
-        vistos = set()
-        for titulo, _ in secoes:
-            if titulo in vistos:
-                achadas.append((cabecalho, titulo))
-            vistos.add(titulo)
-    return achadas
-
-
-def juntar(versoes):
-    linhas = []
-    for cabecalho, antes, secoes in versoes:
-        if cabecalho is not None:
-            linhas.append(cabecalho)
-        linhas.extend(antes)
-        ordem, corpo = [], {}
-        for titulo, conteudo in secoes:
-            if titulo not in corpo:
-                ordem.append(titulo)
-                corpo[titulo] = []
-            # Sem as linhas em branco das pontas: entre as partes juntadas não fica buraco.
-            while conteudo and not conteudo[-1].strip():
-                conteudo = conteudo[:-1]
-            while conteudo and not conteudo[0].strip():
-                conteudo = conteudo[1:]
-            corpo[titulo].extend(conteudo)
-        for titulo in ordem:
-            linhas.append(titulo)
-            linhas.extend(corpo[titulo])
-            linhas.append('')
-    return '\n'.join(linhas).rstrip('\n') + '\n'
-
-
-def problemas_de_versao(versoes):
-    """Versão repetida ou fora de ordem (a mais nova em cima)."""
-    numeros = []
-    for cabecalho, _, _ in versoes:
-        m = re.match(r'## \[(\d+)\.(\d+)\.(\d+)\]', cabecalho or '')
-        if m:
-            numeros.append((tuple(int(x) for x in m.groups()), cabecalho))
-    achados, vistos = [], set()
-    for (numero, cabecalho), (seguinte, _) in zip(numeros, numeros[1:] + [((-1,), None)]):
-        if numero in vistos:
-            achados.append(f'versão repetida: {cabecalho}')
-        vistos.add(numero)
-        if seguinte >= numero:
-            achados.append(f'fora de ordem (a mais nova vai em cima): {cabecalho}')
-    return achados
-
-
 def main():
-    arquivo = os.path.join(RAIZ, 'CHANGELOG.md')
-    versoes = partes(ler(arquivo))
-    achadas = repetidas(versoes)
-    if '--corrigir' in sys.argv:
-        if achadas:
-            io.open(arquivo, 'w', encoding='utf-8', newline='\n').write(juntar(versoes))
-            print(f'CHANGELOG.md: {len(achadas)} seção(ões) repetida(s) juntada(s).')
-        else:
-            print('CHANGELOG.md: nada a juntar.')
-        return 0
-
     erros = []
     arquivos, erros_de_lugar = entradas()
     erros += erros_de_lugar
@@ -229,15 +142,12 @@ def main():
     base, titulo = os.environ.get('BASE'), os.environ.get('TITULO_PR')
     if base and titulo is not None:
         erros += problemas_do_pr(titulo, arquivos_novos(f'origin/{base}'))
-    erros += [f'CHANGELOG.md: {e}' for e in problemas_de_versao(versoes)]
-    erros += [f'CHANGELOG.md: título repetido na mesma versão ({c}: "{t}"); a entrada vai DENTRO da seção que já existe '
-              f'(python3 scripts/ci/versao/verificar-changelog.py --corrigir)' for c, t in achadas]
     if erros:
-        print('CHANGELOG fora do formato:')
+        print('changelog.d/ fora do formato:')
         for e in erros:
             print(f'  - {e}')
         return 1
-    print(f'OK: {len(arquivos)} arquivo(s) em {PASTA}/ e o CHANGELOG.md em ordem.')
+    print(f'OK: {len(arquivos)} arquivo(s) em {PASTA}/.')
     return 0
 
 

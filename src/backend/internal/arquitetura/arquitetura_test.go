@@ -55,7 +55,7 @@ const apoioAosTestes = "internal/plataforma/testeapoio"
 var proibidosNaRegra = []string{"net/http", "internal/plataforma/respostas", "internal/plataforma/servidor"}
 
 var regraSemHTTP = []string{
-	"internal/plataforma/banco", "internal/plataforma/banco/consultas", "internal/movimentacao/bancos", "internal/ajustes/categorizacao", "internal/movimentacao/cobrancas",
+	"internal/plataforma/banco", "internal/movimentacao/bancos", "internal/ajustes/categorizacao", "internal/movimentacao/cobrancas",
 	"internal/plataforma/configuracao",
 	"internal/plataforma/desfazer", "internal/patrimonio/emprestimos", "internal/movimentacao/faturas", "internal/movimentacao/parcelas", "internal/movimentacao/poucoinformativa",
 	"internal/ajustes/regrasdescricao", "internal/analises/relatorios", "internal/plataforma/relogio", "internal/plataforma/segredos", "internal/movimentacao/sugestoes",
@@ -73,7 +73,7 @@ var regraComHTTPPorEnquanto = map[string]string{
 var (
 	// base: o que qualquer pacote pode importar (banco, tipos, relógio, HTTP comum, texto, sessão).
 	base = []string{
-		"internal/plataforma/banco", "internal/plataforma/banco/consultas", "internal/plataforma/banco/esquema", "internal/plataforma/banco/esquema/embutido",
+		"internal/plataforma/banco", "internal/plataforma/banco/esquema", "internal/plataforma/banco/esquema/embutido",
 		"internal/plataforma/banco/esquema/gerar", "internal/plataforma/config", "internal/plataforma/relogio", "internal/plataforma/respostas", "internal/plataforma/servicosistema",
 		"internal/plataforma/servidor", "internal/plataforma/sessao", "internal/plataforma/testeapoio", "internal/plataforma/texto", "internal/plataforma/tipos",
 	}
@@ -129,7 +129,7 @@ var dependencias = []struct {
 		"internal/movimentacao/sugestoes", "internal/movimentacao/transacoes"},
 		"as contas a pagar listam pela base dos relatórios, conciliam e lançam a despesa do pagamento (#79)"},
 	{"internal/movimentacao/conferenciabanco", []string{"internal/movimentacao/bancos", "internal/patrimonio/cambio", "internal/patrimonio/carteira", "internal/movimentacao/contas",
-		"internal/movimentacao/faturas", "internal/patrimonio/reservas"}, "a conferência do banco compara os saldos de todos esses (#445)"},
+		"internal/movimentacao/faturas", "internal/patrimonio/reservas", "internal/movimentacao/transacoes"}, "a conferência do banco compara os saldos de todos esses (#445) e lê o tipo da transação (Despesa)"},
 	{"internal/movimentacao/contas", []string{"internal/movimentacao/bancos", "internal/movimentacao/faturas"}, "a conta mostra o banco e a fatura do cartão"},
 	{"internal/patrimonio/cotacoes", []string{"internal/patrimonio/cambio"}, "cotação em dólar convertida pela PTAX"},
 	{"internal/patrimonio/cripto", nil, "Binance; só os transversais"},
@@ -451,12 +451,12 @@ func TestPacotesForaDaPagina(t *testing.T) {
 		pagina   string
 		mensagem []string
 	}{
-		{"todos citados", []string{"internal/plataforma/banco", "internal/plataforma/banco/consultas"},
-			"| Base | `internal/plataforma/banco`, `internal/plataforma/banco/consultas` |", nil},
+		{"todos citados", []string{"internal/plataforma/banco", "internal/plataforma/banco/esquema"},
+			"| Base | `internal/plataforma/banco`, `internal/plataforma/banco/esquema` |", nil},
 		{"falta um", []string{"internal/plataforma/banco", "internal/novo"}, "`internal/plataforma/banco`",
 			[]string{"diagrama de Componentes: internal/novo não está"}},
-		{"o de dentro não conta pelo de fora", []string{"internal/plataforma/banco"}, "`internal/plataforma/banco/consultas`", []string{
-			"diagrama de Componentes: docs/arquitetura/componentes.md cita internal/plataforma/banco/consultas",
+		{"o de dentro não conta pelo de fora", []string{"internal/plataforma/banco"}, "`internal/plataforma/banco/esquema`", []string{
+			"diagrama de Componentes: docs/arquitetura/componentes.md cita internal/plataforma/banco/esquema",
 			"diagrama de Componentes: internal/plataforma/banco não está",
 		}},
 		{"arquivo não é pacote", []string{"internal/x"}, "`internal/x` e `internal/x/y_test.go`", nil},

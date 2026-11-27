@@ -9,11 +9,11 @@ import (
 	"strings"
 )
 
-// Guid é o Guid do C#. O EF Core grava em MAIÚSCULAS no banco ("2F00DEFB-672E-…"), e o System.Text.Json
-// escreve em minúsculas no JSON ("2f00defb-672e-…"). Os dois formatos foram confirmados pela sonda.
+// Guid é o identificador de 16 bytes. No banco vai em MAIÚSCULAS ("2F00DEFB-672E-…"), e no JSON
+// em minúsculas ("2f00defb-672e-…"). Os dois formatos foram confirmados pela sonda.
 type Guid [16]byte
 
-// GuidVazio é o Guid.Empty do C#.
+// GuidVazio é o Guid zerado.
 var GuidVazio Guid
 
 // NovoGuid gera um GUID aleatório (versão 4), como Guid.NewGuid().
@@ -25,10 +25,10 @@ func NovoGuid() Guid {
 	return g
 }
 
-// LerGuid lê os dois formatos que o .NET grava e escreve: 8-4-4-4-12 ("2f00defb-672e-45ef-87d0-702995ae8d2e") ou
-// os 32 dígitos sem hífen, em maiúsculas ou minúsculas, com os espaços em volta ignorados, como o Guid.Parse. Hífen
-// fora do lugar é recusado, como no .NET (#372, achado pelo fuzz). Os formatos com chaves e parênteses, que o
-// Guid.Parse também lê, ficam de fora: o .NET do projeto não os escreve.
+// LerGuid lê os dois formatos gravados: 8-4-4-4-12 ("2f00defb-672e-45ef-87d0-702995ae8d2e") ou
+// os 32 dígitos sem hífen, em maiúsculas ou minúsculas, com os espaços em volta ignorados. Hífen
+// fora do lugar é recusado (#372, achado pelo fuzz). Os formatos com chaves e parênteses, que o
+// Guid.Parse também lê, ficam de fora: o projeto não os escreve.
 func LerGuid(texto string) (Guid, error) {
 	var g Guid
 	limpo := strings.TrimSpace(texto)
@@ -44,13 +44,13 @@ func LerGuid(texto string) (Guid, error) {
 	return g, nil
 }
 
-// String escreve em minúsculas, como o C# e o JSON.
+// String escreve em minúsculas, o formato do JSON.
 func (g Guid) String() string {
 	h := hex.EncodeToString(g[:])
 	return h[0:8] + "-" + h[8:12] + "-" + h[12:16] + "-" + h[16:20] + "-" + h[20:]
 }
 
-// Value grava em maiúsculas, como o EF Core (driver.Valuer).
+// Value grava em maiúsculas (driver.Valuer).
 func (g Guid) Value() (driver.Value, error) { return strings.ToUpper(g.String()), nil }
 
 // Scan lê do banco (sql.Scanner).
