@@ -102,7 +102,7 @@ type CampoTexto struct {
 	Propriedade string // o nome do campo, que é a chave em "errors" ("Login", "SenhaAtual")
 	Minimo      int
 	Maximo      int
-	Opcional    bool    // sem [Required] (string? no C#)
+	Opcional    bool    // campo opcional (sem [Required])
 	Padrao      *Padrao // [RegularExpression], se houver
 	// MensagemDoTamanho é a mensagem própria do tamanho, quando o campo dá uma ("O texto da cobrança pode ter até 100
 	// caracteres."); vazio, vale a mensagem padrão.
@@ -131,7 +131,7 @@ func (c *CampoTexto) validar(erros map[string][]string) {
 		lista = append(lista, Obrigatorio(c.Propriedade))
 	}
 	if c.Valor != nil {
-		// [StringLength] conta caracteres UTF-16, como string.Length do C#; nulo passa (quem recusa é o Required).
+		// [StringLength] conta caracteres UTF-16; nulo passa (quem recusa é o Required).
 		if n := TamanhoUtf16(*c.Valor); n > c.Maximo || n < c.Minimo {
 			if c.MensagemDoTamanho != "" {
 				lista = append(lista, c.MensagemDoTamanho)

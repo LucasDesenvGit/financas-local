@@ -217,7 +217,7 @@ func (l *linha) salvar(ctx context.Context, tx *sql.Tx) error {
 }
 
 // Assinatura é categoria + mensagem + tipo do erro (primeira linha do detalhe, até o ":"): os 16 primeiros bytes do
-// SHA-256, em hexadecimal maiúsculo, como o Convert.ToHexString(bytes, 0, 16) do C#.
+// SHA-256, em hexadecimal maiúsculo.
 func Assinatura(categoria, mensagem string, detalhe *string) string {
 	tipo := ""
 	if detalhe != nil {
@@ -230,7 +230,7 @@ func Assinatura(categoria, mensagem string, detalhe *string) string {
 }
 
 // limparSeVenceu apaga, uma vez por dia, os erros cuja última ocorrência passou do prazo da Parametrização
-// (Diagnostico.DiasRetencaoErros). Roda já na primeira volta, como o .NET.
+// (Diagnostico.DiasRetencaoErros). Roda já na primeira volta.
 func (g *Gravador) limparSeVenceu(ctx context.Context) {
 	agora := g.relogio.Agora()
 	if !g.ultimaLimpeza.IsZero() && agora.Sub(g.ultimaLimpeza) < intervaloDeLimpeza {

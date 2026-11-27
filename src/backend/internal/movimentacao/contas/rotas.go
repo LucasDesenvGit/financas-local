@@ -117,7 +117,7 @@ func (s *Servico) bancos(w http.ResponseWriter, _ *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista)
 }
 
-// salvarContaDto é o SalvarContaDto do C#, já lido e validado.
+// salvarContaDto é o corpo da conta, já lido e validado.
 type salvarContaDto struct {
 	Nome             string
 	Tipo             int64
@@ -263,7 +263,7 @@ func (s *Servico) criar(w http.ResponseWriter, r *http.Request) {
 		s.erroInterno(w, r, "saldos e faturas das contas", err)
 		return
 	}
-	// O C# manda a URL absoluta (CreatedAtAction); atrás do .NET, o Go não sabe o host, e ninguém lê esse cabeçalho.
+	// O Location vai com a URL relativa: o Go não sabe o host, e ninguém lê esse cabeçalho.
 	w.Header().Set("Location", "/api/contas/"+strconv.FormatInt(c.Id, 10))
 	respostas.JSON(w, http.StatusCreated, respostas.ConteudoJSON, paraDto(c, ex, tipos.DataHoraUtc{DataHora: c.AtualizadoEm}))
 }
@@ -309,7 +309,7 @@ func (s *Servico) atualizar(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, paraDto(*c, ex, tipos.DataHoraUtc{DataHora: c.AtualizadoEm}))
 }
 
-// gravar manda só as colunas que mudaram, como o SaveChanges do EF Core: decimal pelo valor (0 e 0.0 são iguais),
+// gravar manda só as colunas que mudaram: decimal pelo valor (0 e 0.0 são iguais),
 // texto byte a byte. Os nomes das colunas são fixos, daqui; os valores vão por parâmetro.
 func gravar(ctx context.Context, db *sql.DB, antes, depois conta) error {
 	var colunas []string
@@ -391,7 +391,7 @@ func (s *Servico) excluir(w http.ResponseWriter, r *http.Request) {
 }
 
 // DesvincularFaturas tira das transações das contas o vínculo com as faturas, antes de excluir as contas (a FK da
-// transação para a fatura não tem cascata). É o DesvincularFaturasAsync do C#, que a conexão também usa.
+// transação para a fatura não tem cascata). A conexão também a usa.
 func DesvincularFaturas(ctx context.Context, tx *sql.Tx, contaIds ...int64) error {
 	if len(contaIds) == 0 {
 		return nil
@@ -405,7 +405,7 @@ func DesvincularFaturas(ctx context.Context, tx *sql.Tx, contaIds ...int64) erro
 	return err
 }
 
-// faturaDto é o FaturaDto do C#.
+// faturaDto é a fatura no JSON.
 type faturaDto struct {
 	Id                   int64          `json:"id"`
 	DataVencimento       tipos.Data     `json:"dataVencimento"`

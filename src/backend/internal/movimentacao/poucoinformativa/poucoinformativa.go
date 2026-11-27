@@ -1,4 +1,4 @@
-// Pacote poucoinformativa é o DescricaoPoucoInformativaService do C# (#9): a transação com descrição que não diz o que
+// Pacote poucoinformativa (#9): a transação com descrição que não diz o que
 // foi ("PIX ENVIADO", "PAGAMENTO", "TED 123456", só o nome do banco). Sem palavras úteis, nem as regras nem as sugestões
 // conseguem categorizar, e o gasto fica escondido nos relatórios. A tela de Transações (#78) filtra por ela, e o aviso
 // do painel (#80) conta quantas há.
@@ -37,10 +37,10 @@ func init() {
 	}
 }
 
-// LetrasUteis é o LetrasUteis do C#: as letras das palavras que sobram depois de tirar os acentos (FormD sem as marcas),
-// a pontuação, os números soltos e os termos genéricos ("99APP" é uma palavra com 3 letras). O C# olha um char (UTF-16)
+// LetrasUteis: as letras das palavras que sobram depois de tirar os acentos (FormD sem as marcas),
+// a pontuação, os números soltos e os termos genéricos ("99APP" é uma palavra com 3 letras). O texto é olhado um char (UTF-16)
 // por vez: o caractere fora do plano básico, como o "𝐀" matemático, chega em duas metades que não são letra. O
-// gabarito é o testdata/letras.json, gravado pela sonda das contas com o próprio C#.
+// gabarito é o testdata/letras.json, gravado pela sonda das contas.
 func LetrasUteis(descricao string) int {
 	var sb strings.Builder
 	for _, r := range norm.NFD.String(descricao) {

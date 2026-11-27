@@ -51,7 +51,7 @@ func NovoClientePTAX(urlBase string, cliente *http.Client) (*ClientePTAX, error)
 	return &ClientePTAX{base: base, http: cliente}, nil
 }
 
-// Moeda é o MoedaDto do .NET.
+// Moeda é uma moeda da PTAX.
 type Moeda struct {
 	Codigo string `json:"codigo"`
 	Nome   string `json:"nome"`
@@ -119,7 +119,7 @@ func (c *ClientePTAX) BuscarFechamentos(ctx context.Context, moeda string, de, a
 	return fechamentos, nil
 }
 
-// buscarValores faz o GET e devolve a lista "value" do OData (sem "value", lista vazia, como o .NET).
+// buscarValores faz o GET e devolve a lista "value" do OData (sem "value", lista vazia.
 func (c *ClientePTAX) buscarValores(ctx context.Context, caminho string) ([]map[string]json.RawMessage, error) {
 	relativo, err := url.Parse(caminho)
 	if err != nil {
@@ -138,7 +138,7 @@ func (c *ClientePTAX) buscarValores(ctx context.Context, caminho string) ([]map[
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("a PTAX respondeu %d", resp.StatusCode) // o EnsureSuccessStatusCode do .NET
+		return nil, fmt.Errorf("a PTAX respondeu %d", resp.StatusCode) // resposta que não é 2xx é erro
 	}
 	corpo, err := io.ReadAll(io.LimitReader(resp.Body, tamanhoMaximoRes+1))
 	if err != nil {
@@ -160,7 +160,7 @@ func (c *ClientePTAX) buscarValores(ctx context.Context, caminho string) ([]map[
 	return itens, nil
 }
 
-// texto é o TryGetProperty(...).GetString() do .NET: só se o valor for texto JSON.
+// texto: só se o valor for texto JSON.
 func texto(item map[string]json.RawMessage, nome string) string {
 	var s string
 	if bruto, ok := item[nome]; !ok || json.Unmarshal(bruto, &s) != nil {
@@ -169,12 +169,12 @@ func texto(item map[string]json.RawMessage, nome string) string {
 	return s
 }
 
-// numero é o TryGetDecimal do .NET: só número JSON (não texto), com a escala escrita ("5.01130" fica com 5 casas).
+// numero: só número JSON (não texto), com a escala escrita ("5.01130" fica com 5 casas).
 // Sem número, devolve zero.
 func numero(item map[string]json.RawMessage, nome string) tipos.Decimal {
 	bruto, ok := item[nome]
 	if !ok || bytes.HasPrefix(bytes.TrimSpace(bruto), []byte(`"`)) {
-		return tipos.Decimal{} // texto com número não vale: o .NET confere ValueKind == Number
+		return tipos.Decimal{} // texto com número não vale: só vale o número JSON
 	}
 	var n json.Number
 	dec := json.NewDecoder(bytes.NewReader(bruto))
@@ -189,7 +189,7 @@ func numero(item map[string]json.RawMessage, nome string) tipos.Decimal {
 	return d
 }
 
-// mesDiaAno escreve a data como o {de:MM-dd-yyyy} do C#.
+// mesDiaAno escreve a data como MM-dd-yyyy.
 func mesDiaAno(d tipos.Data) string {
 	return fmt.Sprintf("%02d-%02d-%04d", d.Mes(), d.Dia(), d.Ano())
 }

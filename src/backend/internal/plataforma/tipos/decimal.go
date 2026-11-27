@@ -1,6 +1,6 @@
-// Pacote tipos tem os tipos de dado que atravessam o banco e o JSON no mesmo formato do back-end .NET: decimal,
-// data, data e hora e GUID. O formato de cada um foi confirmado pela sonda em testdata/sonda-efcore, que grava
-// valores pelo mesmo EF Core da API e guarda o resultado em testdata/efcore.json (o gabarito dos testes).
+// Pacote tipos tem os tipos de dado que atravessam o banco e o JSON no formato do banco e do JSON: decimal,
+// data, data e hora e GUID. O formato de cada um foi confirmado por uma sonda, que gravou
+// o resultado em testdata/efcore.json (o gabarito dos testes).
 package tipos
 
 import (
@@ -13,13 +13,13 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// casasMaximas é a escala máxima do decimal do C# (28 casas).
+// casasMaximas é a escala máxima do decimal (28 casas).
 const casasMaximas = 28
 
-// Decimal é o decimal do C#: dinheiro, quantidade de cotas, taxa. Nunca use float64 para esses valores.
+// Decimal: dinheiro, quantidade de cotas, taxa. Nunca use float64 para esses valores.
 //
-// Ele guarda a escala (número de casas) como o decimal do C# faz: lido do banco como "-5000.0", sai no JSON como
-// -5000.0, igual ao que o System.Text.Json escreve. No banco, grava no formato do EF Core ("0.0" + até 28 casas,
+// Ele guarda a escala (número de casas): lido do banco como "-5000.0", sai no JSON como
+// -5000.0. No banco, grava no formato do banco ("0.0" + até 28 casas,
 // sem zeros à direita).
 type Decimal struct {
 	v decimal.Decimal
@@ -42,7 +42,7 @@ func DecimalDeInteiro(n int64) Decimal { return Decimal{v: decimal.NewFromInt(n)
 
 // DeDecimal embrulha um shopspring/decimal, por exemplo o resultado de uma conta.
 func DeDecimal(v decimal.Decimal) Decimal {
-	// O C# não tem expoente positivo: 1e3 vira 1000, sem casas.
+	// O decimal não tem expoente positivo: 1e3 vira 1000, sem casas.
 	if v.Exponent() > 0 {
 		v = decimal.NewFromBigInt(v.BigInt(), 0)
 	}
@@ -54,11 +54,11 @@ func DeDecimal(v decimal.Decimal) Decimal {
 	return Decimal{v: v}
 }
 
-// Decimal devolve o valor para fazer contas com o shopspring/decimal. Lembre que Math.Round do C# arredonda
-// pelo método bancário: use RoundBank, não Round, onde o C# não diz o MidpointRounding.
+// Decimal devolve o valor para fazer contas com o shopspring/decimal. Lembre que o arredondamento é
+// o bancário: use RoundBank, não Round.
 func (d Decimal) Decimal() decimal.Decimal { return d.v }
 
-// Escala é o número de casas que o valor guarda (como decimal.Scale no C#).
+// Escala é o número de casas que o valor guarda.
 func (d Decimal) Escala() int32 {
 	if d.v.Exponent() >= 0 {
 		return 0
@@ -66,10 +66,10 @@ func (d Decimal) Escala() int32 {
 	return -d.v.Exponent()
 }
 
-// String escreve o valor com a escala que ele guarda, como decimal.ToString() no C#: 1.50 → "1.50".
+// String escreve o valor com a escala que ele guarda: 1.50 → "1.50".
 func (d Decimal) String() string { return d.v.StringFixed(d.Escala()) }
 
-// TextoNoBanco é como o EF Core grava o decimal no SQLite: pelo menos uma casa e nenhum zero à direita
+// TextoNoBanco é grava o decimal no SQLite: pelo menos uma casa e nenhum zero à direita
 // (1.50 → "1.5", 100 → "100.0").
 func (d Decimal) TextoNoBanco() string {
 	texto := d.v.String()
@@ -79,9 +79,9 @@ func (d Decimal) TextoNoBanco() string {
 	return texto
 }
 
-// NaEscalaDoBanco é o decimal como o EF Core o lê de volta depois de gravá-lo: pelo menos uma casa e nenhum zero à
+// NaEscalaDoBanco é o decimal o lê de volta depois de gravá-lo: pelo menos uma casa e nenhum zero à
 // direita (21.00 → 21.0, 1.50 → 1.5, 100 → 100.0, o mesmo que TextoNoBanco guarda). É a escala que o ef_sum do SQLite
-// devolve para uma soma, e por isso a de um total que o C# calculava no SQL (#447).
+// devolve para uma soma, e por isso a de um total somado no SQL (#447).
 func (d Decimal) NaEscalaDoBanco() Decimal {
 	numero := new(big.Int).Set(d.v.Coefficient())
 	expoente := d.v.Exponent() // DeDecimal nunca deixa expoente positivo
@@ -99,10 +99,10 @@ func (d Decimal) NaEscalaDoBanco() Decimal {
 	return Decimal{v: decimal.NewFromBigInt(numero, expoente)}
 }
 
-// Value grava no banco no formato do EF Core (driver.Valuer).
+// Value grava no banco no formato do banco (driver.Valuer).
 func (d Decimal) Value() (driver.Value, error) { return d.TextoNoBanco(), nil }
 
-// Scan lê do banco (sql.Scanner). Dinheiro gravado como REAL é recusado: float64 erra centavos, e o EF Core
+// Scan lê do banco (sql.Scanner). Dinheiro gravado como REAL é recusado: float64 erra centavos, e o site
 // nunca grava assim.
 func (d *Decimal) Scan(origem any) error {
 	switch v := origem.(type) {
@@ -133,7 +133,7 @@ func (d *Decimal) lerTexto(texto string) error {
 // (O shopspring/decimal sozinho escreveria entre aspas.)
 func (d Decimal) MarshalJSON() ([]byte, error) { return []byte(d.String()), nil }
 
-// UnmarshalJSON aceita número ou texto com número, como o ASP.NET (JsonSerializerDefaults.Web lê número em texto).
+// UnmarshalJSON aceita número ou texto com número (JsonSerializerDefaults.Web lê número em texto).
 func (d *Decimal) UnmarshalJSON(dados []byte) error {
 	texto := string(dados)
 	if texto == "null" {

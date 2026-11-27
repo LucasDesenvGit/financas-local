@@ -18,10 +18,10 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// maximoPorFiltro é o MaximoPorFiltro do C# (#87): "todas do filtro" de uma vez, no máximo.
+// maximoPorFiltro (#87): "todas do filtro" de uma vez, no máximo.
 const maximoPorFiltro = 5000
 
-// categoriaAntes é o EstadoAnterior do C#: como a transação estava antes da alteração em lote, e a categoria que o lote
+// categoriaAntes: como a transação estava antes da alteração em lote, e a categoria que o lote
 // deu (o Desfazer só volta a que continua com ela).
 type categoriaAntes struct {
 	id                int64
@@ -32,7 +32,7 @@ type categoriaAntes struct {
 	aplicada          *int64
 }
 
-// ResultadoCategoriasEmLoteDto é o do C#.
+// ResultadoCategoriasEmLoteDto é o resultado do lote.
 type ResultadoCategoriasEmLoteDto struct {
 	Alteradas int     `json:"alteradas"`
 	Desfazer  *string `json:"desfazer"`
@@ -135,7 +135,7 @@ func (s *Servico) categoriasEmLote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if slices.Contains(itens, nil) {
-		// O C# recebe o item null e quebra ao ler o Id dele (NullReferenceException): o 500.
+		// Com o item nulo não dá para ler o Id dele: a resposta é 500.
 		s.erroInterno(w, r, "ler os itens", fmt.Errorf("item nulo na lista"))
 		return
 	}
@@ -254,7 +254,7 @@ func (s *Servico) categoriasEmLote(w http.ResponseWriter, r *http.Request) {
 		if err := auditoria.Registrar(r.Context(), tx, r, agora, "CategoriaEmLote ("+strconv.Itoa(len(anteriores))+")", login); err != nil {
 			return err
 		}
-		// Como no C#, o SaveChanges grava também o tipo que mudou nas que ficaram com a mesma categoria.
+		// A gravação inclui também o tipo que mudou nas que ficaram com a mesma categoria.
 		if err := transacoes.GravarTodas(r.Context(), tx, lista); err != nil {
 			return err
 		}

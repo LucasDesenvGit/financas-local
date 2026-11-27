@@ -13,8 +13,8 @@ import (
 // DiasEstornoDaCompra é até quantos dias depois da compra um estorno ainda é casado com ela.
 const DiasEstornoDaCompra = 400
 
-// Lancamento é um lançamento no cartão para casar estorno com compra parcelada (#257), como o
-// ParcelasFuturas.Lancamento do C#. Numero e Total são nulos fora de compra parcelada.
+// Lancamento é um lançamento no cartão para casar estorno com compra parcelada (#257).
+// Numero e Total são nulos fora de compra parcelada.
 type Lancamento struct {
 	Id            int64
 	ContaId       int64
@@ -24,7 +24,7 @@ type Lancamento struct {
 	Descricao     string
 }
 
-// ComprasEstornadas é o ParcelasFuturas.ComprasEstornadas do C# (#257, ADR 0036): estorno que devolve uma compra
+// ComprasEstornadas (#257, ADR 0036): estorno que devolve uma compra
 // parcelada inteira (o valor da parcela × o número de parcelas) casa com a 1ª parcela dessa compra; a compra foi
 // cancelada. Devolve os ids que ficam fora dos relatórios: o estorno, a 1ª parcela e as outras parcelas dela já
 // lançadas (até 35 dias depois do estorno, para as que o banco antecipa).
@@ -84,7 +84,7 @@ func ComprasEstornadas(lancamentos []Lancamento) map[int64]bool {
 	return fora
 }
 
-// parcelada: Total > 1 e 1 <= Numero <= Total, com a comparação do C# sobre short?, que dá falso para nulo.
+// parcelada: Total > 1 e 1 <= Numero <= Total (nulo dá falso).
 func parcelada(l Lancamento) bool {
 	return l.Total != nil && l.Numero != nil && *l.Total > 1 && *l.Numero >= 1 && *l.Numero <= *l.Total
 }
@@ -111,8 +111,8 @@ var (
 // prefixosDeEstorno, nesta ordem: o primeiro que casar é o que sai.
 var prefixosDeEstorno = []string{"ESTORNO DE ", "ESTORNO DA ", "ESTORNO DO ", "ESTORNO "}
 
-// semEstorno é o ParcelasFuturas.SemEstorno do C#: a descrição do estorno sem "Estorno de" na frente (alguns bancos
-// repetem a da compra assim). O Trim e o StartsWith(OrdinalIgnoreCase) do C# valem aqui por TrimFunc(IsSpace) e pelo
+// semEstorno: a descrição do estorno sem "Estorno de" na frente (alguns bancos
+// repetem a da compra assim). O corte e a comparação sem diferença de maiúsculas valem aqui por TrimFunc(IsSpace) e pelo
 // mesmo ToUpperInvariant do restante do projeto.
 func semEstorno(descricao string) string {
 	t := strings.TrimFunc(descricao, unicode.IsSpace)

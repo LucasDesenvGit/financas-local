@@ -11,7 +11,7 @@ import (
 	"unicode/utf8"
 )
 
-// Cabeçalhos de segurança, os mesmos do CabecalhosSegurancaMiddleware do .NET. Desde a #86, esta é a fonte: o
+// Cabeçalhos de segurança: o
 // TestCabecalhosDeSeguranca fixa os valores, e os testes no navegador (testes/navegador/servidor.mjs) leem a csp
 // daqui. Mudar um deles é decisão de segurança (ADR).
 const csp = "default-src 'self'; " +
@@ -43,7 +43,7 @@ var cabecalhosDeSeguranca = [][2]string{
 }
 
 // comCabecalhosDeSeguranca põe os cabeçalhos em toda resposta e, em /api, proíbe o cache (dado financeiro).
-// O Go não manda cabeçalho Server nem X-Powered-By, então não há o que tirar. Sem HSTS: o .NET também não manda
+// O Go não manda cabeçalho Server nem X-Powered-By, então não há o que tirar. Sem HSTS: não se manda
 // em 127.0.0.1 nem em localhost (conferido no site rodando).
 func comCabecalhosDeSeguranca(proximo http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,12 +59,12 @@ func comCabecalhosDeSeguranca(proximo http.Handler) http.Handler {
 	})
 }
 
-// ehAPI é o StartsWithSegments("/api") do .NET: "/api" ou "/api/…", sem diferença de maiúsculas.
+// ehAPI: "/api" ou "/api/…", sem diferença de maiúsculas.
 func ehAPI(caminho string) bool {
 	return strings.EqualFold(caminho, "/api") || len(caminho) > 4 && strings.EqualFold(caminho[:5], "/api/")
 }
 
-// paginaHostInvalido é a resposta do filtro de hosts do ASP.NET (AllowedHosts), copiada do site rodando.
+// paginaHostInvalido é a resposta do filtro de hosts (AllowedHosts), copiada do site rodando.
 const paginaHostInvalido = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\"http://www.w3.org/TR/html4/strict.dtd\">\r\n" +
 	"<HTML><HEAD><TITLE>Bad Request</TITLE>\r\n" +
 	"<META HTTP-EQUIV=\"Content-Type\" Content=\"text/html; charset=us-ascii\"></ HEAD >\r\n" +
@@ -73,7 +73,7 @@ const paginaHostInvalido = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\
 	"</BODY></HTML>"
 
 // soHostsPermitidos é o AllowedHosts: outro nome no cabeçalho Host (ex.: um site de fora apontando um domínio
-// para 127.0.0.1, o "DNS rebinding") recebe 400. Vem antes dos cabeçalhos de segurança, como no .NET.
+// para 127.0.0.1, o "DNS rebinding") recebe 400. Vem antes dos cabeçalhos de segurança.
 func soHostsPermitidos(permitidos []string, proximo http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !hostPermitido(r.Host, permitidos) {
@@ -109,9 +109,9 @@ func hostPermitido(host string, permitidos []string) bool {
 var mensagemErroInterno = []byte(`{"mensagem":"` +
 	EscaparComoDotnet("Ocorreu um erro interno. Ele foi registrado em Configurações › Erros.") + `"}`)
 
-// EscaparComoDotnet troca o que não é ASCII por \uXXXX, como o JavaScriptEncoder.Default do System.Text.Json (o
-// JsonSerializer.Serialize do .NET sem opções): o "ó" de "Dólar" vira uma barra, a letra u e o código 00F3, e o que
-// está fora do plano básico (um emoji) vira um par de substitutos. Serve também para gravar no banco o mesmo texto que o .NET gravaria (#81).
+// EscaparComoDotnet troca o que não é ASCII por \uXXXX (o
+// escape padrão do JSON já gravado): o "ó" de "Dólar" vira uma barra, a letra u e o código 00F3, e o que
+// está fora do plano básico (um emoji) vira um par de substitutos. Serve também para gravar no banco o mesmo texto já gravado (#81).
 func EscaparComoDotnet(texto string) string {
 	var b strings.Builder
 	for _, r := range texto {
@@ -150,7 +150,7 @@ func recuperarPanico(log *slog.Logger, proximo http.Handler) http.Handler {
 	})
 }
 
-// ResponderErroInterno responde 500 com a mensagem genérica do .NET. O erro em si vai para o log, nunca para quem
+// ResponderErroInterno responde 500 com a mensagem genérica. O erro em si vai para o log, nunca para quem
 // pediu.
 func ResponderErroInterno(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

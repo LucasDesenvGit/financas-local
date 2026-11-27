@@ -1,4 +1,4 @@
-// Pacote pluggy é o cliente HTTP da Pluggy (ADR 0006), sem SDK: o PluggyClient do .NET. Só fala com a Pluggy: quem grava
+// Pacote pluggy é o cliente HTTP da Pluggy (ADR 0006), sem SDK. Só fala com a Pluggy: quem grava
 // no banco é a sincronização. A API key só vai ao host configurado, e nem ela nem os ids de item e de conta entram em log
 // ou em mensagem de erro de rede.
 package pluggy
@@ -40,7 +40,7 @@ const (
 	redirecionamentos     = 10
 )
 
-// Erro é a PluggyException do .NET: a Pluggy respondeu, e a mensagem é para quem usa. Status 0 é sem status HTTP.
+// Erro: a Pluggy respondeu, e a mensagem é para quem usa. Status 0 é sem status HTTP.
 type Erro struct {
 	Mensagem string
 	Status   int
@@ -49,11 +49,11 @@ type Erro struct {
 func (e *Erro) Error() string { return e.Mensagem }
 
 var (
-	// ErrRede é a HttpRequestException do .NET: o pedido não chegou até o fim, depois das tentativas.
+	// ErrRede: o pedido não chegou até o fim, depois das tentativas.
 	ErrRede = errors.New("falha de rede ao chamar a Pluggy")
-	// ErrResposta é a JsonException do .NET: a Pluggy respondeu fora do formato.
+	// ErrResposta: a Pluggy respondeu fora do formato.
 	ErrResposta = errors.New("resposta da Pluggy fora do formato")
-	// ErrTempoEsgotado é o limite de 100 s: como no .NET, não tenta de novo e não é ErrRede.
+	// ErrTempoEsgotado é o limite de 100 s:, não tenta de novo e não é ErrRede.
 	ErrTempoEsgotado = errors.New("tempo esgotado ao chamar a Pluggy")
 )
 
@@ -158,7 +158,7 @@ func (c *Cliente) enviar(req *http.Request) (*resposta, error) {
 	return &resposta{status: resp.StatusCode, retryAfter: resp.Header.Get("Retry-After"), corpo: corpo}, nil
 }
 
-// classificar separa a falha como o .NET: cancelamento, tempo esgotado e rede. O *url.Error sai, porque o texto dele
+// classificar separa a falha: cancelamento, tempo esgotado e rede. O *url.Error sai, porque o texto dele
 // traz a URL inteira, com os ids de item e de conta.
 func classificar(ctx context.Context, err error) error {
 	if ctx.Err() != nil {
@@ -175,7 +175,7 @@ func classificar(ctx context.Context, err error) error {
 	return fmt.Errorf("%w: %w", ErrRede, err)
 }
 
-// CriarSessao autentica na Pluggy. Sem nova tentativa, como no .NET.
+// CriarSessao autentica na Pluggy. Sem nova tentativa.
 func (c *Cliente) CriarSessao(ctx context.Context, clientId, clientSecret string) (Sessao, error) {
 	credenciais, err := json.Marshal(struct {
 		ClientId     string `json:"clientId"`
@@ -326,7 +326,7 @@ func extrairCursor(proximo string) string {
 	return ""
 }
 
-// obter é o GET com as novas tentativas do .NET: a falha de rede tenta 3 vezes; o 429 e o 5xx, 4 vezes.
+// obter: a falha de rede tenta 3 vezes; o 429 e o 5xx, 4 vezes.
 func (c *Cliente) obter(ctx context.Context, s Sessao, caminho string, destino any) error {
 	for tentativa := 1; ; tentativa++ {
 		req, err := c.novoPedido(ctx, http.MethodGet, caminho, nil)
@@ -362,7 +362,7 @@ func (c *Cliente) obter(ctx context.Context, s Sessao, caminho string, destino a
 }
 
 // esperaDoTransitorio é o Retry-After em segundos, ou 3 s vezes a tentativa, até 1 minuto. O Retry-After em data é
-// ignorado, como o RetryAfter.Delta do .NET.
+// ignorado.
 func esperaDoTransitorio(retryAfter string, tentativa int) time.Duration {
 	espera := time.Duration(3*tentativa) * time.Second
 	if segundos, err := strconv.Atoi(strings.TrimSpace(retryAfter)); err == nil && segundos >= 0 {
@@ -416,7 +416,7 @@ func sanitizarParaLog(valor string) string {
 	return strings.NewReplacer("\r", "", "\n", "").Replace(valor)
 }
 
-// escapar é o Uri.EscapeDataString do .NET: só as letras, os dígitos e "-_.~" passam. O net/url escapa menos no caminho
+// escapar: só as letras, os dígitos e "-_.~" passam. O net/url escapa menos no caminho
 // e troca o espaço por "+" na query.
 func escapar(valor string) string {
 	var b strings.Builder

@@ -1,9 +1,9 @@
-// Pacote transacoes tem a Transacao como as regras do .NET a leem e a mudam (categoria, tipo, nome e "fora dos
+// Pacote transacoes tem a Transacao como as regras a leem e a mudam (categoria, tipo, nome e "fora dos
 // relatórios"): a categorização (internal/ajustes/categorizacao), as regras de descrição (internal/ajustes/regrasdescricao) e as
 // transferências (internal/movimentacao/transferencias). As rotas de /api/transacoes (internal/movimentacao/extrato, #78) mudam também a conta,
 // a data, o valor, o status, a observação e a emergência.
 //
-// Gravar faz o que o SaveChanges do EF Core faz com uma entidade alterada: um UPDATE só das colunas que mudaram.
+// Gravar faz um UPDATE só das colunas que mudaram.
 package transacoes
 
 import (
@@ -16,7 +16,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Tipos de transação (o enum TipoTransacao do C#).
+// Tipos de transação.
 const (
 	Despesa       = 1
 	Receita       = 2
@@ -96,7 +96,7 @@ func Listar(ctx context.Context, q banco.DBTX, onde string, argumentos ...any) (
 func (t *Transacao) Mudou() bool { return len(t.mudancas()) > 0 }
 
 // mudancas são as colunas que as regras e as telas mudam e que estão diferentes do que veio do banco. O valor compara
-// como decimal, como o EF Core: 60 e 60.0 são o mesmo, e o texto no banco fica como está.
+// como decimal: 60 e 60.0 são o mesmo, e o texto no banco fica como está.
 func (t *Transacao) mudancas() []mudanca {
 	a := t.antes
 	if a == nil {
@@ -193,7 +193,7 @@ func boolIguais(a, b *bool) bool {
 	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
 }
 
-// Inserir grava uma transação nova e guarda o Id nela. É o Add com o SaveChanges do EF Core: as colunas que o modelo
+// Inserir grava uma transação nova e guarda o Id nela. As colunas que o modelo
 // não tem (DescricaoRevisada) ficam com o valor padrão da entidade.
 func Inserir(ctx context.Context, q banco.DBTX, t *Transacao, criadoEm tipos.DataHora) error {
 	var guid any
@@ -230,7 +230,7 @@ func Excluir(ctx context.Context, q banco.DBTX, ids ...int64) error {
 	return nil
 }
 
-// Gravar manda ao banco só as colunas que mudaram (o SaveChanges do EF Core) e deixa a transação como gravada.
+// Gravar manda ao banco só as colunas que mudaram e deixa a transação como gravada.
 func Gravar(ctx context.Context, q banco.DBTX, t *Transacao) error {
 	lista := t.mudancas()
 	if len(lista) == 0 {

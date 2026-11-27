@@ -15,7 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Tipos de conta (o enum TipoConta do C#).
+// Tipos de conta.
 const (
 	contaCorrente int64 = 1
 	poupanca      int64 = 2
@@ -199,7 +199,7 @@ func (r *rodada) gravarFatura(ctx context.Context, tx *sql.Tx, contaId int64, pf
 // tamanhoDoNomeDaReserva é o TamanhoMaximoNome do ReservaService.
 const tamanhoDoNomeDaReserva = 100
 
-// reservaInformada é o ReservaInformada do C#.
+// reservaInformada é a reserva informada pelo banco.
 type reservaInformada struct {
 	nome  string
 	valor tipos.Decimal
@@ -332,8 +332,8 @@ func propriedades(cru json.RawMessage) ([]propriedade, bool) {
 	return lista, true
 }
 
-// reservasEmJson escreve a lista como o System.Text.Json: "nome" e "valor", com o texto escapado pelo JavaScriptEncoder
-// padrão, porque o .NET e o Go convivem na mesma coluna.
+// reservasEmJson escreve a lista no formato da coluna: "nome" e "valor", com o texto escapado pelo JavaScriptEncoder
+// padrão (o formato já gravado).
 func reservasEmJson(reservas []reservaInformada) string {
 	var b strings.Builder
 	b.WriteByte('[')
