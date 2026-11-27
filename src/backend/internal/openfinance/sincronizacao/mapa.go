@@ -3,7 +3,7 @@ package sincronizacao
 import "strings"
 
 // mapaPadrao é o MapaPadraoPluggy do CategorizacaoService: a categoria sua que combina com a categoria nova da Pluggy,
-// pelo nome em inglês. A chave está em minúsculas, porque o C# compara sem diferença de maiúsculas.
+// pelo nome em inglês. A chave está em minúsculas, porque a busca é sem diferença de maiúsculas.
 var mapaPadrao = map[string]string{
 	"salary":                           "Salário",
 	"income":                           "Outras receitas",

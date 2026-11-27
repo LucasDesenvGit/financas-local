@@ -1,4 +1,4 @@
-// Package painel são as rotas da entrada "painel" de Go:Prefixos (#80): /api/emprestimos (o EmprestimosController do C#),
+// Package painel são as rotas da entrada "painel" de Go:Prefixos (#80): /api/emprestimos,
 // /api/relatorios (o RelatoriosController) e /api/painel (o PainelController). As regras ficam nos pacotes delas (emprestimos,
 // relatorios); aqui ficam só as rotas e as respostas.
 package painel

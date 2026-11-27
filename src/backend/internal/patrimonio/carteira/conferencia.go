@@ -617,7 +617,7 @@ func categoriaDeRendimento(rs *categorizacao.Regras, descricao string, pluggy *s
 	return id
 }
 
-// Os DTOs da conferência, os do C#.
+// Os DTOs da conferência.
 type (
 	// TipoParaCorrigirDto é o ativo cadastrado como ação ou "outro" que é FII.
 	TipoParaCorrigirDto struct {
@@ -980,7 +980,7 @@ func (s *Servico) Conferir(ctx context.Context) (*ConferenciaInvestimentosDto, e
 }
 
 // trocoAutomatico é o troco classificado na sincronização, com o que ele era antes (para o "Desfazer"). Os nomes são os do
-// JSON que o C# grava na Configuracao.
+// JSON gravado na Configuracao.
 type trocoAutomatico struct {
 	Id                int64  `json:"Id"`
 	CategoriaId       *int64 `json:"CategoriaId"`

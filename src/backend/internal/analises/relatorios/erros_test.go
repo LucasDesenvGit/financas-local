@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
@@ -16,13 +16,13 @@ var errDeTeste = errors.New("falha de teste")
 // dbQueFalha é o banco de verdade, mas a consulta que contém "quando" (a enésima vez que aparece) devolve erro. Serve
 // para conferir que cada consulta que falha vira um erro, e não uma lista pela metade.
 type dbQueFalha struct {
-	consultas.DBTX
+	banco.DBTX
 	quando string
 	vez    int // a enésima consulta que contém "quando" falha (1 = a primeira)
 	vistas *int
 }
 
-func falhaEm(db consultas.DBTX, quando string, vez int) dbQueFalha {
+func falhaEm(db banco.DBTX, quando string, vez int) dbQueFalha {
 	return dbQueFalha{DBTX: db, quando: quando, vez: vez, vistas: new(0)}
 }
 

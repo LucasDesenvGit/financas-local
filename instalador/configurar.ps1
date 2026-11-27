@@ -8,9 +8,9 @@
            copia banco e chaves para a pasta nova (sem apagar nada da antiga) e remove o servico antigo,
            para o .msi poder registrar o dele.
            Leva tambem o segredos.chave, a chave dos segredos do Go (#277).
-        3. Certificado HTTPS de 127.0.0.1/localhost, pelo financas-go.exe gerar-certificado (#84, #277): reaproveita
-           o atual ou gera um novo, confia nele nas Autoridades Raiz da maquina e grava dados\configuracao.json
-           (caminho e senha do .pfx).
+        3. Certificado HTTPS de 127.0.0.1/localhost, pelo financas-go.exe preparar-https (#84, #277, #775): reaproveita
+           o atual ou gera um novo, grava dados\configuracao.json (caminho e senha do .pfx, e a URL) e, aqui, confia
+           nele nas Autoridades Raiz da maquina (Confiar-No-Certificado, do scripts\windows\comum.ps1).
         4. Porta 5443 (#300): se outro programa estiver nela, para com a mensagem no log do msiexec. O servico
            e vital no .msi: sem isso, ele nao sobe e a instalacao falha com um erro generico do Windows Installer.
     -Acao desinstalar  (so na desinstalacao de verdade, nao na troca de versao)
@@ -24,6 +24,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+# Confiar-No-Certificado (#775). Vem de instalador\ (o gerar-msi.ps1 o copia). Fica antes das variaveis abaixo, porque o
+# comum.ps1 define pastas (as do repositorio) que nao valem aqui.
+. (Join-Path $PSScriptRoot "comum.ps1")
 $NomeServico = "FinancasLocal"
 $Raiz = Join-Path $env:ProgramData "FinancasLocal"
 $Dados = Join-Path $Raiz "dados"
@@ -36,11 +39,6 @@ function Log([string]$texto) { Write-Output ("[configurar] " + $texto) }
 
 function Garantir-Pasta([string]$pasta) {
     if (-not (Test-Path -LiteralPath $pasta)) { New-Item -ItemType Directory -Path $pasta -Force | Out-Null }
-}
-
-function Gravar-Json([string]$caminho, $objeto) {
-    $json = ($objeto | ConvertTo-Json -Depth 10) + "`n"
-    [IO.File]::WriteAllText($caminho, $json, (New-Object Text.UTF8Encoding $false))
 }
 
 # ------------------------------------------------------------------ 1) Pasta de dados
@@ -143,61 +141,20 @@ function Migrar-Instalacao-Antiga {
 }
 
 # ------------------------------------------------------------------ 3) Certificado HTTPS
-# So a parte publica interessa aqui: carregar sem gravar a chave privada em nenhum repositorio de chaves do Windows.
-function Ler-Pfx([string]$senha) {
-    $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
-    return New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($Pfx, $senha, $flags)
-}
-
-function Senha-Atual {
-    if (-not (Test-Path -LiteralPath $Configuracao)) { return $null }
-    try { return (Get-Content -LiteralPath $Configuracao -Raw -Encoding UTF8 | ConvertFrom-Json).Kestrel.Endpoints.Https.Certificate.Password }
-    catch { return $null }
-}
-
 function Preparar-Certificado {
-    $senha = Senha-Atual
-    if (-not $senha) {
-        $bytes = New-Object byte[] 24
-        [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-        $senha = [Convert]::ToBase64String($bytes)
-    }
-
-    # #277: quem cuida do certificado e o executavel do Go (#84), como nos scripts: reaproveita o .pfx que abre com a
-    # senha e vale por mais de 30 dias, e gera outro (127.0.0.1, ::1 e localhost no SAN) no caso contrario. A senha vai
-    # pela entrada padrao, nao na linha de comando, onde outro programa a veria.
+    # #775: o executavel do Go cuida do HTTPS (#84), como nos scripts: a senha do .pfx (a de antes, lida do configuracao.json,
+    # ou uma nova), o certificado (127.0.0.1, ::1 e localhost no SAN; reaproveita o que abre com a senha e vale por mais de
+    # 30 dias) e o configuracao.json, que o site le. A senha nao passa por aqui.
     $go = Join-Path $PastaPrograma "financas-go.exe"
-    $resultado = $senha | & $go gerar-certificado -pfx $Pfx
+    $resultado = & $go preparar-https -pfx $Pfx -config $Configuracao -url $Url
     if ($LASTEXITCODE -ne 0) { throw "O executavel do Go nao conseguiu preparar o certificado HTTPS ($LASTEXITCODE)." }
     if ($resultado -eq "reaproveitado") { Log "certificado atual reaproveitado" }
     else { Log "certificado novo gerado" }
-
-    # Confia so na parte publica, na loja da maquina (vale para todas as contas, como no instalar-windows.ps1).
-    $completo = Ler-Pfx $senha
-    $publico = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(, $completo.RawData)
-    $publico.FriendlyName = $NomeServico
-    $loja = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
-    $loja.Open("ReadWrite")
-    try {
-        foreach ($antigo in @($loja.Certificates)) {
-            if ($antigo.FriendlyName -eq $NomeServico -and $antigo.Thumbprint -ne $publico.Thumbprint) { $loja.Remove($antigo) }
-        }
-        if (-not ($loja.Certificates | Where-Object { $_.Thumbprint -eq $publico.Thumbprint })) { $loja.Add($publico) }
-    } finally { $loja.Close() }
-    Log "certificado confiavel para este computador"
-
-    $config = [ordered]@{
-        Kestrel = [ordered]@{
-            Endpoints = [ordered]@{
-                Https = [ordered]@{
-                    Url = $Url
-                    Certificate = [ordered]@{ Path = ($Pfx -replace '\\', '/'); Password = $senha }
-                }
-            }
-        }
-    }
-    Gravar-Json $Configuracao $config
     Log "configuracao gravada em $Configuracao"
+
+    # Confia so na parte publica (o .pem ao lado do .pfx), na loja da maquina: vale para todas as contas.
+    Confiar-No-Certificado ([IO.Path]::ChangeExtension($Pfx, "pem"))
+    Log "certificado confiavel para este computador"
 }
 
 # ------------------------------------------------------------------ 4) Porta ocupada (#300)

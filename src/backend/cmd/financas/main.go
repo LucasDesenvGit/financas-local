@@ -1,33 +1,31 @@
-// Comando financas é o site do Finanças Local (épico #70, ADR 0049): serve o Angular com os mesmos cabeçalhos,
-// cache e erros do .NET de antes (#73) e atende /api com o login do Go (#75): sessão, CSRF e limite de tentativas
-// na frente de todas as rotas. Desde a #85 é o site, e desde a #86 o .NET saiu. Instalado, roda como serviço do
+// Comando financas é o site do Finanças Local (épico #70, ADR 0049): serve o Angular com os cabeçalhos,
+// cache e erros (#73) e atende /api com o login do Go (#75): sessão, CSRF e limite de tentativas
+// na frente de todas as rotas. Desde a #85 é o site. Instalado, roda como serviço do
 // sistema (#84: Serviço do Windows, ou systemd no Linux), com -aplicar-esquema -rotinas-de-partida. Em
 // desenvolvimento:
 //
 //	go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
 //
-// O subcomando gerar-certificado (#84) cuida do .pfx da instalação: reaproveita o que ainda vale e gera outro quando precisa.
+// O subcomando preparar-https (#84, #775) cuida do HTTPS da instalação: o .pfx (reaproveita o que ainda vale e gera outro
+// quando precisa), a senha dele e a configuração que o site lê (https.go). O subcomando aplicar-esquema (#723) cria
+// ou atualiza o banco e sai: é o que os scripts de instalação rodam antes de publicar (esquema.go).
 //
 // Só para teste: -inicio-do-relogio 2026-10-15T01:00:00Z faz o relógio começar nesse instante e andar dali (#363);
 // o contrato usa. Sem a opção, o relógio do sistema.
 package main
 
 import (
-	"bufio"
 	"context"
 	"crypto/tls"
 	"database/sql"
-	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -52,47 +50,18 @@ import (
 
 func main() {
 	var err error
-	if len(os.Args) > 1 && os.Args[1] == "gerar-certificado" {
-		err = gerarCertificado(os.Args[2:], os.Stdin, os.Stdout, relogio.Sistema{})
-	} else {
+	switch {
+	case len(os.Args) > 1 && os.Args[1] == "preparar-https":
+		err = prepararHTTPS(os.Args[2:], os.Stdout, relogio.Sistema{})
+	case len(os.Args) > 1 && os.Args[1] == "aplicar-esquema":
+		err = aplicarEsquema(context.Background(), os.Args[2:], relogio.Sistema{})
+	default:
 		err = servicosistema.Rodar(rodar)
 	}
 	if err != nil {
 		slog.Error("o Go parou com erro", "erro", err)
 		os.Exit(1)
 	}
-}
-
-// gerarCertificado é o subcomando que os scripts chamam. A senha vem pela entrada padrão, e não na linha de comando, onde
-// qualquer programa do computador a veria. Escreve "gerado" ou "reaproveitado" na saída.
-func gerarCertificado(argumentos []string, entrada io.Reader, saida io.Writer, r relogio.Relogio) error {
-	opcoes := flag.NewFlagSet("gerar-certificado", flag.ContinueOnError)
-	pfx := opcoes.String("pfx", "", "caminho do .pfx; a parte pública vai para o .pem ao lado")
-	if err := opcoes.Parse(argumentos); err != nil {
-		return err
-	}
-	if *pfx == "" {
-		return errors.New("gerar-certificado: informe -pfx")
-	}
-	linha, err := bufio.NewReader(entrada).ReadString('\n')
-	if err != nil && !errors.Is(err, io.EOF) {
-		return fmt.Errorf("gerar-certificado: ler a senha: %w", err)
-	}
-	// O pipe do PowerShell 5.1 pode começar pela marca do UTF-8 e termina em \r\n: nada disso é da senha.
-	senha := strings.TrimRight(strings.TrimPrefix(linha, "\ufeff"), "\r\n")
-	if senha == "" {
-		return errors.New("gerar-certificado: a senha vem pela entrada padrão")
-	}
-	gerou, err := servidor.GarantirCertificado(*pfx, senha, r.Agora())
-	if err != nil {
-		return err
-	}
-	resultado := "reaproveitado"
-	if gerou {
-		resultado = "gerado"
-	}
-	_, err = fmt.Fprintln(saida, resultado)
-	return err
 }
 
 // rodar é o programa: acaba quando o ctx acaba (Ctrl+C, systemd ou o gerenciador de serviços do Windows).
@@ -152,7 +121,7 @@ func rodar(ctx context.Context) error {
 	}
 
 	// Desligado por padrão (o contrato e o desenvolvimento usam um banco pronto); a linha do serviço instalado liga.
-	// A assinatura (PRAGMA user_version) é a mesma do EsquemaBanco do .NET de antes: não repete a cópia nem a atualização.
+	// A assinatura (PRAGMA user_version) é a mesma das versões anteriores: não repete a cópia nem a atualização.
 	if *aplicar {
 		if err := banco.AplicarEsquema(ctx, cfg.BancoCaminho, rel, log); err != nil {
 			return err
@@ -168,7 +137,7 @@ func rodar(ctx context.Context) error {
 	}
 	defer db.Close()
 	// #444: as rotinas de partida (regras padrão novas, entradas nos cartões, transferências...). Desligadas por padrão;
-	// a linha do serviço instalado liga. Erro numa rotina só é registrado, como no .NET de antes.
+	// a linha do serviço instalado liga. Erro numa rotina só é registrado.
 	if *partidaSo {
 		partida.Executar(ctx, partida.Opcoes{DB: db, Relogio: rel, Log: log})
 	}

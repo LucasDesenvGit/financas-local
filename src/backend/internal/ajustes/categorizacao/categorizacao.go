@@ -1,10 +1,10 @@
-// Pacote categorizacao é o CategorizacaoService do .NET: define a categoria das transações, nesta ordem de
+// Pacote categorizacao: define a categoria das transações, nesta ordem de
 // prioridade: a escolhida à mão (nunca sobrescrita, quem confere é quem chama), as regras de categorização e o
 // mapeamento da categoria que a Pluggy sugere. Também acerta o tipo (despesa, receita, transferência) e o "fora dos
 // relatórios" pela categoria e pelo valor (ADR 0036). Fica num pacote próprio porque a sincronização (#83) usa o mesmo.
 //
 // Os acertos de dados da partida (regras padrão novas, entradas nos cartões, compras parceladas estornadas) estão em
-// acertos.go (#444); quem os chama ao subir é o internal/partida, só quando o Go está na frente do .NET.
+// acertos.go (#444); quem os chama ao subir é o internal/partida, só quando o Go está na frente.
 package categorizacao
 
 import (
@@ -14,19 +14,19 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Tipos de categoria (o enum TipoCategoria do C#).
+// Tipos de categoria.
 const (
 	CategoriaDespesa       = 1
 	CategoriaReceita       = 2
 	CategoriaTransferencia = 3
 )
 
-// Tipos de correspondência de uma regra (o enum TipoCorrespondencia do C#).
+// Tipos de correspondência de uma regra.
 const (
 	Contem    = 1
 	ComecaCom = 2
@@ -50,7 +50,7 @@ type Regras struct {
 }
 
 // Carregar é o CarregarAsync.
-func Carregar(ctx context.Context, q consultas.DBTX) (*Regras, error) {
+func Carregar(ctx context.Context, q banco.DBTX) (*Regras, error) {
 	rs := &Regras{tiposCategoria: map[int64]int64{}, mapaPluggy: map[string]*int64{}, cartoes: map[int64]bool{}}
 
 	linhas, err := q.QueryContext(ctx, `SELECT "Texto", "TipoCorrespondencia", "CategoriaId" FROM "RegraCategorizacao"
@@ -69,7 +69,7 @@ func Carregar(ctx context.Context, q consultas.DBTX) (*Regras, error) {
 	}
 	linhas.Close()
 
-	// Sem ORDER BY no C#: o SQLite devolve pelo Id. Com dois nomes que ficam iguais normalizados, vale o primeiro.
+	// Sem ORDER BY: o SQLite devolve pelo Id. Com dois nomes que ficam iguais normalizados, vale o primeiro.
 	linhas, err = q.QueryContext(ctx, `SELECT "Id", "Tipo", "Nome" FROM "Categoria" ORDER BY "Id"`)
 	if err != nil {
 		return nil, fmt.Errorf("ler as categorias: %w", err)
@@ -128,7 +128,7 @@ func Carregar(ctx context.Context, q consultas.DBTX) (*Regras, error) {
 }
 
 // Cartoes são os ids das contas de cartão de crédito (#166: entrada nelas é pagamento de fatura ou estorno).
-func Cartoes(ctx context.Context, q consultas.DBTX) (map[int64]bool, error) {
+func Cartoes(ctx context.Context, q banco.DBTX) (map[int64]bool, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id" FROM "Conta" WHERE "Tipo" = ?`, tipolancamento.CartaoCredito)
 	if err != nil {
 		return nil, fmt.Errorf("ler os cartões: %w", err)
@@ -145,7 +145,7 @@ func Cartoes(ctx context.Context, q consultas.DBTX) (map[int64]bool, error) {
 	return cartoes, linhas.Err()
 }
 
-// ResolverTexto é o Resolver(descricao, pluggyCategoriaId) do C#: a categoria pelas regras e pelo mapa da Pluggy.
+// ResolverTexto: a categoria pelas regras e pelo mapa da Pluggy.
 func (rs *Regras) ResolverTexto(descricao string, pluggyCategoriaId *string) *int64 {
 	return rs.resolver(descricao, nil, pluggyCategoriaId)
 }
@@ -184,7 +184,7 @@ func (rs *Regras) resolver(descricao string, outraDescricao, pluggyCategoriaId *
 }
 
 // Corresponde compara o texto e a regra, os dois já normalizados, pelo tipo da regra (o que não é "começa com" nem
-// "igual" é "contém", como o default do switch do C#).
+// "igual" é "contém").
 func Corresponde(t, regraNormalizada string, tipo int64) bool {
 	switch tipo {
 	case ComecaCom:

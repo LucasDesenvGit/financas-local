@@ -12,7 +12,7 @@ const diasValidadeHistorico = 7
 
 // Conversor é o ConversorMoeda: converte para reais com as cotações guardadas, sem consultar a internet. Usa a taxa
 // de compra da PTAX, a que vale para avaliar um bem em moeda estrangeira. A moeda sem cotação fica anotada em
-// MoedasSemCotacao, para quem somou avisar o usuário. Como no .NET, não é para uso em paralelo.
+// MoedasSemCotacao, para quem somou avisar o usuário. Não é para uso em paralelo.
 type Conversor struct {
 	taxas      map[string]tipos.Decimal
 	historico  map[string][]Guardada // por moeda, em ordem de data
@@ -43,7 +43,7 @@ func NovoConversor(ultimas, historico []Guardada) *Conversor {
 	return c
 }
 
-// MoedasSemCotacao são as moedas que apareceram numa conversão sem cotação, em ordem (SortedSet ordinal do .NET).
+// MoedasSemCotacao são as moedas que apareceram numa conversão sem cotação, em ordem (ordem ordinal do texto).
 func (c *Conversor) MoedasSemCotacao() []string {
 	lista := make([]string, 0, len(c.semCotacao))
 	for m := range c.semCotacao {
@@ -54,7 +54,7 @@ func (c *Conversor) MoedasSemCotacao() []string {
 }
 
 // Taxa são os reais por 1 unidade da moeda (última cotação), ou nil sem cotação guardada. Código inválido conta
-// como real, como no .NET.
+// como real.
 func (c *Conversor) Taxa(moeda string) *tipos.Decimal {
 	codigo := normalizarOuReal(moeda)
 	if codigo == MoedaBase {
@@ -79,7 +79,7 @@ func (c *Conversor) ParaReais(valor tipos.Decimal, moeda string) *tipos.Decimal 
 }
 
 // ParaReaisNaData é o valor em reais pela cotação da data (o último dia útil até 7 dias antes). Sem histórico para
-// a data, usa a última cotação guardada. Em real, o valor volta como está (sem arredondar), como no .NET.
+// a data, usa a última cotação guardada. Em real, o valor volta como está (sem arredondar).
 func (c *Conversor) ParaReaisNaData(valor tipos.Decimal, moeda string, data tipos.Data) *tipos.Decimal {
 	codigo := normalizarOuReal(moeda)
 	if codigo == MoedaBase {

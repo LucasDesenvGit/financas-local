@@ -49,12 +49,13 @@ describe('Regressão: assinaturas e cobranças recorrentes (#158)', () => {
     await atualizar();
     const campoTexto = () => raiz.ownerDocument.querySelector('input[name="textoCobranca"]');
     expect(campoTexto()).toBeNull();
-    tela.form!.formaCobranca = FormaCobranca.DebitoAutomatico;
+    const forma = raiz.ownerDocument.querySelector<HTMLSelectElement>('select[name="forma"]')!;
+    forma.selectedIndex = 1;
+    forma.dispatchEvent(new Event('change'));
     await atualizar();
     expect(campoTexto()).not.toBeNull();
 
-    tela.form = { ...tela.form!, descricao: 'Escola', valor: 100, formaCobranca: FormaCobranca.AMao, textoCobranca: 'FIAP' };
-    tela.salvar();
+    tela.salvar({ ...tela.form!, descricao: 'Escola', valor: 100, formaCobranca: FormaCobranca.AMao, textoCobranca: 'FIAP' });
     expect(salvos.at(-1)).toMatchObject({ formaCobranca: FormaCobranca.AMao, textoCobranca: null });
   });
 });

@@ -2,8 +2,7 @@
 // para uma fila, o gravador que os grava em ErroSistema (agrupados e limpos de dados sensíveis) e as rotas de
 // api/erros.
 //
-// Só vale com o Go sozinho, que é como o site vai rodar depois da inversão (#85). Atrás do .NET, o log do Go sai em
-// JSON na saída de erro e quem grava é o .NET (ADR 0049); /api/erros fica no .NET até a inversão.
+// Só vale com o Go sozinho (#85, ADR 0049).
 package erros
 
 import (
@@ -11,7 +10,7 @@ import (
 	"time"
 )
 
-// Nivel é o NivelErro do C# (os números do LogLevel do .NET). No JSON sai como número.
+// Nivel é o nível do registro. No JSON sai como número.
 type Nivel int
 
 const (
@@ -33,7 +32,7 @@ var origensConhecidas = map[string]bool{
 	"API": true, "Open Finance": true, "Investimentos": true, "Câmbio": true, OrigemCripto: true, OrigemSistema: true,
 }
 
-// Registro é um erro ou aviso ainda não gravado (texto ainda sem limpeza): o RegistroErro do C#.
+// Registro é um erro ou aviso ainda não gravado (texto ainda sem limpeza).
 type Registro struct {
 	Em        time.Time // UTC
 	Nivel     Nivel
@@ -62,7 +61,7 @@ func NovaFila() *Fila {
 	return &Fila{canal: make(chan Registro, tamanhoFila)}
 }
 
-// Registrar põe o registro na fila; false se ela está cheia (o BoundedChannelFullMode.DropWrite do .NET).
+// Registrar põe o registro na fila; false se ela está cheia.
 func (f *Fila) Registrar(r Registro) bool {
 	select {
 	case f.canal <- r:

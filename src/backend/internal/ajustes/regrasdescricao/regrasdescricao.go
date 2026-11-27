@@ -1,4 +1,4 @@
-// Pacote regrasdescricao é o RegraDescricaoService do .NET (#123, ADR 0030): "quando a descrição do banco for ou
+// Pacote regrasdescricao (#123, ADR 0030): "quando a descrição do banco for ou
 // contiver X, mostrar Y". Vale só nas transações de nome automático (o do banco ou o dado por uma regra); nome escolhido
 // à mão fica. #241: a regra pode ter uma faixa de valor (sem o sinal). #250: as regras valem em cadeia, cada uma uma vez
 // só, até MaximoNaCadeia passos; RegraDescricaoId guarda a última, a que deu o nome final.
@@ -11,7 +11,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/ajustes/categorizacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -33,10 +33,10 @@ type Regras struct {
 	regras []regra
 }
 
-// Carregar lê as regras ativas e as ordena como o C#: primeiro as que têm faixa de valor (#241); depois "é igual a",
+// Carregar lê as regras ativas e as ordena: primeiro as que têm faixa de valor (#241); depois "é igual a",
 // "começa com" e "contém" (o tipo, do maior para o menor); no mesmo tipo, o texto mais longo (em unidades UTF-16, o
-// string.Length do C#) e, empatando, a mais antiga e o menor Id. A ordenação é estável, como a do LINQ.
-func Carregar(ctx context.Context, q consultas.DBTX) (*Regras, error) {
+// tamanho do texto) e, empatando, a mais antiga e o menor Id. A ordenação é estável.
+func Carregar(ctx context.Context, q banco.DBTX) (*Regras, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Texto", "TipoCorrespondencia", "NovaDescricao", "ValorMinimo",
 		"ValorMaximo", "CriadoEm" FROM "RegraDescricao" WHERE "Ativa"`)
 	if err != nil {
@@ -177,13 +177,13 @@ const ondeNomeAutomatico = `NOT "DescricaoManual" AND "DescricaoOriginal" IS NOT
 	AND ("RegraDescricaoId" IS NOT NULL OR "Descricao" = "DescricaoOriginal")`
 
 // NomeAutomaticoNoBanco lê as transações que estão com o nome automático no banco (a consulta do ReaplicarAsync).
-func NomeAutomaticoNoBanco(ctx context.Context, q consultas.DBTX) ([]*transacoes.Transacao, error) {
+func NomeAutomaticoNoBanco(ctx context.Context, q banco.DBTX) ([]*transacoes.Transacao, error) {
 	return transacoes.Listar(ctx, q, `WHERE `+ondeNomeAutomatico)
 }
 
 // Reaplicar (o ReaplicarAsync) aplica as regras em todas as transações de nome automático e devolve as que mudaram,
 // com AtualizadoEm = agora. Não grava: quem chama decide (transacoes.GravarTodas).
-func Reaplicar(ctx context.Context, q consultas.DBTX, agora tipos.DataHora) ([]*transacoes.Transacao, error) {
+func Reaplicar(ctx context.Context, q banco.DBTX, agora tipos.DataHora) ([]*transacoes.Transacao, error) {
 	rs, err := Carregar(ctx, q)
 	if err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func Reaplicar(ctx context.Context, q consultas.DBTX, agora tipos.DataHora) ([]*
 
 // Previa (o PreviaAsync): quantas transações de nome automático batem com o texto (pela descrição do banco ou pelo
 // nome de agora, #250) e com a faixa de valor (#241), e até 3 exemplos diferentes, na ordem em que o banco devolve.
-func Previa(ctx context.Context, q consultas.DBTX, textoRegra string, tipo int64, excetoId int64, minimo, maximo *tipos.Decimal) (int, []string, error) {
+func Previa(ctx context.Context, q banco.DBTX, textoRegra string, tipo int64, excetoId int64, minimo, maximo *tipos.Decimal) (int, []string, error) {
 	normalizado := texto.ParaRegras(textoRegra)
 	if normalizado == "" {
 		return 0, []string{}, nil

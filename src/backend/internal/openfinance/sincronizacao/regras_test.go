@@ -551,9 +551,9 @@ func TestMovimentoDaCorretora(t *testing.T) {
 		o        operacao
 		esperado bool
 	}{
-		{"da corretora", operacao{origem: origemOpenFinance, pluggyTransacaoId: p("mov-1")}, true},
-		{"posição provisória", operacao{origem: origemOpenFinance, pluggyTransacaoId: p("posicao:x")}, false},
-		{"sem id", operacao{origem: origemOpenFinance}, false},
+		{"da corretora", operacao{origem: tipos.OrigemOpenFinance, pluggyTransacaoId: p("mov-1")}, true},
+		{"posição provisória", operacao{origem: tipos.OrigemOpenFinance, pluggyTransacaoId: p("posicao:x")}, false},
+		{"sem id", operacao{origem: tipos.OrigemOpenFinance}, false},
 		{"manual", operacao{origem: 1, pluggyTransacaoId: p("mov-1")}, false},
 	}
 	for _, c := range casos {

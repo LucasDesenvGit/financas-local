@@ -1,9 +1,9 @@
-// Pacote sugestoes é o SugestaoCategoriaService do C# (#78): sugere categorias pelo histórico (como você categorizou
+// Pacote sugestoes (#78): sugere categorias pelo histórico (como você categorizou
 // transações com descrição parecida; o que você escolheu à mão pesa mais) e por palavras-chave conhecidas, e o texto
 // de uma regra "contém" para o grupo, com o aviso quando ela pegaria transações de outras categorias (#254).
 //
-// O que depende do texto (as palavras, a chave dos grupos, o texto da regra, o percentual) foi conferido contra o
-// próprio C#: o gabarito testdata/sugestoes.json é gravado pela sonda das contas (internal/movimentacao/faturas/testdata/sonda-csharp).
+// O que depende do texto (as palavras, a chave dos grupos, o texto da regra, o percentual) foi conferido contra o gabarito
+// testdata/sugestoes.json, gravado pela sonda das contas (internal/movimentacao/faturas/testdata/sonda-csharp).
 package sugestoes
 
 import (
@@ -37,11 +37,11 @@ var ruido = conjunto(`PIX ENVIADO ENVIADA RECEBIDO RECEBIDA TRANSF TRANSFERENCIA
 var genericasParaRegra = conjunto(`BANCO BCO BANK FATURA PAGAMENTOS RECEBIMENTO DEPOSITO APLICACAO RESGATE SALDO LOJA LOJAS
 	MENSALIDADE SERVICO CENTRO GRUPO INSTITUICAO PAGADORA CLIENTE TITULAR MESMA TITULARIDADE OUTRA OUTROS DIVERSOS ESTORNO TAXA`)
 
-// tamanho é o string.Length do C#: os chars UTF-16.
+// tamanho conta os chars UTF-16.
 func tamanho(s string) int { return len(utf16.Encode([]rune(s))) }
 
-// Palavras é o Palavras do C#: as palavras significativas da descrição (normalizada como nas regras, só letras, com 3
-// chars UTF-16 ou mais e fora do ruído). O C# olha um char por vez: a letra fora do plano básico, como o "𝐀"
+// Palavras: as palavras significativas da descrição (normalizada como nas regras, só letras, com 3
+// chars UTF-16 ou mais e fora do ruído). O texto é olhado um char por vez: a letra fora do plano básico, como o "𝐀"
 // matemático, chega em duas metades que não são letra, e vira espaço.
 func Palavras(descricao string) []string {
 	normalizado := texto.ParaRegras(descricao)
@@ -117,8 +117,7 @@ func TextoRegra(descricoes []string) string {
 	return ""
 }
 
-// prefixoComum é o começo comum dos textos, cortado no fim da última palavra inteira. Os índices são de char UTF-16,
-// como no C#.
+// prefixoComum é o começo comum dos textos, cortado no fim da última palavra inteira. Os índices são de char UTF-16.
 func prefixoComum(textos []string) string {
 	cs := make([][]uint16, len(textos))
 	menor := math.MaxInt
@@ -132,7 +131,7 @@ func prefixoComum(textos []string) string {
 	}
 	prefixo := cs[0][:n]
 	if n < len(cs[0]) && letraOuDigito(cs[0][n]) && !slices.ContainsFunc(cs, func(c []uint16) bool { return len(c) <= n }) {
-		// O prefixo[..Math.Max(0, prefixo.LastIndexOf(' '))] do C#: sem espaço, não sobra nada.
+		// Sem espaço, não sobra nada.
 		corte := 0
 		for i, c := range prefixo {
 			if c == ' ' {
@@ -144,14 +143,14 @@ func prefixoComum(textos []string) string {
 	return strings.TrimSpace(string(utf16.Decode(prefixo)))
 }
 
-// letraOuDigito é o char.IsLetterOrDigit do C#: as letras e os dígitos decimais (Nd). A metade de um surrogate é da
+// letraOuDigito: as letras e os dígitos decimais (Nd). A metade de um surrogate é da
 // categoria Cs, que não é nenhum dos dois.
 func letraOuDigito(c uint16) bool {
 	r := rune(c)
 	return unicode.IsLetter(r) || unicode.Is(unicode.Nd, r)
 }
 
-// percentual é o "P0" do C# na cultura pt-BR: o valor exato do double vezes 100, arredondado para o par no empate
+// percentual formata em pt-BR ("P0"): o valor exato do double vezes 100, arredondado para o par no empate
 // (0,125 é "12%", e 0,005, que no binário fica um pouco acima, é "1%"), sem separador e colado no "%".
 func percentual(razao float64) string {
 	f := new(big.Float).SetPrec(256).SetFloat64(razao)

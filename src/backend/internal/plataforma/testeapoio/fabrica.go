@@ -11,7 +11,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Executor é o que a fábrica precisa para gravar: um *sql.DB ou uma *sql.Tx (a mesma interface do sqlc).
+// Executor é o que a fábrica precisa para gravar: um *sql.DB ou uma *sql.Tx (o mesmo que o `banco.DBTX`).
 type Executor interface {
 	ExecContext(ctx context.Context, consulta string, argumentos ...any) (sql.Result, error)
 }

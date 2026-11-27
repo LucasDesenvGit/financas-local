@@ -29,7 +29,7 @@ func paresDaQuery(r *http.Request) []par {
 	return pares
 }
 
-// ParametroDaQuery é o [FromQuery] do ASP.NET: o nome não diferencia maiúsculas e vale o primeiro valor, na ordem em
+// ParametroDaQuery: o nome não diferencia maiúsculas e vale o primeiro valor, na ordem em
 // que vieram (com "Ano" e "ano" na mesma query, o primeiro dos dois).
 func ParametroDaQuery(r *http.Request, nome string) (string, bool) {
 	for _, p := range paresDaQuery(r) {
@@ -145,7 +145,7 @@ func BoolDaQuery(valor string) (bool, bool) {
 	return false, false
 }
 
-// EnumDaQuery é o EnumTypeModelBinder do ASP.NET na query: o nome (sem diferença de maiúsculas; no mapa, em
+// EnumDaQuery lê um enum da query: o nome (sem diferença de maiúsculas; no mapa, em
 // minúsculas) ou o número, e vários separados por vírgula viram a combinação (o OR dos valores). converte diz se o texto
 // vira o enum (senão, MensagemDaQuery); definido, se o valor existe nele (senão, MensagemDeValorInvalido: o binder
 // confere o Enum.IsDefined, e "9" num enum de 1 a 3 é 400).
@@ -171,7 +171,7 @@ func EnumDaQuery(valor string, nomes map[string]int64) (v int64, converte, defin
 }
 
 // DataDaQuery é o DateOnly do model binding, que lê a query na cultura invariante: "2026-10-15" (o que o front-end
-// manda) e o formato americano "10/15/2026". Outros formatos que o .NET aceita (nome do mês por extenso) ficam de
+// manda) e o formato americano "10/15/2026". Outros formatos (nome do mês por extenso) ficam de
 // fora: o front-end nunca os manda.
 func DataDaQuery(texto string) (tipos.Data, bool) {
 	texto = strings.TrimSpace(texto)

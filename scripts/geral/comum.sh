@@ -28,6 +28,14 @@ case "$(uname -m)" in
         ;;
 esac
 
+# ---------------------------------------------------------------- systemctl do host no Flatpak (#789)
+# No terminal de um app em Flatpak (ex.: o VS Code) nao ha systemctl: o do host e chamado pelo flatpak-spawn. Os
+# scripts seguem usando 'systemctl' e 'command -v systemctl' (que acha a funcao). Fora do Flatpak, nada muda.
+if [[ "$SO" == linux ]] && ! command -v systemctl >/dev/null 2>&1 && command -v flatpak-spawn >/dev/null 2>&1 \
+   && { [[ -e /.flatpak-info ]] || [[ "${container:-}" == flatpak ]]; }; then
+    systemctl() { flatpak-spawn --host systemctl "$@"; }
+fi
+
 # ---------------------------------------------------------------- Pastas (mesma convencao do antigo comum.ps1)
 Raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 Ferramentas="$Raiz/ferramentas"
@@ -218,12 +226,7 @@ configurar_ambiente_build() {
 }
 
 # ---------------------------------------------------------------- Evolucao de schema do SQLite
-# O SQLite nao tem "ALTER TABLE ... ADD COLUMN IF NOT EXISTS". Quando uma versao
-# futura de 2-criar-banco.sh (ou um novo banco/NN-nome.sql rodado via sqlite3)
-# precisar adicionar uma coluna em uma tabela existente sem quebrar quem ja tem
-# o banco criado, use estes dois helpers. Ambos dependem da variavel $banco
-# (caminho do arquivo .db) ja estar definida no script chamador. Exemplo:
-#   adicionar_coluna_se_ausente "Transacoes" "Observacao" "TEXT"
+# Coluna nova em tabela existente nao e do bash: fica em esquema.ColunasNovas (Go) e o executavel a aplica (#723).
 # .timeout: se a API (no ar durante uma atualizacao) estiver gravando, o sqlite3 espera ate 15 s
 # em vez de falhar com "database is locked". Uso: sqlite3 "${SQLITE_ESPERA[@]}" "$banco" ...
 SQLITE_ESPERA=(-cmd '.timeout 15000')
@@ -240,19 +243,3 @@ caminho_sqlite() {
     printf '%s' "$c"
 }
 
-coluna_existe() {
-    local tabela="$1" coluna="$2" colunas
-    # Le a lista inteira antes de comparar (em vez de canalizar direto para um
-    # "grep -qx", que fecha o pipe cedo e poderia, com pipefail, propagar um
-    # SIGPIPE do sqlite3 como falha espuria).
-    colunas="$(sqlite3 "${SQLITE_ESPERA[@]}" "$banco" "PRAGMA table_info($tabela);" | cut -d'|' -f2)"
-    grep -qx "$coluna" <<<"$colunas"
-}
-
-adicionar_coluna_se_ausente() {
-    local tabela="$1" coluna="$2" definicao="$3"
-    if ! coluna_existe "$tabela" "$coluna"; then
-        sqlite3 "${SQLITE_ESPERA[@]}" "$banco" "ALTER TABLE $tabela ADD COLUMN $coluna $definicao;"
-        ok "coluna $coluna adicionada em $tabela"
-    fi
-}

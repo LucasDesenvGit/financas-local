@@ -152,9 +152,7 @@ func validarSalario(valor tipos.Decimal) error {
 	return nil
 }
 
-func (s *Servico) conferirConta(ctx context.Context, q interface {
-	QueryRowContext(context.Context, string, ...any) *sql.Row
-}, contaId *int64) error {
+func (s *Servico) conferirConta(ctx context.Context, q banco.DBTX, contaId *int64) error {
 	if contaId == nil {
 		return nil
 	}

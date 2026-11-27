@@ -174,7 +174,7 @@ func (s *Servico) ObterConversor(ctx context.Context, historicoDesde *tipos.Data
 }
 
 // baixar é o BaixarAsync: consulta a API (fora da transação) e grava numa transação curta as novas e as que
-// mudaram. depois, se não for nil, roda na mesma transação (o SaveChangesAsync do .NET grava tudo junto).
+// mudaram. depois, se não for nil, roda na mesma transação (tudo grava junto).
 func (s *Servico) baixar(ctx context.Context, moeda string, de, ate tipos.Data, depois func(*sql.Tx) error) (novas, corrigidas int, err error) {
 	fechamentos, err := s.fonte.BuscarFechamentos(ctx, moeda, de, ate)
 	if err != nil {
@@ -193,7 +193,7 @@ func (s *Servico) baixar(ctx context.Context, moeda string, de, ate tipos.Data, 
 		for _, f := range fechamentos {
 			if atual, ok := existentes[f.Data.String()]; ok {
 				// O Banco Central pode republicar um boletim corrigido: grava o valor mais recente. O == do decimal
-				// do C# não olha a escala (5.0113 == 5.01130).
+				// não olha a escala (5.0113 == 5.01130).
 				if atual.Compra.Decimal().Equal(f.Compra.Decimal()) && atual.Venda.Decimal().Equal(f.Venda.Decimal()) {
 					continue
 				}
@@ -231,7 +231,7 @@ func (s *Servico) ultimasGuardadas(ctx context.Context) ([]Guardada, error) {
 	if err != nil {
 		return nil, err
 	}
-	// O OrderBy(c => c.Moeda) do .NET compara pela cultura; o código da moeda é só A-Z, em que dá o mesmo.
+	// Ordenar pela cultura ou pelo texto dá o mesmo: o código da moeda é só A-Z.
 	slices.SortStableFunc(lista, func(a, b Guardada) int { return strings.Compare(a.Moeda, b.Moeda) })
 	return lista, nil
 }

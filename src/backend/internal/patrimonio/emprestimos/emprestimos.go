@@ -1,4 +1,4 @@
-// Pacote emprestimos tem os totais do EmprestimoService do .NET (#447, épico #70): o saldo devedor e a parcela mensal
+// Pacote emprestimos tem os totais (#447): o saldo devedor e a parcela mensal
 // de financiamentos e de empréstimos, separados por natureza (ADR 0014). O painel (#80), a sugestão de orçamentos
 // (#79) e a visão anual usam. O painel de empréstimos (a lista dos contratos, os pagamentos por mês e a
 // classificação por modalidade) vem em outra história.
@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco/consultas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Natureza de um contrato (o enum NaturezaCredito do C#).
+// Natureza de um contrato.
 const (
 	NaturezaEmprestimo    = 1
 	NaturezaFinanciamento = 2
@@ -24,7 +24,7 @@ const (
 // casasDaParcelaMensal são as casas do Math.Round da parcela mensal total.
 const casasDaParcelaMensal = 2
 
-// TotaisCreditoDto são os totais de crédito, na ordem do record TotaisCreditoDto do C#.
+// TotaisCreditoDto são os totais de crédito, na ordem dos campos do JSON.
 type TotaisCreditoDto struct {
 	SaldoFinanciamentos         tipos.Decimal `json:"saldoFinanciamentos"`
 	SaldoEmprestimos            tipos.Decimal `json:"saldoEmprestimos"`
@@ -43,10 +43,10 @@ type Contrato struct {
 
 // Servico lê os contratos de crédito. Recebe o banco, que pode ser uma transação (*sql.Tx) de quem chama.
 type Servico struct {
-	db consultas.DBTX
+	db banco.DBTX
 }
 
-func NovoServico(db consultas.DBTX) *Servico { return &Servico{db: db} }
+func NovoServico(db banco.DBTX) *Servico { return &Servico{db: db} }
 
 // ContratosAtivos são os contratos em aberto de conexões ativas: o saldo devedor é maior que zero (comparado em Go,
 // com decimal) e a conexão bancária está ativa. A ordem é a do Id.
@@ -122,7 +122,7 @@ func (s *Servico) Totais(ctx context.Context) (TotaisCreditoDto, error) {
 // ParcelaMensal converte a parcela para o equivalente mensal: anual (YEARLY, ANUAL) ÷ 12, semestral (SEMIANNUALLY,
 // SEMESTRAL) ÷ 6, trimestral (QUARTERLY, TRIMESTRAL) ÷ 3, e qualquer outra periodicidade (MONTHLY, IRREGULAR, vazia)
 // como está. A periodicidade não diferencia maiúsculas. Sem parcela, ou com parcela zero ou negativa, é 0. A divisão é a
-// do decimal do C#, até 28 casas, sem arredondar.
+// do decimal, até 28 casas, sem arredondar.
 func ParcelaMensal(parcela *tipos.Decimal, periodicidade *string) (tipos.Decimal, error) {
 	if parcela == nil || !parcela.Decimal().IsPositive() {
 		return tipos.Zero, nil

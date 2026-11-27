@@ -1,5 +1,5 @@
-// Pacote relogio é o Relogio.cs do Go: datas no fuso de Brasília, seja qual for o fuso do computador. Ao contrário
-// do C# (classe estática), o relógio é passado como dependência, e os testes usam um relógio parado (Fixo) ou um
+// Pacote relogio: datas no fuso de Brasília, seja qual for o fuso do computador.
+// O relógio é passado como dependência, e os testes usam um relógio parado (Fixo) ou um
 // que começa numa hora dada e anda dali (APartirDe, o do contrato).
 package relogio
 
@@ -40,7 +40,7 @@ type Fixo struct {
 func (f Fixo) Agora() time.Time { return f.Instante.UTC() }
 
 // APartirDe é um relógio que começa num instante dado e anda dali, no ritmo do relógio de verdade. Só para teste
-// (#363): é o que o FAKETIME="@..." da libfaketime faz com o .NET no contrato. A libfaketime não age sobre o Go, que
+// (#363): faz o que o FAKETIME="@..." da libfaketime faria no contrato. A libfaketime não age sobre o Go, que
 // lê o relógio sem passar pela libc, por isso a opção -inicio-do-relogio do cmd/financas.
 //
 // Ao contrário do Fixo, o tempo passa: o bloqueio de login de 15 minutos e o "há quanto tempo" continuam
@@ -71,10 +71,10 @@ func LerInicio(texto string) (time.Time, error) {
 	return instante.UTC(), nil
 }
 
-// AgoraLocal é a hora atual em Brasília (Relogio.AgoraLocal no C#).
+// AgoraLocal é a hora atual em Brasília.
 func AgoraLocal(r Relogio) time.Time { return r.Agora().In(Brasilia) }
 
-// Hoje é a data de hoje em Brasília (Relogio.Hoje no C#).
+// Hoje é a data de hoje em Brasília.
 func Hoje(r Relogio) tipos.Data { return tipos.DataDe(AgoraLocal(r)) }
 
 // ParaHoraLocal converte um instante para a hora de Brasília.
@@ -84,7 +84,7 @@ func ParaHoraLocal(instante time.Time) time.Time { return instante.In(Brasilia) 
 //
 // No dia em que o horário de verão começava (até 2019), a meia-noite não existia: o relógio ia de 23:59:59 direto
 // para 01:00. Para uma hora que não existe, o time.Date não garante qual dos dois fusos usa, e aqui devolve as 23:00
-// do dia anterior. O dia então começa na troca de fuso, às 01:00 (#372, achado pelo fuzz). O C# lança exceção
+// do dia anterior. O dia então começa na troca de fuso, às 01:00 (#372, achado pelo fuzz). Não há exceção
 // nesse dia (#393).
 func InicioDoDiaUtc(dia tipos.Data) time.Time {
 	inicio := time.Date(dia.Ano(), dia.Mes(), dia.Dia(), 0, 0, 0, 0, Brasilia)
@@ -94,7 +94,7 @@ func InicioDoDiaUtc(dia tipos.Data) time.Time {
 	return inicio.UTC()
 }
 
-// PrimeiroDiaMes e UltimoDiaMes são os do C#.
+// PrimeiroDiaMes e UltimoDiaMes são o primeiro e o último dia do mês.
 func PrimeiroDiaMes(ano int, mes time.Month) tipos.Data { return tipos.NovaData(ano, mes, 1) }
 
 func UltimoDiaMes(ano int, mes time.Month) tipos.Data {

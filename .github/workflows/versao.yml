@@ -210,7 +210,7 @@ jobs:
           if (@($instalada).Count -ne 1 -or $instalada.DisplayVersion -ne "${{ steps.versao.outputs.seguinte }}") { throw "versões instaladas: $($instalada.DisplayVersion -join ', ')" }
           for ($i = 0; $i -lt 30; $i++) { try { $estado = curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json; break } catch { Start-Sleep 2 } }
           if (-not $estado.configurado) { throw "a atualização perdeu o usuário" }
-          # #277: o financas-go.exe gerar-certificado reaproveitou o certificado que ainda vale (não trocou o confiável).
+          # #277: o financas-go.exe preparar-https reaproveitou o certificado que ainda vale (não trocou o confiável).
           if (-not (Select-String -Path atualizar.log -SimpleMatch "certificado atual reaproveitado" -Quiet)) { throw "a atualização não reaproveitou o certificado (veja atualizar.log)" }
           # #231: a troca de versão parou o Go antigo junto (o arquivo foi trocado) e subiu o novo.
           $go = @(Get-CimInstance Win32_Process -Filter "Name='financas-go.exe'")

@@ -34,7 +34,7 @@ func semProduto(err error) bool {
 	return errors.As(err, &e) && (e.Status == http.StatusBadRequest || e.Status == http.StatusForbidden || e.Status == http.StatusNotFound)
 }
 
-// comLimite é o v is { } x && Math.Abs(x) < limite ? Math.Round((decimal)x, casas) : null do C#: fora do limite, ou sem
+// comLimite arredonda para as casas: fora do limite, ou sem
 // caber no decimal, fica nil.
 func comLimite(n *pluggy.Numero, limite int64, casas int32) *tipos.Decimal {
 	if n == nil {

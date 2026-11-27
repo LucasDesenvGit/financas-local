@@ -26,7 +26,7 @@ type filtro struct {
 
 var situacaoValida = regexp.MustCompile(`^(abertos|resolvidos|todos)$`)
 
-// lerFiltro faz o model binding e a validação do FiltroErrosDto como o ASP.NET (o contrato 17-erros grava cada
+// lerFiltro faz o model binding e a validação do FiltroErrosDto (o contrato 17-erros grava cada
 // mensagem): devolve os erros por propriedade, ou nil.
 //
 //   - o nome do parâmetro não liga para maiúsculas, e repetido vale o primeiro;
@@ -135,8 +135,7 @@ func naoValido(bruto, propriedade string) string {
 }
 
 // lerInt32 é o Int32Converter: o texto sem os espaços das pontas; com 0x ou &h, hexadecimal de até 8 dígitos (os 32
-// bits, como o Convert.ToInt32(texto, 16)); senão, o int.Parse da cultura invariante. Hexadecimal vazio não é um
-// FormatException no .NET, e a mensagem é a genérica.
+// bits, como o Convert.ToInt32(texto, 16)); senão, o int.Parse da cultura invariante. Hexadecimal vazio tem a mensagem genérica.
 func lerInt32(bruto, propriedade string) (int, string) {
 	texto := strings.Trim(bruto, " \t\n\v\f\r")
 	for _, prefixo := range []string{"0x", "0X", "&h", "&H"} {

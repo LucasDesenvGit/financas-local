@@ -22,7 +22,7 @@ func (f Faixa) mensagem(propriedade string) string {
 	return fmt.Sprintf("O campo %s tem de estar entre %s e %s.", propriedade, numeroPtBR(f.Minimo), numeroPtBR(f.Maximo))
 }
 
-// numeroPtBR é o double.ToString da cultura pt-BR: com o expoente abaixo de -4, o .NET passa para a notação científica
+// numeroPtBR escreve o double na cultura pt-BR: com o expoente abaixo de -4, passa para a notação científica
 // (0,0001, mas 1E-05).
 func numeroPtBR(v float64) string {
 	formato := byte('f')
@@ -32,8 +32,8 @@ func numeroPtBR(v float64) string {
 	return strings.Replace(strconv.FormatFloat(v, formato, -1, 64), ".", ",", 1)
 }
 
-// inteiroDoToken lê um int do C# (32 bits): número JSON inteiro ou, como as opções web do ASP.NET leem
-// (AllowReadingFromString), o mesmo número em texto. "7.0", "1e2" e " 7" não são int para o System.Text.Json.
+// inteiroDoToken lê um int (32 bits): número JSON inteiro ou,
+// o mesmo número em texto. "7.0", "1e2" e " 7" não são int.
 func inteiroDoToken(t json.Token) (int64, bool) { return inteiroDoTokenEm(t, 32) }
 
 // inteiroDoTokenEm é o inteiroDoToken com o tamanho do inteiro em bits (64 para o long).
@@ -230,7 +230,7 @@ func (c *CampoDecimal) validar(erros map[string][]string) {
 }
 
 // CampoData é um parâmetro DateOnly (não anulável) de um record: o System.Text.Json lê só o texto "aaaa-mm-dd"; null,
-// número ou outro formato é erro de conversão. Sem a propriedade no JSON, fica a data zero (01/01/0001), como no C#; com
+// número ou outro formato é erro de conversão. Sem a propriedade no JSON, fica a data zero (01/01/0001); com
 // Obrigatoria, é o 400 de campo obrigatório (#503): a transação e a conta a pagar eram gravadas com a data zero.
 type CampoData struct {
 	Propriedade string
@@ -308,7 +308,7 @@ func (c *CampoDecimalOpcional) validar(erros map[string][]string) {
 // Padrao é o [RegularExpression] de um CampoTexto: vale só para texto que não é vazio (o RegularExpressionAttribute
 // deixa passar nulo e ""), e o texto inteiro tem de casar.
 type Padrao struct {
-	// MensagemPropria é o ErrorMessage do atributo, quando o C# dá um ("Moeda inválida: use BRL ou USD.").
+	// MensagemPropria é a mensagem própria do campo, quando há uma ("Moeda inválida: use BRL ou USD.").
 	MensagemPropria string
 	re              *regexp.Regexp
 }
