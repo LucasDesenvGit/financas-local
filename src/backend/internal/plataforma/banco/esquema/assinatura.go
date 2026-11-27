@@ -12,14 +12,16 @@ import (
 // dois arquivos para embutido/, e o TestCopiasEmDia e a CI ("go generate em dia") falham se uma cópia ficar
 // diferente do original. O original continua sendo a fonte única (ADR 0003).
 var Copias = map[string]string{
-	"01-estrutura.sql":      ArquivoEstrutura,
-	"02-dados-iniciais.sql": ArquivoDadosIniciais,
+	"01-estrutura.sql":        ArquivoEstrutura,
+	"02-dados-iniciais.sql":   ArquivoDadosIniciais,
+	"03-tabelas-oficiais.sql": ArquivoTabelasOficiais,
 }
 
-// Scripts são o que o AplicarEsquema lê: a estrutura, os dados iniciais e as colunas novas.
+// Scripts são o que o AplicarEsquema lê: a estrutura, os dados iniciais (só em banco novo), as tabelas oficiais (a
+// cada partida, ADR 0065) e as colunas novas.
 type Scripts struct {
-	Estrutura, DadosIniciais string
-	Colunas                  []ColunaNova
+	Estrutura, DadosIniciais, TabelasOficiais string
+	Colunas                                   []ColunaNova
 }
 
 // Texto lê o arquivo como o EsquemaBanco.Ler: o StreamReader em UTF-8 descarta a marca de ordem de bytes (BOM) do

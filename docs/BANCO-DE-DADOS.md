@@ -5,7 +5,8 @@ O banco é **SQLite**, num arquivo local (`dados/sql/FinancasLocal.db`), criado 
 | Arquivo | Conteúdo |
 |---|---|
 | `banco/01-estrutura.sql` | Tabelas, índices e restrições, todos com `CREATE TABLE/INDEX IF NOT EXISTS`. |
-| `banco/02-dados-iniciais.sql` | Categorias padrão, configurações e regras de categorização iniciais. |
+| `banco/02-dados-iniciais.sql` | Categorias padrão, configurações e regras de categorização iniciais (só em banco novo). |
+| `banco/03-tabelas-oficiais.sql` | Tabelas do INSS e do IRRF por vigência, com a fonte. Idempotente e aplicado a cada partida do site, também em banco existente: é como a tabela de um ano novo chega a todos. Vigência nova entra aqui, não no 02. |
 
 Quem aplica os dois é o executável do Go (`src/backend/internal/plataforma/banco/esquema_banco.go`, com os scripts e a lista de colunas novas embutidos nele; os dados iniciais, no site, só no banco novo; o subcomando dos scripts os aplica sempre, também em banco existente): o site, ao iniciar (`-aplicar-esquema`), e os scripts de instalação, que chamam `financas-go aplicar-esquema -banco <caminho>` na etapa 2 (#723; ali o Go roda do código, com `go run`, porque a publicação é a etapa 3), com cópia em `dados/backups` antes de mudar um banco existente ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)). Não há mais script de permissões: o acesso ao banco é a permissão de arquivo do sistema sobre `dados/`.
 

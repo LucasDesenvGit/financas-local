@@ -9,7 +9,7 @@
 api                             96.9
 plataforma/auditoria            100.0
 plataforma/autenticacao         76.0
-plataforma/banco                83.0
+plataforma/banco                85.1
 plataforma/banco/esquema        100.0
 movimentacao/bancos             96.4
 patrimonio/cambio               87.9
