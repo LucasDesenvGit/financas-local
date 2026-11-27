@@ -1,11 +1,13 @@
 package parametros
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"strings"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/autenticacao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/servidor"
@@ -56,7 +58,16 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	err := banco.EmTransacao(ctx, s.o.DB, func(tx *sql.Tx) error {
+	problema, err := s.conferirSenha(ctx, dto)
+	if err != nil {
+		s.erroInterno(w, r, "conferir a senha", err)
+		return
+	}
+	if problema != "" {
+		respostas.Mensagem(w, http.StatusBadRequest, problema)
+		return
+	}
+	err = banco.EmTransacao(ctx, s.o.DB, func(tx *sql.Tx) error {
 		login, err := auditoria.Login(ctx, tx)
 		if err != nil {
 			return err
@@ -72,6 +83,38 @@ func (s *Servico) salvar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.listar(w, r)
+}
+
+// conferirSenha (#68): quem muda um parâmetro de segurança (Definicao.PedeSenha) para um valor diferente do atual
+// precisa mandar a senha atual, conferida como no alterar-senha. Devolve a mensagem do 400, ou "" quando pode gravar.
+// A senha errada não conta como tentativa de login, como no alterar-senha: a sessão já é de quem entrou, e o bloqueio
+// protege o login, que é por onde se adivinha a senha de fora.
+func (s *Servico) conferirSenha(ctx context.Context, dto corpoSalvar) (string, error) {
+	atuais, err := s.Listar(ctx)
+	if err != nil {
+		return "", err
+	}
+	valorAtual := make(map[string]int, len(atuais))
+	for _, p := range atuais {
+		valorAtual[p.Chave] = p.Valor
+	}
+	muda := false
+	for _, v := range dto.valores {
+		if d, _ := definicao(v.Chave); d.PedeSenha() && v.Valor != valorAtual[v.Chave] {
+			muda = true
+		}
+	}
+	if !muda {
+		return "", nil
+	}
+	if dto.senhaAtual == "" {
+		return "Informe a senha atual para mudar os parâmetros de segurança.", nil
+	}
+	confere, err := autenticacao.ConfereSenha(ctx, s.o.DB, dto.senhaAtual)
+	if err != nil || confere {
+		return "", err
+	}
+	return autenticacao.MensagemSenhaAtualErrada, nil
 }
 
 func (s *Servico) sistema(w http.ResponseWriter, r *http.Request) {
