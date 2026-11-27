@@ -148,6 +148,41 @@ jobs:
           powershell.exe -NoProfile -Command "if (-not (Select-String -Path instaladores\instalacao-windows.log -SimpleMatch 'certificado existente reaproveitado' -Quiet)) { exit 1 }" || exit /b 1
           curl.exe --ssl-no-revoke -fsS https://localhost:5443/api/auth/estado || exit /b 1
 
+      # #68, item 1: o servico roda como SYSTEM, entao so SYSTEM e Administradores (os donos) mudam o que ele executa e os
+      # dados. Confere a ACL com o Get-Acl, em vez de gravar com um usuario comum criado aqui: nao depende do logon
+      # secundario no runner e diz qual permissao sobrou. Depois da atualizacao, para valer tambem na segunda execucao.
+      - name: Pastas do servico protegidas (#68)
+        shell: powershell
+        run: |
+          $sistema = "S-1-5-18"; $admins = "S-1-5-32-544"; $usuarios = "S-1-5-32-545"
+          # Gravar, acrescentar, atributos, apagar, trocar permissao ou dono, e GENERIC_ALL/GENERIC_WRITE.
+          $escrita = 0x2 -bor 0x4 -bor 0x10 -bor 0x40 -bor 0x100 -bor 0x10000 -bor 0x40000 -bor 0x80000 -bor 0x10000000 -bor 0x40000000
+          $tipo = [Security.Principal.SecurityIdentifier]
+          foreach ($p in "publicado\api", "publicado\api\financas-go.exe", "publicado\api-anterior", "publicado\preparo",
+                         "dados", "dados\chaves", "dados\sql\FinancasLocal.db", "backups") {
+            $acl = Get-Acl -LiteralPath $p
+            $dono = $acl.GetOwner($tipo).Value
+            if ($dono -ne $admins -and $dono -ne $sistema) { throw "${p}: o dono e $dono" }
+            if ((Test-Path -LiteralPath $p -PathType Container) -and -not $acl.AreAccessRulesProtected) { throw "${p}: ainda herda da pasta de cima" }
+            foreach ($r in $acl.GetAccessRules($true, $true, $tipo)) {
+              $sid = $r.IdentityReference.Value
+              if ($r.AccessControlType -ne "Allow" -or $sid -eq $sistema -or $sid -eq $admins) { continue }
+              if (($r.FileSystemRights.value__ -band $escrita) -ne 0) { throw "${p}: $sid pode gravar ($($r.FileSystemRights))" }
+              if ($p -notlike "publicado*") { throw "${p}: $sid tem acesso ($($r.FileSystemRights))" }
+            }
+          }
+          # O gerenciador roda na conta de quem usa e le os appsettings da publicacao.
+          $ler = [Security.AccessControl.FileSystemRights]::ReadAndExecute
+          $regras = (Get-Acl publicado\api).GetAccessRules($true, $true, $tipo)
+          if (-not ($regras | Where-Object { $_.IdentityReference.Value -eq $usuarios -and ($_.FileSystemRights -band $ler) -eq $ler })) {
+            throw "Usuarios nao leem publicado\api"
+          }
+          # O resto continua da conta de quem desenvolve: o instalar-gerenciador.ps1 grava la sem administrador.
+          foreach ($p in "ferramentas", "publicado\gerenciador", "src") {
+            if ((Get-Acl -LiteralPath $p).AreAccessRulesProtected) { throw "${p}: nao devia ter sido protegida" }
+          }
+          icacls.exe publicado\api dados backups
+
       # #468: o passo a passo do docs/OPERACAO.md: a copia volta, e o que veio depois dela sai.
       - name: Restaurar a copia (docs/OPERACAO.md)
         shell: powershell
