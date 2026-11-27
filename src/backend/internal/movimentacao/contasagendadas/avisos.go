@@ -185,7 +185,7 @@ func (s *Servico) lerRecorrentes(ctx context.Context) ([]recorrente, error) {
 		b."UltimaSincronizacaoEm", b."UltimoErro" IS NOT NULL, b."UltimaAtualizacaoInstituicao"
 		FROM "ContaAgendada" AS c LEFT JOIN "Conta" AS co ON c."ContaId" = co."Id"
 		LEFT JOIN "ConexaoBancaria" AS b ON b."Id" = co."ConexaoBancariaId"
-		WHERE c."Ativa" AND c."Recorrencia" <> ? ORDER BY c."Id"`, origemOpenFinance, relatorios.RecorrenciaUnica)
+		WHERE c."Ativa" AND c."Recorrencia" <> ? ORDER BY c."Id"`, tipos.OrigemOpenFinance, relatorios.RecorrenciaUnica)
 	if err != nil {
 		return nil, fmt.Errorf("ler as contas a pagar recorrentes: %w", err)
 	}

@@ -59,9 +59,6 @@ func lerSalvarTransacao(w http.ResponseWriter, r *http.Request) (salvarTransacao
 		Status: status.Ou(1), Emergencia: emergencia.Valor, ReservaNome: aparadoOuNulo(reserva.Valor)}, true
 }
 
-// origemManual é a OrigemConta das contas manuais.
-const origemManual = 1
-
 // validarManual: nunca transferência (tem a opção própria), e a categoria, se veio, tem
 // de existir. Em conta manual, sem cofrinho. Em conta do Open Finance, só o gasto pago direto de um cofrinho (#758,
 // ADR 0063): despesa, com o cofrinho, que não pode ser o Méli Dólar (em dólar). Devolve a mensagem do 400, ou "".
@@ -76,13 +73,13 @@ func (s *Servico) validarManual(ctx context.Context, d salvarTransacaoDto) (stri
 		return "Conta inválida.", nil
 	case err != nil:
 		return "", err
-	case origem == origemManual && d.ReservaNome != nil:
+	case origem == tipos.OrigemManual && d.ReservaNome != nil:
 		return "O cofrinho só vale em conta do Open Finance: em conta manual, o gasto sai do saldo da conta.", nil
-	case origem != origemManual && d.ReservaNome == nil:
+	case origem != tipos.OrigemManual && d.ReservaNome == nil:
 		return "Não é possível lançar manualmente em contas do Open Finance. Os lançamentos chegam pela sincronização.", nil
-	case origem != origemManual && d.Tipo == transacoes.Receita:
+	case origem != tipos.OrigemManual && d.Tipo == transacoes.Receita:
 		return "Do cofrinho só se lança despesa.", nil
-	case origem != origemManual && reservas.EhNomeMeliDolar(*d.ReservaNome):
+	case origem != tipos.OrigemManual && reservas.EhNomeMeliDolar(*d.ReservaNome):
 		return reservas.ErrSaidaMeliDolar.Error(), nil
 	}
 	if d.CategoriaId != nil {

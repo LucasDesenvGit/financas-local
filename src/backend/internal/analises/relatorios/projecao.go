@@ -16,7 +16,6 @@ const CorSemCategoriaDaProjecao = "#a9b4c6"
 const (
 	tipoContaCartao       = 3
 	tipoContaInvestimento = 4
-	origemOpenFinance     = 2
 )
 
 // Situações de um mês da projeção.
@@ -131,7 +130,7 @@ func (s *Servico) Projecao(ctx context.Context, mesesFuturos int, saldos map[int
 		if c.Tipo != tipoContaInvestimento {
 			saldoDisponivel = tipos.Somar(saldoDisponivel, zeroSeAusente(saldos, c.Id))
 		}
-		if c.Tipo == tipoContaCartao && c.Origem == origemOpenFinance {
+		if c.Tipo == tipoContaCartao && c.Origem == tipos.OrigemOpenFinance {
 			cartoesOpenFinance[c.Id] = true
 		}
 	}

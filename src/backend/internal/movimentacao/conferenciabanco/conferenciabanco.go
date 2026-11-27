@@ -20,6 +20,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/bancos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/contas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/faturas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/cambio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/carteira"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/patrimonio/reservas"
@@ -35,8 +36,6 @@ const (
 	diasDasComprasRepetidas = 45
 
 	tipoContaCartao      = 3
-	origemOpenFinance    = 2
-	tipoDespesa          = 1
 	statusPendente       = 2
 	rotaDasTransacoes    = "/transacoes"
 	rotaDosInvestimentos = "/investimentos"
@@ -259,7 +258,7 @@ func (s *Servico) lerMovimentosDeCartao(ctx context.Context, desde tipos.Data) (
 // pistasDaConta são as pistas de uma conta (sem os cartões).
 func pistasDaConta(c contaLida, lista []reservas.ReservaDto, pendentes map[int64]pendencia) []PistaDto {
 	var pistas []PistaDto
-	if c.origem == origemOpenFinance {
+	if c.origem == tipos.OrigemOpenFinance {
 		em := c.atualizadoEm
 		if c.atualizadoNoBanco != nil {
 			em = *c.atualizadoNoBanco
@@ -287,7 +286,7 @@ func pistasDaConta(c contaLida, lista []reservas.ReservaDto, pendentes map[int64
 func estornosDoMes(doCartao []movimento, inicio, fim tipos.Data) tipos.Decimal {
 	soma := tipos.Zero
 	for _, m := range doCartao {
-		if positivo(m.valor) && m.tipo == tipoDespesa && !m.data.Antes(inicio) && !m.data.Depois(fim) {
+		if positivo(m.valor) && m.tipo == transacoes.Despesa && !m.data.Antes(inicio) && !m.data.Depois(fim) {
 			soma = tipos.Somar(soma, m.valor)
 		}
 	}
@@ -495,7 +494,7 @@ func (s *Servico) Montar(ctx context.Context) (*ConferenciaDto, error) {
 			saldo = tipos.Zero
 		}
 		if c.tipo != tipoContaCartao {
-			d.Contas = append(d.Contas, ContaDto{c.id, c.nome, nomesDosBancos[c.id], c.origem == origemOpenFinance, saldo, pistasDaConta(c, listaDeReservas, pendentes)})
+			d.Contas = append(d.Contas, ContaDto{c.id, c.nome, nomesDosBancos[c.id], c.origem == tipos.OrigemOpenFinance, saldo, pistasDaConta(c, listaDeReservas, pendentes)})
 			continue
 		}
 		var fatura *faturas.DoMes

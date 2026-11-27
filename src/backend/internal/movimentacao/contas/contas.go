@@ -28,8 +28,8 @@ const (
 	CartaoCredito = 3
 	Investimento  = 4
 
-	Manual      = 1
-	OpenFinance = 2
+	Manual      = tipos.OrigemManual
+	OpenFinance = tipos.OrigemOpenFinance
 )
 
 const mensagemNaoEncontrado = "Registro não encontrado."

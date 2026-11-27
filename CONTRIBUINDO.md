@@ -112,7 +112,7 @@ Além do build e dos testes do back-end e do front-end, a CI confere o que dá p
 ```bash
 python3 scripts/ci/banco/verificar-sql.py                           # banco/01-estrutura.sql é idempotente (e é aplicado a um SQLite descartável)
 python3 scripts/dev/gerar-diagrama-banco.py --conferir         # os diagramas de docs/BANCO-DE-DADOS.md estão em dia
-python3 scripts/ci/versao/verificar-changelog.py                     # changelog.d/ no formato (e o CHANGELOG.md em ordem); no PR, o arquivo em feat e fix (ADR 0070)
+python3 scripts/ci/versao/verificar-changelog.py                     # changelog.d/ no formato; no PR, o arquivo em feat e fix (ADR 0070)
 ```
 
 | Workflow ou job | Quando | O que faz |

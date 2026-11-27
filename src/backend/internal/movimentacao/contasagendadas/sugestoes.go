@@ -13,6 +13,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/analises/relatorios"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/cobrancas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/sugestoes"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/transacoes"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -33,7 +34,6 @@ const (
 
 	tipoContaCartao       = 3
 	tipoContaInvestimento = 4
-	tipoDespesa           = 1
 )
 
 var (
@@ -691,7 +691,7 @@ func (s *Servico) lerLancamentos(ctx context.Context, desde, hoje tipos.Data) ([
 		WHERE t."Data" >= ? AND t."Data" <= ? AND t."Tipo" = ? AND t."TransferenciaGrupo" IS NULL
 			AND NOT t."IgnorarRelatorios" AND t."ParcelaTotal" IS NULL AND t."ReservaNome" IS NULL AND co."Tipo" <> ?
 			AND NOT co."Arquivada"
-		ORDER BY t."Data" DESC`, desde, hoje, tipoDespesa, tipoContaInvestimento)
+		ORDER BY t."Data" DESC`, desde, hoje, transacoes.Despesa, tipoContaInvestimento)
 	if err != nil {
 		return nil, fmt.Errorf("ler os lançamentos das sugestões: %w", err)
 	}

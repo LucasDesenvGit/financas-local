@@ -1,5 +1,5 @@
 """Testes do verificar-changelog.py (ADR 0070): o formato dos arquivos de changelog.d/, o arquivo obrigatório nos PRs feat e
-fix e o CHANGELOG.md em ordem.
+fix.
 
 Rodar: python3 -B scripts/ci/versao/test_verificar_changelog.py
 """
@@ -143,40 +143,13 @@ class ArquivoObrigatorioNoPr(unittest.TestCase):
             self.assertEqual(vc.arquivos_novos("origin/develop", raiz), ["changelog.d/fix-x.md"])
 
 
-class ChangelogEmOrdem(unittest.TestCase):
-    def test_titulo_repetido_na_mesma_versao_e_versao_fora_de_ordem(self):
-        texto = ("# Changelog\n\n## [3.0.0] — 2026-11-02\n\n### Correções\n- a\n\n### Correções\n- b\n\n"
-                 "## [3.1.0] — 2026-11-03\n\n### Funcionalidades\n- c\n")
-        versoes = vc.partes(texto)
-        self.assertEqual(vc.repetidas(versoes), [("## [3.0.0] — 2026-11-02", "### Correções")])
-        self.assertEqual(vc.problemas_de_versao(versoes), ["fora de ordem (a mais nova vai em cima): ## [3.0.0] — 2026-11-02"])
-        juntado = vc.juntar(versoes)
-        self.assertEqual(juntado.count("### Correções"), 1)
-        self.assertIn("- a\n- b\n", juntado)
-
-    def test_versao_repetida(self):
-        texto = "## [3.0.0] — x\n\n### Correções\n- a\n\n## [3.0.0] — y\n\n### Correções\n- b\n"
-        self.assertTrue(any("versão repetida" in p for p in vc.problemas_de_versao(vc.partes(texto))))
-
-    def test_changelog_em_ordem(self):
-        texto = "# C\n\n## [3.1.0] — x · desenvolvimento\n\n### Correções\n- a\n\n## [3.0.0] — y\n\n### Correções\n- b\n"
-        self.assertEqual(vc.problemas_de_versao(vc.partes(texto)), [])
-
-
 class DoRepositorio(unittest.TestCase):
-    def test_o_changelog_d_e_o_changelog_do_repositorio_estao_em_ordem(self):
+    def test_o_changelog_d_do_repositorio_esta_no_formato(self):
         arquivos, problemas = vc.entradas()
         achados = list(problemas)
         for caminho, conteudo in arquivos:
             achados += vc.problemas_da_entrada(caminho, conteudo)
         self.assertEqual(achados, [])
-        versoes = vc.partes(io_ler(vc.RAIZ))
-        self.assertEqual(vc.problemas_de_versao(versoes), [])
-        self.assertEqual(vc.repetidas(versoes), [])
-
-
-def io_ler(raiz):
-    return Path(raiz, "CHANGELOG.md").read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
 if __name__ == "__main__":

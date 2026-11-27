@@ -20,9 +20,6 @@ import (
 // FormaDebitoAutomatico é a FormaCobranca "débito automático": com um cofrinho, a baixa é no vencimento.
 const FormaDebitoAutomatico = 2
 
-// origemOpenFinance é a OrigemConta do Open Finance: só nela há reservas.
-const origemOpenFinance = 2
-
 // statusEfetivada é o StatusTransacao.Efetivada.
 const statusEfetivada = 1
 
@@ -153,7 +150,7 @@ func baixarPeloCofrinho(ctx context.Context, q banco.DBTX, hoje tipos.Data, agor
 		a."CategoriaId", a."ContaId", a."Ativa", a."DataLimite", a."UltimoPagamentoEm", a."ReservaNome", a."ReservaDesde"
 		FROM "ContaAgendada" AS a INNER JOIN "Conta" AS c ON c."Id" = a."ContaId"
 		WHERE a."Ativa" AND a."FormaCobranca" = ? AND a."ReservaNome" IS NOT NULL AND c."Origem" = ? AND NOT c."Arquivada"
-		AND a."ProximoVencimento" <= ? ORDER BY a."Id"`, FormaDebitoAutomatico, origemOpenFinance, hoje)
+		AND a."ProximoVencimento" <= ? ORDER BY a."Id"`, FormaDebitoAutomatico, tipos.OrigemOpenFinance, hoje)
 	if err != nil {
 		return 0, fmt.Errorf("ler as contas a pagar pelo cofrinho: %w", err)
 	}
