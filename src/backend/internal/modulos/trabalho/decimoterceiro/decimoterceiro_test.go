@@ -380,7 +380,11 @@ func TestDecimoPontosDaRevisao(t *testing.T) {
 	novo := criar(`{"empregador":"N","admissao":"2026-03-20","salarioBruto":5000}`)
 	for _, mes := range []string{"2026-03", "2026-04"} {
 		var h holerite.Holerite
-		_ = json.Unmarshal(chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", novo), `{"mes":"`+mes+`"}`).Corpo, &h)
+		r := chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", novo), `{"mes":"`+mes+`"}`)
+		r.ConferirStatus(t, http.StatusCreated)
+		if err := json.Unmarshal(r.Corpo, &h); err != nil {
+			t.Fatal(err)
+		}
 		if mes == "2026-03" {
 			chamar("PUT", fmt.Sprintf("/api/trabalho/holerites/%d", h.Id), `{"diasUteis":10,"diasDescanso":2,"lancamentos":[{"tipo":1,"quantidade":10,"percentual":50}]}`).
 				ConferirStatus(t, http.StatusOK)

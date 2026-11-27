@@ -163,13 +163,7 @@ func (s *Servico) DefinirPrimeira(ctx context.Context, empregoId int64, ano int,
 	}
 	// A 1ª não passa do total, mas só quando o valor muda (#750): quem informou 3000 e viu o total cair para 2800 (um
 	// holerite apagado) recebia 400 ao trocar só a data, e tinha de corrigir o valor antes.
-	var guardado *tipos.Decimal
-	err = s.db.QueryRowContext(ctx, `SELECT "PrimeiraParcelaValor" FROM "DecimoTerceiro" WHERE "EmpregoId" = ? AND "Ano" = ?`,
-		empregoId, ano).Scan(&guardado)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return Resposta{}, fmt.Errorf("ler a 1ª parcela: %w", err)
-	}
-	mudouOValor := valor != nil && (guardado == nil || !valor.Decimal().Equal(guardado.Decimal()))
+	mudouOValor := valor != nil && (!atual.Calculo.Primeira.ValorInformado || !valor.Decimal().Equal(atual.Calculo.Primeira.Valor.Decimal()))
 	if mudouOValor && valor.Decimal().GreaterThan(atual.Calculo.Total.Decimal()) {
 		return Resposta{}, erroDeValidacao("A 1ª parcela não passa do 13º do ano inteiro (" + reais(atual.Calculo.Total.Decimal()) + ").")
 	}
