@@ -18,7 +18,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// conversao é o que as reservas usam do câmbio (o CambioService do C#): a cotação de uma data, o histórico do dólar e o
+// conversao é o que as reservas usam do câmbio: a cotação de uma data, o histórico do dólar e o
 // conversor. A interface é de quem usa: o serviço de verdade é o internal/patrimonio/cambio.
 type conversao interface {
 	ObterCotacao(ctx context.Context, moeda string, data *tipos.Data) (*cambio.Cotacao, error)
@@ -39,7 +39,7 @@ func NovoServico(db *sql.DB, c conversao, r relogio.Relogio, log *slog.Logger) *
 	return &Servico{db: db, cambio: c, relogio: r, log: log}
 }
 
-// ReservaDto é o do C#, na ordem do record.
+// ReservaDto, na ordem dos campos do JSON.
 type ReservaDto struct {
 	ContaId              int64          `json:"contaId"`
 	NomeConta            string         `json:"nomeConta"`
@@ -84,8 +84,8 @@ type conferida struct {
 }
 
 // De onde vêm os lançamentos de reserva: contas do Open Finance que entram no patrimônio, com a conexão ativa (ou
-// sem conexão), e a descrição do banco (que não muda quando você renomeia a transação). O LIKE é o filtro grosso do
-// C#; a regra exata fica em ExtrairNome e EhMeliDolar. O gasto do app pago com um cofrinho (ReservaNome, #691) fica de
+// sem conexão), e a descrição do banco (que não muda quando você renomeia a transação). O LIKE é o filtro grosso;
+// a regra exata fica em ExtrairNome e EhMeliDolar. O gasto do app pago com um cofrinho (ReservaNome, #691) fica de
 // fora: a descrição dele é a que você digitou, e ele já conta pelo pagosPeloCofrinho.
 const deMovimentos = `SELECT t."ContaId", c."Nome", COALESCE(t."DescricaoOriginal", t."Descricao"), t."Data", t."Valor"
 	FROM "Transacao" AS t
@@ -240,7 +240,7 @@ func extremos(lista []movimento) (primeiro, ultimo *tipos.Data) {
 
 type chave struct {
 	conta int64
-	nome  string // em maiúsculas (o ToUpperInvariant do C#)
+	nome  string // em maiúsculas
 }
 
 // Listar é o ListarAsync: as reservas das contas que entram no patrimônio, com o saldo (nunca negativo), da maior
@@ -272,7 +272,7 @@ func (s *Servico) Listar(ctx context.Context) ([]ReservaDto, error) {
 	}
 	hoje := relogio.Hoje(s.relogio)
 
-	// O GroupBy do C# (na ordem do primeiro de cada grupo), com a conta e o nome em maiúsculas.
+	// Agrupa (na ordem do primeiro de cada grupo), com a conta e o nome em maiúsculas.
 	grupos := map[chave][]movimento{}
 	var chaves []chave
 	for _, m := range movimentos {
@@ -420,7 +420,7 @@ func (s *Servico) meliDolar(ctx context.Context) ([]ReservaDto, error) {
 		if q := QuantidadeNaDescricao(m.descricao); q != nil {
 			return *q, nil
 		}
-		// O ParaReais(1, "USD", data) do C#: a taxa da data, arredondada a 2 casas.
+		// A taxa da data, arredondada a 2 casas.
 		taxa := conversor.ParaReaisNaData(um, MoedaMeliDolar, m.data)
 		if taxa == nil || !taxa.Decimal().IsPositive() {
 			return tipos.Zero, nil

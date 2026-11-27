@@ -14,12 +14,12 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// ResultadoAplicacaoDto é o do C#: quantas transações a ação mudou.
+// ResultadoAplicacaoDto: quantas transações a ação mudou.
 type ResultadoAplicacaoDto struct {
 	TransacoesAtualizadas int64 `json:"transacoesAtualizadas"`
 }
 
-// lerIds lê o corpo de uma ação em lote: Ids (obrigatória, de 1 a 1000) e mais os outros campos. Devolve os ids sem repetição (o Distinct do C#).
+// lerIds lê o corpo de uma ação em lote: Ids (obrigatória, de 1 a 1000) e mais os outros campos. Devolve os ids sem repetição.
 func lerIds(w http.ResponseWriter, r *http.Request, outros ...respostas.Campo) ([]int64, bool) {
 	ids := respostas.CampoLista{Propriedade: "Ids", Item: respostas.ItemLong, Minimo: 1, Maximo: 1000}
 	if !respostas.LerObjeto(w, r, append([]respostas.Campo{&ids}, outros...)...) {
@@ -45,7 +45,7 @@ func emLista(ids []int64) (string, []any) {
 
 // emergenciaEmLote é o PUT /api/transacoes/emergencia-em-lote: marca (só as saídas) ou desmarca (todas) o gasto de
 // emergência. A conta é a das linhas que casam, como a do ExecuteUpdate (inclusive as que já estavam assim). O
-// "Valor < 0" do C# é conferido aqui, em decimal: dinheiro não se compara no SQL.
+// "Valor < 0" é conferido aqui, em decimal: dinheiro não se compara no SQL.
 func (s *Servico) emergenciaEmLote(w http.ResponseWriter, r *http.Request) {
 	emergencia := respostas.CampoBool{Propriedade: "Emergencia"}
 	ids, ok := lerIds(w, r, &emergencia)

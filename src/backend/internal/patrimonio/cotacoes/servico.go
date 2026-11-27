@@ -73,7 +73,7 @@ func esperarComContexto(ctx context.Context, d time.Duration) error {
 	}
 }
 
-// avisar registra o aviso com a origem e o texto do C#: a tela de erros soma pelo texto, e um aviso por ativo fica uma
+// avisar registra o aviso com a origem e o texto de sempre: a tela de erros soma pelo texto, e um aviso por ativo fica uma
 // linha por ativo.
 func (s *Servico) avisar(msg string, args ...any) {
 	s.log.Warn(msg, append([]any{"origem", "Investimentos"}, args...)...)
@@ -351,7 +351,7 @@ func (s *Servico) FechamentosDiarios(ctx context.Context, ticker string, de, ate
 	return serie, nil
 }
 
-// palavrasDo texto são os pedaços entre o que não é letra, dígito, marca ou conector: o \b do .NET é de Unicode, e o do
+// palavrasDo texto são os pedaços entre o que não é letra, dígito, marca ou conector: o \b da regra é de Unicode, e o do
 // RE2, só de ASCII.
 func palavrasDo(t string) []string {
 	return strings.FieldsFunc(t, func(r rune) bool {

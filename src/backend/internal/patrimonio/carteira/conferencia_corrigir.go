@@ -550,7 +550,7 @@ func (s *Servico) ClassificarTrocosSemDuvida(ctx context.Context) (int, error) {
 	return len(ids), nil
 }
 
-// TrocosAutomaticosDto é o do C#.
+// TrocosAutomaticosDto é um formato enviado à tela.
 type TrocosAutomaticosDto struct {
 	Quantidade int           `json:"quantidade"`
 	Total      tipos.Decimal `json:"total"`

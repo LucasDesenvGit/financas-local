@@ -1,5 +1,5 @@
 // Package cobrancas é a regra que liga uma conta a pagar às cobranças do extrato (#158, ADR 0043; #205; #241): a
-// conciliação (o ContaAgendadaService.ConciliarAsync do C#), o texto da transação que a cobrança procura e as chaves
+// conciliação, o texto da transação que a cobrança procura e as chaves
 // do extrato. É um pacote de regra, sem HTTP (ADR 0056), porque três lugares conciliam: as rotas das contas a pagar
 // (#79), as rotinas de partida (#444) e a sincronização (#83).
 package cobrancas
@@ -28,7 +28,7 @@ const FormaAMao = 1
 // tamanhoMaximoDaChave é o tamanho da coluna ChaveExtrato.
 const tamanhoMaximoDaChave = 150
 
-// RegrasPorValor são os ids das regras de descrição com faixa de valor (#241), o RegrasPorValorAsync do C#.
+// RegrasPorValor são os ids das regras de descrição com faixa de valor (#241).
 func RegrasPorValor(ctx context.Context, q banco.DBTX) (map[int64]bool, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id" FROM "RegraDescricao" WHERE "ValorMinimo" IS NOT NULL OR "ValorMaximo" IS NOT NULL`)
 	if err != nil {
@@ -74,7 +74,7 @@ func ChaveDe(descricao string) string {
 	return strings.Join(partes, " ")
 }
 
-// soLetras é o p.All(char.IsLetter) do C#, um char UTF-16 por vez: a letra fora do plano básico chega em duas metades
+// soLetras olha um char UTF-16 por vez: a letra fora do plano básico chega em duas metades
 // que não são letra.
 func soLetras(p string) bool {
 	for _, r := range p {
@@ -221,8 +221,8 @@ func avancar(c *contaAConciliar, data tipos.Data) {
 	}
 }
 
-// maisRecente é a cobrança de data mais recente cujo texto contém o procurado; no empate, a primeira lida (o
-// OrderByDescending estável do C#).
+// maisRecente é a cobrança de data mais recente cujo texto contém o procurado; no empate, a primeira lida (a ordenação é
+// estável).
 func maisRecente(candidatas []candidata, procurado string) *candidata {
 	var melhor *candidata
 	for i := range candidatas {

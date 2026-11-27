@@ -1,5 +1,5 @@
 // Pacote saude é o endpoint de exemplo da convivência (#231): GET /api/go/saude passa pelo caminho todo
-// (front-end → .NET → Go → banco) e diz se o Go está de pé, qual a versão dele, quem está logado (lido do banco),
+// (front-end → Go → banco) e diz se o Go está de pé, qual a versão dele, quem está logado (lido do banco),
 // o modo do diário do banco (tem de ser "wal" com os dois processos no mesmo arquivo) e a hora do relógio do Go
 // (#363: no contrato, ela tem de ser a do relógio de teste, e não a do computador).
 package saude
@@ -21,7 +21,7 @@ import (
 // Resposta do GET /api/go/saude.
 type Resposta struct {
 	Situacao      string         `json:"situacao"`      // "ok"
-	Versao        string         `json:"versao"`        // a do executável do Go (igual à do .NET, se publicado junto)
+	Versao        string         `json:"versao"`        // a do executável do Go
 	Usuario       string         `json:"usuario"`       // o login de quem está logado, lido da tabela Usuario
 	DiarioDoBanco string         `json:"diarioDoBanco"` // PRAGMA journal_mode: "wal"
 	Agora         tipos.DataHora `json:"agora"`         // a hora do relógio do Go, em UTC (como um CriadoEm)
@@ -49,7 +49,7 @@ func Handler(db *sql.DB, log *slog.Logger, r relogio.Relogio) http.HandlerFunc {
 			return
 		}
 		if login == nil {
-			// Sem sessão, ou o .NET já conferiu o carimbo e o usuário foi apagado no meio.
+			// Sem sessão, ou o usuário foi apagado no meio.
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

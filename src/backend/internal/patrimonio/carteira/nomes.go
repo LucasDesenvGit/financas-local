@@ -10,7 +10,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
 )
 
-// Os tipos de ativo (o enum TipoAtivo do C#).
+// Os tipos de ativo.
 const (
 	tipoFii   int64 = 1
 	tipoAcao  int64 = 2
@@ -19,7 +19,7 @@ const (
 	tipoOutro int64 = 5
 )
 
-// Os tipos de operação (o enum TipoOperacao do C#).
+// Os tipos de operação.
 const (
 	operacaoCompra int64 = 1
 	operacaoVenda  int64 = 2
@@ -65,7 +65,7 @@ func ehRendaVariavel(tipo string) bool {
 	return t == "EQUITY" || t == "ETF"
 }
 
-// segmentosFii são os segmentos para agrupar os FIIs, sem diferença de ordem do C#.
+// segmentosFii são os segmentos para agrupar os FIIs, sem diferença de ordem.
 var segmentosFii = []string{"Logística", "Shoppings", "Lajes corporativas", "Papel (recebíveis)", "Híbrido", "Fundo de fundos",
 	"Renda urbana", "Agronegócio", "Residencial", "Hotéis", "Hospitais/Educação", "Desenvolvimento", "Outros"}
 

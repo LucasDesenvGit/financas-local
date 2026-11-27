@@ -29,7 +29,7 @@ type Tarefa struct {
 	log     *slog.Logger
 
 	mu              sync.Mutex
-	ultimaTentativa *time.Time // na memória, como o campo _ultimaTentativa do .NET
+	ultimaTentativa *time.Time // na memória
 }
 
 // NovaTarefa cria a tarefa.
@@ -79,7 +79,7 @@ func (t *Tarefa) Ciclo(ctx context.Context) error {
 	return nil
 }
 
-// Vencida é o Vencida do .NET: a atualização venceu se nunca rodou, se não rodou hoje (em Brasília), ou se já
+// Vencida: a atualização venceu se nunca rodou, se não rodou hoje (em Brasília), ou se já
 // passou das 13h30 de hoje e a última foi antes disso.
 func Vencida(ultimaUtc *time.Time, agoraUtc time.Time) bool {
 	if ultimaUtc == nil {

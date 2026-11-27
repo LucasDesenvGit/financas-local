@@ -19,7 +19,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Os tipos de correspondência das regras (o enum TipoCorrespondencia do C#), com os nomes da query em minúsculas.
+// Os tipos de correspondência das regras, com os nomes da query em minúsculas.
 const (
 	contem    = 1
 	comecaCom = 2
@@ -28,7 +28,7 @@ const (
 
 var nomesDaCorrespondencia = map[string]int64{"contem": contem, "comecacom": comecaCom, "igual": igual}
 
-// PreviaRenomearDto é o do C#.
+// PreviaRenomearDto é a prévia do renomear.
 type PreviaRenomearDto struct {
 	DescricaoOriginal *string  `json:"descricaoOriginal"`
 	TextoSugerido     string   `json:"textoSugerido"`
@@ -36,14 +36,14 @@ type PreviaRenomearDto struct {
 	Exemplos          []string `json:"exemplos"`
 }
 
-// ResultadoRenomearDto é o do C#: quantas mudaram, a regra criada e a chave do Desfazer.
+// ResultadoRenomearDto: quantas mudaram, a regra criada e a chave do Desfazer.
 type ResultadoRenomearDto struct {
 	Alteradas int     `json:"alteradas"`
 	RegraId   *int64  `json:"regraId"`
 	Desfazer  *string `json:"desfazer"`
 }
 
-// ResultadoRenomearEmLoteDto é o do C#.
+// ResultadoRenomearEmLoteDto é o resultado do renomear em lote.
 type ResultadoRenomearEmLoteDto struct {
 	Alteradas       int     `json:"alteradas"`
 	RegrasCriadas   int     `json:"regrasCriadas"`
@@ -83,8 +83,8 @@ type desfazerNome struct {
 
 func mesmoId(a, b *int64) bool { return (a == nil) == (b == nil) && (a == nil || *a == *b) }
 
-// reaplicar é o ReaplicarAsync do C# com as transações que a rota já leu: o EF Core devolve a mesma instância
-// rastreada, com o que a rota já mudou na memória, para a linha que a consulta acha. A consulta é a do banco (o que
+// reaplicar aplica as regras às transações que a rota já leu: para cada linha que a consulta acha, vale a mesma instância
+// que a rota já leu, com o que ela já mudou na memória. A consulta é a do banco (o que
 // ainda não foi gravado não muda quais linhas vêm). Devolve o nome de antes das outras que mudaram.
 func reaplicar(r *http.Request, tx *sql.Tx, agora tipos.DataHora, proprias []*transacoes.Transacao) ([]nomeAntes, error) {
 	rs, err := regrasdescricao.Carregar(r.Context(), tx)
@@ -169,8 +169,7 @@ func (s *Servico) previaRenomear(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, PreviaRenomearDto{original, sugerido, quantidade, exemplos})
 }
 
-// letrasOuDigitos conta, no texto normalizado como nas regras, os chars (UTF-16) que são letra ou dígito decimal (o
-// Count(char.IsLetterOrDigit) do C#).
+// letrasOuDigitos conta, no texto normalizado como nas regras, os chars (UTF-16) que são letra ou dígito decimal.
 func letrasOuDigitos(t string) int {
 	n := 0
 	for _, r := range texto.ParaRegras(t) {
@@ -321,7 +320,7 @@ func (s *Servico) renomear(w http.ResponseWriter, r *http.Request) {
 		s.erroInterno(w, r, "renomear a transação", err)
 		return
 	}
-	// A chave só depois de gravar, como no C#.
+	// A chave só depois de gravar.
 	if resultado.Alteradas > 0 || resultado.RegraId != nil {
 		chave := s.memoriaNomes.Guardar(estado)
 		resultado.Desfazer = &chave
@@ -329,7 +328,7 @@ func (s *Servico) renomear(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, resultado)
 }
 
-// maximoRegrasPorLote é o MaximoRegrasPorLote do C#: regras criadas de uma vez pelo renomear em lote.
+// maximoRegrasPorLote: regras criadas de uma vez pelo renomear em lote.
 const maximoRegrasPorLote = 50
 
 // renomearEmLote é o PATCH /api/transacoes/descricao/em-lote (#123): o mesmo nome em várias transações, só nelas
@@ -352,9 +351,9 @@ func (s *Servico) renomearEmLote(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusNotFound, "Alguma transação não existe mais. Atualize a lista.")
 		return
 	}
-	// O "Escreva o novo nome." do C# não chega a valer: o [Required] já recusa o nome só com espaços.
+	// O "Escreva o novo nome." não chega a valer: o [Required] já recusa o nome só com espaços.
 	nome := strings.TrimSpace(*descricaoCampo.Valor)
-	// Uma descrição do banco por texto normalizado, a primeira de cada (o GroupBy do C#).
+	// Uma descrição do banco por texto normalizado, a primeira de cada.
 	var originais []string
 	if criar.Valor {
 		vistos := map[string]bool{}
@@ -509,7 +508,7 @@ func (s *Servico) desfazerRenomear(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return err
 		}
-		// No C#, as regras criadas saem antes (o ExecuteDelete não espera o SaveChanges).
+		// As regras criadas saem antes (o DELETE em lote não espera a gravação).
 		if len(estado.criadas) > 0 {
 			em, argumentos := emLista(estado.criadas)
 			if _, err := tx.ExecContext(r.Context(), `DELETE FROM "RegraDescricao" WHERE "Id" IN `+em, argumentos...); err != nil {

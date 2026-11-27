@@ -20,7 +20,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// origemManual é o OrigemOperacao.Manual do C#.
+// origemManual é a origem das operações lançadas à mão.
 const origemManual = 1
 
 // fonteManual é a FonteCotacao do preço informado à mão.
@@ -141,7 +141,7 @@ func (s *Servico) operacoesDoAtivo(ctx context.Context, id int64) ([]Operacao, e
 	return lista, linhas.Err()
 }
 
-// vendaPossivel é o VendaPossivelAsync: nenhuma venda, em ordem cronológica, passa da quantidade em carteira. O C# desempata
+// vendaPossivel: nenhuma venda, em ordem cronológica, passa da quantidade em carteira. O desempate é
 // pelo Id, mas operações do mesmo dia e tipo só somam ou só subtraem: a ordem entre elas não muda o resultado.
 func vendaPossivel(operacoes []Operacao) bool {
 	ordenadas := slices.Clone(operacoes)

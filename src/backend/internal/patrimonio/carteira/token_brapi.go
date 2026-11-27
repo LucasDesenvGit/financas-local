@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-// chaveTokenBrapi é a linha do token da brapi na Configuracao, a mesma do .NET.
+// chaveTokenBrapi é a linha do token da brapi na Configuracao.
 const chaveTokenBrapi = "Cotacao.BrapiToken"
 
 // ApagarTokenDaBrapi apaga o token da brapi que ficou guardado: a fonte saiu na #763 (ADR 0072), e o token virou um

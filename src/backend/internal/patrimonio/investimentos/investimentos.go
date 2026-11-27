@@ -1,4 +1,4 @@
-// Package investimentos são os investimentos do Open Finance (#80): o InvestimentosController do C# (as 3 rotas de
+// Package investimentos são os investimentos do Open Finance (#80; as 3 rotas de
 // /api/investimentos: a lista, o histórico mês a mês e o renomear) e o HistoricoInvestimentosService (#173 e),
 // ADR 0045), cuja gravação a sincronização do Open Finance (#83) também chama.
 package investimentos
@@ -55,7 +55,7 @@ func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa stri
 	servidor.ResponderErroInterno(w)
 }
 
-// InvestimentoDto é o InvestimentoDto do C#.
+// InvestimentoDto é o investimento enviado à tela.
 type InvestimentoDto struct {
 	Id                int64          `json:"id"`
 	Nome              string         `json:"nome"`
@@ -78,7 +78,7 @@ type InvestimentoDto struct {
 }
 
 // Listar são os investimentos pelo tipo (ordem binária, a do ORDER BY do SQLite) e, dentro dele, pelo maior saldo, com o
-// saldo em reais e o nome de exibição (#170). O saldo é ordenado em Go (o EF Core usa a collation EF_DECIMAL; dinheiro
+// saldo em reais e o nome de exibição (#170). O saldo é ordenado em Go (dinheiro
 // é texto no banco); o empate fica na ordem do Id.
 func (s *Servico) Listar(ctx context.Context) ([]InvestimentoDto, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT i."Id", i."Nome", i."Tipo", i."Subtipo", i."Codigo", i."Emissor", i."Moeda",

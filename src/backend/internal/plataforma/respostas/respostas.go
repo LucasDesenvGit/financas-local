@@ -1,6 +1,6 @@
 // Pacote respostas tem as respostas que a API monta sozinha, antes ou em volta da regra: o 400 do CSRF recusado, o 400
 // de validação (corpo que não abre, campo que falta, valor fora da faixa), o 415, a {"mensagem": ...} e o 204/401/404
-// sem corpo. O formato veio do ASP.NET (ProblemDetails, com "errors" por campo), que o front-end lê; as mensagens são
+// sem corpo. O formato é o ProblemDetails, com "errors" por campo, que o front-end lê; as mensagens são
 // em português, porque o erro.interceptor.ts mostra a primeira de "errors" na tela (#710).
 package respostas
 
@@ -27,7 +27,7 @@ func SemCorpo(w http.ResponseWriter, status int) {
 	w.WriteHeader(status)
 }
 
-// CortarUtf16 corta o texto em n caracteres UTF-16 (o s[..n] do C#), sem partir um caractere no meio.
+// CortarUtf16 corta o texto em n caracteres UTF-16, sem partir um caractere no meio.
 func CortarUtf16(s string, n int) string {
 	usados := 0
 	for i, r := range s {
@@ -135,7 +135,7 @@ func TipoNaoSuportado(w http.ResponseWriter) {
 // Obrigatorio é a mensagem do campo que não veio, ou veio vazio.
 func Obrigatorio(nome string) string { return "O campo " + nome + " é obrigatório." }
 
-// TamanhoUtf16 é o string.Length do C# (texto.TamanhoUtf16), para quem já fala HTTP e valida a entrada.
+// TamanhoUtf16 conta os chars UTF-16 (texto.TamanhoUtf16), para quem já fala HTTP e valida a entrada.
 func TamanhoUtf16(s string) int { return texto.TamanhoUtf16(s) }
 
 // ErroJSON é o erro de leitura do corpo: a chave em "errors" é o caminho ("$" ou "$.login").

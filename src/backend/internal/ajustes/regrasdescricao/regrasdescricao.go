@@ -1,4 +1,4 @@
-// Pacote regrasdescricao é o RegraDescricaoService do .NET (#123, ADR 0030): "quando a descrição do banco for ou
+// Pacote regrasdescricao (#123, ADR 0030): "quando a descrição do banco for ou
 // contiver X, mostrar Y". Vale só nas transações de nome automático (o do banco ou o dado por uma regra); nome escolhido
 // à mão fica. #241: a regra pode ter uma faixa de valor (sem o sinal). #250: as regras valem em cadeia, cada uma uma vez
 // só, até MaximoNaCadeia passos; RegraDescricaoId guarda a última, a que deu o nome final.
@@ -33,9 +33,9 @@ type Regras struct {
 	regras []regra
 }
 
-// Carregar lê as regras ativas e as ordena como o C#: primeiro as que têm faixa de valor (#241); depois "é igual a",
+// Carregar lê as regras ativas e as ordena: primeiro as que têm faixa de valor (#241); depois "é igual a",
 // "começa com" e "contém" (o tipo, do maior para o menor); no mesmo tipo, o texto mais longo (em unidades UTF-16, o
-// string.Length do C#) e, empatando, a mais antiga e o menor Id. A ordenação é estável, como a do LINQ.
+// tamanho do texto) e, empatando, a mais antiga e o menor Id. A ordenação é estável.
 func Carregar(ctx context.Context, q banco.DBTX) (*Regras, error) {
 	linhas, err := q.QueryContext(ctx, `SELECT "Id", "Texto", "TipoCorrespondencia", "NovaDescricao", "ValorMinimo",
 		"ValorMaximo", "CriadoEm" FROM "RegraDescricao" WHERE "Ativa"`)

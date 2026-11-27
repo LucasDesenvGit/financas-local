@@ -15,9 +15,9 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Os acertos de dados que o C# faz ao iniciar a API (Program.cs) e, no caso do último, depois de cada sincronização
+// Os acertos de dados feitos ao iniciar a API e, no caso do último, depois de cada sincronização
 // (#83). Cada um é uma função só, chamada pela partida (#444) e, depois, pela sincronização. Nenhum abre transação: o
-// SaveChanges único do EF Core vira a transação de quem chama, para o que a rotina acerta valer inteiro ou nada.
+// tudo vai na transação de quem chama, para o que a rotina acerta valer inteiro ou nada.
 
 // Marcas em Configuracao de que o grupo de regras padrão já foi criado (ConfiguracaoService).
 const (
@@ -30,7 +30,7 @@ const (
 // prioridadeDaRegraPadrao é a das regras que chegam depois da instalação (a mesma do 02-dados-iniciais.sql).
 const prioridadeDaRegraPadrao = 50
 
-// regraPadraoNova é um grupo do RegrasPadraoNovas do C#. Filtros é o LIKE que acha os candidatos no banco; a
+// regraPadraoNova é um grupo de regras padrão novas. Filtros é o LIKE que acha os candidatos no banco; a
 // comparação certa é pelo texto normalizado. O LIKE do SQLite só ignora a caixa em ASCII: a letra que pode vir com
 // acento vai como "_" no filtro (#567).
 type regraPadraoNova struct {
@@ -58,7 +58,7 @@ var regrasPadraoNovas = []regraPadraoNova{
 // A marca em Configuracao faz cada grupo ser criado uma vez só, e uma regra apagada por você não volta. Sem a categoria
 // "Investimentos", a marca não é gravada, e as regras nascem quando ela voltar (#568). Devolve quantas transações mudaram.
 //
-// As regras lidas para o AplicarTipo são as de antes das criadas aqui: no C# elas ainda estão só na memória do contexto
+// As regras lidas para o AplicarTipo são as de antes das criadas aqui: elas ainda estão só na memória do contexto
 // (Add, sem SaveChanges) quando o CarregarAsync lê o banco, então não entram. Só o texto de estorno no cartão olha as
 // regras, e a regra nova nunca é a certa para ele (a categoria dela é "Investimentos", de transferência).
 func CriarRegrasPadrao(ctx context.Context, q banco.DBTX, rel relogio.Relogio) (int, error) {
@@ -135,7 +135,7 @@ func categoriaInvestimentos(ctx context.Context, q banco.DBTX) (*int64, error) {
 // sem grupo de transferência, cujo texto (o do banco, ou o nome se não houver) contém uma das regras do grupo.
 func passarParaInvestimentos(ctx context.Context, q banco.DBTX, regras *Regras, grupo regraPadraoNova, categoria int64, agora tipos.DataHora) (int, error) {
 	candidatas := map[int64]*transacoes.Transacao{}
-	var ordem []int64 // a ordem em que cada uma apareceu (o Dictionary do C# guarda a ordem de inserção)
+	var ordem []int64 // a ordem em que cada uma apareceu (a ordem de inserção)
 	for _, filtro := range grupo.filtros {
 		achadas, err := transacoes.Listar(ctx, q, `WHERE NOT "CategoriaManual" AND "TransferenciaGrupo" IS NULL
 			AND ("CategoriaId" <> ? OR "CategoriaId" IS NULL) AND COALESCE("DescricaoOriginal", "Descricao") LIKE ? ORDER BY "Id"`,
@@ -225,7 +225,7 @@ func mesmaCategoria(a, b *int64) bool {
 // da compra e 60 de folga). Devolve quantas transações passaram a ficar fora.
 func IgnorarComprasParceladasEstornadas(ctx context.Context, q banco.DBTX, hoje tipos.Data, agora tipos.DataHora) (int, error) {
 	desde := hoje.SomarDias(-parcelas.DiasEstornoDaCompra - 60)
-	// O C# só traz do banco o que tem valor positivo ou mais de uma parcela, para ler menos linhas. Aqui vem tudo da janela
+	// Bastaria trazer o que tem valor positivo ou mais de uma parcela. Aqui vem tudo da janela
 	// e o ComprasEstornadas escolhe (ele já descarta o que não é estorno nem parcela): o resultado é o mesmo, e a coluna
 	// do valor é TEXT, que o SQL não compara.
 	lancamentos, err := transacoes.Listar(ctx, q, `WHERE "ContaId" IN (SELECT "Id" FROM "Conta" WHERE "Tipo" = ?)

@@ -1,4 +1,4 @@
-// Pacote openfinance são as rotas do Open Finance (#83): o OpenFinanceController do .NET. Credenciais, conexões, estado
+// Pacote openfinance são as rotas do Open Finance (#83). Credenciais, conexões, estado
 // da sincronização e o mapa das categorias da Pluggy. Quem fala com a Pluggy é o pacote pluggy.
 package openfinance
 
@@ -91,7 +91,7 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 
 func (s *Servico) agora() tipos.DataHora { return tipos.NovaDataHora(s.relogio.Agora()) }
 
-// idDaRota é o {id:int} do .NET: o que não é int não casa com a rota e dá 404 sem corpo.
+// idDaRota: o que não é int não casa com a rota e dá 404 sem corpo.
 func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(strings.TrimPrefix(r.PathValue("id"), "+"), 10, 32)
 	if err != nil {
@@ -101,7 +101,7 @@ func idDaRota(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	return id, true
 }
 
-// erroInterno é o 500 do .NET, com o erro no log; requisição cancelada não responde nem registra.
+// erroInterno responde 500, com o erro no log; requisição cancelada não responde nem registra.
 func (s *Servico) erroInterno(w http.ResponseWriter, r *http.Request, etapa string, err error) {
 	if errors.Is(err, context.Canceled) || r.Context().Err() != nil {
 		return

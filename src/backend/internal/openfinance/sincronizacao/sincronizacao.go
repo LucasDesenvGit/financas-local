@@ -1,7 +1,7 @@
-// Pacote sincronizacao traz os dados do Open Finance para o banco (#83): o SincronizacaoService do .NET. Conexão, contas,
+// Pacote sincronizacao traz os dados do Open Finance para o banco (#83). Conexão, contas,
 // faturas, transações, investimentos, empréstimos e a carteira de renda variável.
 //
-// Cada etapa grava numa transação do banco, como os SaveChanges do .NET: uma falha no meio não deixa a etapa pela metade,
+// Cada etapa grava numa transação do banco: uma falha no meio não deixa a etapa pela metade,
 // e o que veio antes dela fica. A chamada à Pluggy nunca acontece com uma transação aberta.
 package sincronizacao
 
@@ -51,7 +51,7 @@ type classificadorDeTrocos interface {
 	ClassificarTrocosSemDuvida(ctx context.Context) (int, error)
 }
 
-// Servico sincroniza. A trava é o SemaphoreSlim do .NET: uma rodada por vez, sem fila.
+// Servico sincroniza. A trava: uma rodada por vez, sem fila.
 type Servico struct {
 	db         *sql.DB
 	config     *configuracao.Servico
@@ -89,7 +89,7 @@ func (s *Servico) avisar(msg string, args ...any) {
 	s.log.Warn(msg, append([]any{"origem", "Open Finance"}, args...)...)
 }
 
-// credenciais lê o Client ID e o Client Secret. Sem um dos dois, ok é false. O segredo gravado pelo .NET não se lê até a
+// credenciais lê o Client ID e o Client Secret. Sem um dos dois, ok é false. O segredo gravado no esquema antigo não se lê até a
 // troca dos segredos (#85): vale como não configurado, com o aviso no log.
 func (s *Servico) credenciais(ctx context.Context) (id, secret string, ok bool, err error) {
 	clientId, err := s.config.Obter(ctx, chaveClientId)
@@ -399,7 +399,7 @@ func (r *rodada) concluir(ctx context.Context, conexao, logId int64, item *plugg
 	})
 }
 
-// rotinasDoFim são as mesmas da partida, na ordem do .NET. O erro nos trocos não desfaz a sincronização: o troco continua
+// rotinasDoFim são as mesmas da partida, na mesma ordem. O erro nos trocos não desfaz a sincronização: o troco continua
 // na conferência.
 func (r *rodada) rotinasDoFim(ctx context.Context) error {
 	hoje := relogio.Hoje(r.relogio)
@@ -428,7 +428,7 @@ func (r *rodada) rotinasDoFim(ctx context.Context) error {
 	return nil
 }
 
-// limitar é o Limitar do C#: corta em n caracteres UTF-16; nil continua nil.
+// limitar: corta em n caracteres UTF-16; nil continua nil.
 func limitar(valor *string, n int) *string {
 	if valor == nil {
 		return nil
@@ -455,7 +455,7 @@ func dataDe(i *pluggy.Instante) *tipos.Data {
 	return &d
 }
 
-// arredondar é o Arredondar do C#: (decimal)double e 2 casas, para longe do zero. Sem valor, zero.
+// arredondar: (decimal)double e 2 casas, para longe do zero. Sem valor, zero.
 func arredondar(n *pluggy.Numero) (tipos.Decimal, error) {
 	if n == nil {
 		return tipos.Zero, nil

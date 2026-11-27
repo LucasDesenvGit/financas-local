@@ -41,7 +41,7 @@ func Registrar(mux *http.ServeMux, s *Servico) {
 	mux.HandleFunc("POST /api/erros/front-end", s.registrarDoFrontEnd)
 }
 
-// ErroSistemaDto, na ordem do record do C#. Datas em UTC, com "Z" (o Utc do controller).
+// ErroSistemaDto, na ordem dos campos do JSON. Datas em UTC, com "Z" (o Utc do controller).
 type ErroSistemaDto struct {
 	Id          int64                  `json:"id"`
 	PrimeiraEm  configuracao.Instante  `json:"primeiraEm"`
@@ -94,7 +94,7 @@ func (s *Servico) Listar(ctx context.Context, f filtro) (PaginaErrosDto, error) 
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM "ErroSistema" WHERE `+onde, args...).Scan(&p.Total); err != nil {
 		return p, err
 	}
-	// O Skip((Pagina - 1) * TamanhoPagina) do C# é conta de int: passa do limite e dá a volta, como aqui.
+	// A conta (Pagina - 1) * TamanhoPagina é de int: passa do limite e dá a volta.
 	pular := int32(int64(f.pagina-1) * int64(f.tamanhoPagina))
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "PrimeiraEm", "UltimaEm", "Ocorrencias", "Nivel", "Origem", "Mensagem",
 		"Rota", "Usuario", "Resolvido", "ResolvidoEm"

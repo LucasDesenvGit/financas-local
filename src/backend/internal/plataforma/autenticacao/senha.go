@@ -12,13 +12,12 @@ import (
 	"hash"
 )
 
-// O hash de senha do ASP.NET Identity (PasswordHasher<TUser>), que é o que está no banco: o Go lê e grava no mesmo
-// formato, para dar para voltar ao .NET sem trocar a senha de ninguém.
+// O hash de senha, no formato que já está no banco: o Go lê e grava no mesmo
+// formato, para ninguém precisar trocar a senha.
 //
 // Versão 3 (a de hoje): 0x01 | PRF (uint32, big-endian) | iterações (uint32) | tamanho do sal (uint32) | sal | chave,
-// em Base64. O .NET grava PBKDF2 com HMAC-SHA512, 100 mil iterações, sal de 16 bytes e chave de 32 bytes.
+// em Base64. Grava-se PBKDF2 com HMAC-SHA512, 100 mil iterações, sal de 16 bytes e chave de 32 bytes.
 // Versão 2 (antiga): 0x00 | sal (16) | chave (32), PBKDF2 com HMAC-SHA1 e mil iterações.
-// Fonte: https://github.com/dotnet/aspnetcore/blob/main/src/Identity/Extensions.Core/src/PasswordHasher.cs
 const (
 	iteracoesV3  = 100_000
 	tamanhoSalV3 = 16
@@ -30,7 +29,7 @@ const (
 	prfSHA512 = 2 // KeyDerivationPrf.HMACSHA512
 )
 
-// ResultadoSenha é o PasswordVerificationResult do .NET.
+// ResultadoSenha é o resultado da conferência da senha.
 type ResultadoSenha int
 
 const (
@@ -39,7 +38,7 @@ const (
 	SenhaCertaRefazer                       // SuccessRehashNeeded: certa, mas num formato mais fraco que o de hoje
 )
 
-// GerarHash faz o hash da senha no formato v3 do .NET (HMAC-SHA512, 100 mil iterações, sal aleatório).
+// GerarHash faz o hash da senha no formato v3 (HMAC-SHA512, 100 mil iterações, sal aleatório).
 func GerarHash(senha string) (string, error) {
 	sal := make([]byte, tamanhoSalV3)
 	if _, err := rand.Read(sal); err != nil {
@@ -60,7 +59,7 @@ func GerarHash(senha string) (string, error) {
 }
 
 // VerificarHash confere a senha com o hash do banco, em tempo constante na comparação da chave. Hash inválido ou de
-// formato desconhecido é senha errada, como no .NET.
+// formato desconhecido é senha errada.
 func VerificarHash(hashBase64, senha string) ResultadoSenha {
 	dados, err := base64.StdEncoding.DecodeString(hashBase64)
 	if err != nil || len(dados) == 0 {
@@ -69,14 +68,14 @@ func VerificarHash(hashBase64, senha string) ResultadoSenha {
 	switch dados[0] {
 	case 0x00:
 		if verificarV2(dados, senha) {
-			return SenhaCertaRefazer // o .NET também pede para refazer o hash v2
+			return SenhaCertaRefazer // o hash v2 também é refeito
 		}
 	case 0x01:
 		certa, prf, iteracoes := verificarV3(dados, senha)
 		if !certa {
 			return SenhaErrada
 		}
-		// Igual ao .NET: menos iterações que as de hoje, ou PRF mais fraca que SHA-512, pede para refazer o hash.
+		// Menos iterações que as de hoje, ou PRF mais fraca que SHA-512, pede para refazer o hash.
 		if iteracoes < iteracoesV3 || prf != prfSHA512 {
 			return SenhaCertaRefazer
 		}
@@ -101,7 +100,7 @@ func verificarV3(dados []byte, senha string) (certa bool, prf, iteracoes uint32)
 	prf = binary.BigEndian.Uint32(dados[1:])
 	iteracoes = binary.BigEndian.Uint32(dados[5:])
 	tamanhoSal := int(binary.BigEndian.Uint32(dados[9:]))
-	// O .NET recusa sal ou chave com menos de 128 bits.
+	// Sal ou chave com menos de 128 bits é recusado.
 	if tamanhoSal < 16 || tamanhoSal > len(dados)-cabecalhoV3 || iteracoes == 0 {
 		return false, prf, iteracoes
 	}

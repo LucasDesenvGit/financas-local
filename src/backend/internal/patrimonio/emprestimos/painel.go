@@ -10,7 +10,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// EmprestimoDto é um contrato no painel de empréstimos, na ordem do record EmprestimoDto do C#.
+// EmprestimoDto é um contrato no painel de empréstimos, na ordem dos campos do JSON.
 type EmprestimoDto struct {
 	Id                  int64          `json:"id"`
 	Natureza            int64          `json:"natureza"`
@@ -78,12 +78,12 @@ type contratoDoPainel struct {
 	pagamentos          []tipos.Decimal
 }
 
-// Painel é o PainelAsync do C#: os contratos das conexões ativas (em aberto primeiro, pelo maior saldo devedor), os
+// Painel: os contratos das conexões ativas (em aberto primeiro, pelo maior saldo devedor), os
 // totais de cada natureza e os pagamentos dos últimos 12 meses, o atual incluído (ADR 0014).
 //
-// O total pago de um contrato e a soma dos pagamentos de um mês são feitos pelo EF Core no SQLite (o ef_sum): saem no
-// formato em que ele grava ("0.0###"), e não com a escala da soma em C# (NaEscalaDoBanco). Sem pagamento, o total pago
-// é "0.0" (o "?? 0m" vira COALESCE no SQL) e o mês é 0 (o Sum do LINQ, em memória, sobre nenhum grupo).
+// O total pago de um contrato e a soma dos pagamentos de um mês saem no
+// formato em que o banco grava ("0.0###"), e não com a escala da soma (NaEscalaDoBanco). Sem pagamento, o total pago
+// é "0.0" e o mês é 0.
 func (s *Servico) Painel(ctx context.Context, hoje tipos.Data) (PainelEmprestimosDto, error) {
 	contratos, err := s.contratosDoPainel(ctx)
 	if err != nil {
@@ -178,7 +178,7 @@ func (s *Servico) contratosDoPainel(ctx context.Context) ([]contratoDoPainel, er
 	return lista, nil
 }
 
-// somaDoBanco é o Sum feito pelo EF Core no SQLite (ef_sum): no formato em que ele grava, ou 0 sem linhas.
+// somaDoBanco é a soma no formato em que o banco grava, ou 0 sem linhas.
 func somaDoBanco(valores []tipos.Decimal) tipos.Decimal {
 	if len(valores) == 0 {
 		return tipos.Zero
@@ -214,7 +214,7 @@ func resumir(lista []EmprestimoDto, natureza int64) ResumoCreditoDto {
 }
 
 // pagamentosPorMes são os pagamentos dos últimos 12 meses (o atual incluído) das conexões ativas, por natureza. Cada
-// mês e natureza é uma soma do EF Core no SQLite (o GroupBy com Sum), no formato em que ele grava; sem pagamento, 0.
+// mês e natureza é uma soma agrupada, no formato em que o banco grava; sem pagamento, 0.
 func (s *Servico) pagamentosPorMes(ctx context.Context, hoje tipos.Data) ([]PagamentosMesCreditoDto, error) {
 	inicio := tipos.NovaData(hoje.Ano(), hoje.Mes(), 1).SomarMeses(-11)
 	linhas, err := s.db.QueryContext(ctx, `SELECT p."Data", p."Valor", e."Natureza" FROM "PagamentoEmprestimo" p
@@ -288,7 +288,7 @@ var modalidades = map[string]string{
 	"MICROCREDITO":                          "Microcrédito",
 }
 
-// DescreverModalidade é o ClassificacaoCredito.DescreverModalidade do C#: o nome em português das modalidades
+// DescreverModalidade: o nome em português das modalidades
 // conhecidas; sem modalidade, "Financiamento" ou "Empréstimo" pela natureza; qualquer outra, o código em título
 // ("FINANCIAMENTO_RURAL" → "Financiamento Rural", o ToTitleCase pt-BR).
 func DescreverModalidade(modalidade *string, natureza int64) string {
@@ -304,7 +304,7 @@ func DescreverModalidade(modalidade *string, natureza int64) string {
 	return titulo(strings.ToLower(strings.ReplaceAll(*modalidade, "_", " ")))
 }
 
-// titulo é o TextInfo.ToTitleCase do .NET para um texto já em minúsculas: a primeira letra de cada palavra em
+// titulo põe um texto já em minúsculas em título: a primeira letra de cada palavra em
 // maiúscula. Uma palavra começa depois de um caractere que não é letra nem dígito.
 func titulo(s string) string {
 	var b strings.Builder

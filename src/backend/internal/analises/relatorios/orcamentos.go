@@ -24,8 +24,8 @@ var limiteDoAlerta = tipos.DecimalDeInteiro(80)
 
 var cem = tipos.DecimalDeInteiro(100)
 
-// OrcamentoDto é o orçamento do mês contra o gasto, na ordem do record OrcamentoDto do C#. Ano e Mes têm o tipo do
-// C# (short e byte).
+// OrcamentoDto é o orçamento do mês contra o gasto, na ordem dos campos do JSON. Ano e Mes são
+// pequenos (short e byte).
 type OrcamentoDto struct {
 	Id              int64         `json:"id"`
 	CategoriaId     int64         `json:"categoriaId"`
@@ -50,7 +50,7 @@ type OrcamentoDto struct {
 //   - Situação: "ok" até o limite; "alerta" a partir de 80% do limite (do percentual já arredondado); "emergencia" se
 //     passou do limite mas, sem os gastos de emergência, ficaria dentro dele; "estourado" nos demais.
 //
-// As quatro somas do C# eram quatro consultas; aqui as linhas do mês são lidas uma vez e servem às quatro, com o mesmo
+// As linhas do mês são lidas uma vez e servem às quatro somas, com o mesmo
 // resultado.
 func (s *Servico) OrcamentosDoMes(ctx context.Context, ano, mes int) ([]OrcamentoDto, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT o."Id", o."CategoriaId", o."Valor", c."Nome", c."Cor" FROM "Orcamento" o
@@ -128,7 +128,7 @@ func (s *Servico) OrcamentosDoMes(ctx context.Context, ano, mes int) ([]Orcament
 	return resultado, nil
 }
 
-// primeiroValor é o "a.FirstOrDefault(...)?.Valor ?? b.FirstOrDefault(...)?.Valor ?? 0m" do C#: o total da categoria
+// primeiroValor: o total da categoria
 // na primeira lista que a tem, senão na segunda, senão o decimal 0 (sem casas). As listas só têm total positivo.
 func primeiroValor(primeira, segunda []ValorCategoriaDto, categoriaId int64) tipos.Decimal {
 	for _, lista := range [][]ValorCategoriaDto{primeira, segunda} {
