@@ -62,4 +62,23 @@ describe('Usabilidade: Manual', () => {
       ['Transações: encontrar e entender ›', '/manual/transacoes']
     ]);
   });
+
+  it('a seção com print mostra a imagem do tema aberto, com alt, tamanho e carga preguiçosa', async () => {
+    const t = await abrirManual('/manual/relatorios');
+    const img = t.raiz.querySelector<HTMLImageElement>('#painel img.print-manual')!;
+    const secao = MANUAL.find((c) => c.id === 'relatorios')!.secoes.find((s) => s.id === 'painel')!;
+    expect(img.getAttribute('src')).toMatch(/^\/imagens\/manual\/painel-(claro|escuro)\.webp$/);
+    expect(img.getAttribute('alt')).toBe(secao.print!.alt);
+    expect(Number(img.getAttribute('width'))).toBeGreaterThan(0);
+    expect(Number(img.getAttribute('height'))).toBeGreaterThan(0);
+    expect(img.getAttribute('loading')).toBe('lazy');
+    // Entre o "Passo a passo" e o "Abrir a tela".
+    expect(img.previousElementSibling!.tagName).toBe('OL');
+    expect(img.nextElementSibling!.classList).toContain('abrir-tela');
+  });
+
+  it('a busca acha a seção pelo texto alternativo do print', async () => {
+    const t = await abrirManual('/manual?busca=Pôr do sol Lavanda');
+    expect(t.raiz.querySelector('.resultados-busca a')!.getAttribute('href')).toBe('/manual/configuracoes#aparencia');
+  });
 });

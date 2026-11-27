@@ -3,9 +3,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
+import { TemaService } from '../../core/tema.service';
 import { GLOSSARIO } from '../../compartilhado/glossario/glossario';
 import { TermoComponent } from '../../compartilhado/glossario/termo.component';
 import { CapituloManual, MANUAL, SecaoManual } from './manual-conteudo';
+import { MEDIDAS_PRINTS } from './prints-manual';
 
 /** Uma seção achada pela busca, com o capítulo dela. */
 interface Resultado { capitulo: CapituloManual; secao: SecaoManual; }
@@ -51,6 +53,11 @@ function normalizar(texto: string): string {
             <ol class="passos">
               @for (p of s.passos; track $index) { <li>{{ p }}</li> }
             </ol>
+            @if (s.print; as pr) {
+              <!-- Print gerado da tela (ADR 0071): o do tema aberto; width e height da própria imagem, para a página não pular. -->
+              <img class="print-manual" [src]="'/imagens/manual/' + pr.id + '-' + tema.tema() + '.webp'" [alt]="pr.alt"
+                [attr.width]="medidas[pr.id]?.largura" [attr.height]="medidas[pr.id]?.altura" loading="lazy">
+            }
             @if (s.abrir?.length) {
               <p class="abrir-tela">
                 @for (l of s.abrir; track l.rotulo) {
@@ -86,7 +93,8 @@ function normalizar(texto: string): string {
     } @else {
       <header class="cabecalho-pagina"><h1>Manual</h1></header>
       <p class="resumo-capitulo">Passo a passo para usar o Finanças Local: do primeiro acesso até transações bem categorizadas,
-        relatórios confiáveis e metas no caminho. Em qualquer tela, o botão “Ajuda” abre a parte que explica aquela tela.</p>
+        relatórios confiáveis e metas no caminho. Em qualquer tela, o botão “Ajuda” abre a parte que explica aquela tela.
+        Várias partes trazem uma imagem da tela, no tema (claro ou escuro) que você está usando.</p>
 
       <div class="busca-manual">
         <label for="busca-manual">Buscar no manual</label>
@@ -135,6 +143,7 @@ function normalizar(texto: string): string {
     .para-que { margin: 0; color: var(--texto-suave); }
     .passos { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 90ch; }
     .secao-manual ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 90ch; }
+    .print-manual { display: block; max-width: 100%; height: auto; margin: 14px 0 0; border: 1px solid var(--linha); border-radius: 10px; }
     .abrir-tela { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
     .abrir-tela .botao { text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
     .termos-secao { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; margin: 10px 0 0; font-size: 0.9rem; }
@@ -165,6 +174,8 @@ export class ManualComponent {
 
   readonly capitulos = MANUAL;
   readonly glossario = GLOSSARIO;
+  readonly medidas = MEDIDAS_PRINTS;
+  readonly tema = inject(TemaService);
 
   readonly idCapitulo = toSignal(this.rota.paramMap.pipe(map((p) => p.get('capitulo'))),
     { initialValue: this.rota.snapshot.paramMap.get('capitulo') });
@@ -172,14 +183,14 @@ export class ManualComponent {
   readonly busca = toSignal(this.rota.queryParamMap.pipe(map((p) => (p.get('busca') ?? '').slice(0, 60))),
     { initialValue: (this.rota.snapshot.queryParamMap.get('busca') ?? '').slice(0, 60) });
 
-  /** Seções que têm todas as palavras buscadas, em qualquer parte (título, passos, dicas, erros, links). */
+  /** Seções que têm todas as palavras buscadas, em qualquer parte (título, passos, texto das imagens, dicas, erros, links). */
   readonly resultados = computed<Resultado[]>(() => {
     const palavras = normalizar(this.busca()).split(/\s+/).filter((p) => p.length > 0);
     if (!palavras.length) return [];
     const achados: Resultado[] = [];
     for (const capitulo of MANUAL) {
       for (const secao of capitulo.secoes) {
-        const texto = normalizar([capitulo.titulo, secao.titulo, secao.paraQueServe, ...secao.passos, ...(secao.dicas ?? []),
+        const texto = normalizar([capitulo.titulo, secao.titulo, secao.paraQueServe, ...secao.passos, secao.print?.alt ?? '', ...(secao.dicas ?? []),
           ...(secao.erros ?? []), ...(secao.abrir ?? []).map((l) => l.rotulo)].join(' '));
         if (palavras.every((p) => texto.includes(p))) achados.push({ capitulo, secao });
       }
