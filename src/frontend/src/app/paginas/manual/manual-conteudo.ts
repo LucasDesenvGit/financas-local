@@ -22,6 +22,8 @@ export interface SecaoManual {
   /** Para que serve, em uma frase. */
   paraQueServe: string;
   passos: string[];
+  /** Print da tela (ADR 0071): `imagens/manual/<id>-claro.webp` e `-escuro.webp`, gerados por `npm run prints:manual`. Complementa os passos, nunca os substitui. */
+  print?: { id: string; alt: string };
   /** "Abrir a tela": leva direto, já filtrada quando faz sentido (detalhe por navegação). */
   abrir?: LinkManual[];
   dicas?: string[];
@@ -75,6 +77,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'conhecendo-a-tela',
         titulo: 'Conhecendo a tela',
         paraQueServe: 'Saber onde ficam o menu, o status da sincronização e as ferramentas que valem em qualquer tela.',
+        print: { id: 'conhecendo-a-tela', alt: 'Menu lateral com os grupos de telas, a barra de cima com Ajuda, avisos e status da sincronização, e o começo do Painel.' },
         passos: [
           'À esquerda fica o menu com todas as telas, separadas por assunto: o Painel no topo; Movimentação (Transações, Contas e cartões, Contas a pagar); Planejamento (Orçamentos, Metas); Patrimônio (Investimentos, Empréstimos e financiamentos); Análises (Relatórios, Visão anual, Projeção); Ajustes (Categorias e regras, Configurações); e o Manual no rodapé.',
           'Clique no nome de um grupo (ou use Enter ou Espaço) para mostrar ou esconder as telas dele. A seta indica se o grupo está aberto (para baixo) ou fechado (para o lado), e vários grupos podem ficar abertos ao mesmo tempo. Na primeira vez, todos vêm abertos; feche os que você não usa. A escolha fica salva neste navegador.',
@@ -241,6 +244,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'credenciais',
         titulo: 'Client ID e Client Secret',
         paraQueServe: 'As credenciais que deixam o Finanças Local buscar os seus dados na Pluggy.',
+        print: { id: 'credenciais', alt: 'Configurações, aba Open Finance: os campos Client ID e Client Secret e os botões Testar conexão e Salvar.' },
         passos: [
           'Em dashboard.pluggy.ai, crie uma conta de desenvolvedor.',
           'Adicione o conector “MeuPluggy” e crie uma aplicação de desenvolvimento.',
@@ -310,6 +314,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'tipos-de-conta',
         titulo: 'Contas do Open Finance e contas manuais',
         paraQueServe: 'Entender de onde vem o saldo de cada conta e quando criar uma conta à mão.',
+        print: { id: 'tipos-de-conta', alt: 'Contas e cartões: resumo de saldo, faturas e dívida, os botões Conferir com o banco e Conta manual, e o início da lista de contas.' },
         passos: [
           'Contas do Open Finance aparecem sozinhas depois da sincronização; saldo, limite e tipo vêm do banco.',
           'Para dinheiro em espécie, banco sem Open Finance ou um controle separado, use “+ Conta manual”.',
@@ -368,6 +373,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'conferir-banco',
         titulo: 'Conferir com o banco',
         paraQueServe: 'Ver se o site bate com o app de cada banco e, quando não bate, por quê.',
+        print: { id: 'conferir-banco', alt: 'Conferir com o banco: tabela de contas com o saldo no site, o campo para informar o valor do app do banco e o resultado.' },
         passos: [
           'Em Contas e cartões, clique em “Conferir com o banco”.',
           'Abra o app de cada banco e digite o valor que aparece lá: o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
@@ -416,6 +422,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'filtros',
         titulo: 'Filtrar e buscar',
         paraQueServe: 'Encontrar rápido as transações que importam.',
+        print: { id: 'filtros', alt: 'Transações com os botões do topo, os filtros de período, conta, categoria, tipo e lançamento, e a caixa de busca.' },
         passos: [
           'Escolha o período em “De” e “Até” (o padrão é o mês atual).',
           'Filtre por conta, por uma ou várias categorias (inclusive “Sem categoria”), por tipo (despesas, receitas, transferências) e por “Lançamento” (Pix, compras no cartão, pagamento de fatura…).',
@@ -433,6 +440,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'etiquetas',
         titulo: 'O que cada etiqueta quer dizer',
         paraQueServe: 'Entender cada transação sem precisar abri-la.',
+        print: { id: 'etiquetas', alt: 'Lista de transações com data, descrição, etiqueta de tipo, categoria, conta e valor.' },
         passos: [
           'Antes do nome, o selo do serviço quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber, TIM, Mercado Livre…); senão, o selo pelo tipo do lançamento (o do Pix em “Pix enviado” e “Pix recebido”; o logo do banco em “Pagamento de fatura”, quando o texto cita o banco); senão, o ícone da categoria (ex.: talheres em Alimentação, maleta em Salário); e, sem categoria, o ícone do tipo, o mesmo da etiqueta. O mesmo selo aparece no Painel e em Contas a pagar.',
           'A primeira etiqueta diz como o dinheiro entrou ou saiu: “Compra no cartão”, “Pix enviado”, “Entre suas contas”, “Pagamento de fatura”, “Boleto ou débito automático”…',
@@ -492,6 +500,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'lancamento-manual',
         titulo: 'Lançamento manual e transferência',
         paraQueServe: 'Registrar o que o banco não informa, como gastos em dinheiro ou uma compra paga direto de um cofrinho.',
+        print: { id: 'lancamento-manual', alt: 'Janela Novo lançamento com tipo, conta, data, valor, descrição, categoria, observação e as caixas de marcar.' },
         passos: [
           'Crie antes uma conta manual (ex.: “Carteira”) em Contas e cartões.',
           'Em Transações, clique em “+ Lançamento”: tipo, conta, data, valor, descrição e categoria.',
@@ -564,6 +573,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'modo-edicao',
         titulo: 'Várias de uma vez: “Editar categorias”',
         paraQueServe: 'Arrumar dezenas de transações rápido, sem abrir uma por uma.',
+        print: { id: 'modo-edicao', alt: 'Lista de transações no modo de edição, com uma lista suspensa de categoria em cada linha.' },
         passos: [
           'Em Transações, filtre o que quer arrumar (ex.: o mês, “Sem categoria”).',
           'Clique em “✎ Editar categorias”. Cada linha ganha um seletor de categoria.',
@@ -661,6 +671,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'criar-regra',
         titulo: 'Criar uma regra',
         paraQueServe: 'Categorizar sozinho o que se repete.',
+        print: { id: 'criar-regra', alt: 'Aba Regras automáticas de Categorias e regras, com o botão Regra, a tabela de regras e a seção de regras de descrição.' },
         passos: [
           'Abra Categorias e regras › “Regras automáticas” e clique em “+ Regra”.',
           'Em “Quando a descrição”, escolha “contém”, “começa com” ou “é igual a”.',
@@ -717,6 +728,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'criar-categoria',
         titulo: 'Criar e organizar categorias',
         paraQueServe: 'Ter as categorias do seu jeito.',
+        print: { id: 'criar-categoria', alt: 'Janela Nova categoria com nome, tipo, subcategoria de, natureza do gasto, cor e a caixa Ativa.' },
         passos: [
           'Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.',
           'Dê um “Nome”, escolha o “Tipo” (despesa, receita ou transferência) e uma cor.',
@@ -759,6 +771,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'definir-limites',
         titulo: 'Definir os limites do mês',
         paraQueServe: 'Combinar consigo mesmo quanto gastar em cada categoria.',
+        print: { id: 'definir-limites', alt: 'Orçamentos do mês: totais orçado, gasto e disponível e a tabela de categorias com o campo de limite de cada uma.' },
         passos: [
           'Abra Orçamentos e escolha o mês no seletor.',
           'Na coluna “Limite (R$)”, digite o limite de cada categoria. Em branco = sem orçamento.',
@@ -804,6 +817,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'criar-meta',
         titulo: 'Criar uma meta',
         paraQueServe: 'Dar nome, valor e prazo a um objetivo.',
+        print: { id: 'criar-meta', alt: 'Janela Nova meta com nome, valor alvo, data alvo, conta, valor inicial, quanto guardar por mês, ícone e cor.' },
         passos: [
           'Abra Metas e clique em “+ Nova meta”.',
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
@@ -876,6 +890,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'cadastrar-conta',
         titulo: 'Cadastrar uma conta a pagar',
         paraQueServe: 'Ser lembrado dos vencimentos no Painel.',
+        print: { id: 'cadastrar-conta', alt: 'Janela Nova conta a pagar com descrição, valor, vencimento, recorrência, categoria, como é cobrada e conta de pagamento.' },
         passos: [
           'Abra Contas a pagar e clique em “+ Nova conta”.',
           'Informe a descrição, o valor, o “Próximo vencimento” e a recorrência (mensal, anual ou única).',
@@ -922,6 +937,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'assinaturas-recorrentes',
         titulo: 'Assinaturas e recorrentes: onde cada cobrança cai',
         paraQueServe: 'Ver de uma vez qual assinatura cai em qual cartão e qual débito automático sai de qual conta, e quanto vai por mês.',
+        print: { id: 'assinaturas-recorrentes', alt: 'Aba Assinaturas e recorrentes de Contas a pagar, com os totais por mês e por ano e as contas em que cada cobrança cai.' },
         passos: [
           'Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.',
           'No topo: quanto vai por mês e por ano nas cobranças que se repetem (a anual entra dividida por 12).',
@@ -1011,6 +1027,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'painel',
         titulo: 'Painel',
         paraQueServe: 'Responder “como estou hoje?” e “como está este mês?”.',
+        print: { id: 'painel', alt: 'Começo do Painel: a situação de hoje, com patrimônio líquido, saldo em contas, dívida dos cartões e investimentos.' },
         passos: [
           '“Situação hoje”: patrimônio, saldo em contas, dívida total nos cartões, investimentos e próximos vencimentos — não muda com o mês escolhido.',
           'O card “Fatura em aberto” soma a fatura que ainda recebe compras (a do mês, enquanto não fecha; depois, a próxima) dos cartões em que “Fatura no Painel” está ligado, em Contas e cartões; “ver detalhes” mostra a de cada cartão.',
@@ -1030,6 +1047,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'visao-anual',
         titulo: 'Visão anual',
         paraQueServe: 'Responder “como foi o meu ano?”.',
+        print: { id: 'visao-anual', alt: 'Visão anual com o seletor de ano e de comparação e os primeiros indicadores de saúde financeira, como taxa de poupança e reserva de emergência.' },
         passos: [
           'Poupança acumulada, patrimônio estimado e para onde vai a sua renda (50/30/20).',
           'Despesas e receitas mês a mês, comparação de categorias com outro ano e o mapa de gastos.',
@@ -1042,6 +1060,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'relatorios-tela',
         titulo: 'Relatórios',
         paraQueServe: 'Responder “para onde foi o meu dinheiro?”.',
+        print: { id: 'relatorios-tela', alt: 'Relatórios com os filtros de período e de visão e os totais de receitas, despesas e saldo do período.' },
         passos: [
           'Fluxo de caixa mensal: barras de receitas e despesas de cada mês e, por cima delas, a linha lilás do saldo acumulado, com um ponto em cada mês. O valor de cada ponto está na última coluna da tabela, "Saldo acumulado".',
           'Despesas (ou receitas) por categoria no período.',
@@ -1053,6 +1072,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'projecao',
         titulo: 'Projeção',
         paraQueServe: 'Responder “quanto vou ter no fim do mês (e nos próximos)?”.',
+        print: { id: 'projecao', alt: 'Projeção com a escolha de 3, 6 ou 12 meses, receita e despesa médias, disponível hoje e saldo previsto.' },
         passos: [
           'Os meses seguintes usam a média das receitas, a média das despesas à vista e as parcelas já contratadas.',
           'O mês atual junta o que já aconteceu com a média do que falta.',
@@ -1085,6 +1105,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'carteira',
         titulo: 'Carteira de renda variável',
         paraQueServe: 'Acompanhar ações, FIIs, ETFs e BDRs com preço médio e proventos.',
+        print: { id: 'carteira', alt: 'Investimentos: botões do topo e os resumos de total investido, renda variável, carteira contra a Selic, proventos e Selic.' },
         passos: [
           'Abra Investimentos e clique em “+ Lançar compra/venda”.',
           'Informe o código da B3 (ex.: MXRF11), a quantidade, o preço pago e a data.',
@@ -1179,6 +1200,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'mes-a-mes',
         titulo: 'Mês a mês dos FIIs',
         paraQueServe: 'Acompanhar cada mês da carteira de FIIs como no app da corretora: quanto entrou, quanto rendeu e quanto as cotas valorizaram.',
+        print: { id: 'mes-a-mes', alt: 'Gráfico Mês a mês dos FIIs, com os rendimentos e a valorização de cada mês, e o começo da tabela com os aportes.' },
         passos: [
           'Abra Investimentos › FIIs e desça até “Mês a mês”. Escolha “12 meses” ou “24 meses”.',
           'O gráfico mostra, por mês, os rendimentos e a valorização; os aportes ficam na tabela, para um aporte grande não achatar o resto. A frase acima dele resume o último mês.',
@@ -1223,6 +1245,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'reservas',
         titulo: 'Reservas (cofrinhos do Mercado Pago)',
         paraQueServe: 'Contar no patrimônio o dinheiro guardado em cofrinhos e reservas da conta.',
+        print: { id: 'reservas', alt: 'Aba Reservas de Investimentos: tabela com cada reserva, a conta, o guardado, o retirado, o saldo e a base do saldo.' },
         passos: [
           'Quando o banco informa pelo Open Finance o valor de uma reserva, pelo nome, ele vale: só essa reserva aparece como “informado pelo banco” e não precisa de conferência.',
           'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
@@ -1482,6 +1505,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'modulos',
         titulo: 'Módulos',
         paraQueServe: 'Ligar só as partes do site que vão além do básico das finanças e que você quer usar. Desligado, o módulo some do menu, não roda nada em segundo plano e não acessa a internet.',
+        print: { id: 'modulos', alt: 'Configurações, aba Módulos: interruptor do módulo Notícias, desligado, com a explicação do que ele acessa.' },
         passos: [
           'Abra Configurações › Módulos.',
           'Cada módulo mostra o que faz e se acessa a internet (e para onde). Ligue ou desligue pelo interruptor: vale na hora, sem recarregar a página, e em qualquer navegador.',
@@ -1496,6 +1520,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'aparencia',
         titulo: 'Aparência',
         paraQueServe: 'Deixar o site com as suas cores.',
+        print: { id: 'aparencia', alt: 'Configurações, aba Aparência: as paletas de cores Lavanda, Oceano, Floresta, Grafite, Pôr do sol e Sua cor.' },
         passos: [
           'Abra Configurações › Aparência.',
           'Escolha uma paleta pronta (cada uma tem versão clara e escura) ou uma cor personalizada.',
@@ -1507,6 +1532,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'seguranca',
         titulo: 'Segurança',
         paraQueServe: 'Trocar a senha e ver os acessos recentes.',
+        print: { id: 'seguranca', alt: 'Configurações, aba Segurança: formulário para alterar a senha e a lista de acessos recentes.' },
         passos: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
@@ -1519,6 +1545,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'acesso-pelo-celular',
         titulo: 'Acesso pelo celular',
         paraQueServe: 'Abrir o site no celular, na mesma rede Wi-Fi de casa. Vem desligado: assim, o site só abre neste computador.',
+        print: { id: 'acesso-pelo-celular', alt: 'Bloco Acesso pelo celular com o aviso de segurança, o endereço do computador na rede e o botão para ligar.' },
         passos: [
           'Abra Configurações › Segurança e, em “Acesso pelo celular”, escolha o endereço deste computador na rede (o do Wi-Fi ou do cabo da sua casa).',
           'Clique em “Ligar o acesso pelo celular” e confirme. Ligado, qualquer aparelho da sua rede chega à tela de entrar: use uma senha forte e não ligue em rede pública (café, aeroporto).',
@@ -1537,6 +1564,7 @@ export const MANUAL: CapituloManual[] = [
         id: 'erros-do-sistema',
         titulo: 'Erros do sistema',
         paraQueServe: 'Ver o que deu errado (sincronização, cotações, telas) sem procurar em logs.',
+        print: { id: 'erros-do-sistema', alt: 'Configurações, aba Erros: filtros de situação, origem, nível e datas e a tabela de erros do sistema.' },
         passos: [
           'Abra Configurações › Erros.',
           'Filtre por situação, origem, nível e período. O mesmo erro repetido aparece uma vez, com quantas vezes aconteceu.',

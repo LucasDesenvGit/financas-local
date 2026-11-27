@@ -1,8 +1,11 @@
+import { existsSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { Route } from '@angular/router';
 import { rotas } from '../../../src/app/app.routes';
 import { GLOSSARIO } from '../../../src/app/compartilhado/glossario/glossario';
 import { telasDoMenu } from '../../../src/app/layout/shell.component';
 import { MANUAL, ajudaDaUrl } from '../../../src/app/paginas/manual/manual-conteudo';
+import { MEDIDAS_PRINTS } from '../../../src/app/paginas/manual/prints-manual';
 import { abrirManual } from '../apoio/manual';
 
 /**
@@ -73,5 +76,42 @@ describe('Regressão: Manual acompanha o site', () => {
     const t = await abrirManual('/manual/nao-existe');
     expect(t.raiz.querySelector('.vazio')!.textContent).toContain('Essa parte do manual não existe.');
     expect(t.raiz.querySelector('.vazio a')!.getAttribute('href')).toBe('/manual');
+  });
+
+  // #752, ADR 0071: os prints do Manual. Gerados por `npm run prints:manual`; aqui só se confere o que o site precisa.
+  describe('prints das seções (ADR 0071)', () => {
+    const pasta = join(__dirname, '..', '..', '..', 'public', 'imagens', 'manual');
+    const prints = MANUAL.flatMap((c) => c.secoes.flatMap((s) => (s.print ? [s.print] : [])));
+    const TETO_ARQUIVO = 50 * 1024;
+    const TETO_PASTA = 2 * 1024 * 1024;
+
+    it('texto alternativo obrigatório: descreve a tela, até 160 caracteres, sem "Imagem", "Print" nem "Foto" no começo (WCAG 1.1.1)', () => {
+      expect(prints.length).toBeGreaterThan(0);
+      for (const { id, alt } of prints) {
+        expect(alt.trim().length).toBeGreaterThan(10);
+        expect(alt.length).toBeLessThanOrEqual(160);
+        expect(`${id}: ${alt}`.slice(id.length + 2)).not.toMatch(/^\s*(imagem|print|foto)/i);
+      }
+    });
+
+    it('cada print tem os dois temas, as medidas e um id só', () => {
+      expect(new Set(prints.map((p) => p.id)).size).toBe(prints.length);
+      for (const { id } of prints) {
+        for (const tema of ['claro', 'escuro']) expect([`${id}-${tema}.webp`, existsSync(join(pasta, `${id}-${tema}.webp`))]).toEqual([`${id}-${tema}.webp`, true]);
+        expect([id, MEDIDAS_PRINTS[id] !== undefined]).toEqual([id, true]);
+      }
+    });
+
+    it('nada sobra: todo arquivo e toda medida pertencem a uma seção', () => {
+      const esperados = new Set(prints.flatMap((p) => [`${p.id}-claro.webp`, `${p.id}-escuro.webp`]));
+      expect(readdirSync(pasta).filter((a) => !esperados.has(a))).toEqual([]);
+      expect(Object.keys(MEDIDAS_PRINTS).filter((id) => !prints.some((p) => p.id === id))).toEqual([]);
+    });
+
+    it('peso: até 50 KiB por arquivo e 2 MiB na pasta (o repositório e o .msi crescem junto)', () => {
+      const arquivos = readdirSync(pasta).map((a) => ({ a, tamanho: statSync(join(pasta, a)).size }));
+      expect(arquivos.filter((f) => f.tamanho > TETO_ARQUIVO)).toEqual([]);
+      expect(arquivos.reduce((soma, f) => soma + f.tamanho, 0)).toBeLessThanOrEqual(TETO_PASTA);
+    });
   });
 });

@@ -12,6 +12,7 @@
     "test:tipos": "tsc -p tsconfig.spec.json --noEmit",
     "test:navegador": "ng build --configuration production && playwright test",
     "test:afetados": "node testes/rodar-afetados.mjs",
+    "prints:manual": "node testes/prints-manual.mjs",
     "test:arquitetura": "jest --roots \"<rootDir>/testes/arquitetura\""
   },
   "dependencies": {
