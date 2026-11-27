@@ -9,7 +9,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Usuario é a linha da tabela Usuario, no formato do EF Core (GUID em maiúsculas, data e hora "AAAA-MM-DD hh:mm:ss.f").
+// Usuario é a linha da tabela Usuario, no formato do banco (GUID em maiúsculas, data e hora "AAAA-MM-DD hh:mm:ss.f").
 type Usuario struct {
 	Id               int64
 	Login            string
@@ -43,7 +43,7 @@ func usuarioPorId(ctx context.Context, q banco.DBTX, id int64) (Usuario, error) 
 	return lerUsuario(q.QueryRowContext(ctx, `SELECT `+colunasUsuario+` FROM "Usuario" WHERE "Id" = ? LIMIT 1`, id))
 }
 
-// sessaoValida diz se o usuário existe e o carimbo de segurança da sessão é o dele (o ValidadorSessao do .NET).
+// sessaoValida diz se o usuário existe e o carimbo de segurança da sessão é o dele.
 func sessaoValida(ctx context.Context, q banco.DBTX, id int64, carimbo tipos.Guid) (valida bool, err error) {
 	err = q.QueryRowContext(ctx,
 		`SELECT EXISTS (SELECT 1 FROM "Usuario" WHERE "Id" = ? AND "CarimboSeguranca" = ?)`, id, carimbo).Scan(&valida)

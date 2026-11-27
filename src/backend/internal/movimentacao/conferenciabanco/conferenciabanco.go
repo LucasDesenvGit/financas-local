@@ -1,4 +1,4 @@
-// Package conferenciabanco é o "Conferir com o banco" (#172, ConferenciaBancoService do C#): para cada conta, fatura do mês
+// Package conferenciabanco é o "Conferir com o banco" (#172): para cada conta, fatura do mês
 // e investimento, o valor que o site usa e as pistas do que pode fazer o app do banco mostrar outro número: quando o banco
 // atualizou, reservas, pendentes, parcelas, estornos, compras repetidas. Quem compara é a tela: você digita o valor do app, e
 // a pista com o mesmo valor da diferença aparece primeiro. Os textos não levam valores em reais: a tela mostra o Valor pelo

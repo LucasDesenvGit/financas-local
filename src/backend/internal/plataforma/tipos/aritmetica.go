@@ -7,28 +7,28 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// Aritmética com o mesmo resultado do decimal do C#, escala inclusive (#81). O gabarito é o
-// testdata/csharp.json, gravado pela sonda testdata/sonda-csharp com o .NET da API.
+// Aritmética do decimal de 96 bits (28 casas), com a escala (#81). O gabarito é o
+// testdata/csharp.json, gravado pela sonda testdata/sonda-csharp.
 //
-// A escala aparece no JSON (o System.Text.Json escreve 250.0, e não 250), então não basta o valor estar certo: o
-// shopspring/decimal divide com 16 casas e arredonda "para cima" no .5, e o C# não faz nem um nem outro.
+// A escala aparece no JSON (o JSON escreve 250.0, e não 250), então não basta o valor estar certo: o
+// shopspring/decimal divide com 16 casas e arredonda "para cima" no .5, e o decimal de 96 bits não faz nem um nem outro.
 
 // casasDoInt64 são as casas que um número de 64 bits tem: acima de 28 mais elas, o VarDecMul arredonda para zero sem
 // fazer a conta.
 const casasDoInt64 = 19
 
-// ErrDivisaoPorZero é a DivideByZeroException do C#.
+// ErrDivisaoPorZero é a divisão por zero.
 var ErrDivisaoPorZero = errors.New("divisão por zero")
 
-// ErrEstouro é a OverflowException do C#: o resultado não cabe nos 96 bits do decimal.
+// ErrEstouro: o resultado não cabe nos 96 bits do decimal.
 var ErrEstouro = errors.New("o resultado não cabe num decimal do C#")
 
-// limite96 é 2^96: o decimal do C# guarda o número sem a vírgula em 96 bits.
+// limite96 é 2^96: o decimal guarda o número sem a vírgula em 96 bits.
 var limite96 = new(big.Int).Lsh(big.NewInt(1), 96)
 
 var dez = big.NewInt(10)
 
-// Dividir é a divisão do decimal do C# (a / b), com a mesma escala no resultado:
+// Dividir é a divisão do decimal (a / b), com a mesma escala no resultado:
 //   - a escala "natural" é a de a menos a de b (1.00 / 1 = 1.00; 1 / 1.00 = 1);
 //   - quando ela não basta, a divisão continua até a maior escala, até 28, em que o número cabe em 96 bits
 //     (1 / 3 = 0.3333333333333333333333333333; 22 / 7 tem 29 dígitos), com a última casa arredondada pelo método
@@ -73,7 +73,7 @@ func Dividir(a, b Decimal) (Decimal, error) {
 	return Decimal{}, ErrEstouro
 }
 
-// Multiplicar é a multiplicação do decimal do C#: a escala é a soma das escalas (10.0 * 5.4123 = 54.12300), até 28, e
+// Multiplicar: a escala é a soma das escalas (10.0 * 5.4123 = 54.12300), até 28, e
 // o resultado que não cabe nos 96 bits perde casas. O zero depende do caminho do VarDecMul: com os dois números em até
 // 32 bits, guarda a escala (0.00 * 1.5 = 0.000), salvo acima de 47 casas; com um deles maior, não tem casas.
 func Multiplicar(a, b Decimal) Decimal {
@@ -88,11 +88,11 @@ func Multiplicar(a, b Decimal) Decimal {
 	return DeDecimal(produto)
 }
 
-// Somar e Subtrair mantêm a maior escala, como no C# (1.5 + 2.25 = 3.75; 2.50 - 1 = 1.50).
+// Somar e Subtrair mantêm a maior escala (1.5 + 2.25 = 3.75; 2.50 - 1 = 1.50).
 func Somar(a, b Decimal) Decimal    { return DeDecimal(a.v.Add(b.v)) }
 func Subtrair(a, b Decimal) Decimal { return DeDecimal(a.v.Sub(b.v)) }
 
-// Maior é o Math.Max do decimal do C#: no empate devolve o primeiro, com a escala dele (Max(100, 100.0) = 100).
+// Maior devolve o maior: no empate devolve o primeiro, com a escala dele (Max(100, 100.0) = 100).
 func Maior(a, b Decimal) Decimal {
 	if a.v.Cmp(b.v) >= 0 {
 		return a
@@ -100,8 +100,8 @@ func Maior(a, b Decimal) Decimal {
 	return b
 }
 
-// Menor é o Math.Min do decimal do C#: no empate devolve o segundo, com a escala dele (Min(1.0, 1.00) = 1.00), o
-// contrário do Math.Max.
+// Menor devolve o menor: no empate devolve o segundo, com a escala dele (Min(1.0, 1.00) = 1.00), o
+// contrário do Maior.
 func Menor(a, b Decimal) Decimal {
 	if a.v.LessThan(b.v) {
 		return a
@@ -109,7 +109,7 @@ func Menor(a, b Decimal) Decimal {
 	return b
 }
 
-// Arredondar é o Math.Round(x, casas) do C#, sem o MidpointRounding: arredonda pelo método bancário (2.565 →
+// Arredondar arredonda pelo método bancário (2.565 →
 // 2.56; 0.125 → 0.12) e só mexe quando o valor tem mais casas que o pedido (250.0 continua 250.0, não 250.00).
 func Arredondar(d Decimal, casas int32) Decimal {
 	if d.Escala() <= casas {
@@ -118,7 +118,7 @@ func Arredondar(d Decimal, casas int32) Decimal {
 	return Decimal{v: d.v.RoundBank(casas)}
 }
 
-// ArredondarLongeDoZero é o Math.Round(x, casas, MidpointRounding.AwayFromZero) do C#: no empate, sai do zero (2.565 →
+// ArredondarLongeDoZero arredonda para longe do zero: no empate, sai do zero (2.565 →
 // 2.57; -0.125 → -0.13), e só mexe quando o valor tem mais casas que o pedido.
 func ArredondarLongeDoZero(d Decimal, casas int32) Decimal {
 	if d.Escala() <= casas {

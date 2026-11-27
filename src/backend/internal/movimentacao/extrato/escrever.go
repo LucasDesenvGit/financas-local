@@ -45,7 +45,7 @@ func (s *Servico) responderTransacao(w http.ResponseWriter, r *http.Request, id 
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, lista[0])
 }
 
-// categoriaExiste confere a categoria escolhida (o "Categoria inválida." do C#).
+// categoriaExiste confere a categoria escolhida.
 func (s *Servico) categoriaExiste(ctx context.Context, id int64) (bool, error) {
 	var existe bool
 	err := s.db.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM "Categoria" WHERE "Id" = ?)`, id).Scan(&existe)

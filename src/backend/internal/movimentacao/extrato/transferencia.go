@@ -19,7 +19,7 @@ type contaDaTransferencia struct {
 	manual bool
 }
 
-// contasDaTransferencia lê as duas contas pelo Id (o ToDictionaryAsync do C#).
+// contasDaTransferencia lê as duas contas pelo Id.
 func (s *Servico) contasDaTransferencia(ctx context.Context, origem, destino int64) (map[int64]contaDaTransferencia, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "Nome", "Origem" = 1 FROM "Conta" WHERE "Id" = ? OR "Id" = ?`, origem, destino)
 	if err != nil {
@@ -39,7 +39,7 @@ func (s *Servico) contasDaTransferencia(ctx context.Context, origem, destino int
 
 // transferir é o POST /api/transacoes/transferencia: a transferência entre contas, lançada só nas contas manuais (o
 // lado do Open Finance chega pela sincronização). Os dois lados têm o mesmo grupo, a categoria Transferências
-// (escolhida), e ficam fora dos relatórios. Tudo numa transação do banco (no C#, um SaveChanges só).
+// (escolhida), e ficam fora dos relatórios. Tudo numa transação do banco.
 func (s *Servico) transferir(w http.ResponseWriter, r *http.Request) {
 	origemId := respostas.CampoInteiro{Propriedade: "ContaOrigemId"}
 	destinoId := respostas.CampoInteiro{Propriedade: "ContaDestinoId"}

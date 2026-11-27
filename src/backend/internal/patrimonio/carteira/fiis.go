@@ -16,7 +16,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// A análise dos fundos imobiliários (FiiService do C#): renda (DY, yield on cost), cada compra comparada com hoje, proventos
+// A análise dos fundos imobiliários: renda (DY, yield on cost), cada compra comparada com hoje, proventos
 // por mês, evolução do patrimônio e rentabilidade comparada com Selic e IFIX.
 
 const (
@@ -37,7 +37,7 @@ var (
 	direitoDeSubscricao = regexp.MustCompile(`^[A-Z]{4}1[2-5]$`)
 )
 
-// FiiDto é o do C#.
+// FiiDto é um formato enviado à tela.
 type FiiDto struct {
 	Id                        int64          `json:"id"`
 	Ticker                    string         `json:"ticker"`
@@ -88,13 +88,13 @@ type LoteFiiDto struct {
 	Origem                 int64          `json:"origem"`
 }
 
-// ValorAtivoDto é o do C#.
+// ValorAtivoDto é um formato enviado à tela.
 type ValorAtivoDto struct {
 	Ticker string        `json:"ticker"`
 	Valor  tipos.Decimal `json:"valor"`
 }
 
-// ProventoMesDto é o do C#.
+// ProventoMesDto é um formato enviado à tela.
 type ProventoMesDto struct {
 	Ano             int             `json:"ano"`
 	Mes             int             `json:"mes"`
@@ -103,7 +103,7 @@ type ProventoMesDto struct {
 	PorAtivo        []ValorAtivoDto `json:"porAtivo"`
 }
 
-// EvolucaoFiiMesDto é o do C#.
+// EvolucaoFiiMesDto é um formato enviado à tela.
 type EvolucaoFiiMesDto struct {
 	Ano          int           `json:"ano"`
 	Mes          int           `json:"mes"`
@@ -133,7 +133,7 @@ type MesAMesFiiDto struct {
 	IdsRendimentos       []int64               `json:"idsRendimentos"`
 }
 
-// RentabilidadeMesDto é o do C#.
+// RentabilidadeMesDto é um formato enviado à tela.
 type RentabilidadeMesDto struct {
 	Ano      int            `json:"ano"`
 	Mes      int            `json:"mes"`
@@ -142,7 +142,7 @@ type RentabilidadeMesDto struct {
 	Ifix     *tipos.Decimal `json:"ifix"`
 }
 
-// ResumoFiisDto é o do C#.
+// ResumoFiisDto é um formato enviado à tela.
 type ResumoFiisDto struct {
 	ValorMercado           tipos.Decimal  `json:"valorMercado"`
 	Custo                  tipos.Decimal  `json:"custo"`
@@ -160,20 +160,20 @@ type ResumoFiisDto struct {
 	QuantidadeFiis         int            `json:"quantidadeFiis"`
 }
 
-// PontoPrecoDto é o do C#.
+// PontoPrecoDto é um formato enviado à tela.
 type PontoPrecoDto struct {
 	Ano        int           `json:"ano"`
 	Mes        int           `json:"mes"`
 	Fechamento tipos.Decimal `json:"fechamento"`
 }
 
-// HistoricoPrecoDto é o do C#.
+// HistoricoPrecoDto é um formato enviado à tela.
 type HistoricoPrecoDto struct {
 	Ticker string          `json:"ticker"`
 	Pontos []PontoPrecoDto `json:"pontos"`
 }
 
-// PainelFiisDto é o do C#.
+// PainelFiisDto é um formato enviado à tela.
 type PainelFiisDto struct {
 	Resumo               ResumoFiisDto                 `json:"resumo"`
 	Fiis                 []FiiDto                      `json:"fiis"`
@@ -389,7 +389,7 @@ func (s *Servico) lerFundos(ctx context.Context, hoje tipos.Data) ([]*fundo, err
 	return fundos, s.lerMensaisDosFundos(ctx, fundos)
 }
 
-// pct é o Pct do C#: a parte em % do total, a 2 casas; nil sem um dos dois ou com o total zerado.
+// pct: a parte em % do total, a 2 casas; nil sem um dos dois ou com o total zerado.
 func (c *conta) pct(parte, total *tipos.Decimal) *tipos.Decimal {
 	if parte == nil || total == nil || !positivo(*total) {
 		return nil

@@ -1,4 +1,4 @@
-// Pacote configuracao é o ConfiguracaoService do .NET: lê e grava a tabela Configuracao (chave e valor em texto).
+// Pacote configuracao: lê e grava a tabela Configuracao (chave e valor em texto).
 //
 // Segredo (Protegido = 1) não passa pelo Obter (devolve ErrProtegido): é lido e gravado por ObterSegredo e
 // DefinirSegredo, com o cofre do pacote segredos (#76). Até a inversão (#85) nenhuma rota do Go usa os dois.
@@ -37,7 +37,7 @@ func Novo(db banco.DBTX, r relogio.Relogio) *Servico {
 	return &Servico{db: db, relogio: r}
 }
 
-// ComTx devolve o mesmo serviço gravando na transação tx (o SaveChanges único do .NET).
+// ComTx devolve o mesmo serviço gravando na transação tx.
 func (s *Servico) ComTx(tx *sql.Tx) *Servico {
 	return &Servico{db: tx, relogio: s.relogio}
 }
@@ -157,7 +157,7 @@ func (s *Servico) ObterSegredo(ctx context.Context, cofre Cofre, chave string) (
 	case c.Valor == nil:
 		return nil, nil
 	case !c.Protegido:
-		return c.Valor, nil // como o .NET: sem a marca, o valor é texto puro
+		return c.Valor, nil // sem a marca, o valor é texto puro
 	}
 	segredo, err := cofre.Decifrar(chave, *c.Valor)
 	if err != nil {
@@ -180,7 +180,7 @@ func (s *Servico) SegredoGravado(ctx context.Context, chave string) (valor *stri
 }
 
 // DefinirSegredo é o DefinirAsync(chave, valor, protegido: true): grava o valor cifrado pelo cofre, com
-// Protegido = 1. nil apaga o valor (fica a linha, sem valor), como no .NET.
+// Protegido = 1. nil apaga o valor (fica a linha, sem valor).
 func (s *Servico) DefinirSegredo(ctx context.Context, cofre Cofre, chave string, segredo *string) error {
 	var valor *string
 	if segredo != nil {
@@ -196,8 +196,8 @@ func (s *Servico) DefinirSegredo(ctx context.Context, cofre Cofre, chave string,
 	return nil
 }
 
-// LerInteiro é o int.TryParse do C# (NumberStyles.Integer): espaços antes e depois, sinal + ou -, só dígitos ASCII,
-// dentro de um int de 32 bits. Os "\0" do fim são ignorados, como no .NET.
+// LerInteiro lê um inteiro: espaços antes e depois, sinal + ou -, só dígitos ASCII,
+// dentro de um int de 32 bits. Os "\0" do fim são ignorados.
 func LerInteiro(texto string) (int, bool) {
 	texto = strings.TrimRight(texto, "\x00")
 	texto = strings.Trim(texto, " \t\n\v\f\r")
@@ -217,7 +217,7 @@ func LerInteiro(texto string) (int, bool) {
 	return int(n), true
 }
 
-// LerBool é o bool.TryParse do C#: "true" ou "false" sem diferença de maiúsculas, com espaços em volta (e "\0" no
+// LerBool lê um booleano: "true" ou "false" sem diferença de maiúsculas, com espaços em volta (e "\0" no
 // fim) ignorados.
 func LerBool(texto string) (bool, bool) {
 	texto = strings.TrimLeftFunc(texto, unicode.IsSpace)
@@ -246,8 +246,8 @@ const (
 	local
 )
 
-// Formatos ISO 8601 que o DateTime.TryParse aceita e que o .NET grava (ToString("O") e o do EF Core). Outros textos
-// que o .NET lê pela cultura (como "14/10/2026 09:00") não são lidos aqui: viram nil, como texto inválido.
+// Formatos ISO 8601 aceitos: o com 7 casas e fuso e o do banco. Outros textos
+// que dependem da cultura (como "14/10/2026 09:00") não são lidos aqui: viram nil, como texto inválido.
 var formatosInstante = []string{
 	"2006-01-02T15:04:05.9999999", "2006-01-02 15:04:05.9999999", "2006-01-02T15:04", "2006-01-02 15:04", "2006-01-02",
 }
@@ -296,7 +296,7 @@ func (i Instante) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + texto + `"`), nil
 }
 
-// ParaUtc é o ToUniversalTime do C# com o Kind em Utc: o instante sem fuso conta como hora local, a de Brasília.
+// ParaUtc converte para UTC: o instante sem fuso conta como hora local, a de Brasília.
 func (i Instante) ParaUtc() Instante {
 	if i.tipo != semFuso {
 		return InstanteUTC(i.t)
@@ -309,8 +309,8 @@ func (i Instante) ParaUtc() Instante {
 // Tempo devolve o instante (sem fuso: a hora de parede, num time.Time em UTC). #81: o câmbio compara com o relógio.
 func (i Instante) Tempo() time.Time { return i.t }
 
-// TextoRedondo é o ToString("O") do C#, sempre com 7 casas: "2026-10-15T01:02:03.1234567Z" (UTC), com o
-// deslocamento (hora local) ou sem nada (sem fuso). É como o .NET grava os carimbos na Configuracao (#81).
+// TextoRedondo escreve sempre com 7 casas: "2026-10-15T01:02:03.1234567Z" (UTC), com o
+// deslocamento (hora local) ou sem nada (sem fuso). É grava os carimbos na Configuracao (#81).
 func (i Instante) TextoRedondo() string {
 	texto := i.t.Format("2006-01-02T15:04:05.0000000")
 	switch i.tipo {
@@ -322,7 +322,7 @@ func (i Instante) TextoRedondo() string {
 	return texto
 }
 
-// DefinirData grava o instante como o .NET grava os carimbos: DateTime.UtcNow.ToString("O"). #81: as datas de
+// DefinirData grava o instante grava os carimbos: DateTime.UtcNow.ToString("O"). #81: as datas de
 // atualização do câmbio e da cripto.
 func (s *Servico) DefinirData(ctx context.Context, chave string, instante time.Time) error {
 	texto := InstanteUTC(instante).TextoRedondo()

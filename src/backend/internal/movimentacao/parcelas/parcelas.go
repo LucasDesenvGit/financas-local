@@ -1,4 +1,4 @@
-// Pacote parcelas tem o que o ParcelasFuturas do C# usa para reconhecer as parcelas de uma mesma compra.
+// Pacote parcelas tem o que reconhece as parcelas de uma mesma compra.
 package parcelas
 
 import (
@@ -11,12 +11,12 @@ import (
 // LetrasDaCompra é quantas letras da descrição identificam a compra.
 const LetrasDaCompra = 8
 
-// Compra é o ParcelasFuturas.Compra do C#: as 8 primeiras letras da descrição em maiúsculas (ToUpperInvariant), sem o
+// Compra: as 8 primeiras letras da descrição em maiúsculas (ToUpperInvariant), sem o
 // número da parcela ("03/10", "PARC 3 DE 10"). Duas parcelas da mesma compra têm a mesma.
 //
-// O número sai pela regex \bPARC(ELA)?\b\.?|\d{1,3}\s*(/|DE)\s*\d{1,3}, aqui escrita à mão: no .NET, \d, \s e \b valem
+// O número sai pela regex \bPARC(ELA)?\b\.?|\d{1,3}\s*(/|DE)\s*\d{1,3}, aqui escrita à mão: na regex, \d, \s e \b valem
 // para qualquer alfabeto (o "٣" árabe é dígito, o espaço sem quebra é espaço), e no regexp do Go (RE2) só para ASCII.
-// O .NET também olha um char (UTF-16) por vez: o caractere fora do plano básico, como o "𝐀" matemático, chega em duas
+// O texto também é olhado um char (UTF-16) por vez: o caractere fora do plano básico, como o "𝐀" matemático, chega em duas
 // metades que não são letra, dígito, espaço nem parte de palavra. Por isso o texto é lido em UTF-16.
 func Compra(descricao string) string {
 	cs := utf16.Encode([]rune(texto.MaiusculasInvariantes(descricao)))
@@ -87,7 +87,7 @@ func tem(cs []uint16, i int, s string) bool {
 	return true
 }
 
-// digitos conta os dígitos (\d do .NET: \p{Nd}) a partir de i, até 3.
+// digitos conta os dígitos (\d: \p{Nd}) a partir de i, até 3.
 func digitos(cs []uint16, i int) int {
 	n := 0
 	for n < 3 && i+n < len(cs) && unicode.Is(unicode.Nd, rune(cs[i+n])) && !utf16.IsSurrogate(rune(cs[i+n])) {
@@ -96,7 +96,7 @@ func digitos(cs []uint16, i int) int {
 	return n
 }
 
-// espacos pula os espaços (\s do .NET: [\f\n\r\t\v\x85\p{Z}]).
+// espacos pula os espaços (\s: [\f\n\r\t\v\x85\p{Z}]).
 func espacos(cs []uint16, i int) int {
 	for i < len(cs) {
 		r := rune(cs[i])
@@ -108,7 +108,7 @@ func espacos(cs []uint16, i int) int {
 	return i
 }
 
-// dePalavra é o que conta como palavra para o \b do .NET: letra, marca sem espaço (Mn), dígito (Nd), conector (Pc) e
+// dePalavra: letra, marca sem espaço (Mn), dígito (Nd), conector (Pc) e
 // os juntadores de largura zero (ZWJ e ZWNJ).
 func dePalavra(c uint16) bool {
 	r := rune(c)

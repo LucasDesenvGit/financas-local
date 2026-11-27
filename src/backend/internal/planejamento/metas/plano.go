@@ -26,7 +26,7 @@ const (
 	tipoCartao  = 3
 )
 
-// diasPorMes é o 30.44m do C#.
+// diasPorMes é o número médio de dias por mês (30.44).
 var diasPorMes = mustDecimal("30.44")
 
 // tiposCaixa são as contas de dinheiro: corrente, poupança, dinheiro e outras.
@@ -83,7 +83,7 @@ type contaDoPlano struct {
 // faturaDoMes é a soma das faturas dos cartões que vencem num mês, e a parte delas que é parcela.
 type faturaDoMes struct{ total, parcelas tipos.Decimal }
 
-// Planejar é o PlanejarAsync do C#: o dinheiro que entra e sai de cada mês, que é o que dá para guardar.
+// Planejar: o dinheiro que entra e sai de cada mês, que é o que dá para guardar.
 //   - receitas e despesas das contas de dinheiro, sem transferências;
 //   - menos as faturas de cartão que vencem no mês (a compra no cartão sai do caixa quando a fatura vence);
 //   - mês atual: o que já entrou e saiu, mais a média do que falta (receitas: o maior entre o recebido e a média);
@@ -246,7 +246,7 @@ func zeroSeVazio(d tipos.Decimal) tipos.Decimal { return tipos.Somar(tipos.Zero,
 
 func marcadores(n int) string { return strings.TrimSuffix(strings.Repeat("?, ", n), ", ") }
 
-// lerContas são as contas não arquivadas, na ordem do Id (a da tabela, que o C# lê sem ORDER BY).
+// lerContas são as contas não arquivadas, na ordem do Id (a da tabela, lida sem ORDER BY).
 func (s *Servico) lerContas(ctx context.Context) ([]contaDoPlano, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "Tipo", "IncluirNoSaldo", "DiaFechamento", "DiaVencimento"
 		FROM "Conta" WHERE NOT "Arquivada" ORDER BY "Id"`)

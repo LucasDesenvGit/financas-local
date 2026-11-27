@@ -1,4 +1,4 @@
-// Package metas são as metas de economia (#79): o MetasController do C# (as 8 rotas de /api/metas), com o progresso
+// Package metas são as metas de economia (#79): as 8 rotas de /api/metas, com o progresso
 // pelo saldo da conta ou do cofrinho (#89), a ordem de prioridade, os aportes (#318) e o caixa do plano (#90, #149, o
 // AssistenteMetasService; a divisão entre as metas é feita na tela, ADR 0035).
 package metas
@@ -77,7 +77,7 @@ func naoEncontrado(w http.ResponseWriter) {
 	respostas.Mensagem(w, http.StatusNotFound, "Registro não encontrado.")
 }
 
-// MetaDto é o MetaDto do C#.
+// MetaDto é a meta enviada à tela.
 type MetaDto struct {
 	Id                   int64          `json:"id"`
 	Nome                 string         `json:"nome"`
@@ -108,7 +108,7 @@ type MetaAporteDto struct {
 	Hora  *string       `json:"hora"`
 }
 
-// meta é a linha de Meta, com o nome da conta (o Include do C#).
+// meta é a linha de Meta, com o nome da conta.
 type meta struct {
 	id                    int64
 	nome                  string
@@ -149,7 +149,7 @@ func lerMetas(ctx context.Context, q banco.DBTX, onde string, argumentos ...any)
 	return lista, nil
 }
 
-// mesmoNome é o string.Equals(..., OrdinalIgnoreCase) do C#.
+// mesmoNome compara sem diferença de maiúsculas.
 func mesmoNome(a, b string) bool {
 	return texto.MaiusculasInvariantes(a) == texto.MaiusculasInvariantes(b)
 }
@@ -164,7 +164,7 @@ func reservaDa(m meta, lista []reservas.ReservaDto) *reservas.ReservaDto {
 	return nil
 }
 
-// paraDto é o ParaDto do C#. O valor inicial (ValorAtual gravado) sempre conta. Com cofrinho, soma o saldo dele (nunca
+// paraDto monta o DTO. O valor inicial (ValorAtual gravado) sempre conta. Com cofrinho, soma o saldo dele (nunca
 // o da conta junto, para não contar duas vezes); sem cofrinho, o saldo da conta vinculada, se positivo (#89).
 func paraDto(m meta, saldos map[int64]tipos.Decimal, lista []reservas.ReservaDto, hoje tipos.Data) (MetaDto, error) {
 	var reserva *reservas.ReservaDto
@@ -214,7 +214,7 @@ func paraDto(m meta, saldos map[int64]tipos.Decimal, lista []reservas.ReservaDto
 	return dto, nil
 }
 
-// paraDtos lê os saldos das contas e as reservas só se alguma meta precisa deles, como o C#.
+// paraDtos lê os saldos das contas e as reservas só se alguma meta precisa deles.
 func (s *Servico) paraDtos(ctx context.Context, lista []meta) ([]MetaDto, error) {
 	saldos := map[int64]tipos.Decimal{}
 	var res []reservas.ReservaDto
@@ -247,7 +247,7 @@ func (s *Servico) paraDtos(ctx context.Context, lista []meta) ([]MetaDto, error)
 }
 
 // listar: concluídas no fim; depois pela prioridade (0, sem ordem, vai para o fim), pela data (sem data no fim) e pelo
-// nome. A ordem é a do ORDER BY que o EF Core gera (o nome na ordem binária do SQLite); nada de dinheiro nela.
+// nome. A ordem é a do nome, binária (a do SQLite); nada de dinheiro nela.
 func (s *Servico) listar(w http.ResponseWriter, r *http.Request) {
 	lista, err := lerMetas(r.Context(), s.db, `ORDER BY m."Concluida", CASE WHEN m."Prioridade" = 0 THEN 2147483647
 		ELSE m."Prioridade" END, m."DataAlvo" IS NULL, m."DataAlvo", m."Nome"`)
@@ -280,7 +280,7 @@ func (s *Servico) responderMeta(w http.ResponseWriter, r *http.Request, id int64
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, dtos[0])
 }
 
-// entrada é o SalvarMetaDto, com os atributos de validação do C#.
+// entrada é o corpo da meta, com as regras de validação.
 type entrada struct {
 	nome, cor             respostas.CampoTexto
 	valorAlvo, valorAtual respostas.CampoDecimal
@@ -341,7 +341,7 @@ func (s *Servico) conferirConta(w http.ResponseWriter, r *http.Request, conta *i
 	return true
 }
 
-// cofrinho é o ValidarCofrinhoAsync do C#: cofrinho só com conta, e precisa existir nela (conta + nome, sem
+// cofrinho: cofrinho só com conta, e precisa existir nela (conta + nome, sem
 // diferenciar maiúsculas). Ao editar, manter o cofrinho que já estava gravado é aceito mesmo que ele tenha sumido do
 // extrato (o cartão avisa). Devolve o nome como está no extrato, ou a mensagem de erro.
 func (s *Servico) cofrinho(ctx context.Context, e *entrada, atual *meta) (nome *string, mensagem string, err error) {
@@ -369,7 +369,7 @@ func (s *Servico) cofrinho(ctx context.Context, e *entrada, atual *meta) (nome *
 	return nil, "Cofrinho inválido para esta conta.", nil
 }
 
-// valores são as colunas que o Aplicar do C# grava, na ordem do INSERT e do UPDATE.
+// valores são as colunas gravadas, na ordem do INSERT e do UPDATE.
 func (e *entrada) valores(cofrinho *string) []any {
 	conta := e.conta()
 	if conta == nil {

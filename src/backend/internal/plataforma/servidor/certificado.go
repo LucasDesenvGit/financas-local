@@ -18,7 +18,7 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 )
 
-// CarregarPFX lê o certificado .pfx que os scripts e o .msi já geram (dotnet dev-certs no Linux,
+// CarregarPFX lê o certificado .pfx que os scripts e o .msi já geram (o preparar-https no Linux,
 // Export-PfxCertificate no Windows). A biblioteca padrão do Go não lê PKCS#12. Os dois geradores de hoje usam o
 // formato antigo (3DES), que o golang.org/x/crypto/pkcs12 também lê; mas ele está congelado e não lê o .pfx com
 // AES (OpenSSL 3, ou Export-PfxCertificate -CryptoAlgorithmOption AES256_SHA256). O go-pkcs12 lê os dois (ADR 0049).
@@ -81,7 +81,7 @@ func novoCertificado(agora time.Time, validade time.Duration) (*ecdsa.PrivateKey
 	return chave, folha, nil
 }
 
-// Regra do certificado da instalação, a mesma dos scripts: dura 1 ano, como o do dotnet dev-certs, e é trocado quando
+// Regra do certificado da instalação, a mesma dos scripts: dura 1 ano e é trocado quando
 // faltam 30 dias ou menos.
 const (
 	validadeDoCertificado = 365 * 24 * time.Hour
@@ -101,7 +101,7 @@ func GarantirCertificado(caminho, senha string, agora time.Time) (gerou bool, er
 		if err != nil {
 			return false, err
 		}
-		// Modern2023: AES e SHA-256. O .NET e o go-pkcs12 leem esse formato, e o Windows também, desde o 10 versão 1809.
+		// Modern2023: AES e SHA-256. O go-pkcs12 lê esse formato, e o Windows também, desde o 10 versão 1809.
 		dados, err := pkcs12.Modern2023.Encode(chave, nova, nil, senha)
 		if err != nil {
 			return false, fmt.Errorf("montar o certificado: %w", err)

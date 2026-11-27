@@ -1,8 +1,8 @@
 // Pacote desfazer guarda, na memória do processo e por pouco tempo, o estado de antes de uma alteração em lote, para o
-// botão "Desfazer" (o IMemoryCache do C#, com o PrazoDesfazer de 10 minutos). O navegador recebe só a chave: um GUID
-// sem hífens, em minúsculas (o Guid.NewGuid().ToString("N")). Cada chave vale uma vez só, e some no fim do prazo.
+// botão "Desfazer" (com o PrazoDesfazer de 10 minutos). O navegador recebe só a chave: um GUID
+// sem hífens, em minúsculas. Cada chave vale uma vez só, e some no fim do prazo.
 //
-// Como no C#, nada disso vai para o banco: reiniciar o serviço perde o Desfazer, e quem está com a tela aberta vê
+// Nada disso vai para o banco: reiniciar o serviço perde o Desfazer, e quem está com a tela aberta vê
 // "Não dá mais para desfazer".
 package desfazer
 
@@ -15,7 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Prazo é o PrazoDesfazer do C#.
+// Prazo é quanto tempo o Desfazer vale.
 const Prazo = 10 * time.Minute
 
 // MensagemVencida é o 404 de quando a chave não existe, venceu ou já foi usada.

@@ -17,7 +17,7 @@ type MesValoresDto struct {
 }
 
 // Totais são as receitas e as despesas dos relevantes entre inicio e fim, pelo tipo, e não pelo sinal (ADR 0036): o
-// estorno no cartão é despesa positiva e abate as despesas. Cada soma é um SumAsync do EF Core (no formato do banco,
+// estorno no cartão é despesa positiva e abate as despesas. Cada soma sai no formato do banco (
 // "0.0" sem linhas); as despesas saem positivas.
 func (s *Servico) Totais(ctx context.Context, inicio, fim tipos.Data) (receitas, despesas tipos.Decimal, err error) {
 	lancamentos, err := s.Relevantes(ctx, inicio, fim)
@@ -35,7 +35,7 @@ func totais(lancamentos []Lancamento) (receitas, despesas tipos.Decimal) {
 }
 
 // FluxoMensal são as receitas e as despesas de cada mês entre inicio e fim, inclusive os meses sem movimento (com 0).
-// O C# agrupa por ano e mês no SQLite (uma soma condicional por grupo): o mês com movimento tem as três somas no formato do
+// A soma é por ano e mês, uma condicional por grupo: o mês com movimento tem as três somas no formato do
 // banco, mesmo a de um tipo que não apareceu nele ("0.0"); o mês sem movimento, 0 sem casas. As despesas saem
 // positivas, e a emergência é o valor absoluto das saídas (Valor < 0) marcadas como emergência.
 func (s *Servico) FluxoMensal(ctx context.Context, inicio, fim tipos.Data) ([]MesValoresDto, error) {

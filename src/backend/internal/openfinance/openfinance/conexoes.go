@@ -91,7 +91,7 @@ func compararOpcional(a, b *string) int {
 	return texto.CompararNaCultura(*a, *b)
 }
 
-// alterarAtiva liga ou desliga a conexão. Sem o parâmetro "ativa", vale false, como o bool do [FromQuery] no .NET.
+// alterarAtiva liga ou desliga a conexão. Sem o parâmetro "ativa", vale false.
 func (s *Servico) alterarAtiva(w http.ResponseWriter, r *http.Request) {
 	id, ok := idDaRota(w, r)
 	if !ok {

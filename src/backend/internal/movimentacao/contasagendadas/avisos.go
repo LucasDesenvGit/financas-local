@@ -24,7 +24,7 @@ var (
 	variacaoValorVariavel = decimalFixo("0.15") // valor que varia mais que isso (luz, água) não gera o aviso
 )
 
-// AvisoDto é o AvisoContaAgendadaDto do C#, na ordem do record.
+// AvisoDto é o aviso da conta agendada, na ordem dos campos do JSON.
 type AvisoDto struct {
 	ContaAgendadaId int64          `json:"contaAgendadaId"`
 	Descricao       string         `json:"descricao"`

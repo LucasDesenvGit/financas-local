@@ -1,4 +1,4 @@
-// Pacote texto tem as duas normalizações de texto das regras do .NET, conferidas contra o próprio C# por uma sonda
+// Pacote texto tem as duas normalizações de texto das regras, conferidas por uma sonda
 // (testdata/sonda-csharp grava testdata/normalizar.json, o gabarito dos testes).
 //
 //   - ParaRegras é o CategorizacaoService.Normalizar: as regras de categoria e de descrição comparam o texto sem acento
@@ -15,7 +15,7 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// TamanhoUtf16 é o string.Length do C#: unidades UTF-16 (um emoji conta 2). Mora aqui, e não no respostas, para a
+// TamanhoUtf16 conta unidades UTF-16 (um emoji conta 2). Mora aqui, e não no respostas, para a
 // regra que só mede texto não depender do pacote do HTTP (#476).
 func TamanhoUtf16(s string) int {
 	n := 0
@@ -25,7 +25,7 @@ func TamanhoUtf16(s string) int {
 	return n
 }
 
-// ParaRegras é o CategorizacaoService.Normalizar do C#: tira os espaços das pontas, decompõe (FormD), descarta os
+// ParaRegras: tira os espaços das pontas, decompõe (FormD), descarta os
 // acentos (as marcas sem espaço, a categoria Mn), recompõe (FormC) e passa para maiúsculas como o ToUpperInvariant.
 // Só espaços (ou nada) vira "".
 func ParaRegras(valor string) string {
@@ -42,10 +42,10 @@ func ParaRegras(valor string) string {
 	return strings.Map(maiusculaInvariante, norm.NFC.String(b.String()))
 }
 
-// ParaPalavras é o Normalizar do TipoLancamentoService do C#: decompõe (FormD, sem recompor depois), descarta os
+// ParaPalavras: decompõe (FormD, sem recompor depois), descarta os
 // acentos, deixa só letras e dígitos (em maiúsculas) e troca o resto por um espaço, sem espaços repetidos nem nas pontas.
 //
-// O C# olha um char (UTF-16) por vez: um caractere fora do plano básico, como um emoji ou o "𝐀" matemático, chega em
+// O texto é olhado um char (UTF-16) por vez: um caractere fora do plano básico, como um emoji ou o "𝐀" matemático, chega em
 // duas metades (surrogates), que não são letra, e vira espaço. Por isso a mesma regra aqui (r > 0xFFFF).
 func ParaPalavras(valor string) string {
 	var b strings.Builder
@@ -73,11 +73,11 @@ func TemPalavra(texto string, termos ...string) bool {
 	return false
 }
 
-// MaiusculasInvariantes é o ToUpperInvariant do .NET para um texto (ver maiusculaInvariante).
+// MaiusculasInvariantes passa um texto para maiúsculas, sem cultura (ver maiusculaInvariante).
 func MaiusculasInvariantes(s string) string { return strings.Map(maiusculaInvariante, s) }
 
-// maiusculaInvariante é o ToUpperInvariant do .NET para um caractere: o mapeamento simples do Unicode, menos o "ı"
-// (i sem ponto, U+0131), que o .NET deixa como está (o "I" dele é só do turco). Conferido no gabarito.
+// maiusculaInvariante passa um caractere para maiúscula, sem cultura: o mapeamento simples do Unicode, menos o "ı"
+// (i sem ponto, U+0131), que fica como está (o "I" dele é só do turco). Conferido no gabarito.
 func maiusculaInvariante(r rune) rune {
 	if r == 'ı' {
 		return r

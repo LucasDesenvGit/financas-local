@@ -12,7 +12,7 @@ import (
 // CorSemCategoria é a cor da fatia "Sem categoria".
 const CorSemCategoria = "#94a3b8"
 
-// ValorCategoriaDto é um total por categoria, na ordem do record ValorCategoriaDto do C#. Sem categoria, CategoriaId
+// ValorCategoriaDto é um total por categoria, na ordem dos campos do JSON. Sem categoria, CategoriaId
 // é null e o nome é "Sem categoria".
 type ValorCategoriaDto struct {
 	CategoriaId *int64        `json:"categoriaId"`
@@ -28,7 +28,7 @@ type categoriaLida struct {
 	paiId *int64
 }
 
-// lerCategorias lê todas as categorias, por Id (o ToDictionaryAsync do C#).
+// lerCategorias lê todas as categorias, por Id.
 func (s *Servico) lerCategorias(ctx context.Context) (map[int64]categoriaLida, error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id", "Nome", "Cor", "CategoriaPaiId" FROM "Categoria"`)
 	if err != nil {
@@ -79,7 +79,7 @@ func (s *Servico) TotaisPorCategoria(ctx context.Context, inicio, fim tipos.Data
 // mesmas linhas.
 func totaisPorCategoria(lancamentos []Lancamento, categorias map[int64]categoriaLida, tipo int64, agruparNoPai,
 	somenteEmergencia bool) []ValorCategoriaDto {
-	// O GroupBy do C#: uma soma por CategoriaId (e uma para as sem categoria). O SQLite entrega os grupos em ordem de
+	// Uma soma por CategoriaId (e uma para as sem categoria). O SQLite entrega os grupos em ordem de
 	// CategoriaId, e a ordem em que os totais entram no resultado desempata os de mesmo valor.
 	porCategoria := map[int64][]tipos.Decimal{}
 	semId := []tipos.Decimal{}

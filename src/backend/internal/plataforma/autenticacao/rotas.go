@@ -33,7 +33,7 @@ type estadoDto struct {
 	Versao      string  `json:"versao"`
 }
 
-// auditoriaDto é a AuditoriaAcesso como o .NET a devolve (a entidade, em camelCase).
+// auditoriaDto é a AuditoriaAcesso a devolve (a entidade, em camelCase).
 type auditoriaDto struct {
 	Id        int64          `json:"id"`
 	DataHora  tipos.DataHora `json:"dataHora"`
@@ -291,7 +291,7 @@ func (a *Autenticacao) emitirCsrf(w http.ResponseWriter, req *requisicao) error 
 	return nil
 }
 
-// salvarComAuditoria grava o usuário e o registro de auditoria juntos, como o SaveChanges do .NET.
+// salvarComAuditoria grava o usuário e o registro de auditoria juntos.
 func (a *Autenticacao) salvarComAuditoria(ctx context.Context, r *http.Request, u Usuario, evento string, login *string) error {
 	return banco.EmTransacao(ctx, a.o.DB, func(tx *sql.Tx) error {
 		if err := atualizarUsuario(ctx, tx, u); err != nil {
@@ -330,7 +330,7 @@ func (a *Autenticacao) inteiro(ctx context.Context, chave string, padrao, minimo
 	return min(max(valor, minimo), maximo), nil
 }
 
-// hashDeMentira é o _hashFicticio do .NET: o hash de uma senha aleatória, feito uma vez só.
+// hashDeMentira: o hash de uma senha aleatória, feito uma vez só.
 func (a *Autenticacao) hashDeMentira() string {
 	a.hashFicticioUmaVez.Do(func() {
 		a.hashFicticio, _ = GerarHash(tipos.NovoGuid().String())
