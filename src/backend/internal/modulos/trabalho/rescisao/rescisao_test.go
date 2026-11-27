@@ -2,10 +2,12 @@ package rescisao
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/decimoterceiro"
@@ -224,6 +226,13 @@ func TestRescisaoPelaApi(t *testing.T) {
 		}
 	}
 
+	// #751: a tela do FGTS deixa o 13º do ano da saída para a rescisão; fora de dezembro, ele vem no depósito dela.
+	// Pedido de demissão com o aviso trabalhado, saída em 30/06: 8% do saldo de salário (6000) e do 13º (6/12, 3000) = 720.
+	junho := ler(chamar("GET", base+"/simular?tipo=2&aviso=1&saida=2026-06-30", ""), http.StatusOK)
+	if junho.Fgts.DepositoRescisao.String() != "720.00" {
+		t.Fatalf("depósito da rescisão em 30/06 = %+v\n%+v", junho.Fgts, junho.Verbas)
+	}
+
 	// Saindo antes de 30/11, a 1ª parcela do 13º ainda não veio: não desconta.
 	nov := ler(chamar("GET", base+"/simular?tipo=1&aviso=2&saida=2026-11-20", ""), http.StatusOK)
 	for _, d := range nov.Descontos {
@@ -360,5 +369,104 @@ func TestRescisaoComSaqueAniversarioEAnoSeguinte(t *testing.T) {
 	r := Calcular(e)
 	if r.Verbas[2].Descricao != "13º proporcional" || r.Verbas[2].Referencia != "12/12 do ano da saída e 1/12 do seguinte" || r.Verbas[2].Valor.String() != "6500.00" {
 		t.Fatalf("13º com o ano seguinte = %+v", r.Verbas[2])
+	}
+}
+
+// Regressão (#751): dois "Registrar" ao mesmo tempo davam 500 no 2º (a chave do EmpregoId), porque a conferência de "já
+// registrada" ficava fora da transação. Agora um registra e os outros recebem errRegistrada (409 na rota).
+func TestRegistrarAoMesmoTempo(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
+	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
+	s := NovoServico(db, empregos, holerites, decimo, asFerias, fgts.NovoServico(db, empregos, holerites, decimo, asFerias, rel, log), rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	var e emprego.Emprego
+	_ = json.Unmarshal(testeapoio.Chamar(t, m, "POST", "/api/trabalho/empregos", `{"empregador":"E","admissao":"2024-03-11","salarioBruto":6000}`).Corpo, &e)
+	const vezes = 8
+	erros := make(chan error, vezes)
+	var juntos sync.WaitGroup
+	for range vezes {
+		juntos.Go(func() {
+			_, err := s.Registrar(t.Context(), e.Id, Acordo, AvisoIndenizado, testeapoio.Dia(2026, 10, 15), nil)
+			erros <- err
+		})
+	}
+	juntos.Wait()
+	close(erros)
+	registradas := 0
+	for err := range erros {
+		switch {
+		case err == nil:
+			registradas++
+		case !errors.Is(err, errRegistrada):
+			t.Errorf("erro que não é o de já registrada (seria 500): %v", err)
+		}
+	}
+	if registradas != 1 {
+		t.Fatalf("%d registradas; quer 1", registradas)
+	}
+}
+
+// Regressão (#751): um saque-aniversário antigo marcava a pessoa como no saque-aniversário para sempre, e quem voltou ao
+// saque-rescisão aparecia sem poder sacar o saldo. A pessoa responde: ?saqueAniversario=false (e o mesmo no registro)
+// vale no lugar do que o site deduz.
+func TestRescisaoComARespostaDoSaqueAniversario(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
+	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
+	oFgts := fgts.NovoServico(db, empregos, holerites, decimo, asFerias, rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	fgts.Registrar(m, oFgts)
+	RegistrarRotas(m, NovoServico(db, empregos, holerites, decimo, asFerias, oFgts, rel, log))
+	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
+		return testeapoio.Chamar(t, m, metodo, caminho, corpo)
+	}
+	ler := func(r testeapoio.Resposta, status int) Calculo {
+		t.Helper()
+		r.ConferirStatus(t, status)
+		var c Calculo
+		if err := json.Unmarshal(r.Corpo, &c); err != nil {
+			t.Fatalf("%s: %v", r.Corpo, err)
+		}
+		return c
+	}
+	var e emprego.Emprego
+	_ = json.Unmarshal(chamar("POST", "/api/trabalho/empregos", `{"empregador":"E","admissao":"2024-03-11","salarioBruto":6000}`).Corpo, &e)
+	chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/fgts/lancamentos", e.Id), `{"data":"2024-08-10","tipo":2,"valor":100,"motivo":2}`).
+		ConferirStatus(t, http.StatusOK)
+	base := fmt.Sprintf("/api/trabalho/empregos/%d/rescisao", e.Id)
+	deduzido := ler(chamar("GET", base+"/simular?tipo=1&aviso=2&saida=2026-10-15", ""), http.StatusOK)
+	if !deduzido.Fgts.SaqueAniversario || deduzido.Fgts.PercentualSaque != 0 {
+		t.Fatalf("sem a resposta, o saque de 2024 marca o saque-aniversário: %+v", deduzido.Fgts)
+	}
+	voltou := ler(chamar("GET", base+"/simular?tipo=1&aviso=2&saida=2026-10-15&saqueAniversario=false", ""), http.StatusOK)
+	if voltou.Fgts.SaqueAniversario || voltou.Fgts.PercentualSaque != 100 || !voltou.Fgts.Sacavel.Decimal().GreaterThan(deduzido.Fgts.Sacavel.Decimal()) {
+		t.Fatalf("respondido que não: %+v", voltou.Fgts)
+	}
+	r := chamar("GET", base+"/comparar?saida=2026-10-15&saqueAniversario=false", "")
+	r.ConferirStatus(t, http.StatusOK)
+	var lista []Comparacao
+	_ = json.Unmarshal(r.Corpo, &lista)
+	if len(lista) == 0 || !lista[0].Sacavel.Decimal().Equal(voltou.Fgts.Sacavel.Decimal()) {
+		t.Fatalf("a comparação segue a resposta: %+v", lista)
+	}
+	r = chamar("GET", base+"/simular?tipo=1&aviso=2&saida=2026-10-15&saqueAniversario=talvez", "")
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, fmt.Sprintf(`{"mensagem":%q}`, MensagemSaqueAniversario))
+	registrada := ler(chamar("POST", base, `{"tipo":1,"aviso":2,"saida":"2026-10-15","saqueAniversario":false}`), http.StatusCreated)
+	if registrada.Fgts.SaqueAniversario || !registrada.Fgts.Sacavel.Decimal().Equal(voltou.Fgts.Sacavel.Decimal()) {
+		t.Fatalf("o registro guarda a resposta: %+v", registrada.Fgts)
 	}
 }

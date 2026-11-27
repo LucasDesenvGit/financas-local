@@ -97,6 +97,13 @@ import { TIPOS, avisoPadrao, avisosDoTipo, textoDoFgts } from './rescisao';
             <p>{{ textoFgts(c.fgts.percentualMulta, c.fgts.percentualSaque) }} Saldo estimado: {{ c.fgts.saldo | currency }}, mais o
               depósito da rescisão ({{ c.fgts.depositoRescisao | currency }})@if (c.fgts.multa) {; multa: {{ c.fgts.multa | currency }}}.
               <strong>Para sacar: {{ c.fgts.sacavel | currency }}.</strong></p>
+            <!-- #751: o site deduz o saque-aniversário dos saques do FGTS, mas quem voltou ao saque-rescisão tem o saque antigo no
+                 histórico: a pessoa confirma ou corrige ali (Nielsen 3, controle; Nielsen 5, prevenir o erro). -->
+            <label class="checkbox"><input type="checkbox" name="saqueAniversario" [checked]="c.fgts.saqueAniversario" [disabled]="ocupado()"
+              (change)="mudarSaqueAniversario($any($event.target).checked)"> Estou no saque-aniversário do FGTS</label>
+            <p class="texto-suave detalhe-saque">{{ saqueAniversario === null
+              ? 'Marcado pelo que o site viu nos saques do FGTS. No saque-aniversário, a dispensa e o acordo liberam só a multa.'
+              : 'Pela sua resposta. No saque-aniversário, a dispensa e o acordo liberam só a multa.' }}</p>
             <p>{{ c.seguroDesemprego ? 'Você pode ter direito ao seguro-desemprego (12 meses ou mais de emprego, na 1ª vez que pede).' :
               'Este tipo de desligamento não dá direito ao seguro-desemprego.' }}</p>
             @if (!registrada()) {
@@ -119,6 +126,7 @@ import { TIPOS, avisoPadrao, avisosDoTipo, textoDoFgts } from './rescisao';
     .comparacao .detalhe { display: block; font-size: 0.8rem; font-weight: 400; }
     td.direita { white-space: nowrap; }
     .aviso-estimativa { margin-top: 0; }
+    .detalhe-saque { margin-top: 4px; font-size: 0.85rem; }
   `]
 })
 export class TrabalhoRescisaoComponent implements OnInit {
@@ -138,6 +146,8 @@ export class TrabalhoRescisaoComponent implements OnInit {
   tipo = TipoRescisao.SemJustaCausa;
   aviso = AvisoRescisao.Indenizado;
   saida: string | null = null;
+  /** A resposta da pessoa sobre o saque-aniversário; null, o site deduz dos saques do FGTS (#751). */
+  saqueAniversario: boolean | null = null;
 
   ngOnInit(): void {
     this.api.empregos().subscribe({
@@ -165,16 +175,23 @@ export class TrabalhoRescisaoComponent implements OnInit {
   simular(): void {
     const e = this.emprego();
     if (!e || !this.saida) return;
-    this.api.simularRescisao(e.id, this.tipo, this.aviso, this.saida).subscribe({
+    this.api.simularRescisao(e.id, this.tipo, this.aviso, this.saida, this.saqueAniversario).subscribe({
       next: (c) => this.calculo.set(c),
       error: (err) => this.avisosService.erro(mensagemDeErro(err))
     });
   }
 
+  /** A pessoa respondeu: refaz a conta e, se estava aberta, a comparação, que também depende disso. */
+  mudarSaqueAniversario(marcado: boolean): void {
+    this.saqueAniversario = marcado;
+    this.simular();
+    if (this.comparacao()) this.comparar();
+  }
+
   comparar(): void {
     const e = this.emprego();
     if (!e || !this.saida) return;
-    this.api.compararRescisao(e.id, this.saida).subscribe({
+    this.api.compararRescisao(e.id, this.saida, this.saqueAniversario).subscribe({
       next: (l) => this.comparacao.set(l),
       error: (err) => this.avisosService.erro(mensagemDeErro(err))
     });
@@ -189,7 +206,7 @@ export class TrabalhoRescisaoComponent implements OnInit {
       confirmar: 'Registrar' });
     if (!ok) return;
     this.ocupado.set(true);
-    this.api.registrarRescisao(e.id, c.tipo, c.aviso, c.saida).subscribe({
+    this.api.registrarRescisao(e.id, c.tipo, c.aviso, c.saida, c.fgts.saqueAniversario).subscribe({
       next: (r) => { this.ocupado.set(false); this.registrada.set(r); this.avisosService.sucesso('Rescisão registrada: o emprego foi fechado.'); },
       error: (err) => { this.ocupado.set(false); this.avisosService.erro(mensagemDeErro(err)); }
     });

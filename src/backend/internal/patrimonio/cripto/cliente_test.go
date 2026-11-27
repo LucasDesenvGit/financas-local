@@ -11,39 +11,39 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 )
 
-// testdata/tickers.json foi gravado do Mercado Bitcoin de verdade (api.mercadobitcoin.net), em 24/10/2026, com os 4
-// pares: os preços vêm como texto, e "date" em segundos (10 dígitos), não em nanossegundos como diz a especificação.
+// testdata/ticker-24hr.json foi gravado da Binance de verdade (api.binance.com), em 18/11/2026, com os 4 pares
+// (ticker de 24 h, type=MINI): os preços vêm como texto, e "closeTime" em milissegundos (#762).
 
-// mercadoGravado é o Mercado Bitcoin num serviço falso (testeapoio.ServicoDeFora, #460) que dá a mesma resposta a
-// todo pedido e confere os cabeçalhos do .NET.
-func mercadoGravado(t *testing.T, resposta testeapoio.RespostaDeFora) (*Cliente, *testeapoio.ServicoDeFora) {
+// binanceGravada é a Binance num serviço falso (testeapoio.ServicoDeFora, #460) que dá a mesma resposta a todo pedido
+// e confere os cabeçalhos do .NET.
+func binanceGravada(t *testing.T, resposta testeapoio.RespostaDeFora) (*Cliente, *testeapoio.ServicoDeFora) {
 	t.Helper()
-	mercado := testeapoio.NovoServicoDeFora(t)
-	mercado.Exigir("User-Agent", "FinancasLocal/1.0")
-	mercado.Exigir("Accept", "application/json")
-	mercado.Em("GET", "*", resposta)
-	c, err := NovoCliente(mercado.URL()+"/api/v4/", mercado.Cliente())
+	binance := testeapoio.NovoServicoDeFora(t)
+	binance.Exigir("User-Agent", "FinancasLocal/1.0")
+	binance.Exigir("Accept", "application/json")
+	binance.Em("GET", "*", resposta)
+	c, err := NovoCliente(binance.URL()+"/api/v3/", binance.Cliente())
 	if err != nil {
 		t.Fatal(err)
 	}
-	return c, mercado
+	return c, binance
 }
 
 func TestUltimosNegociosGravados(t *testing.T) {
 	t.Parallel()
-	c, mercado := mercadoGravado(t, testeapoio.RespostaDeFora{Arquivo: "tickers.json"})
+	c, binance := binanceGravada(t, testeapoio.RespostaDeFora{Arquivo: "ticker-24hr.json"})
 	negocios, err := c.UltimosNegocios(context.Background(), Moedas)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if mercado.URIs()[0] != "/api/v4/tickers?symbols=BTC-BRL,ETH-BRL,SOL-BRL,USDT-BRL" {
-		t.Errorf("endereço %s", mercado.URIs()[0])
+	if binance.URIs()[0] != "/api/v3/ticker/24hr?symbols=%5B%22BTCBRL%22%2C%22ETHBRL%22%2C%22SOLBRL%22%2C%22USDTBRL%22%5D&type=MINI" {
+		t.Errorf("endereço %s", binance.URIs()[0])
 	}
 	if len(negocios) != 4 {
 		t.Fatalf("%d moedas, esperado 4: %v", len(negocios), negocios)
 	}
 	btc := negocios["BTC"]
-	if btc.Preco.String() != "400555.00000000" || !btc.DataHora.Equal(time.Unix(1792858672, 0)) {
+	if btc.Preco.String() != "372650.00000000" || !btc.DataHora.Equal(time.Unix(1795050536, 0)) {
 		t.Errorf("BTC %s em %v", btc.Preco, btc.DataHora)
 	}
 }
@@ -53,15 +53,15 @@ func TestUltimosNegociosIgnoraOQueOdotnetIgnora(t *testing.T) {
 	agora := time.Date(2026, 10, 14, 21, 0, 0, 0, time.UTC)
 	segundos := agora.Unix()
 	corpo := `[
-		{"pair":"BTC-BRL","last":"618900.12","date":` + itoa(segundos) + `},
-		{"pair":"ETH-BRL","last":12000.5,"date":` + itoa(segundos*1000) + `},
-		{"pair":"SOL-BRL","last":"900","date":` + itoa(segundos*1_000_000_000) + `},
-		{"pair":"USDT-BRL","last":"0","date":` + itoa(segundos) + `},
-		{"pair":"DOGE-BRL","last":"1","date":` + itoa(segundos) + `},
-		{"pair":"BTC-USD","last":"1","date":` + itoa(segundos) + `},
-		{"pair":"XRP-BRL","last":"1","date":"` + itoa(segundos) + `"}
+		{"symbol":"BTCBRL","lastPrice":"618900.12","closeTime":` + itoa(segundos) + `},
+		{"symbol":"ETHBRL","lastPrice":12000.5,"closeTime":` + itoa(segundos*1000) + `},
+		{"symbol":"SOLBRL","lastPrice":"900","closeTime":` + itoa(segundos*1_000_000_000) + `},
+		{"symbol":"USDTBRL","lastPrice":"0","closeTime":` + itoa(segundos) + `},
+		{"symbol":"DOGEBRL","lastPrice":"1","closeTime":` + itoa(segundos) + `},
+		{"symbol":"BTCUSD","lastPrice":"1","closeTime":` + itoa(segundos) + `},
+		{"symbol":"XRPBRL","lastPrice":"1","closeTime":"` + itoa(segundos) + `"}
 	]`
-	c, _ := mercadoGravado(t, testeapoio.RespostaDeFora{Corpo: corpo})
+	c, _ := binanceGravada(t, testeapoio.RespostaDeFora{Corpo: corpo})
 	negocios, err := c.UltimosNegocios(context.Background(), Moedas)
 	if err != nil {
 		t.Fatal(err)
@@ -92,21 +92,33 @@ func TestUltimosNegociosIgnoraOQueOdotnetIgnora(t *testing.T) {
 
 func TestUltimosNegociosComFalha(t *testing.T) {
 	t.Parallel()
+	// #762: a página do Cloudflare que o Mercado Bitcoin devolve desde 14/11/2026, a todo pedido.
+	cloudflare := testeapoio.RespostaDeFora{Status: http.StatusForbidden, TipoConteudo: "text/html; charset=UTF-8",
+		Corpo: `<!DOCTYPE html><html><head><title>Attention Required! | Cloudflare</title></head></html>`}
 	casos := []struct {
 		nome     string
 		resposta testeapoio.RespostaDeFora
 		deRede   bool // a HttpRequestException do .NET: a tarefa avisa e tenta de novo
+		recusa   bool // a fonte recusou (4xx): a tarefa registra o erro uma vez
 	}{
-		{"erro 503", testeapoio.RespostaDeFora{Status: http.StatusServiceUnavailable}, true},
-		{"muitos pedidos", testeapoio.MuitosPedidos, true},
-		{"objeto em vez de lista", testeapoio.RespostaDeFora{Corpo: `{"erro":"x"}`}, false},
-		{"não é JSON", testeapoio.RespostaDeFora{Corpo: `<html>`, TipoConteudo: "text/html"}, false},
-		{"JSON quebrado", testeapoio.JSONQuebrado, false},
+		{"erro 503", testeapoio.RespostaDeFora{Status: http.StatusServiceUnavailable}, true, false},
+		{"erro 500, a borda de baixo do 5xx", testeapoio.RespostaDeFora{Status: http.StatusInternalServerError}, true, false},
+		{"400, a borda de baixo do 4xx", testeapoio.RespostaDeFora{Status: http.StatusBadRequest}, false, true},
+		{"IP banido depois do limite (418)", testeapoio.RespostaDeFora{Status: http.StatusTeapot}, false, true},
+		{"país bloqueado (451)", testeapoio.RespostaDeFora{Status: http.StatusUnavailableForLegalReasons}, false, true},
+		{"muitos pedidos", testeapoio.MuitosPedidos, true, false},
+		{"tempo esgotado do lado de lá (408)", testeapoio.RespostaDeFora{Status: http.StatusRequestTimeout}, true, false},
+		{"403 do Cloudflare", cloudflare, false, true},
+		{"caminho que sumiu (404)", testeapoio.RespostaDeFora{Status: http.StatusNotFound}, false, true},
+		{"passou a pedir chave (401)", testeapoio.RespostaDeFora{Status: http.StatusUnauthorized}, false, true},
+		{"objeto em vez de lista", testeapoio.RespostaDeFora{Corpo: `{"erro":"x"}`}, false, false},
+		{"não é JSON", testeapoio.RespostaDeFora{Corpo: `<html>`, TipoConteudo: "text/html"}, false, false},
+		{"JSON quebrado", testeapoio.JSONQuebrado, false, false},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			cliente, _ := mercadoGravado(t, c.resposta)
+			cliente, _ := binanceGravada(t, c.resposta)
 			_, err := cliente.UltimosNegocios(context.Background(), Moedas)
 			if err == nil {
 				t.Fatal("esperado erro")
@@ -114,17 +126,20 @@ func TestUltimosNegociosComFalha(t *testing.T) {
 			if errors.Is(err, ErrRede) != c.deRede {
 				t.Errorf("erro de rede: %v, esperado %v (%v)", errors.Is(err, ErrRede), c.deRede, err)
 			}
+			if errors.Is(err, ErrRecusa) != c.recusa {
+				t.Errorf("recusa: %v, esperado %v (%v)", errors.Is(err, ErrRecusa), c.recusa, err)
+			}
 		})
 	}
 }
 
 func TestUltimosNegociosComTempoEsgotado(t *testing.T) {
 	t.Parallel()
-	mercado := testeapoio.NovoServicoDeFora(t)
-	mercado.Em("GET", "*", testeapoio.TempoEsgotado)
-	cliente := mercado.Cliente()
+	binance := testeapoio.NovoServicoDeFora(t)
+	binance.Em("GET", "*", testeapoio.TempoEsgotado)
+	cliente := binance.Cliente()
 	cliente.Timeout = 50 * time.Millisecond
-	c, err := NovoCliente(mercado.URL(), cliente)
+	c, err := NovoCliente(binance.URL(), cliente)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +150,7 @@ func TestUltimosNegociosComTempoEsgotado(t *testing.T) {
 
 func TestClienteSoHTTPS(t *testing.T) {
 	t.Parallel()
-	if _, err := NovoCliente("http://api.mercadobitcoin.net/api/v4/", nil); err == nil {
+	if _, err := NovoCliente("http://api.binance.com/api/v3/", nil); err == nil {
 		t.Error("HTTP sem S aceito")
 	}
 	c, err := NovoCliente(URLPadrao, nil)

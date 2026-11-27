@@ -52,6 +52,7 @@ func TestDiasTrabalhados(t *testing.T) {
 		// Mês comercial (ADR 0065, revisão do #699): a admissão no dia 15 conta 30 − 15 + 1 = 16 dias, também em
 		// fevereiro, como a folha faz com o mês de 30 dias; a saída no dia 27 de fevereiro conta 27.
 		{"admissão em 15 de fevereiro: 16 dias do mês comercial", fev, d(2026, 2, 15), nil, 16},
+		{"admissão em 28 de fevereiro: 3 dias do mês comercial, não 1 (#750)", fev, d(2026, 2, 28), nil, 3},
 		{"saída em 27 de fevereiro", fev, d(2024, 3, 11), &[]tipos.Data{d(2026, 2, 27)}[0], 27},
 		{"entrou e saiu no mesmo mês", out, d(2026, 10, 5), &[]tipos.Data{d(2026, 10, 14)}[0], 10},
 		{"admissão depois do mês", out, d(2026, 11, 1), nil, 0},

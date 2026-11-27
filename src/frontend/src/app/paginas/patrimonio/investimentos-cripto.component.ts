@@ -24,13 +24,13 @@ export interface LinhaCripto {
   preco: number | null;
   dataHora: string | null;
   variacao24h: number | null;
-  /** #329: de onde veio a cotação (hoje, o Mercado Bitcoin; ADR 0048). */
+  /** #329: de onde veio a cotação (hoje, a Binance; ADR 0073). */
   fonte: string | null;
 }
 
 /**
- * #279 (ADR 0048): a cotação de criptomoedas em reais em Investimentos, ao lado do Câmbio. O último negócio no Mercado
- * Bitcoin, que a API guarda a cada 30 minutos (GET /api/cripto/cotacoes, sem consultar a internet na hora).
+ * #279 (ADR 0073, antes a 0048): a cotação de criptomoedas em reais em Investimentos, ao lado do Câmbio. O último negócio
+ * na Binance, que a API guarda a cada 30 minutos (GET /api/cripto/cotacoes, sem consultar a internet na hora).
  * - Data e hora sempre à vista (Nielsen 1): cripto muda o tempo todo, inclusive no fim de semana.
  * - Variação em 24 h com sinal e cor, e o sinal também em texto (a cor não é o único jeito de ler; WCAG 1.4.1).
  * - "Criptomoeda" com ⓘ do glossário (Nielsen 2); a fonte dita no bloco, e o aviso de conferir na corretora.
@@ -44,7 +44,7 @@ export interface LinhaCripto {
     <section class="painel-bloco bloco-cripto" aria-labelledby="titulo-cripto">
       <div class="bloco-titulo">
         <h2 id="titulo-cripto">Criptomoedas</h2>
-        <small class="texto-suave">cotação de <app-termo chave="criptomoeda">criptomoedas</app-termo> em reais, último negócio no Mercado Bitcoin</small>
+        <small class="texto-suave">cotação de <app-termo chave="criptomoeda">criptomoedas</app-termo> em reais, último negócio na Binance</small>
       </div>
       @if (erro()) {
         <p class="texto-suave">Não deu para ler as cotações guardadas agora.</p>
@@ -68,7 +68,7 @@ export interface LinhaCripto {
                   <small class="texto-suave variacao-cripto cotacao-variacao">variação em 24 h ainda sem dado</small>
                 }
                 <!-- #329: a fonte em cada linha, como o "PTAX de …" do câmbio (Nielsen 1 e 2). -->
-                <small class="texto-suave data-cripto cotacao-fonte" [class.desatualizada]="velha(l)">{{ l.fonte ?? 'Mercado Bitcoin' }} · {{ l.dataHora | date: 'dd/MM HH:mm' }}@if (velha(l)) {<span> · desatualizada</span>}</small>
+                <small class="texto-suave data-cripto cotacao-fonte" [class.desatualizada]="velha(l)">{{ l.fonte ?? 'Binance' }} · {{ l.dataHora | date: 'dd/MM HH:mm' }}@if (velha(l)) {<span> · desatualizada</span>}</small>
               } @else {
                 <small class="texto-suave data-cripto sem-cotacao">sem cotação guardada ainda</small>
               }

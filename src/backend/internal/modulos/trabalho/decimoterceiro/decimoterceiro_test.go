@@ -8,9 +8,9 @@ import (
 	"log/slog"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
-	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
@@ -294,5 +294,104 @@ func TestPrimeiraParcelaComAsFerias(t *testing.T) {
 	r, _ = s.DefinirPrimeira(t.Context(), e.Id, 2026, &[]tipos.Data{testeapoio.Dia(2026, 7, 10)}[0], nil)
 	if r.Primeira.ComFerias || r.Primeira.Data.String() != "2026-07-10" {
 		t.Fatalf("1ª informada = %+v", r.Primeira)
+	}
+}
+
+// Regra (#750, ADR 0065): a faixa dos meses com avo deixa de fora o mês da admissão ou da saída com menos de 15 dias.
+func TestMesesComAvo(t *testing.T) {
+	t.Parallel()
+	d := testeapoio.Dia
+	casos := []struct {
+		nome        string
+		admissao    tipos.Data
+		saida       *tipos.Data
+		inicio, fim tipos.Data
+	}{
+		{"o ano inteiro", d(2020, 1, 1), nil, d(2026, 1, 1), d(2027, 1, 1)},
+		{"admissão em 17/03 conta março", d(2026, 3, 17), nil, d(2026, 3, 1), d(2027, 1, 1)},
+		{"admissão em 18/03 começa em abril", d(2026, 3, 18), nil, d(2026, 4, 1), d(2027, 1, 1)},
+		{"saída em 20/08 conta agosto", d(2020, 1, 1), data(2026, 8, 20), d(2026, 1, 1), d(2026, 9, 1)},
+		{"saída em 14/08 para em julho", d(2020, 1, 1), data(2026, 8, 14), d(2026, 1, 1), d(2026, 8, 1)},
+		{"sem avo no ano", d(2026, 12, 20), nil, d(2026, 1, 1), d(2026, 1, 1)},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			inicio, fim := MesesComAvo(2026, c.admissao, c.saida)
+			if inicio != c.inicio || fim != c.fim {
+				t.Fatalf("faixa = [%s, %s); quer [%s, %s)", inicio, fim, c.inicio, c.fim)
+			}
+		})
+	}
+}
+
+// Regressão dos pontos da revisão do #700 (#750): a data padrão não vira informada, trocar só a data não esbarra no
+// total que caiu, e as horas do mês da admissão sem avo não entram na média.
+func TestDecimoPontosDaRevisao(t *testing.T) {
+	t.Parallel()
+	db := testeapoio.NovoBancoVazio(t)
+	rel := testeapoio.HojeEmBrasilia(2026, 11, 13)
+	log := slog.New(slog.DiscardHandler)
+	empregos := emprego.NovoServico(db, rel, log)
+	holerites := holerite.NovoServico(db, empregos, rel, log)
+	m := mux{http.NewServeMux()}
+	emprego.Registrar(m, empregos)
+	holerite.Registrar(m, holerites)
+	Registrar(m, NovoServico(db, empregos, holerites, rel, log))
+	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
+		return testeapoio.Chamar(t, m, metodo, caminho, corpo)
+	}
+	criar := func(corpo string) int64 {
+		var e emprego.Emprego
+		if err := json.Unmarshal(chamar("POST", "/api/trabalho/empregos", corpo).Corpo, &e); err != nil {
+			t.Fatal(err)
+		}
+		return e.Id
+	}
+	ler := func(r testeapoio.Resposta, status int) Resposta {
+		t.Helper()
+		r.ConferirStatus(t, status)
+		var c Resposta
+		if err := json.Unmarshal(r.Corpo, &c); err != nil {
+			t.Fatalf("%s: %v", r.Corpo, err)
+		}
+		return c
+	}
+
+	id := criar(`{"empregador":"E","admissao":"2024-03-11","salarioBruto":5000}`)
+	caminho := fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/2026", id)
+	// Só o valor: a data é a padrão (30/11), e a resposta diz que ela não foi informada; a tela não a grava.
+	c := ler(chamar("PUT", caminho, `{"primeiraParcelaValor":3000}`), http.StatusOK)
+	if !c.Primeira.ValorInformado || c.Primeira.DataInformada || c.Primeira.Data.String() != "2026-11-30" {
+		t.Fatalf("só o valor = %+v", c.Primeira)
+	}
+	// O total cai para 2800 (o salário de dezembro baixou) e a pessoa troca só a data: grava, com o valor de antes.
+	chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/salarios", id), `{"inicio":"2026-12-01","salarioBruto":2800}`).ConferirStatus(t, http.StatusOK)
+	c = ler(chamar("PUT", caminho, `{"primeiraParcelaEm":"2026-08-01","primeiraParcelaValor":3000}`), http.StatusOK)
+	if c.Total.String() != "2800.00" || !c.Primeira.DataInformada || c.Primeira.Data.String() != "2026-08-01" || c.Primeira.Valor.String() != "3000.00" {
+		t.Fatalf("trocar só a data = %+v", c.Calculo)
+	}
+	// Um valor novo acima do total continua recusado.
+	r := chamar("PUT", caminho, `{"primeiraParcelaEm":"2026-08-01","primeiraParcelaValor":2900}`)
+	r.ConferirStatus(t, http.StatusBadRequest)
+	r.ConferirJSON(t, `{"mensagem":"A 1ª parcela não passa do 13º do ano inteiro (R$ 2.800,00)."}`)
+
+	// Admissão em 20/03: março tem 12 dias, sem avo. As 10 h extras de março não entram na média; abril, sem horas, sim.
+	novo := criar(`{"empregador":"N","admissao":"2026-03-20","salarioBruto":5000}`)
+	for _, mes := range []string{"2026-03", "2026-04"} {
+		var h holerite.Holerite
+		r := chamar("POST", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", novo), `{"mes":"`+mes+`"}`)
+		r.ConferirStatus(t, http.StatusCreated)
+		if err := json.Unmarshal(r.Corpo, &h); err != nil {
+			t.Fatal(err)
+		}
+		if mes == "2026-03" {
+			chamar("PUT", fmt.Sprintf("/api/trabalho/holerites/%d", h.Id), `{"diasUteis":10,"diasDescanso":2,"lancamentos":[{"tipo":1,"quantidade":10,"percentual":50}]}`).
+				ConferirStatus(t, http.StatusOK)
+		}
+	}
+	c = ler(chamar("GET", fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/2026", novo), ""), http.StatusOK)
+	if c.Avos != 9 || c.MediaVariaveis.String() != "0.00" || c.MesesComHolerite != 1 || c.Total.String() != "3750.00" {
+		t.Fatalf("admissão sem avo em março = %+v", c.Calculo)
 	}
 }

@@ -167,7 +167,7 @@ Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são s
 
 ## O que ficou de fora
 
-- **Integrações externas** (Yahoo, Banco Central, Mercado Bitcoin): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go, nos pacotes delas, com respostas gravadas. A **Pluggy** entra pela Pluggy falsa.
+- **Integrações externas** (Yahoo, Banco Central, Binance): fora do contrato de ponta a ponta, porque dependem da internet. São testadas em Go, nos pacotes delas, com respostas gravadas. A **Pluggy** entra pela Pluggy falsa.
 - **Cabeçalhos de segurança, cache e arquivos do front-end:** testes do pacote `internal/plataforma/servidor` (`TestCabecalhosDeSeguranca`, `TestRespostasComoODotnet`).
 - **O que só existe no Windows** (serviço, instalador): continua com o teste do `.msi`.
 - **Relação entre GUIDs:** todo GUID vira o mesmo marcador, então o contrato não confere que duas transações têm o mesmo `TransferenciaGrupo` pelo valor (confere pela contagem e pelos outros campos).

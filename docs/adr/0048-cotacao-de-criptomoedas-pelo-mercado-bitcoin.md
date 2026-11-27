@@ -1,6 +1,6 @@
 # 0048. Cotação de criptomoedas pela API pública do Mercado Bitcoin
 
-- **Status:** Aceita
+- **Status:** Substituída por [0073](0073-cotacao-de-criptomoedas-pela-binance.md) (em 18/11/2026: desde 14/11 o Mercado Bitcoin bloqueia, com o Cloudflare, quem não é navegador, #762)
 - **Data:** 2026-10-21
 - **Relacionadas:** [0009](0009-ativos-no-exterior-na-carteira-manual.md) (cotações da carteira); a PTAX do câmbio (#247) é o modelo seguido; issue #279
 
@@ -45,7 +45,7 @@ Usamos a **API pública v4 do Mercado Bitcoin** (`https://api.mercadobitcoin.net
   - a tabela é pequena: 4 moedas × 48 por dia × 30 dias, cerca de 5.800 linhas.
 - **Negativas:**
   - **preço de uma corretora só:** pode diferir alguns décimos de outras corretoras e de médias como a CoinGecko. A tela diz de onde vem;
-  - **dependência nova:** a API pode mudar ou sair do ar sem aviso. Nesse caso, a tela mostra a última cotação guardada, com a data, e o erro vai para o registro de erros (ADR 0022);
+  - **dependência nova:** a API pode mudar ou sair do ar sem aviso. Nesse caso, a tela mostra a última cotação guardada, com a data, e o erro vai para o registro de erros (ADR 0022). Falta de internet, 5xx, 408 e 429 são aviso, a cada ciclo; a fonte que recusa o pedido (os outros 4xx, como o 403 do Cloudflare desde 14/11/2026, #762) é erro, registrado uma vez enquanto a recusa for a mesma;
   - **domínio novo de saída** (`api.mercadobitcoin.net`): mais um endereço com que a API do site conversa sozinha;
   - **com o site desligado, não há cotação nem variação** daquele período: o histórico tem buracos;
   - **cripto oscila muito em 30 minutos:** a data e a hora ficam sempre à vista, e o bloco avisa para conferir na corretora antes de negociar.

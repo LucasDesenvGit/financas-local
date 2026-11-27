@@ -78,7 +78,7 @@ func Montar(d Dependencias) Montado {
 	})
 	parametros.Registrar(mux, par)                                            // #76
 	cambio.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: câmbio pela PTAX (ADR 0007)
-	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: criptomoedas pelo Mercado Bitcoin (ADR 0048)
+	cripto.Registrar(mux, d.DB, d.Log, d.Relogio)                             // #81: criptomoedas pela Binance (ADR 0073)
 	categorias.Registrar(mux, categorias.NovoServico(d.DB, d.Relogio, d.Log)) // #77: categorias, regras e regras de descrição
 	contas.Registrar(mux, contas.NovoServico(d.DB, d.Relogio, d.Log))         // #77: contas e faturas do cartão
 	extrato.Registrar(mux, extrato.NovoServico(d.DB, d.Relogio, par, d.Log))  // #78: transações (as 18 rotas)

@@ -313,7 +313,8 @@
           "data": "2025-12-31",
           "diferenca": 308.23,
           "estimado": 8691.77,
-          "informado": 9000.00
+          "informado": 9000.00,
+          "pendente": 600.00
         }
       ],
       "lancamentos": [
@@ -654,7 +655,8 @@
           "data": "2025-12-31",
           "diferenca": 308.23,
           "estimado": 8691.77,
-          "informado": 9000.00
+          "informado": 9000.00,
+          "pendente": 600.00
         }
       ],
       "lancamentos": [
@@ -993,7 +995,8 @@
           "data": "2025-12-31",
           "diferenca": 308.23,
           "estimado": 8691.77,
-          "informado": 9000.00
+          "informado": 9000.00,
+          "pendente": 600.00
         }
       ],
       "lancamentos": [

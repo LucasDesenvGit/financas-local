@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ApiService } from '../../../src/app/core/api.service';
 import { Modulo } from '../../../src/app/core/modelos';
 import { ModulosService, listarDestinos, trocarModulo } from '../../../src/app/core/modulos.service';
@@ -61,6 +61,22 @@ describe('Módulos (#191)', () => {
     expect(s.lista()).toEqual([trabalho]);
     s.carregar(); // depois de dar certo, não pede de novo
     expect(modulos).toHaveBeenCalledTimes(2);
+  });
+
+  it('carregando vale enquanto a leitura vai, e volta a falso no erro e no sucesso (#750)', () => {
+    let resposta = new Subject<Modulo[]>();
+    const s = servico({ modulos: () => resposta });
+    expect(s.carregando()).toBe(false);
+    s.carregar();
+    expect(s.carregando()).toBe(true);
+    resposta.error(new Error('rede'));
+    expect(s.carregando()).toBe(false);
+    resposta = new Subject<Modulo[]>();
+    s.carregar();
+    expect(s.carregando()).toBe(true);
+    resposta.next([trabalho]);
+    expect(s.carregando()).toBe(false);
+    expect(s.falhou()).toBe(false);
   });
 
   it('ligar troca o módulo na lista com o que a API devolveu', () => {

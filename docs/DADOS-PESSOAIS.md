@@ -91,7 +91,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 
 | | |
 |---|---|
-| **O que é** | `Emprego`: empregador, CNPJ, admissão e saída, regime, jornada, dependentes para o IR, a conta onde o salário cai e se ele vem em duas vezes (o adiantamento do dia 15). `SalarioVigencia`: o salário bruto de cada período. `Holerite` e `HoleriteLancamento`: o holerite de cada mês (horas extras, bônus, descontos como plano de saúde e pensão alimentícia) e, fechado, o cálculo guardado. `DecimoTerceiro`: quando e quanto veio a 1ª parcela do 13º. `FeriasFaltas` e `FeriasAgendamento`: as faltas sem justificativa de cada período e as férias agendadas (datas, dias, dias vendidos). `FgtsLancamento`: o saldo do FGTS visto no app, os saques (com o motivo) e a distribuição de resultados. `HoleriteRecebimento`: qual transação pagou qual holerite (só a ligação e a parte do valor). `Rescisao`: a rescisão registrada (o tipo, a data de saída e a conta guardada) ([ADR 0065](adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). As tabelas do INSS e do IRRF (`InssVigencia`, `InssFaixa`, `IrrfVigencia`, `IrrfFaixa`) são públicas, não pessoais |
+| **O que é** | `Emprego`: empregador, CNPJ, admissão e saída, regime, jornada, dependentes para o IR, a conta onde o salário cai e se ele vem em duas vezes (o adiantamento do dia 15). `SalarioVigencia`: o salário bruto de cada período. `Holerite` e `HoleriteLancamento`: o holerite de cada mês (horas extras, bônus, descontos como plano de saúde e pensão alimentícia) e, fechado, o cálculo guardado. `DecimoTerceiro`: quando e quanto veio a 1ª parcela do 13º. `FeriasFaltas` e `FeriasAgendamento`: as faltas sem justificativa de cada período e as férias agendadas (datas, dias, dias vendidos). `FgtsLancamento`: o saldo do FGTS visto no app, os saques (com o motivo) e a distribuição de resultados ([ADR 0066](adr/0066-fgts-fora-do-patrimonio-estimado-no-trabalho.md)). `HoleriteRecebimento`: qual transação pagou qual holerite (só a ligação e a parte do valor). `Rescisao`: a rescisão registrada (o tipo, a data de saída e a conta guardada) ([ADR 0065](adr/0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md)). As tabelas do INSS e do IRRF (`InssVigencia`, `InssFaixa`, `IrrfVigencia`, `IrrfFaixa`) são públicas, não pessoais |
 | **De onde vem** | De você, nas telas do grupo **Trabalho** (Salário, Holerites, 13º salário e as outras que vierem), com o módulo Trabalho ligado (Configurações › Módulos) |
 | **Sai do computador?** | Não. O módulo não acessa a internet |
 | **Por quanto tempo** | Até você apagar. Desligar o módulo esconde a tela, mas guarda os dados |
@@ -122,7 +122,7 @@ Todos os grupos ficam no banco (`dados/sql/FinancasLocal.db`) e também em **tod
 | | |
 |---|---|
 | **O que é** | `CotacaoMoeda` (PTAX), `CotacaoCripto`, `TaxaSelicDiaria`, `IndiceMensal` (como o IFIX) e `CategoriaPluggy` (as categorias que a Pluggy usa e a sua categoria para cada uma). Não são dados seus, a não ser a escolha da categoria |
-| **De onde vem** | Do Banco Central, do Mercado Bitcoin, do Yahoo Finance e da Pluggy |
+| **De onde vem** | Do Banco Central, da Binance, do Yahoo Finance e da Pluggy |
 | **Sai do computador?** | Não: só entram. O que sai para buscá-los está na [tabela de saídas](SEGURANCA.md#o-que-sai-para-a-internet) |
 | **Por quanto tempo** | Sem prazo |
 | **Como apagar** | Só apagando tudo |
