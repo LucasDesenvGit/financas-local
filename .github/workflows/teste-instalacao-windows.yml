@@ -183,7 +183,7 @@ jobs:
           foreach ($p in "ferramentas", "publicado\gerenciador", "src") {
             if ((Get-Acl -LiteralPath $p).AreAccessRulesProtected) { throw "${p}: nao devia ter sido protegida" }
           }
-          icacls.exe publicado\api dados backups
+          foreach ($p in "publicado\api", "dados", "backups") { icacls.exe $p }  # o icacls aceita um caminho por vez
 
       # #468: o passo a passo do docs/OPERACAO.md: a copia volta, e o que veio depois dela sai.
       - name: Restaurar a copia (docs/OPERACAO.md)
