@@ -5,9 +5,8 @@
 # Os esperados (esperado/) foram gravados do .NET até a #86; desde então,
 # são a regressão do Go: um esperado só muda com o motivo escrito no PR.
 #
-# 1. Monta o banco fictício numa pasta temporária: banco/01-estrutura.sql,
-#    as colunas novas do 2-criar-banco.sh, banco/02-dados-iniciais.sql e
-#    dados/base.sql (dados inventados).
+# 1. Monta o banco fictício numa pasta temporária: o esquema pelo próprio
+#    executável (aplicar-esquema, #723) e dados/base.sql (dados inventados).
 # 2. Sobe o Go como o serviço instalado (-aplicar-esquema -rotinas-de-partida),
 #    com:
 #    - o relógio de teste começando em 2026-10-15 01:00:00 UTC
@@ -45,7 +44,6 @@ done
 
 pasta_contrato="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 pasta_go="$(cd "$pasta_contrato/../.." && pwd)"
-raiz="$(cd "$pasta_go/../.." && pwd)"
 porta="${PORTA:-5451}"
 # O mesmo instante do InicioPadrao (contrato_test.go).
 inicio="2026-10-15T01:00:00Z"
@@ -61,20 +59,6 @@ trap limpar EXIT
 mkdir -p "$pasta/dados/sql" "$pasta/dados/chaves"
 banco_db="$pasta/dados/sql/FinancasLocal.db"
 
-# 1. Banco fictício, na ordem do 2-criar-banco.sh: estrutura, colunas novas (as linhas adicionar_coluna_se_ausente),
-#    dados iniciais e, por fim, os dados inventados.
-(
-    # shellcheck source=../../../../scripts/geral/comum.sh
-    source "$raiz/scripts/geral/comum.sh"
-    banco="$banco_db" # o adicionar_coluna_se_ausente usa $banco
-    sqlite3 -bail "$banco" < "$raiz/banco/01-estrutura.sql"
-    while IFS= read -r linha; do
-        eval "$linha" >/dev/null
-    done < <(grep -E '^[[:space:]]*adicionar_coluna_se_ausente[[:space:]]' "$raiz/scripts/geral/2-criar-banco.sh")
-    sqlite3 -bail "$banco" < "$raiz/banco/02-dados-iniciais.sql"
-    sqlite3 -bail "$banco" < "$pasta_contrato/dados/base.sql"
-)
-
 # O comparador, o Go e a Pluggy falsa compilados fora do namespace sem rede (o go pode precisar baixar módulos). O Go
 # sai como na publicação: sem cgo e com a versão calculada (ADR 0070; o /api/go/saude a devolve). Num clone sem o
 # histórico do git, a versão sai com o sufixo -sem-git, igual no executável e no comparador.
@@ -85,6 +69,11 @@ versao="$(cd "$pasta_go" && go run ./cmd/versao)"
     CGO_ENABLED=0 go build -ldflags "-X github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/versao.Atual=$versao" \
         -o "$pasta/financas-go$exe" ./cmd/financas &&
     go build -o "$pasta/pluggy-falsa$exe" ./testes/contrato/pluggyfalsa)
+
+# 1. Banco fictício: o Go cria a estrutura, as colunas novas e os dados iniciais (subcomando aplicar-esquema, #723,
+#    o mesmo caminho da instalação) e, por fim, entram os dados inventados.
+"$pasta/financas-go$exe" aplicar-esquema -banco "$banco_db" >/dev/null
+sqlite3 -bail "$banco_db" < "$pasta_contrato/dados/base.sql"
 
 # O certificado do Go é o da instalação (preparar-https, #84 e #775), lido do appsettings como no site, e o comparador
 # confia só na parte pública dele (-raiz): a conexão é conferida, sem InsecureSkipVerify (#638).

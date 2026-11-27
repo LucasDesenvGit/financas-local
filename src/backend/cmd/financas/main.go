@@ -7,7 +7,8 @@
 //	go run ./cmd/financas -endereco 127.0.0.1:5444 -wwwroot ../frontend/dist/financas-web/browser -certificado-temporario
 //
 // O subcomando preparar-https (#84, #775) cuida do HTTPS da instalação: o .pfx (reaproveita o que ainda vale e gera outro
-// quando precisa), a senha dele e a configuração que o site lê (https.go).
+// quando precisa), a senha dele e a configuração que o site lê (https.go). O subcomando aplicar-esquema (#723) cria
+// ou atualiza o banco e sai: é o que os scripts de instalação rodam antes de publicar (esquema.go).
 //
 // Só para teste: -inicio-do-relogio 2026-10-15T01:00:00Z faz o relógio começar nesse instante e andar dali (#363);
 // o contrato usa. Sem a opção, o relógio do sistema.
@@ -49,9 +50,12 @@ import (
 
 func main() {
 	var err error
-	if len(os.Args) > 1 && os.Args[1] == "preparar-https" {
+	switch {
+	case len(os.Args) > 1 && os.Args[1] == "preparar-https":
 		err = prepararHTTPS(os.Args[2:], os.Stdout, relogio.Sistema{})
-	} else {
+	case len(os.Args) > 1 && os.Args[1] == "aplicar-esquema":
+		err = aplicarEsquema(context.Background(), os.Args[2:], relogio.Sistema{})
+	default:
 		err = servicosistema.Rodar(rodar)
 	}
 	if err != nil {

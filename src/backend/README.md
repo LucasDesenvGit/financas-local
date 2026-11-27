@@ -133,7 +133,7 @@ Teste de mutação (#373, #456, ADR 0051): no PR, o workflow "Teste de mutação
 python3 ../../scripts/ci/go/mutacao-go.py internal/ajustes/parametros   # um pacote (~1 min); sem argumento, todos de mutacao-go.txt
 ```
 
-A CI roda todos menos os de ponta a ponta no job "Go" (também quando muda o `banco/` ou o `2-criar-banco.sh`); o contrato, no job "contrato", e o site ligando, no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
+A CI roda todos menos os de ponta a ponta no job "Go" (também quando muda o `banco/`); o contrato, no job "contrato", e o site ligando, no job "API e banco". O job "Go (Windows)" roda o `go vet` e o `go test` num Windows de verdade, para os arquivos `_windows.go` (DPAPI dos segredos, serviço do Windows; #459), sem o `-race`, que lá pede cgo. No job "Go", o `go test` também confere a cobertura de cada pacote (o piso de `cobertura-minima.txt`, que só sobe) e o tempo dos testes. Como ver localmente: `CONTRIBUINDO.md`, "Testes do back-end (Go)".
 
 **Testes de contrato (#72):** mudou o back-end? Rode `testes/contrato/rodar.sh` (Linux ou Git Bash do Windows; detalhes no [README](testes/contrato/README.md)). Ele compila o Go e o sobe como o serviço instalado. Os esperados são a regressão do site (os primeiros vieram do .NET, até a #86): um esperado só muda com o motivo no PR (ADR 0051). A CI roda o contrato no job "contrato".
 

@@ -18,7 +18,7 @@ cd financas-local/scripts/geral
 ```bash
 cd financas-local/scripts/geral
 ./1-preparar-ambiente.sh     # Go, Node.js e sqlite3 (poucos minutos)
-./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa
+./2-criar-banco.sh           # cria o banco SQLite com a estrutura completa (o Go aplica o esquema)
 ./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
 ```
 

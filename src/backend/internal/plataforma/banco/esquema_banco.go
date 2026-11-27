@@ -25,28 +25,49 @@ const (
 	PrefixoBackup = "FinancasLocal-antes-atualizacao-"
 )
 
-// AplicarEsquema cria e atualiza o banco como o EsquemaBanco.Aplicar do .NET (Data/EsquemaBanco.cs, ADR 0003): os
-// mesmos scripts de banco/ e as mesmas colunas novas das linhas adicionar_coluna_se_ausente do 2-criar-banco.sh,
-// embutidos no executável. Banco novo recebe também os dados iniciais. Num banco que já existe, se a assinatura dos
-// scripts (PRAGMA user_version) mudou desde a última vez, faz antes uma cópia em dados/backups; se não mudou, não
+// AplicarEsquema cria e atualiza o banco (ADR 0003): os scripts de banco/, embutidos no executável, e as colunas
+// novas de esquema.ColunasNovas. Banco novo recebe também os dados iniciais. Num banco que já existe, se a assinatura
+// dos scripts (PRAGMA user_version) mudou desde a última vez, faz antes uma cópia em dados/backups; se não mudou, não
 // mexe em nada.
 //
-// Até a inversão (#85, ADR 0049), quem aplica o esquema ao iniciar é o .NET: o executável Go só chama isto com a
-// opção -aplicar-esquema. A assinatura é a mesma dos dois lados, então um não refaz o trabalho do outro.
+// Quem chama: o site, com -aplicar-esquema (a linha do serviço), e o subcomando aplicar-esquema, que os scripts de
+// instalação rodam antes de publicar (cmd/financas/esquema.go, #723). A assinatura é a mesma, então um não refaz o
+// trabalho do outro.
 func AplicarEsquema(ctx context.Context, caminho string, r relogio.Relogio, log *slog.Logger) error {
 	scripts := esquema.Scripts{
 		Estrutura:     esquema.Texto(embutido.Estrutura),
 		DadosIniciais: esquema.Texto(embutido.DadosIniciais),
-		CriarBanco:    esquema.Texto(embutido.CriarBanco),
+		Colunas:       esquema.ColunasNovas,
 	}
 	return aplicarEsquema(ctx, caminho, scripts, r, log)
 }
 
-func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Scripts, r relogio.Relogio, log *slog.Logger) error {
-	colunas := esquema.LerColunasNovas(scripts.CriarBanco)
-	if len(colunas) == 0 {
-		return errors.New("nenhuma coluna nova encontrada no 2-criar-banco.sh embutido")
+// AplicarEsquemaEDados é o que os scripts de instalação rodam (#723): o AplicarEsquema e, em seguida, o
+// 02-dados-iniciais.sql sempre, também em banco que já existe, como o sqlite3 do 2-criar-banco.sh fazia. É assim que
+// a vigência nova do INSS e do IRRF de cada ano chega a quem já tem banco (ADR 0065). O script é idempotente
+// (INSERT OR IGNORE, WHERE NOT EXISTS). O site, ao iniciar, usa só o AplicarEsquema.
+func AplicarEsquemaEDados(ctx context.Context, caminho string, r relogio.Relogio, log *slog.Logger) error {
+	info, err := os.Stat(caminho)
+	existia := err == nil && !info.IsDir() && info.Size() > 0
+	if err := AplicarEsquema(ctx, caminho, r, log); err != nil {
+		return err
 	}
+	if !existia { // o AplicarEsquema já pôs os dados iniciais no banco novo
+		return nil
+	}
+	db, err := Abrir(ctx, caminho)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	if _, err := db.ExecContext(ctx, esquema.Texto(embutido.DadosIniciais)); err != nil {
+		return fmt.Errorf("aplicar o 02-dados-iniciais.sql: %w", err)
+	}
+	return nil
+}
+
+func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Scripts, r relogio.Relogio, log *slog.Logger) error {
+	colunas := scripts.Colunas
 	assinatura := esquema.Assinatura(scripts.Estrutura, colunas)
 
 	caminho, err := filepath.Abs(caminhoBanco)
@@ -96,8 +117,8 @@ func aplicarEsquema(ctx context.Context, caminhoBanco string, scripts esquema.Sc
 			if existe > 0 {
 				continue
 			}
-			// DDL não aceita parâmetro. O texto vem do 2-criar-banco.sh embutido no executável, nunca de quem usa o
-			// site, e a expressão só aceita [A-Za-z0-9_] nos nomes.
+			// DDL não aceita parâmetro. O texto vem de esquema.ColunasNovas, nunca de quem usa o
+			// site, e os nomes são só os da lista.
 			alterar := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", c.Tabela, c.Coluna, c.Definicao)
 			if _, err := tx.ExecContext(ctx, alterar); err != nil {
 				return fmt.Errorf("acrescentar a coluna %s.%s: %w", c.Tabela, c.Coluna, err)

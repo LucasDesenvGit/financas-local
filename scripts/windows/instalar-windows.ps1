@@ -6,8 +6,8 @@
     Equivalente, no Windows, a scripts/geral/instalar.sh (etapas 1, 2 e 3). Usa so o que vem com o
     Windows (Windows PowerShell 5.1) e baixa o resto para ferramentas\:
       1) Node.js LTS, Go e sqlite3 portateis (reaproveita go da linha do go.mod e sqlite3 do PATH), todos por HTTPS e conferidos pelo hash publicado pela origem
-      2) Banco SQLite: banco\01-estrutura.sql, colunas novas e banco\02-dados-iniciais.sql
-         (a lista de colunas novas e lida do 2-criar-banco.sh, para existir num lugar so)
+      2) Banco SQLite: o executavel do Go (subcomando aplicar-esquema, #723) aplica a estrutura, as colunas
+         novas e os dados iniciais, que ficam embutidos nele
       3) Compila o front-end e o back-end em Go (financas-go.exe, o site desde a #86), publica em
          publicado\api, gera/reaproveita o certificado HTTPS
          e registra o servico do Windows "FinancasLocal"
@@ -314,7 +314,6 @@ function Sqlite-NaPasta([string]$banco, [string]$comando, [string]$arquivo) {
 
 function Criar-Banco {
     $banco = Join-Path $PastaSql "FinancasLocal.db"
-    $pastaBancoSql = Join-Path $Raiz "banco"
 
     Etapa "[2/3] Criando pastas de dados"
     foreach ($p in @($Dados, $PastaSql, $PastaChaves, $PastaBackups)) { Garantir-Pasta $p }
@@ -331,39 +330,18 @@ function Criar-Banco {
         Ok "copia em $copia"
     }
 
-    # .read em vez de redirecionar o arquivo: o pipe do PowerShell 5.1 para programas externos
-    # converte o texto para ASCII e estragaria os acentos de 02-dados-iniciais.sql.
-    Etapa "[2/3] Criando a estrutura em $banco (01-estrutura.sql)"
-    $estrutura = Join-Path $pastaBancoSql "01-estrutura.sql"
-    if (-not (Test-Path -LiteralPath $estrutura)) { ErroSai "Arquivo nao encontrado: $estrutura" }
-    Sqlite-NaPasta $banco ".read" $estrutura
-    Ok "estrutura criada/atualizada"
-
-    # A lista de colunas novas fica so no 2-criar-banco.sh (linhas adicionar_coluna_se_ausente),
-    # para nao precisar manter duas copias.
-    Etapa "[2/3] Adicionando colunas novas em tabelas existentes"
-    $scriptBanco = Join-Path $Raiz "scripts\geral\2-criar-banco.sh"
-    $padrao = '^\s*adicionar_coluna_se_ausente\s+"([A-Za-z0-9_]+)"\s+"([A-Za-z0-9_]+)"\s+"([^"]+)"'
-    $total = 0
-    foreach ($linha in (Get-Content -LiteralPath $scriptBanco)) {
-        $m = [regex]::Match($linha, $padrao)
-        if (-not $m.Success) { continue }
-        $total++
-        $tabela = $m.Groups[1].Value; $coluna = $m.Groups[2].Value; $definicao = $m.Groups[3].Value
-        $colunas = Sqlite $banco "PRAGMA table_info($tabela);" | ForEach-Object { ($_ -split '\|')[1] }
-        if (@($colunas) -notcontains $coluna) {
-            Sqlite $banco "ALTER TABLE $tabela ADD COLUMN $coluna $definicao;" | Out-Null
-            Ok "coluna $coluna adicionada em $tabela"
-        }
-    }
-    if ($total -eq 0) { Aviso "nenhuma linha adicionar_coluna_se_ausente encontrada em 2-criar-banco.sh" }
-    Ok "colunas conferidas"
-
-    Etapa "[2/3] Inserindo dados iniciais (02-dados-iniciais.sql)"
-    $iniciais = Join-Path $pastaBancoSql "02-dados-iniciais.sql"
-    if (-not (Test-Path -LiteralPath $iniciais)) { ErroSai "Arquivo nao encontrado: $iniciais" }
-    Sqlite-NaPasta $banco ".read" $iniciais
-    Ok "categorias e configuracoes padrao"
+    # #723: quem aplica o esquema e o executavel do Go (banco\01-estrutura.sql e 02-dados-iniciais.sql embutidos,
+    # as colunas novas em internal\plataforma\banco\esquema\colunas_novas.go): banco novo nasce completo e banco
+    # antigo ganha o que falta. O executavel ainda nao foi publicado nesta etapa (a 3 faz isso), entao roda do codigo
+    # com o Go da etapa 1: o cache de compilacao evita compilar tudo de novo na etapa 3.
+    Configurar-AmbienteBuild
+    if (-not (Comando-Existe "go")) { ErroSai "Go nao encontrado (a etapa 1 devia ter instalado em ferramentas\go)." }
+    Etapa "[2/3] Criando/atualizando a estrutura em $banco"
+    Push-Location (Join-Path $Raiz "src\backend")
+    try {
+        Executar "go" @("run", "./cmd/financas", "aplicar-esquema", "-banco", $banco)
+    } finally { Pop-Location }
+    Ok "estrutura, colunas novas e dados iniciais conferidos"
 
     $tabelas = Sqlite $banco "SELECT COUNT(*) FROM sqlite_master WHERE type='table';"
     Ok "banco pronto ($tabelas tabela(s))"

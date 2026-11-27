@@ -20,7 +20,7 @@ A [0002](0002-sqlite-e-kestrel-no-lugar-de-sql-server-e-iis.md) decidiu automati
 
 No Windows, a instalação é feita por `scripts/windows/instalar-windows.ps1` (etapas 1, 2 e 3), chamado por `instalar-windows.cmd` na raiz, que pede elevação. Escolhido pelo usuário para eliminar a dependência do Git Bash. Os scripts bash continuam valendo para Linux/macOS. O mesmo vale para parar o sistema: `parar-windows.cmd` chama o `scripts/windows/parar-windows.ps1`.
 
-Para reduzir a duplicação, o `.ps1` **não tem lista própria de colunas novas**: lê as linhas `adicionar_coluna_se_ausente "Tabela" "Coluna" "definição"` do `2-criar-banco.sh`. Os arquivos `banco/*.sql` também são os mesmos.
+Para reduzir a duplicação, o `.ps1` **não tem lista própria de colunas novas**. Desde a #723 ele não lê mais nada do bash: chama `financas-go aplicar-esquema`, e a lista fica em Go (`esquema.ColunasNovas`; antes eram as linhas `adicionar_coluna_se_ausente` do `2-criar-banco.sh`). Os arquivos `banco/*.sql` vão embutidos no executável.
 
 ## Consequências
 
@@ -28,10 +28,9 @@ Para reduzir a duplicação, o `.ps1` **não tem lista própria de colunas novas
 - **Negativas:**
   - duas implementações das etapas 1 a 3 (`.sh` e `.ps1`) até a #655 (abaixo): mudança de URL, versão aceita do Node, certificado, `appsettings.Production.json` ou registro do serviço tinha de ser feita nas duas;
   - o `.ps1` precisa ser compatível com o Windows PowerShell 5.1 (sem `??`, sem acentos no arquivo, entre outras), e o teste da CI não cobre o pedido de elevação (UAC) nem o duplo clique, que seguem como teste manual;
-  - o `.ps1` depende do formato da chamada `adicionar_coluna_se_ausente` no `2-criar-banco.sh` (três argumentos entre aspas duplas, um por linha); outra forma de escrever passa despercebida (o script só avisa se não encontrar nenhuma);
   - o certificado HTTPS é posto nas **Autoridades Raiz Confiáveis da máquina** (`LocalMachine\Root`), não só da conta: vale para todas as contas do computador, sem a janela do `dotnet dev-certs https --trust` e sem cair na conta errada quando outro administrador eleva no UAC. Como é uma raiz autoassinada, quem tiver a chave privada (o `.pfx` em `dados/chaves`) poderia emitir certificados aceitos neste computador. O SAN é só `localhost`, e a chave fica na pasta `dados`, que já guarda os dados financeiros;
   - o backup (`4-backup.sh`) continua pedindo bash no Windows.
-- **Na prática:** coluna nova continua só no `2-criar-banco.sh`, no formato acima. Serviço, certificado e pastas de dados também existem no `instalador/configurar.ps1` (o `.msi`, [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md)): confira se mudam juntos.
+- **Na prática:** coluna nova só em `ColunasNovas` (Go). Serviço, certificado e pastas de dados também existem no `instalador/configurar.ps1` (o `.msi`, [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md)): confira se mudam juntos.
 
 ## Atualização de 2026-10-20: scripts separados por sistema (issue #154)
 
@@ -46,4 +45,4 @@ Para reduzir a duplicação, o `.ps1` **não tem lista própria de colunas novas
 - **O que continua em bash no Windows:** o `2-criar-banco.sh` e o `4-backup.sh` (o backup agendado do Windows roda pelo `bash.exe` do Git).
 - **Código comum do PowerShell:** `scripts/windows/comum.ps1`. O `instalador/configurar.ps1` (`.msi`) usa só o `Confiar-No-Certificado` (#775): o `gerar-msi.ps1` leva o arquivo junto, e o resto do `.msi` não depende dele.
 - **Custo:** quem usa o Git Bash no Windows passa a rodar o PowerShell por baixo, com a saída, o log e a exigência de Administrador dele. Quem pulou todas as versões entre a #154 e a #655 e roda o comando antigo do gerenciador em C# precisa usar os caminhos de `scripts/geral/`.
-- **Regra que deixa de valer:** "mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`, confira o `.ps1`". Continua valendo: coluna nova só no `2-criar-banco.sh` (o `.ps1` lê dele), e serviço, certificado e pastas de dados também no `instalador/configurar.ps1`.
+- **Regra que deixa de valer:** "mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`, confira o `.ps1`". Continua valendo: coluna nova só em `ColunasNovas` (desde a #723, ninguém lê isso de bash), e serviço, certificado e pastas de dados também no `instalador/configurar.ps1`.
