@@ -173,8 +173,9 @@ func TestTextoTiraOBOM(t *testing.T) {
 
 func TestCopiasEmDia(t *testing.T) {
 	embutidos := map[string][]byte{
-		"01-estrutura.sql":      embutido.Estrutura,
-		"02-dados-iniciais.sql": embutido.DadosIniciais,
+		"01-estrutura.sql":        embutido.Estrutura,
+		"02-dados-iniciais.sql":   embutido.DadosIniciais,
+		"03-tabelas-oficiais.sql": embutido.TabelasOficiais,
 	}
 	if len(embutidos) != len(esquema.Copias) {
 		t.Fatalf("o embutido tem %d arquivos e o esquema.Copias %d", len(embutidos), len(esquema.Copias))
@@ -599,6 +600,60 @@ func TestAplicarEsquemaComOsScriptsEmbutidos(t *testing.T) {
 	copia := filepath.Join(filepath.Dir(caminho), "..", "backups", PrefixoBackup+"20261022_233000_000.db")
 	if _, err := os.Stat(copia); err != nil {
 		t.Errorf("a cópia deveria ter o nome na hora de Brasília (22/10 23:30): %v", err)
+	}
+}
+
+// #805 (ADR 0065): quem atualiza só pelo serviço (AplicarEsquema, o do site) recebe a vigência nova do INSS e do IRRF
+// em banco existente, com a assinatura em dia ou não, sem recriar categoria apagada e sem cópia de backup a mais.
+func TestAplicarEsquemaRecolocaTabelasOficiaisEmBancoExistente(t *testing.T) {
+	ctx := context.Background()
+	semInss2026 := "DELETE FROM InssFaixa WHERE Inicio = '2026-01-01'; DELETE FROM InssVigencia WHERE Inicio = '2026-01-01';" +
+		"DELETE FROM IrrfFaixa WHERE Inicio = '2026-01-01'; DELETE FROM IrrfVigencia WHERE Inicio = '2026-01-01';"
+	for _, c := range []struct {
+		nome       string
+		preparar   string // o que o teste faz no banco depois de criado
+		copiasApos int    // cópias "antes da atualização" depois do AplicarEsquema
+	}{
+		{"assinatura em dia", "", 0},
+		{"assinatura velha", "PRAGMA user_version = 7;", 1},
+	} {
+		t.Run(c.nome, func(t *testing.T) {
+			caminho := filepath.Join(t.TempDir(), "dados", "sql", "FinancasLocal.db")
+			if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+				t.Fatal(err)
+			}
+			executar(t, caminho, semInss2026+c.preparar)
+			if n := contar(t, caminho, "SELECT COUNT(*) FROM InssVigencia WHERE Inicio = '2026-01-01'"); n != 0 {
+				t.Fatal("o teste devia partir de um banco sem a vigência de 2026")
+			}
+			executar(t, caminho, "DELETE FROM RegraCategorizacao WHERE CategoriaId IN (SELECT Id FROM Categoria WHERE Nome = 'Moradia'); DELETE FROM Categoria WHERE Nome = 'Moradia';")
+			categorias := contar(t, caminho, "SELECT COUNT(*) FROM Categoria")
+
+			for i := range 2 { // duas vezes: a segunda não duplica nada
+				if err := AplicarEsquema(ctx, caminho, instanteDosTestes, semLog()); err != nil {
+					t.Fatalf("passada %d: %v", i+1, err)
+				}
+				for consulta, esperado := range map[string]int{
+					"SELECT COUNT(*) FROM InssVigencia":                          2,
+					"SELECT COUNT(*) FROM InssFaixa WHERE Inicio = '2026-01-01'": 4,
+					"SELECT COUNT(*) FROM IrrfVigencia":                          2,
+					"SELECT COUNT(*) FROM IrrfFaixa WHERE Inicio = '2026-01-01'": 5,
+					"SELECT COUNT(*) FROM Categoria WHERE Nome = 'Moradia'":      0, // apagada, não volta
+					"SELECT COUNT(*) FROM Categoria":                             categorias,
+				} {
+					if n := contar(t, caminho, consulta); n != esperado {
+						t.Errorf("passada %d: %s = %d, esperado %d", i+1, consulta, n, esperado)
+					}
+				}
+			}
+			copias, err := os.ReadDir(filepath.Join(filepath.Dir(caminho), "..", "backups"))
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				t.Fatal(err)
+			}
+			if len(copias) != c.copiasApos {
+				t.Errorf("%d cópias de backup, esperado %d", len(copias), c.copiasApos)
+			}
+		})
 	}
 }
 
