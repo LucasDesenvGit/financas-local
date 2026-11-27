@@ -59,6 +59,7 @@
       "primeira": {
         "comFerias": false,
         "data": "2026-11-30",
+        "dataInformada": false,
         "informada": false,
         "valor": 3024.79,
         "valorInformado": false
@@ -68,6 +69,7 @@
       "segunda": {
         "comFerias": false,
         "data": "2026-12-20",
+        "dataInformada": false,
         "informada": false,
         "valor": 1972.90,
         "valorInformado": false
@@ -135,6 +137,7 @@
       "primeira": {
         "comFerias": false,
         "data": "2026-07-10",
+        "dataInformada": true,
         "informada": true,
         "valor": 2800.00,
         "valorInformado": true
@@ -144,6 +147,7 @@
       "segunda": {
         "comFerias": false,
         "data": "2026-12-20",
+        "dataInformada": false,
         "informada": false,
         "valor": 2197.69,
         "valorInformado": false

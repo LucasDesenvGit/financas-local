@@ -10,7 +10,7 @@ import { MoedaPipe } from '../../compartilhado/moeda.pipe';
 import { CampoDataComponent } from '../../compartilhado/ui/campo-data.component';
 import { CampoValorComponent } from '../../compartilhado/ui/campo-valor.component';
 import { aliquota, empregoAtual } from './salario';
-import { anoDaUrl } from './decimo-terceiro';
+import { anoDaUrl, camposDaPrimeira } from './decimo-terceiro';
 
 /**
  * #214 (ADR 0065): Trabalho › 13º salário. O 13º do ano (proporcional, com a média das horas extras), as duas parcelas
@@ -139,8 +139,7 @@ export class TrabalhoDecimoTerceiroComponent implements OnInit {
   private mostrar(d: DecimoTerceiro): void {
     this.decimo.set(d);
     this.erro.set(null);
-    this.primeiraEm = d.primeira.informada && !d.primeira.comFerias ? d.primeira.data : null; // a das férias vem delas, não do formulário
-    this.primeiraValor = d.primeira.valorInformado ? d.primeira.valor : null; // a metade calculada não vira valor informado
+    ({ em: this.primeiraEm, valor: this.primeiraValor } = camposDaPrimeira(d.primeira));
   }
 
   private carregar(): void {

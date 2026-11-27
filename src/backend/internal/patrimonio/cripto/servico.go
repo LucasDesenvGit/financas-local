@@ -1,6 +1,6 @@
-// Pacote cripto é a cotação de criptomoedas em reais (ADR 0048, #81): o último negócio no Mercado Bitcoin, guardado
-// a cada 30 minutos por 30 dias, e a rota GET /api/cripto/cotacoes. Porte do CriptoService, do CriptoController e do
-// CriptoHostedService do .NET (o contrato, casos/03-cripto.json, confere).
+// Pacote cripto é a cotação de criptomoedas em reais (ADR 0073, #81): o último negócio na Binance (até 14/11/2026, no
+// Mercado Bitcoin, ADR 0048), guardado a cada 30 minutos por 30 dias, e a rota GET /api/cripto/cotacoes. Porte do
+// CriptoService, do CriptoController e do CriptoHostedService do .NET (o contrato, casos/03-cripto.json, confere).
 package cripto
 
 import (
@@ -20,15 +20,15 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Moedas são as acompanhadas, na ordem da tela (CriptoService.Moedas). Moeda nova: conferir antes que o Mercado
-// Bitcoin tem o par XXX-BRL.
+// Moedas são as acompanhadas, na ordem da tela (CriptoService.Moedas). Moeda nova: conferir antes que a Binance tem o
+// par XXXBRL (ADR 0073).
 var Moedas = []string{"BTC", "ETH", "SOL", "USDT"}
 
 // ChaveUltimaAtualizacao é a chave da Configuracao, a mesma do .NET.
 const ChaveUltimaAtualizacao = "Cripto.UltimaAtualizacao"
 
 // Fonte, como aparece no JSON.
-const Fonte = "Mercado Bitcoin"
+const Fonte = "Binance"
 
 const (
 	diasGuardados = 30 // por quantos dias a cotação fica guardada
@@ -71,7 +71,7 @@ type Servico struct {
 	log     *slog.Logger
 }
 
-// NovoServico cria o serviço. fonte é o cliente do Mercado Bitcoin (NovoCliente).
+// NovoServico cria o serviço. fonte é o cliente da Binance (NovoCliente).
 func NovoServico(db *sql.DB, fonte fonteDeNegocios, r relogio.Relogio, log *slog.Logger) *Servico {
 	return &Servico{db: db, config: configuracao.Novo(db, r), fonte: fonte, relogio: r, log: log}
 }
@@ -129,7 +129,7 @@ func (s *Servico) Atualizar(ctx context.Context) (ResultadoAtualizacao, error) {
 		return ResultadoAtualizacao{}, err
 	}
 	if len(resultado.Falhas) > 0 {
-		s.log.Warn("O Mercado Bitcoin não devolveu a cotação de algumas moedas.", "origem", erros.OrigemCripto,
+		s.log.Warn("A Binance não devolveu a cotação de algumas moedas.", "origem", erros.OrigemCripto,
 			"moedas", strings.Join(resultado.Falhas, ", "))
 	}
 
