@@ -2,7 +2,7 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 14/11/2026, revisado no módulo Notícias (#10, ADR 0067): três saídas de rede novas (G1, BBC News Brasil e TabNews), só com o módulo ligado, com o link das notícias filtrado pelo domínio da fonte. Antes, 09/11/2026, no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
+> **Data:** 27/11/2026, revisado no aviso do gerenciador (#68, itens 2 e 14): disco sem criptografia e pasta de dados na nuvem. Antes, 14/11/2026, no módulo Notícias (#10, ADR 0067): três saídas de rede novas (G1, BBC News Brasil e TabNews), só com o módulo ligado, com o link das notícias filtrado pelo domínio da fonte. Antes, 09/11/2026, no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
 
 ## De quem o sistema se protege
 
@@ -15,7 +15,7 @@ O sistema escuta em `127.0.0.1`, então, com o acesso pelo celular desligado (o 
 ## Fora do escopo
 
 - **Quem já é administrador da máquina:** lê a memória, as chaves e o banco.
-- **Disco sem criptografia:** a recomendação é ativar o BitLocker ou o LUKS.
+- **Disco sem criptografia:** a recomendação é ativar o BitLocker ou o LUKS; o gerenciador avisa quando o disco da pasta `dados` está sem (#68, item 2).
 - **Comprometimento da Pluggy ou do banco:** o sistema confia no que o Open Finance entrega.
 
 ## Fronteiras de confiança
@@ -116,7 +116,7 @@ Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na p
 | **Falsificação** | Outro usuário usa os arquivos | Sem senha de banco: vale a permissão do sistema. No `.msi`, só o sistema e os administradores; pelos scripts no Linux, só a sua conta (`chmod 700`); pelos scripts no Windows, a permissão que a pasta do projeto já tinha | — |
 | **Adulteração** | Um usuário sem privilégio troca os arquivos do serviço | No `.msi`, as pastas são protegidas | O serviço como SYSTEM a partir de pastas alteráveis, na instalação pelos scripts (#68, item 1) |
 | **Repúdio** | Apagar o rastro no banco | — | A auditoria não tem cópia fora do banco |
-| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com AES-256-GCM (`internal/plataforma/segredos`), com a chave em `dados/chaves/segredos.chave`, protegida pelo DPAPI no Windows e pela permissão do arquivo no Linux. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `AplicarEsquema`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2) |
+| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com AES-256-GCM (`internal/plataforma/segredos`), com a chave em `dados/chaves/segredos.chave`, protegida pelo DPAPI no Windows e pela permissão do arquivo no Linux. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `AplicarEsquema`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2): a decisão é a criptografia do disco, e o gerenciador avisa quando ela falta ou quando a pasta está numa pasta da nuvem (item 14). Só avisa com certeza: disco que o sistema não diz (pasta de rede, FUSE, ZFS, Windows sem a informação do BitLocker) fica sem aviso |
 | **Negação de serviço** | O banco corrompe ou some | Cópia antes de mudar a estrutura, e o [guia de restaurar](OPERACAO.md#restaurar-uma-cópia) | — |
 | **Aumento de privilégio** | O serviço é usado para rodar outra coisa | No Linux, roda na conta do usuário | O serviço do Linux sem isolamento (#68, item 6) |
 
@@ -155,7 +155,7 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 | Item da #68 | Onde está aqui |
 |---|---|
 | 1. Serviço como SYSTEM a partir de pastas alteráveis | Fronteira 5, adulteração |
-| 2. Banco e cópias sem criptografia | Fronteira 5, vazamento |
+| 2. Banco e cópias sem criptografia | Fronteira 5, vazamento (aviso no gerenciador) |
 | 3. Sair não invalida a sessão e a sessão sem teto (resolvido) | Fronteira 1, falsificação |
 | 4. Configuração inicial aberta | Fronteira 1, aumento de privilégio |
 | 5. Certificado confiável para a máquina inteira | Fronteira 1, vazamento |
@@ -163,3 +163,4 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 | 7. CI e cadeia de dependências | Fronteira 4, aumento de privilégio |
 | 8. Política de senha e bloqueio | Fronteira 1, falsificação. Resolvido: mudar o bloqueio pede a senha atual; o mínimo de 8 caracteres ficou por decisão |
 | 9. Sobras da instalação antiga com IIS | Fora daqui: não muda uma fronteira |
+| 14. Pasta sincronizada com a nuvem | Fronteira 5, vazamento (aviso no gerenciador) |
