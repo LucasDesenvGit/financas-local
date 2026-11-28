@@ -24,8 +24,8 @@ export interface SecaoManual {
   paraQueServe: string;
   /** Print da tela (ADR 0071): `imagens/manual/<id>-claro.webp` e `-escuro.webp`, gerados por `npm run prints:manual`. Complementa o texto, nunca o substitui. */
   print?: { id: string; alt: string };
-  /** De 1 a 4 tópicos curtos, em lista sem numeração (o quê → onde). */
-  topicos: string[];
+  /** De 1 a 4 tópicos curtos, em lista sem numeração (o quê → onde). Pode faltar quando a seção é só passo a passo. */
+  topicos?: string[];
   /** Só quando é passo a passo de verdade e a ordem importa: lista numerada, até 6 itens curtos. */
   passos?: string[];
   /** "Abrir a tela": leva direto, já filtrada quando faz sentido (detalhe por navegação). */
@@ -107,7 +107,6 @@ export const MANUAL: CapituloManual[] = [
         id: 'por-onde-comecar',
         titulo: 'Por onde começar',
         paraQueServe: 'Uma ordem que deixa os relatórios certos o quanto antes.',
-        topicos: ['Dados primeiro (bancos e contas), depois organização (categorias e regras) e, por fim, planejamento.'],
         passos: [
           'Conecte seus bancos pelo Open Finance (capítulo “Conectar seus bancos”).',
           'Confira as contas e cartões: o banco de cada um e a conta de cada cartão.',
@@ -245,12 +244,13 @@ export const MANUAL: CapituloManual[] = [
       {
         id: 'meu-pluggy',
         titulo: 'Autorizar seus bancos no Meu Pluggy',
-        paraQueServe: 'O Open Finance precisa do seu consentimento em cada banco; o Meu Pluggy é o caminho para isso.',
-        topicos: ['Crie sua conta em meu.pluggy.ai.'],
+        paraQueServe: 'O Open Finance só entrega os dados do banco com o seu consentimento. O Meu Pluggy é o caminho.',
+        topicos: [
+          'Crie a sua conta em meu.pluggy.ai e conecte cada banco.',
+          'O consentimento é dado no aplicativo do banco e vale por até 12 meses.'
+        ],
         detalhes: [
-          'Crie sua conta em meu.pluggy.ai.',
-          'Conecte cada banco pelo fluxo oficial do Open Finance: o consentimento é dado no aplicativo do próprio banco.',
-          'O consentimento vale por até 12 meses.',
+          'Use o fluxo oficial do Open Finance para conectar cada banco.',
           'O Meu Pluggy atualiza os dados dos bancos mais ou menos uma vez por dia.'
         ]
       },
@@ -259,65 +259,68 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Client ID e Client Secret',
         paraQueServe: 'As credenciais que deixam o Finanças Local buscar os seus dados na Pluggy.',
         print: { id: 'credenciais', alt: 'Configurações, aba Open Finance: os campos Client ID e Client Secret e os botões Testar conexão e Salvar.' },
-        topicos: ['Em dashboard.pluggy.ai, crie uma conta de desenvolvedor.'],
-        detalhes: [
+        passos: [
           'Em dashboard.pluggy.ai, crie uma conta de desenvolvedor.',
           'Adicione o conector “MeuPluggy” e crie uma aplicação de desenvolvimento.',
           'Copie o Client ID e o Client Secret da aplicação.',
           'No site, abra Configurações › Open Finance, cole os dois e clique em “Salvar”.',
-          'Clique em “Testar conexão” para confirmar.',
-          'O Client Secret fica guardado criptografado e nunca é mostrado de novo. Para trocar, cole o novo; para manter, deixe o campo vazio.'
+          'Clique em “Testar conexão” para confirmar.'
         ],
-        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }],
+        detalhes: [
+          'O Client Secret fica guardado criptografado e nunca é mostrado de novo. Para trocar, cole o novo; para manter, deixe o campo vazio.'
+        ]
       },
       {
         id: 'conexoes',
         titulo: 'Adicionar as conexões (um Item ID por banco)',
         paraQueServe: 'Cada banco autorizado vira uma conexão, e as contas e cartões dele aparecem sozinhos.',
-        topicos: ['No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize — uma vez para cada…'],
+        passos: [
+          'No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize o banco.',
+          'Copie o Item ID que a autorização gera (aparece no dashboard). Cada banco tem o seu.',
+          'Em Configurações › Open Finance, cole-o em “Adicionar conexão” e clique em “Adicionar”.',
+          'Clique em “Sincronizar agora”: na primeira vez, vêm os últimos meses de histórico.',
+          'Confira em Contas e cartões se as contas e os cartões apareceram.'
+        ],
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }, { rotulo: 'Ver as contas', rota: '/contas' }],
         detalhes: [
-          'No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize — uma vez para cada banco.',
-          'Cada autorização gera um Item ID (aparece no dashboard).',
-          'Em Configurações › Open Finance, cole o Item ID no campo “Adicionar conexão” e clique em “Adicionar”.',
           'Cada conexão aparece com o selo do banco (o mesmo de Contas e cartões); banco que o site não conhece aparece com um ícone de banco.',
           'Cada conexão mostra a situação em português: “Atualizada”, “Desatualizada”, “Erro de login no banco” ou “Precisa de ação sua” (aí é preciso entrar no Meu Pluggy). Os botões “Sincronizar”, “Pausar” e “Remover” ficam na própria linha.',
-          'Clique em “Sincronizar agora”. Na primeira vez são buscados os últimos meses de histórico.',
-          'Confira em Contas e cartões se as contas e cartões apareceram.',
           'Pelo Meu Pluggy, toda conexão tem o mesmo nome de conector (“MeuPluggy”). O site mostra o banco, tirado das contas da conexão, e o conector ao lado (“via MeuPluggy”).',
           'Quanto histórico a primeira carga busca fica em Configurações › Parametrização › Sincronização.',
           'A conexão aparece com o nome errado? Escolha o banco certo numa das contas dela, em Contas e cartões › editar.'
-        ],
-        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }, { rotulo: 'Ver as contas', rota: '/contas' }]
+        ]
       },
       {
         id: 'sincronizacao',
         titulo: 'Sincronização automática',
         paraQueServe: 'Manter as transações em dia sem clicar em nada.',
-        topicos: ['A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).'],
+        topicos: [
+          'Roda sozinha, a cada 6 horas (padrão), e relê os últimos 30 dias para pegar o que mudou.',
+          'O status fica na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
+          'Para sincronizar na hora, clique no status ou em “Sincronizar agora” (Configurações › Open Finance).'
+        ],
+        abrir: [{ rotulo: 'Ajustar a sincronização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }],
         detalhes: [
-          'A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).',
-          'A cada vez, ela relê os últimos dias (padrão: 30) para pegar o que mudou ou entrou atrasado.',
-          'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
-          'Para sincronizar na hora, clique em “Atualizado há…” na barra de cima ou use “Sincronizar agora” em Configurações › Open Finance.',
           'O aviso do resultado (“Sincronizado: 3 nova(s), 2 atualizada(s).”) tem “Ver em Transações”: abre as Transações só com essas, no período delas, com o filtro “Novas e atualizadas na sincronização” em “Filtrando:”. Atualizada é a que já existia e mudou de verdade nessa sincronização. O aviso de “Adicionar” conexão traz o mesmo botão, com as transações da primeira carga. Sem nada novo, o aviso vem sem o botão. Com mais de 200, o botão abre o período inteiro, porque são muitas para listar uma a uma. O aviso fica 10 segundos e não some enquanto o mouse ou o foco estão nele.',
           'Lançamento pendente que o banco efetivou com outro código sai sozinho, mesmo que seja de antes dos dias relidos: o site acha a efetivada do mesmo valor na mesma conta (até 10 dias depois), para não contar em dobro.',
           'Conta em outra moeda (ex.: em dólar) gera um aviso nas notificações (o sino da barra do topo): o site soma as contas como reais, sem conversão.'
-        ],
-        abrir: [{ rotulo: 'Ajustar a sincronização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
+        ]
       },
       {
         id: 'consentimento-e-erros',
         titulo: 'Consentimento vencendo e erros de conexão',
         paraQueServe: 'Saber o que fazer quando um banco para de atualizar.',
-        topicos: ['As notificações (o sino da barra de cima) avisam quando o consentimento de um banco vai expirar (padrão: 30…'],
+        topicos: [
+          'Consentimento perto de vencer → o sino avisa (padrão: 30 dias antes). Renove no Meu Pluggy.',
+          '“1 conexão com erro” na barra de cima → clique: abre as conexões, com o último erro de cada uma.',
+          '“Precisa de ação sua” → entre no Meu Pluggy e reautorize o banco.'
+        ],
+        abrir: [{ rotulo: 'Ver as conexões', rota: '/configuracoes' }, { rotulo: 'Ver os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }],
         detalhes: [
-          'As notificações (o sino da barra de cima) avisam quando o consentimento de um banco vai expirar (padrão: 30 dias antes). Renove no Meu Pluggy.',
-          'Se a barra de cima mostrar “1 conexão com erro”, clique nela: ela leva à lista de conexões, com o último erro de cada uma.',
-          'Se pedir “ação no Meu Pluggy”, entre no Meu Pluggy e reautorize o banco.',
           'Detalhes técnicos de falhas ficam em Configurações › Erros.',
           'Erro 401 ou 403 ao sincronizar: confira o Client ID e o Client Secret e se o MeuPluggy foi autorizado para aquele banco.'
-        ],
-        abrir: [{ rotulo: 'Ver as conexões', rota: '/configuracoes' }, { rotulo: 'Ver os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }]
+        ]
       }
     ]
   },
@@ -1564,42 +1567,43 @@ export const MANUAL: CapituloManual[] = [
         id: 'parametrizacao',
         titulo: 'Parametrização',
         paraQueServe: 'Ajustar o comportamento do site sem mexer em arquivo nenhum.',
-        topicos: ['Abra Configurações › Parametrização.'],
+        topicos: [
+          'Configurações › Parametrização → cada parâmetro mostra o que faz, a faixa válida e o padrão.',
+          'Mude o valor e clique em “Salvar parâmetros”: vale na hora.',
+          'Mudar a segurança do login pede a sua senha atual, num campo ao lado de “Salvar parâmetros”.'
+        ],
+        abrir: [{ rotulo: 'Abrir a Parametrização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }],
         detalhes: [
-          'Abra Configurações › Parametrização.',
-          'Cada parâmetro mostra o que faz, a faixa válida e o padrão: sincronização, Painel, segurança do login e por quanto tempo o histórico de acessos fica guardado, orçamentos, metas, transações e erros.',
-          'Mude o valor e salve: vale na hora.',
-          'Mudar a segurança do login (tentativas antes do bloqueio, tempo de bloqueio e por quanto tempo o histórico de acessos fica guardado) pede a sua senha atual: o campo aparece ao lado de “Salvar parâmetros”. Assim, quem achar o site aberto não afrouxa o bloqueio.',
+          'Os parâmetros cobrem: sincronização, Painel, segurança do login e por quanto tempo o histórico de acessos fica guardado, orçamentos, metas, transações e erros.',
+          'Pedem a senha as mudanças no bloqueio do login: tentativas antes do bloqueio, tempo de bloqueio e prazo do histórico de acessos. Assim, quem achar o site aberto não afrouxa o bloqueio.',
           'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.',
           '“A senha atual não confere”: a senha digitada não é a de entrar no site. Digite de novo e salve; nada foi gravado.'
-        ],
-        abrir: [{ rotulo: 'Abrir a Parametrização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
+        ]
       },
       {
         id: 'modulos',
         titulo: 'Módulos',
-        paraQueServe: 'Ligar só as partes do site que vão além do básico das finanças e que você quer usar. Desligado, o módulo some do menu, não roda nada em segundo plano e não acessa a internet.',
+        paraQueServe: 'Ligue só o que quiser usar além do básico. Desligado, o módulo some do menu e não acessa a internet.',
         print: { id: 'modulos', alt: 'Configurações, aba Módulos: interruptor do módulo Notícias, desligado, com a explicação do que ele acessa.' },
-        topicos: ['Abra Configurações › Módulos.'],
+        topicos: [
+          'Configurações › Módulos → um interruptor por módulo; vale na hora, sem recarregar a página.',
+          'Cada módulo mostra o que faz e se acessa a internet (e para onde).',
+          'Desligar não apaga nada: os dados voltam quando você ligar de novo.'
+        ],
+        abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }],
         detalhes: [
-          'Abra Configurações › Módulos.',
-          'Cada módulo mostra o que faz e se acessa a internet (e para onde). Ligue ou desligue pelo interruptor: vale na hora, sem recarregar a página, e em qualquer navegador.',
           'Ligado, a tela do módulo aparece no menu, e o que ele faz em segundo plano (buscar as notícias, por exemplo) roda na hora. Desligado, ela some; se você abrir o endereço dela, o site mostra que o módulo está desligado, com o botão para ligar.',
-          'Desligar não apaga nada: os dados do módulo ficam guardados e voltam quando você ligar de novo.',
           'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).',
           '“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). O aviso aparece no menu e em Configurações › Módulos: clique em “Tentar de novo”, que diz “Tentando…” enquanto lê. Enquanto isso, as telas dos módulos ficam fora do menu.'
-        ],
-        abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
+        ]
       },
       {
         id: 'aparencia',
         titulo: 'Aparência',
         paraQueServe: 'Deixar o site com as suas cores.',
         print: { id: 'aparencia', alt: 'Configurações, aba Aparência: as paletas de cores Lavanda, Oceano, Floresta, Grafite, Pôr do sol e Sua cor.' },
-        topicos: ['Abra Configurações › Aparência.'],
-        detalhes: [
-          'Abra Configurações › Aparência.',
-          'Escolha uma paleta pronta (cada uma tem versão clara e escura) ou uma cor personalizada.',
+        topicos: [
+          'Configurações › Aparência → escolha uma paleta pronta (cada uma tem versão clara e escura) ou uma cor sua.',
           'A escolha fica salva neste navegador.'
         ],
         abrir: [{ rotulo: 'Abrir a Aparência', rota: '/configuracoes', params: { aba: 'aparencia' } }]
@@ -1609,51 +1613,57 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Segurança',
         paraQueServe: 'Trocar a senha e ver os acessos recentes.',
         print: { id: 'seguranca', alt: 'Configurações, aba Segurança: formulário para alterar a senha e a lista de acessos recentes.' },
-        topicos: ['Abra Configurações › Segurança.'],
+        topicos: [
+          'Configurações › Segurança › “Alterar senha” → informe a atual e a nova duas vezes; as outras sessões fecham.',
+          '“Acessos recentes” → quem entrou, senhas erradas, bloqueios e mudanças importantes, com “Desfazer” em algumas.'
+        ],
+        abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }],
         detalhes: [
-          'Abra Configurações › Segurança.',
-          'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
           '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, módulos ligados ou desligados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador; com o acesso pelo celular ligado, o celular aparece pelo IP dele na rede.',
           'Os acessos ficam guardados por 180 dias e depois são apagados sozinhos, uma vez por dia. Para mudar o prazo (de 30 a 730 dias), use Configurações › Parametrização › Segurança, “Guardar o histórico de acessos por”.'
-        ],
-        abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
+        ]
       },
       {
         id: 'acesso-pelo-celular',
         titulo: 'Acesso pelo celular',
-        paraQueServe: 'Abrir o site no celular, na mesma rede Wi-Fi de casa. Vem desligado: assim, o site só abre neste computador.',
+        paraQueServe: 'Abrir o site no celular, na mesma rede Wi-Fi de casa. Vem desligado: o site só abre neste computador.',
         print: { id: 'acesso-pelo-celular', alt: 'Bloco Acesso pelo celular com o aviso de segurança, o endereço do computador na rede e o botão para ligar.' },
-        topicos: ['Abra Configurações › Segurança e, em “Acesso pelo celular”, escolha o endereço deste computador na rede (o do…'],
+        passos: [
+          'Em Configurações › Segurança › “Acesso pelo celular”, escolha o endereço deste computador na rede.',
+          'Clique em “Ligar o acesso pelo celular” e confirme.',
+          'No celular, no mesmo Wi-Fi, instale o certificado (QR code “1. Certificado”).',
+          'Abra o endereço do site (QR code “4. O site”) e entre com o seu usuário e a sua senha.'
+        ],
+        abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }],
         detalhes: [
-          'Abra Configurações › Segurança e, em “Acesso pelo celular”, escolha o endereço deste computador na rede (o do Wi-Fi ou do cabo da sua casa).',
-          'Clique em “Ligar o acesso pelo celular” e confirme. Ligado, qualquer aparelho da sua rede chega à tela de entrar: use uma senha forte e não ligue em rede pública (café, aeroporto).',
+          'Escolha o endereço do Wi-Fi ou do cabo da sua casa. Ligado, qualquer aparelho da sua rede chega à tela de entrar: use uma senha forte e não ligue em rede pública (café, aeroporto).',
           'No Windows, a porta abre no firewall só para a rede de casa, e só se a rede estiver como Particular. Se a tela avisar que a rede está como Pública e esta for a sua casa, mude para Particular em Configurações › Rede e Internet. No Linux, se o firewall (ufw ou firewalld) estiver ligado, a tela mostra o comando para rodar uma vez.',
-          'No celular, no mesmo Wi-Fi, abra o endereço do certificado que a tela mostra (termina em /api/celular/autoridade): aponte a câmera para o QR code “1. Certificado” ou digite o endereço. Desta vez o navegador avisa que a conexão não é particular: é esperado, siga em “Avançado” e “Continuar”.',
+          'Para baixar o certificado, aponte a câmera para o QR code ou digite o endereço que a tela mostra (termina em /api/celular/autoridade). Desta vez o navegador avisa que a conexão não é particular: é esperado, siga em “Avançado” e “Continuar”.',
           'Android: abra o arquivo baixado ou vá em Configurações › Segurança › Criptografia e credenciais › Instalar um certificado › Certificado de CA. iPhone: em Ajustes › Perfil Transferido, toque em Instalar; depois, em Ajustes › Geral › Sobre › Ajustes de Confiança de Certificados, ligue “Finanças Local (celular)”.',
           'Para conferir que o certificado é deste computador, compare a impressão digital da tela com a que o iPhone mostra em “Mais detalhes” ao instalar.',
-          'Depois disso, abra no celular o endereço que a tela mostra (https://, o IP e :5443), pelo QR code “4. O site” ou digitando, e entre com o seu usuário e a sua senha. Fora de casa, o celular não chega ao site.',
+          'O endereço do site é https://, o IP e :5443; digite-o se não usar o QR code. Fora de casa, o celular não chega ao site.',
           'Se o roteador der outro IP a este computador, a tela avisa: desligue e ligue de novo com o endereço novo (o certificado do celular continua valendo). Para o endereço não mudar, reserve o IP no roteador.',
           '“Desligar o acesso pelo celular” fecha a porta na hora e apaga a regra do firewall do Windows. Ligar e desligar aparecem nos acessos recentes.',
           'O gerenciador (a janela da bandeja) também liga e desliga, no cartão “Acesso pelo celular”, que mostra se o acesso está ligado e o endereço. “Ligar o acesso” usa o endereço escolhido da última vez (ou o principal deste computador); no Windows, ele pede a permissão de administrador. Para escolher outro endereço, ver o QR code ou os avisos do firewall, use “Ver no site”, que abre esta tela.'
-        ],
-        abrir: [{ rotulo: 'Abrir a Segurança', rota: '/configuracoes', params: { aba: 'seguranca' } }]
+        ]
       },
       {
         id: 'erros-do-sistema',
         titulo: 'Erros do sistema',
         paraQueServe: 'Ver o que deu errado (sincronização, cotações, telas) sem procurar em logs.',
         print: { id: 'erros-do-sistema', alt: 'Configurações, aba Erros: filtros de situação, origem, nível e datas e a tabela de erros do sistema.' },
-        topicos: ['Abra Configurações › Erros.'],
+        topicos: [
+          'Configurações › Erros → filtre por situação, origem, nível e período; o erro repetido aparece uma vez.',
+          '“Resolvido” tira da lista (e “Reabrir” traz de volta); “detalhe” mostra a explicação técnica.',
+          '“Reportar para o Claude” → copia o erro num texto para colar no Claude Code.'
+        ],
+        abrir: [{ rotulo: 'Abrir os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }],
         detalhes: [
-          'Abra Configurações › Erros.',
-          'Filtre por situação, origem, nível e período. O mesmo erro repetido aparece uma vez, com quantas vezes aconteceu.',
-          '“detalhe” mostra a explicação técnica; “Resolvido” tira da lista (e “Reabrir” traz de volta).',
           'Tokens, senhas, CPF e valores são removidos antes de gravar.',
-          '“Reportar para o Claude” copia o erro (a mensagem, a tela, quantas vezes, a explicação técnica e a versão do site, sem o seu login) num texto que começa com /reportar-erro. Cole no Claude Code: ele procura se já existe uma issue, analisa o erro e pergunta se resolve agora, só cataloga ou se é do ambiente de desenvolvimento. O site não manda nada para a internet: quem envia é você, ao colar.',
+          'O texto do “Reportar para o Claude” leva a mensagem, a tela, quantas vezes, a explicação técnica e a versão do site, sem o seu login, e começa com /reportar-erro. Cole no Claude Code: ele procura se já existe uma issue, analisa o erro e pergunta se resolve agora, só cataloga ou se é do ambiente de desenvolvimento. O site não manda nada para a internet: quem envia é você, ao colar.',
           'Se o navegador não deixar copiar sozinho, o texto aparece embaixo do erro, já selecionado: copie com Ctrl+C.',
           'O repositório do projeto é público. Antes de abrir uma issue, o Claude relê o texto e tira o que sobrou de dado pessoal (nomes, descrições de transação).'
-        ],
-        abrir: [{ rotulo: 'Abrir os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }]
+        ]
       }
     ]
   },
@@ -1666,12 +1676,14 @@ export const MANUAL: CapituloManual[] = [
         id: 'o-que-sai',
         titulo: 'O que fica e o que sai do computador',
         paraQueServe: 'Saber exatamente para onde vão os seus dados.',
-        topicos: ['Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.'],
+        topicos: [
+          'Fica no computador: transações, contas, categorias, metas, orçamentos e carteira.',
+          'Sai, por HTTPS: a conversa com a Pluggy (com as suas credenciais), taxas e cotações.',
+          'Não sai: valores, quantidades e dados pessoais.'
+        ],
         detalhes: [
-          'Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.',
-          'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance); e o pedido das cotações de criptomoedas à Binance, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
+          'A conversa com a Pluggy é do Open Finance. Para as taxas, saem datas (Selic e câmbio, no Banco Central); para as cotações, códigos de ativos (Yahoo Finance) e o pedido das criptomoedas à Binance, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
           'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
-          'Não sai: valores, quantidades e dados pessoais.',
           'Com o acesso pelo celular ligado (Configurações › Segurança), o site também atende os aparelhos da sua rede de casa, que chegam à tela de entrar. Nada vai para a internet por causa disso, e fora de casa o celular não chega ao site.',
           'Do Pix e da TED, o nome e o CPF de quem pagou ou recebeu não são guardados à parte: fica o meio e se as duas pontas são a mesma pessoa. Mas a descrição vem do banco como está e costuma trazer o nome (“PIX ENVIADO FULANO”); ela fica guardada, só no seu computador.'
         ]
@@ -1680,41 +1692,44 @@ export const MANUAL: CapituloManual[] = [
         id: 'ocultar-valores',
         titulo: 'Ocultar valores',
         paraQueServe: 'Mostrar a tela a alguém sem mostrar quanto você tem.',
-        topicos: ['Clique no botão do olho na barra de cima.'],
-        detalhes: [
-          'Clique no botão do olho na barra de cima.',
-          'Todos os valores ficam escondidos, inclusive nas frases dos gráficos. O olho fica riscado e o botão destacado enquanto os valores estão escondidos.',
-          'Clique de novo para mostrar.'
+        topicos: [
+          'Clique no olho, na barra de cima: todos os valores ficam escondidos, até nas frases dos gráficos.',
+          'Clique de novo para mostrar. O olho fica riscado enquanto os valores estão escondidos.'
         ]
       },
       {
         id: 'backup',
         titulo: 'Backup',
         paraQueServe: 'Não perder os seus dados se o computador der problema.',
-        topicos: ['Pelo gerenciador (Windows e Linux): abra “Mais opções”, clique em “Salvar uma cópia do banco…” e escolha onde…'],
-        detalhes: [
-          'Pelo gerenciador (Windows e Linux): abra “Mais opções”, clique em “Salvar uma cópia do banco…” e escolha onde guardar (pendrive, disco externo, nuvem). No Windows, ele pede permissão de administrador.',
-          'Instalou pelos scripts? Você também pode rodar scripts/geral/4-backup.sh (de preferência agendado), que copia o banco para a pasta “backups” do projeto. Copie essa pasta de vez em quando para um disco externo ou outro lugar seguro.',
+        topicos: [
+          'No gerenciador: “Mais opções” › “Salvar uma cópia do banco…”. Escolha onde guardar (pendrive, disco, nuvem).',
           'A cópia tem todos os seus dados financeiros: guarde em lugar seguro.',
-          'Ative a criptografia do disco (BitLocker no Windows, LUKS no Linux): o arquivo do banco não é criptografado.'
+          'Ative a criptografia do disco (BitLocker ou LUKS): o arquivo do banco não é criptografado.'
+        ],
+        detalhes: [
+          'No Windows, o gerenciador pede permissão de administrador para salvar a cópia.',
+          'Instalou pelos scripts? Você também pode rodar scripts/geral/4-backup.sh (de preferência agendado), que copia o banco para a pasta “backups” do projeto. Copie essa pasta de vez em quando para um disco externo ou outro lugar seguro.'
         ]
       },
       {
         id: 'restaurar',
         titulo: 'Restaurar uma cópia',
-        paraQueServe: 'Voltar o banco para uma cópia salva, depois de um problema.',
-        topicos: ['Pelo gerenciador (Windows e Linux): abra “Mais opções” e clique em “Restaurar uma cópia…”. Ele diz o que muda…'],
+        paraQueServe: 'Voltar o banco para uma cópia salva. Tudo volta à data da cópia, inclusive a senha do site.',
+        passos: [
+          'No gerenciador, abra “Mais opções” e clique em “Restaurar uma cópia…”.',
+          'Leia o que muda e, se for seguir, escolha o arquivo da cópia.',
+          'Abra o site, entre e confira a última transação e Configurações › Erros.',
+          'Deu tudo certo? Apague a pasta “antes-de-restaurar”.'
+        ],
         detalhes: [
-          'Pelo gerenciador (Windows e Linux): abra “Mais opções” e clique em “Restaurar uma cópia…”. Ele diz o que muda e, se você seguir, pede o arquivo da cópia. No Windows, pede permissão de administrador.',
+          'No Windows, o gerenciador pede permissão de administrador.',
           'O gerenciador confere que o arquivo é uma cópia do banco do Finanças Local antes de desligar o site. Depois desliga, guarda o banco de agora na pasta dados, em “antes-de-restaurar”, põe a cópia no lugar (sem os arquivos -wal e -shm do banco antigo) e liga o site de novo. Se algo der errado no meio, ele devolve o banco de antes.',
-          'Abra o site, entre e confira a última transação e Configurações › Erros. Deu tudo certo? Apague a pasta “antes-de-restaurar”.',
           'Sem o gerenciador, à mão: pare o site (“Desligar” no gerenciador, ou o serviço do Finanças Local, se instalou pelos scripts).',
           'Ache a pasta de dados: C:\\ProgramData\\FinancasLocal\\dados, se instalou pelo .msi (só abre como administrador), ou a pasta “dados” do projeto, se instalou pelos scripts.',
           'Guarde o banco atual: copie os arquivos FinancasLocal.db* da pasta dados/sql para outra pasta.',
           'Copie a cópia por cima de dados/sql/FinancasLocal.db.',
           'Apague os arquivos FinancasLocal.db-wal e FinancasLocal.db-shm da pasta dados/sql. Se ficarem, a cópia pode corromper.',
           'Ligue o site (“Ligar” no gerenciador), abra-o e confira a última transação.',
-          'Tudo volta para a data da cópia, inclusive a senha do site: entre com a senha que valia naquele dia.',
           'O que veio do Open Finance depois da cópia volta na próxima sincronização; o que você lançou à mão, não.',
           'Antes de cada atualização que muda o banco, o sistema guarda uma cópia em dados/backups.',
           'Os comandos prontos, para Windows e Linux, estão em docs/OPERACAO.md, no repositório do projeto.'
@@ -1724,11 +1739,13 @@ export const MANUAL: CapituloManual[] = [
         id: 'atualizar',
         titulo: 'Atualizar e parar o sistema',
         paraQueServe: 'Manter o site em dia e saber desligar tudo.',
-        topicos: ['Pelo gerenciador do Windows (instalação pelo .msi): quando aparecer “Tem versão nova”, veja “O que mudou” e…'],
+        topicos: [
+          'Instalou pelo .msi? Com versão nova, o gerenciador mostra “O que mudou”; clique em “Atualizar para …”.',
+          'Nenhuma atualização apaga dados. Antes de mudar o banco, a versão nova guarda uma cópia em dados/backups.',
+          'Para parar o site, “Desligar” no gerenciador; “Ligar” volta. Sem isso, o site liga com o computador.'
+        ],
         detalhes: [
-          'Pelo gerenciador do Windows (instalação pelo .msi): quando aparecer “Tem versão nova”, veja “O que mudou” e clique em “Atualizar para …”. Ele baixa, confere e abre o instalador; é só avançar. O site fica fora do ar por alguns segundos. Sem o gerenciador, baixe o .msi novo da página de versões no GitHub e abra.',
-          'Nenhuma atualização apaga dados. Antes de mudar a estrutura do banco, a versão nova guarda uma cópia em dados/backups.',
-          'Para parar o site: “Desligar” no gerenciador; “Ligar” volta. Sem isso, o site liga sozinho com o computador.',
+          'O gerenciador baixa, confere e abre o instalador; é só avançar. O site fica fora do ar por alguns segundos. Sem o gerenciador, baixe o .msi novo da página de versões no GitHub e abra.',
           'Instalou pelos scripts: para atualizar, rode scripts/geral/instalar.sh na pasta do projeto, que também traz o .NET e o Go das versões novas e faz backup do banco antes; para parar tudo, parar-windows.cmd no Windows ou scripts/geral/parar.sh no Linux.'
         ]
       },
@@ -1736,14 +1753,17 @@ export const MANUAL: CapituloManual[] = [
         id: 'problemas-comuns',
         titulo: 'Problemas comuns',
         paraQueServe: 'Resolver sozinho os tropeços mais frequentes.',
-        topicos: ['O navegador alerta sobre o certificado: abra o mesmo .msi de novo e escolha “Reparar”, que recoloca o…'],
-        detalhes: [
-          'O navegador alerta sobre o certificado: abra o mesmo .msi de novo e escolha “Reparar”, que recoloca o certificado nos confiáveis. Instalou pelos scripts? Rode scripts/geral/instalar.sh de novo.',
-          '“Não foi possível falar com a API”: abra o gerenciador e veja a situação. Desligado, clique em “Ligar”; “ligado, mas não responde”, espere alguns segundos e clique em “Reiniciar”.',
-          'O Client Secret da Pluggy não abre mais (depois de trocar de computador): informe o Client Secret de novo em Configurações.',
-          'Algo deu errado e você não sabe o quê: veja Configurações › Erros.'
+        topicos: [
+          'Alerta de certificado no navegador → abra o mesmo .msi de novo e escolha “Reparar”.',
+          '“Não foi possível falar com a API” → no gerenciador, “Ligar”; se já está ligado, espere e clique em “Reiniciar”.',
+          'O Client Secret da Pluggy não abre (outro computador) → informe-o de novo em Configurações.',
+          'Não sabe o que deu errado → veja Configurações › Erros.'
         ],
-        abrir: [{ rotulo: 'Ver os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }]
+        abrir: [{ rotulo: 'Ver os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }],
+        detalhes: [
+          'Instalou pelos scripts e o navegador alerta sobre o certificado? Rode scripts/geral/instalar.sh de novo.',
+          '“Ligado, mas não responde”: espere alguns segundos antes de clicar em “Reiniciar”.'
+        ]
       }
     ]
   }

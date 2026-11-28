@@ -17,6 +17,11 @@ function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
+/** O que a seção mostra sem abrir o "Mais detalhes": título, linha, tópicos, passos e o texto do print. */
+function textoVisivel(secao: SecaoManual): string {
+  return [secao.titulo, secao.paraQueServe, ...(secao.topicos ?? []), ...(secao.passos ?? []), secao.print?.alt ?? ''].join(' ');
+}
+
 /**
  * Manual do site (#113, ADR 0026). /manual: índice dos capítulos (Shneiderman: visão geral primeiro) e busca;
  * /manual/<capitulo>#<secao>: o capítulo, com cada seção em "uma linha → print → até 4 tópicos
@@ -56,9 +61,11 @@ function normalizar(texto: string): string {
               <img class="print-manual" [src]="'/imagens/manual/' + pr.id + '-' + tema.tema() + '.webp'" [alt]="pr.alt"
                 [attr.width]="medidas[pr.id]?.largura" [attr.height]="medidas[pr.id]?.altura" loading="lazy">
             }
-            <ul class="topicos">
-              @for (p of s.topicos; track $index) { <li>{{ p }}</li> }
-            </ul>
+            @if (s.topicos?.length) {
+              <ul class="topicos">
+                @for (p of s.topicos; track $index) { <li>{{ p }}</li> }
+              </ul>
+            }
             @if (s.passos?.length) {
               <ol class="passos">
                 @for (p of s.passos; track $index) { <li>{{ p }}</li> }
@@ -77,7 +84,8 @@ function normalizar(texto: string): string {
               </p>
             }
             @if (s.detalhes?.length) {
-              <details class="mais-detalhes">
+              <!-- A busca que trouxe até aqui: se as palavras só estão nos detalhes, eles já vêm abertos. -->
+              <details class="mais-detalhes" [open]="detalhesAbertos(s)">
                 <summary>Mais detalhes</summary>
                 <ul>@for (d of s.detalhes; track $index) { <li>{{ d }}</li> }</ul>
               </details>
@@ -112,7 +120,7 @@ function normalizar(texto: string): string {
           <ul class="resultados-busca">
             @for (r of resultados(); track r.capitulo.id + r.secao.id) {
               <li class="painel-bloco">
-                <a [routerLink]="['/manual', r.capitulo.id]" [fragment]="r.secao.id">{{ r.capitulo.titulo }} › {{ r.secao.titulo }}</a>
+                <a [routerLink]="['/manual', r.capitulo.id]" [queryParams]="{ busca: busca().trim() }" [fragment]="r.secao.id">{{ r.capitulo.titulo }} › {{ r.secao.titulo }}</a>
                 <p class="texto-suave">{{ r.secao.paraQueServe }}</p>
               </li>
             }
@@ -199,13 +207,20 @@ export class ManualComponent {
     const achados: Resultado[] = [];
     for (const capitulo of MANUAL) {
       for (const secao of capitulo.secoes) {
-        const texto = normalizar([capitulo.titulo, secao.titulo, secao.paraQueServe, ...secao.topicos, ...(secao.passos ?? []), secao.print?.alt ?? '',
-          ...(secao.detalhes ?? []), ...(secao.abrir ?? []).map((l) => l.rotulo)].join(' '));
+        const texto = normalizar([capitulo.titulo, textoVisivel(secao), ...(secao.detalhes ?? []), ...(secao.abrir ?? []).map((l) => l.rotulo)].join(' '));
         if (palavras.every((p) => texto.includes(p))) achados.push({ capitulo, secao });
       }
     }
     return achados;
   });
+
+  /** "Mais detalhes" já aberto: veio da busca e alguma palavra buscada só aparece lá (#817). */
+  detalhesAbertos(secao: SecaoManual): boolean {
+    const visivel = normalizar(textoVisivel(secao));
+    const detalhes = normalizar((secao.detalhes ?? []).join(' '));
+    const fora = normalizar(this.busca()).split(/\s+/).filter((p) => p.length > 0 && !visivel.includes(p));
+    return fora.length > 0 && fora.every((p) => detalhes.includes(p));
+  }
 
   numero(c: CapituloManual): number {
     return MANUAL.indexOf(c) + 1;
