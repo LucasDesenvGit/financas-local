@@ -1,23 +1,18 @@
 package holerite
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo, que as guarda (desligado, 409).
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do holerite, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/holerites", s.listarHTTP)
 	r.HandleFunc("POST /api/trabalho/empregos/{id}/holerites", s.criarHTTP)
 	r.HandleFunc("GET /api/trabalho/holerites/{id}", s.obterHTTP)
@@ -29,23 +24,10 @@ func Registrar(r Registrador, s *Servico) {
 
 // Mensagens que a pessoa vê.
 const (
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
-	MensagemFechado      = "O holerite está fechado: reabra para mudar."
-	MensagemAberto       = "O holerite já está aberto."
-	MensagemSemTabela    = "Ainda não há tabela do INSS ou do IRRF para esse mês: não dá para fechar."
+	MensagemFechado   = "O holerite está fechado: reabra para mudar."
+	MensagemAberto    = "O holerite já está aberto."
+	MensagemSemTabela = "Ainda não há tabela do INSS ou do IRRF para esse mês: não dá para fechar."
 )
-
-func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return false
-	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(destino); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
-		return false
-	}
-	return true
-}
 
 func idDoCaminho(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
@@ -76,7 +58,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, 
 	case errors.Is(err, ErrReabrirSemCalculo): // antes dos outros: vem embrulhado com o erro do cálculo
 		_, motivo, _ := avisoDe(err)
 		respostas.Mensagem(w, http.StatusConflict, "Não dá para reabrir: o cálculo guardado se perderia, porque "+motivo)
-	case errors.Is(err, ErrSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	case errors.Is(err, ErrSemSalario) || errors.Is(err, ErrForaDoEmprego):
 		aviso, _, _ := avisoDe(err)
@@ -104,7 +86,7 @@ func (s *Servico) criarHTTP(w http.ResponseWriter, r *http.Request) {
 	var dto struct {
 		Mes string `json:"mes"` // "2026-11"
 	}
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	mes, err := tipos.LerData(dto.Mes + "-01")
@@ -139,7 +121,7 @@ func (s *Servico) salvarHTTP(w http.ResponseWriter, r *http.Request) {
 		DiasDescanso int64        `json:"diasDescanso"`
 		Lancamentos  []Lancamento `json:"lancamentos"`
 	}
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	h, err := s.Salvar(r.Context(), id, dto.DiasUteis, dto.DiasDescanso, dto.Lancamentos)

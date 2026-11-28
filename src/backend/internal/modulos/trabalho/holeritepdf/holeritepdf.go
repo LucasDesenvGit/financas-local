@@ -15,6 +15,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/leitor"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
@@ -341,7 +342,6 @@ func (s *Servico) Desfazer(ctx context.Context, empregoId int64, chave string) (
 
 var (
 	limiteDoValor = decimal.NewFromInt(10_000_000)
-	oitoPct       = decimal.RequireFromString("0.08")
 )
 
 // montar faz o cálculo do holerite (o que fica guardado no fechado) com as linhas confirmadas: os totais e o líquido
@@ -404,9 +404,9 @@ func montar(e emprego.Emprego, c Confirmacao) (holerite.Calculo, error) {
 	case c.FgtsDoMes != nil:
 		calc.FgtsDoMes = *c.FgtsDoMes
 	case c.BaseFgts != nil:
-		calc.FgtsDoMes = tipos.DeDecimal(c.BaseFgts.Decimal().Mul(oitoPct).Round(2))
+		calc.FgtsDoMes = tipos.DeDecimal(c.BaseFgts.Decimal().Mul(encargos.AliquotaFgts).Round(2))
 	default:
-		calc.FgtsDoMes = tipos.DeDecimal(proventos.Mul(oitoPct).Round(2))
+		calc.FgtsDoMes = tipos.DeDecimal(proventos.Mul(encargos.AliquotaFgts).Round(2))
 	}
 	return calc, nil
 }

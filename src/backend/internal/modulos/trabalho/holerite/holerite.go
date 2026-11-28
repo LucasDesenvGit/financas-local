@@ -41,7 +41,6 @@ var (
 	ErrFechado       = errors.New("holerite fechado")
 	ErrAberto        = errors.New("holerite aberto")
 	ErrJaExiste      = errors.New("já existe holerite do mês")
-	ErrSemTabela     = errors.New("sem tabela do INSS ou do IRRF para o mês")
 	ErrSemSalario    = errors.New("sem salário no mês")
 	ErrForaDoEmprego = errors.New("mês fora do emprego")
 	ErrNaoELido      = errors.New("o holerite não é mais o lido do PDF")
@@ -60,7 +59,7 @@ var semCalculo = []struct {
 	aviso  string // na tela do holerite aberto e no "Não dá para fechar"
 	motivo string // no "Não dá para reabrir"
 }{
-	{ErrSemTabela, "Ainda não há tabela do INSS ou do IRRF para esse mês: o holerite fica sem o cálculo.",
+	{encargos.ErrSemTabela, "Ainda não há tabela do INSS ou do IRRF para esse mês: o holerite fica sem o cálculo.",
 		"ainda não há tabela do INSS ou do IRRF para esse mês."},
 	{ErrSemSalario, "Não há salário para esse mês: cadastre em Trabalho › Salário. O holerite fica sem o cálculo.",
 		"não há salário para esse mês. Cadastre em Trabalho › Salário e reabra."},
@@ -279,19 +278,9 @@ func (s *Servico) calcular(ctx context.Context, h Holerite) (Calculo, error) {
 		entrada.Lancamentos = append(entrada.Lancamentos, l.Lancamento)
 	}
 	if !entrada.SemEncargos {
-		inss, err := encargos.LerTabelasInss(ctx, s.db)
-		if err != nil {
+		var err error
+		if entrada.Inss, entrada.Irrf, err = encargos.TabelasDoMes(ctx, s.db, h.Mes); err != nil {
 			return Calculo{}, err
-		}
-		irrf, err := encargos.LerTabelasIrrf(ctx, s.db)
-		if err != nil {
-			return Calculo{}, err
-		}
-		var okInss, okIrrf bool
-		entrada.Inss, okInss = encargos.Vigente(inss, h.Mes)
-		entrada.Irrf, okIrrf = encargos.Vigente(irrf, h.Mes)
-		if !okInss || !okIrrf {
-			return Calculo{}, ErrSemTabela
 		}
 	}
 	return Calcular(entrada), nil
@@ -677,5 +666,5 @@ func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, f
 		}
 		total = total.Add(doMes)
 	}
-	return centavos(total), meses, nil
+	return tipos.Centavos(total), meses, nil
 }

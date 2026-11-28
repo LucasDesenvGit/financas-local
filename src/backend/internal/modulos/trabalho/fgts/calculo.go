@@ -65,8 +65,6 @@ type Estimativa struct {
 	Conferencias []Conferencia `json:"conferencias"`
 }
 
-func centavos(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v.Round(2)) }
-
 // DiaDoDeposito é até quando a empresa deposita o FGTS do mês, no mês seguinte: o dia 20 desde a competência 03/2024
 // (FGTS Digital; Lei 8.036, art. 15, na redação da Lei 14.438/2022) e o dia 7 até a 02/2024 (#751). O app só mostra o
 // depósito de uma competência depois disso (*inferido*: há empresa que paga antes).
@@ -118,7 +116,7 @@ func Estimar(inicio, ate tipos.Data, depositos map[string]decimal.Decimal, lanca
 		}
 		saldo = saldo.Add(correcao).Add(deposito).Add(antes)
 		m := Mes{Mes: mes, Correcao: tipos.DeDecimal(correcao), Deposito: tipos.DeDecimal(deposito),
-			Distribuicao: centavos(distribuicao), Saques: centavos(saques)}
+			Distribuicao: tipos.Centavos(distribuicao), Saques: tipos.Centavos(saques)}
 		if conferencia != nil {
 			informado := conferencia.Valor.Decimal()
 			pendente := deposito
@@ -126,14 +124,14 @@ func Estimar(inicio, ate tipos.Data, depositos map[string]decimal.Decimal, lanca
 				pendente = pendente.Add(r.Meses[len(r.Meses)-1].Deposito.Decimal())
 			}
 			estimado := saldo.Sub(pendente)
-			r.Conferencias = append(r.Conferencias, Conferencia{Data: conferencia.Data, Informado: centavos(informado),
-				Estimado: centavos(estimado), Diferenca: centavos(informado.Sub(estimado)), Pendente: centavos(pendente)})
+			r.Conferencias = append(r.Conferencias, Conferencia{Data: conferencia.Data, Informado: tipos.Centavos(informado),
+				Estimado: tipos.Centavos(estimado), Diferenca: tipos.Centavos(informado.Sub(estimado)), Pendente: tipos.Centavos(pendente)})
 			saldo, m.Conferido = informado.Add(pendente), true
 		}
 		saldo = saldo.Add(depois)
-		m.Saldo = centavos(saldo)
+		m.Saldo = tipos.Centavos(saldo)
 		r.Meses = append(r.Meses, m)
 	}
-	r.Saldo = centavos(saldo)
+	r.Saldo = tipos.Centavos(saldo)
 	return r
 }

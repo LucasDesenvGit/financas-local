@@ -1,22 +1,21 @@
 package fgts
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/shopspring/decimal"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/decimoterceiro"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/ferias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -24,11 +23,8 @@ import (
 
 // Mensagens que a pessoa vê.
 const (
-	MensagemSemFgts      = "Estágio e PJ não têm FGTS."
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
+	MensagemSemFgts = "Estágio e PJ não têm FGTS."
 )
-
-var oitoPct = decimal.RequireFromString("0.08")
 
 // Resposta é o FGTS do emprego: a estimativa e os lançamentos.
 type Resposta struct {
@@ -93,7 +89,7 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 		if !doHolerite[mes.String()] {
 			if salario, ok := emprego.SalarioDoMes(e.Salarios, mes); ok {
 				dias := decimal.NewFromInt(int64(holerite.DiasTrabalhados(mes, e.Admissao, e.Saida)))
-				porMes[mes.String()] = salario.SalarioBruto.Decimal().Mul(dias).Div(decimal.NewFromInt(30)).Mul(oitoPct)
+				porMes[mes.String()] = salario.SalarioBruto.Decimal().Mul(dias).Div(decimal.NewFromInt(30)).Mul(encargos.AliquotaFgts)
 			}
 		}
 	}
@@ -115,8 +111,8 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 		// O mês fora do intervalo fica no mapa, mas o Estimar só lê os do intervalo.
 		primeira := d.Primeira.Valor.Decimal()
 		mesDaPrimeira, dezembro := emprego.InicioDoMes(d.Primeira.Data).String(), tipos.NovaData(ano, 12, 1).String()
-		porMes[mesDaPrimeira] = porMes[mesDaPrimeira].Add(primeira.Mul(oitoPct))
-		porMes[dezembro] = porMes[dezembro].Add(d.Total.Decimal().Sub(primeira).Mul(oitoPct))
+		porMes[mesDaPrimeira] = porMes[mesDaPrimeira].Add(primeira.Mul(encargos.AliquotaFgts))
+		porMes[dezembro] = porMes[dezembro].Add(d.Total.Decimal().Sub(primeira).Mul(encargos.AliquotaFgts))
 	}
 	periodos, err := s.ferias.Listar(ctx, e.Id)
 	if err != nil {
@@ -131,10 +127,10 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 			// A base é a do INSS das férias: férias + 1/3, sem a dobra do art. 137 nem o 1/3 dela. A Lei 8.036 (art. 15,
 			// § 6º) tira do FGTS o que a Lei 8.212 (art. 28, § 9º, "d") tira do INSS, e a dobra está lá (#751).
 			base := a.Calculo.Inss.Base.Decimal()
-			porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(oitoPct))
+			porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(encargos.AliquotaFgts))
 			for m, dias := range diasDeFeriasPorMes(a.Inicio, a.Dias) {
 				if salario, ok := emprego.SalarioDoMes(e.Salarios, m); ok && !lido[m.String()] {
-					tirar := salario.SalarioBruto.Decimal().Mul(decimal.NewFromInt(int64(min(dias, 30)))).Div(decimal.NewFromInt(30)).Mul(oitoPct)
+					tirar := salario.SalarioBruto.Decimal().Mul(decimal.NewFromInt(int64(min(dias, 30)))).Div(decimal.NewFromInt(30)).Mul(encargos.AliquotaFgts)
 					porMes[m.String()] = decimal.Max(decimal.Zero, porMes[m.String()].Sub(tirar))
 				}
 			}
@@ -238,7 +234,7 @@ func (s *Servico) ParaRescisao(ctx context.Context, empregoId int64, saida tipos
 			saldo = saldo.Sub(l.Valor.Decimal()) // depois: ainda não saiu (revisão do #704)
 		}
 	}
-	r.Saldo, r.BaseDaMulta = centavos(decimal.Max(saldo, decimal.Zero)), centavos(base)
+	r.Saldo, r.BaseDaMulta = tipos.Centavos(decimal.Max(saldo, decimal.Zero)), tipos.Centavos(base)
 	return r, nil
 }
 
@@ -255,7 +251,7 @@ func (s *Servico) lancamentos(ctx context.Context, empregoId int64) ([]Lancament
 		if err := linhas.Scan(&l.Id, &l.Data, &l.Tipo, &l.Valor, &l.Motivo); err != nil {
 			return nil, err
 		}
-		l.Valor = centavos(l.Valor.Decimal())
+		l.Valor = tipos.Centavos(l.Valor.Decimal())
 		lista = append(lista, l)
 	}
 	return lista, linhas.Err()
@@ -283,7 +279,7 @@ func (s *Servico) Lancar(ctx context.Context, empregoId int64, l Lancamento) (Re
 		l.Motivo = nil
 	}
 	_, err = s.db.ExecContext(ctx, `INSERT INTO "FgtsLancamento" ("EmpregoId", "Data", "Tipo", "Valor", "Motivo", "CriadoEm")
-		VALUES (?, ?, ?, ?, ?, ?)`, empregoId, l.Data, l.Tipo, centavos(v), l.Motivo, tipos.NovaDataHora(s.relogio.Agora()))
+		VALUES (?, ?, ?, ?, ?, ?)`, empregoId, l.Data, l.Tipo, tipos.Centavos(v), l.Motivo, tipos.NovaDataHora(s.relogio.Agora()))
 	if err != nil {
 		return Resposta{}, fmt.Errorf("gravar o lançamento do FGTS: %w", err)
 	}
@@ -307,21 +303,11 @@ func (s *Servico) Excluir(ctx context.Context, empregoId, id int64) (Resposta, e
 
 /* ------------------------------------------------------------ HTTP */
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do FGTS, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/fgts", s.obterHTTP)
 	r.HandleFunc("POST /api/trabalho/empregos/{id}/fgts/lancamentos", s.lancarHTTP)
 	r.HandleFunc("DELETE /api/trabalho/empregos/{id}/fgts/lancamentos/{lancamento}", s.excluirHTTP)
-}
-
-func idDe(r *http.Request, nome string) int64 {
-	id, _ := strconv.ParseInt(r.PathValue(nome), 10, 64) // id que não é número vira 0: não existe (404)
-	return id
 }
 
 func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Resposta, err error) {
@@ -342,34 +328,29 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Respos
 }
 
 func (s *Servico) obterHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := s.Obter(r.Context(), idDe(r, "id"), relogio.Hoje(s.relogio))
+	c, err := s.Obter(r.Context(), respostas.IdDe(r, "id"), relogio.Hoje(s.relogio))
 	s.responder(w, r, c, err)
 }
 
 func (s *Servico) lancarHTTP(w http.ResponseWriter, r *http.Request) {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return
-	}
 	var dto struct {
 		Data   *tipos.Data    `json:"data"`
 		Tipo   int64          `json:"tipo"`
 		Valor  *tipos.Decimal `json:"valor"`
 		Motivo *int64         `json:"motivo"`
 	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(&dto); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	if dto.Data == nil || dto.Valor == nil {
 		respostas.Mensagem(w, http.StatusBadRequest, "Informe a data e o valor.")
 		return
 	}
-	c, err := s.Lancar(r.Context(), idDe(r, "id"), Lancamento{Data: *dto.Data, Tipo: dto.Tipo, Valor: *dto.Valor, Motivo: dto.Motivo})
+	c, err := s.Lancar(r.Context(), respostas.IdDe(r, "id"), Lancamento{Data: *dto.Data, Tipo: dto.Tipo, Valor: *dto.Valor, Motivo: dto.Motivo})
 	s.responder(w, r, c, err)
 }
 
 func (s *Servico) excluirHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := s.Excluir(r.Context(), idDe(r, "id"), idDe(r, "lancamento"))
+	c, err := s.Excluir(r.Context(), respostas.IdDe(r, "id"), respostas.IdDe(r, "lancamento"))
 	s.responder(w, r, c, err)
 }

@@ -89,9 +89,6 @@ type Irrf struct {
 	Fonte           string        `json:"fonte"`
 }
 
-// centavos arredonda ao centavo, com o empate saindo do zero (0,005 → 0,01), e deixa sempre duas casas.
-func centavos(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v.Round(2)) }
-
 // CalcularInss é o INSS progressivo: cada faixa cobra a alíquota dela sobre o pedaço da base que cai nela, até o teto.
 // Arredonda só o total, ao centavo.
 func CalcularInss(t TabelaInss, base tipos.Decimal) Inss {
@@ -103,14 +100,14 @@ func CalcularInss(t TabelaInss, base tipos.Decimal) Inss {
 			topo := decimal.Min(b, f.Ate.Decimal())
 			parcela := topo.Sub(anterior).Mul(f.Aliquota.Decimal())
 			total = total.Add(parcela)
-			r.Parcelas = append(r.Parcelas, ParcelaInss{De: centavos(anterior), Ate: centavos(topo), Aliquota: f.Aliquota, Valor: centavos(parcela)})
+			r.Parcelas = append(r.Parcelas, ParcelaInss{De: tipos.Centavos(anterior), Ate: tipos.Centavos(topo), Aliquota: f.Aliquota, Valor: tipos.Centavos(parcela)})
 		}
 		anterior = f.Ate.Decimal()
 	}
 	if n := len(t.Faixas); n > 0 && b.GreaterThan(t.Faixas[n-1].Ate.Decimal()) {
 		r.NoTeto = true
 	}
-	r.Valor = centavos(total)
+	r.Valor = tipos.Centavos(total)
 	return r
 }
 
@@ -121,14 +118,14 @@ func CalcularIrrf(t TabelaIrrf, rendimento, inss tipos.Decimal, dependentes int,
 	rend := rendimento.Decimal()
 	legais := inss.Decimal().Add(t.DeducaoDependente.Decimal().Mul(decimal.NewFromInt(int64(dependentes)))).Add(outras.Decimal())
 	simplificado := t.DescontoSimplificado.Decimal()
-	r := Irrf{Rendimento: rendimento, DeducoesLegais: centavos(legais), Simplificado: t.DescontoSimplificado, Fonte: t.Fonte,
+	r := Irrf{Rendimento: rendimento, DeducoesLegais: tipos.Centavos(legais), Simplificado: t.DescontoSimplificado, Fonte: t.Fonte,
 		DeducaoUsada: DeducaoLegal}
 	deducao := legais
 	if simplificado.GreaterThan(legais) {
 		deducao, r.DeducaoUsada = simplificado, DeducaoSimplificada
 	}
 	base := decimal.Max(decimal.Zero, rend.Sub(deducao))
-	r.Base = centavos(base)
+	r.Base = tipos.Centavos(base)
 
 	aliquota, parcela := decimal.Zero, decimal.Zero
 	for _, f := range t.Faixas {
@@ -137,7 +134,7 @@ func CalcularIrrf(t TabelaIrrf, rendimento, inss tipos.Decimal, dependentes int,
 			break
 		}
 	}
-	r.Aliquota, r.ParcelaADeduzir = tipos.DeDecimal(aliquota), centavos(parcela)
+	r.Aliquota, r.ParcelaADeduzir = tipos.DeDecimal(aliquota), tipos.Centavos(parcela)
 	imposto := decimal.Max(decimal.Zero, base.Mul(aliquota).Sub(parcela)).Round(2)
 	r.ImpostoDaTabela = tipos.DeDecimal(imposto)
 
@@ -151,8 +148,8 @@ func CalcularIrrf(t TabelaIrrf, rendimento, inss tipos.Decimal, dependentes int,
 		}
 	}
 	reducao = decimal.Min(reducao, imposto)
-	r.ReducaoLei15270 = centavos(reducao)
-	r.Valor = centavos(imposto.Sub(reducao))
+	r.ReducaoLei15270 = tipos.Centavos(reducao)
+	r.Valor = tipos.Centavos(imposto.Sub(reducao))
 	return r
 }
 

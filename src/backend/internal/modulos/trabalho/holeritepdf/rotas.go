@@ -1,8 +1,6 @@
 package holeritepdf
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -10,16 +8,12 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/leitor"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/desfazer"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 )
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo, que as guarda (desligado, 409).
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do holerite em PDF, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("POST /api/trabalho/empregos/{id}/holerites/pdf", s.lerHTTP)
 	r.HandleFunc("POST /api/trabalho/empregos/{id}/holerites/pdf/confirmar", s.confirmarHTTP)
 	r.HandleFunc("POST /api/trabalho/empregos/{id}/holerites/pdf/desfazer/{chave}", s.desfazerHTTP)
@@ -33,32 +27,19 @@ const (
 
 // Mensagens que a pessoa vê.
 const (
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
-	MensagemNaoEPDF      = "O arquivo não é um PDF."
-	MensagemGrande       = "O PDF passa do limite (700 KB e 5 páginas): mande só o holerite."
-	MensagemSenha        = "O PDF tem senha: digite a senha para abrir. Ela é usada só para abrir o arquivo e não fica guardada."
-	MensagemSenhaErrada  = "A senha não abriu o PDF. Confira e tente de novo."
-	MensagemSemTexto     = "Este PDF é uma imagem, e por enquanto o leitor só lê PDF com texto. Dá para digitar o holerite."
-	MensagemIlegivel     = "O PDF não abriu: ele pode estar corrompido. Tente baixar de novo."
-	MensagemPesado       = "O conteúdo do PDF passa do limite do leitor: ele não parece um holerite. Dá para digitar o holerite."
-	MensagemDemorou      = "O PDF demorou demais para ler, e a leitura parou: ele pode estar corrompido. Tente baixar de novo."
-	MensagemOcupado      = "O leitor ainda está lendo outro PDF. Espere uns segundos e tente de novo; se continuar, reinicie o Finanças Local pelo gerenciador."
-	MensagemSemTabela    = "Não achei a tabela do holerite (as colunas de vencimentos e de descontos) neste PDF. Dá para digitar o holerite."
-	MensagemFechado      = "O holerite do mês está fechado: reabra antes de gravar o lido."
-	MensagemRodape       = "O salário base, as bases do INSS e do FGTS e o FGTS do mês vão de R$ 0,00 a R$ 9.999.999,99, em centavos."
+	MensagemNaoEPDF     = "O arquivo não é um PDF."
+	MensagemGrande      = "O PDF passa do limite (700 KB e 5 páginas): mande só o holerite."
+	MensagemSenha       = "O PDF tem senha: digite a senha para abrir. Ela é usada só para abrir o arquivo e não fica guardada."
+	MensagemSenhaErrada = "A senha não abriu o PDF. Confira e tente de novo."
+	MensagemSemTexto    = "Este PDF é uma imagem, e por enquanto o leitor só lê PDF com texto. Dá para digitar o holerite."
+	MensagemIlegivel    = "O PDF não abriu: ele pode estar corrompido. Tente baixar de novo."
+	MensagemPesado      = "O conteúdo do PDF passa do limite do leitor: ele não parece um holerite. Dá para digitar o holerite."
+	MensagemDemorou     = "O PDF demorou demais para ler, e a leitura parou: ele pode estar corrompido. Tente baixar de novo."
+	MensagemOcupado     = "O leitor ainda está lendo outro PDF. Espere uns segundos e tente de novo; se continuar, reinicie o Finanças Local pelo gerenciador."
+	MensagemSemTabela   = "Não achei a tabela do holerite (as colunas de vencimentos e de descontos) neste PDF. Dá para digitar o holerite."
+	MensagemFechado     = "O holerite do mês está fechado: reabra antes de gravar o lido."
+	MensagemRodape      = "O salário base, as bases do INSS e do FGTS e o FGTS do mês vão de R$ 0,00 a R$ 9.999.999,99, em centavos."
 )
-
-func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return false
-	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(destino); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
-		return false
-	}
-	return true
-}
 
 func idDoCaminho(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
@@ -84,7 +65,7 @@ func (s *Servico) lerHTTP(w http.ResponseWriter, r *http.Request) {
 		Arquivo []byte `json:"arquivo"` // base64
 		Senha   string `json:"senha"`
 	}
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	p, err := s.Ler(r.Context(), id, dto.Arquivo, dto.Senha)
@@ -126,7 +107,7 @@ func (s *Servico) confirmarHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var dto Confirmacao
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	g, err := s.Confirmar(r.Context(), id, dto)

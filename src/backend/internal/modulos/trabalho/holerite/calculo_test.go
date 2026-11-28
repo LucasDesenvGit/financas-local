@@ -16,17 +16,10 @@ func ptr(s string) *tipos.Decimal { d := v(s); return &d }
 // tabelas2026 são as tabelas oficiais de 2026, lidas dos dados iniciais.
 func tabelas2026(t *testing.T) (encargos.TabelaInss, encargos.TabelaIrrf) {
 	t.Helper()
-	db := testeapoio.NovoBanco(t)
-	inss, err := encargos.LerTabelasInss(t.Context(), db)
+	ti, tr, err := encargos.TabelasDoMes(t.Context(), testeapoio.NovoBanco(t), testeapoio.Dia(2026, 1, 1))
 	if err != nil {
 		t.Fatal(err)
 	}
-	irrf, err := encargos.LerTabelasIrrf(t.Context(), db)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ti, _ := encargos.Vigente(inss, testeapoio.Dia(2026, 1, 1))
-	tr, _ := encargos.Vigente(irrf, testeapoio.Dia(2026, 1, 1))
 	return ti, tr
 }
 

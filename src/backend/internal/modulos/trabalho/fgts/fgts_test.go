@@ -13,6 +13,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/ferias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -96,10 +97,6 @@ func TestEstimar(t *testing.T) {
 	}
 }
 
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 func TestFgtsPelaApi(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBancoVazio(t)
@@ -110,7 +107,7 @@ func TestFgtsPelaApi(t *testing.T) {
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimo, asFerias, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	ferias.Registrar(m, asFerias)
@@ -197,7 +194,7 @@ func TestFgtsPelaApi(t *testing.T) {
 		{"motivo desconhecido", `{"data":"2026-11-10","tipo":2,"valor":1,"motivo":5}`, "Escolha o motivo do saque."},
 		{"motivo zero", `{"data":"2026-11-10","tipo":2,"valor":1,"motivo":0}`, "Escolha o motivo do saque."},
 		{"sem data", `{"tipo":1,"valor":1}`, "Informe a data e o valor."},
-		{"JSON quebrado", `{"tipo":`, MensagemJSONInvalido},
+		{"JSON quebrado", `{"tipo":`, respostas.MensagemFormatoEsperado},
 	}
 	for _, k := range casos {
 		t.Run(k.nome, func(t *testing.T) {
@@ -291,7 +288,7 @@ func TestParaRescisaoComSaques(t *testing.T) {
 	holerites := holerite.NovoServico(db, empregos, rel, log)
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimo, ferias.NovoServico(db, empregos, holerites, rel, log), rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	Registrar(m, s)
 	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
@@ -381,7 +378,7 @@ func TestFeriasEmDobroForaDoFgts(t *testing.T) {
 	holerites := holerite.NovoServico(db, empregos, rel, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimoterceiro.NovoServico(db, empregos, holerites, rel, log), asFerias, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	ferias.Registrar(m, asFerias)
 	Registrar(m, s)
@@ -416,7 +413,7 @@ func TestParaRescisaoComConferenciaNoMesDaSaida(t *testing.T) {
 	holerites := holerite.NovoServico(db, empregos, rel, log)
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimo, ferias.NovoServico(db, empregos, holerites, rel, log), rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	Registrar(m, s)
 	var e emprego.Emprego

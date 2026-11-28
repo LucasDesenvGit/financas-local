@@ -1,10 +1,8 @@
 package decimoterceiro
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -17,6 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -24,10 +23,9 @@ import (
 
 // Mensagens que a pessoa vê.
 const (
-	MensagemSemDecimo    = "Estágio e PJ não têm 13º salário pela CLT."
-	MensagemSemTabela    = "Ainda não há tabela do INSS ou do IRRF para esse ano."
-	MensagemForaDoAno    = "O emprego não estava ativo nesse ano."
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
+	MensagemSemDecimo = "Estágio e PJ não têm 13º salário pela CLT."
+	MensagemSemTabela = "Ainda não há tabela do INSS ou do IRRF para esse ano."
+	MensagemForaDoAno = "O emprego não estava ativo nesse ano."
 )
 
 // Resposta é o 13º do ano com o que a tela precisa dizer.
@@ -63,27 +61,21 @@ func (s *Servico) ComFerias(f Ferias) *Servico {
 	return s
 }
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do 13º, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/decimo-terceiro/{ano}", s.obterHTTP)
 	r.HandleFunc("PUT /api/trabalho/empregos/{id}/decimo-terceiro/{ano}", s.definirHTTP)
 }
 
 var (
 	errSemDecimo = errors.New("sem 13º")
-	errSemTabela = errors.New("sem tabela")
 	errForaDoAno = errors.New("fora do ano")
 )
 
 // SemDecimo diz se o erro do Obter é só a falta do 13º no ano (não é CLT, o ano está fora do emprego, falta a tabela),
 // e não uma falha: quem soma o 13º (o FGTS) segue sem ele e devolve as outras.
 func SemDecimo(err error) bool {
-	return errors.Is(err, errSemDecimo) || errors.Is(err, errSemTabela) || errors.Is(err, errForaDoAno)
+	return errors.Is(err, errSemDecimo) || errors.Is(err, encargos.ErrSemTabela) || errors.Is(err, errForaDoAno)
 }
 
 // Obter calcula o 13º do emprego no ano.
@@ -114,18 +106,9 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 	if err != nil {
 		return Resposta{}, err
 	}
-	inss, err := encargos.LerTabelasInss(ctx, s.db)
+	tInss, tIrrf, err := encargos.TabelasDoMes(ctx, s.db, mesBase)
 	if err != nil {
 		return Resposta{}, err
-	}
-	irrf, err := encargos.LerTabelasIrrf(ctx, s.db)
-	if err != nil {
-		return Resposta{}, err
-	}
-	tInss, okInss := encargos.Vigente(inss, mesBase)
-	tIrrf, okIrrf := encargos.Vigente(irrf, mesBase)
-	if !okInss || !okIrrf {
-		return Resposta{}, errSemTabela
 	}
 	entrada := Entrada{Ano: ano, Avos: avos, SalarioBase: salario.SalarioBruto, SomaVariaveis: soma, MesesComHolerite: meses,
 		Dependentes: e.Dependentes, Inss: tInss, Irrf: tIrrf}
@@ -207,7 +190,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Respos
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemSemDecimo)
 	case errors.Is(err, errForaDoAno):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemForaDoAno)
-	case errors.Is(err, errSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	default:
 		s.log.ErrorContext(r.Context(), "trabalho: 13º salário", "erro", err)
@@ -229,16 +212,11 @@ func (s *Servico) definirHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return
-	}
 	var dto struct {
 		PrimeiraParcelaEm    *tipos.Data    `json:"primeiraParcelaEm"`
 		PrimeiraParcelaValor *tipos.Decimal `json:"primeiraParcelaValor"`
 	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(&dto); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	c, err := s.DefinirPrimeira(r.Context(), id, ano, dto.PrimeiraParcelaEm, dto.PrimeiraParcelaValor)
