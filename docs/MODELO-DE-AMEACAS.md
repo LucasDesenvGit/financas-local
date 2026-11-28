@@ -83,7 +83,7 @@ flowchart TB
 
 ### 2. API ↔ Go (saiu na #86)
 
-Até a #86, a API em .NET ficava na frente e repassava ao Go, num processo filho, as rotas já migradas, em HTTP local, com um segredo interno novo a cada partida e o usuário num cabeçalho. Com o .NET fora, o site é um processo só: não há porta interna, segredo interno nem repasse, e as ameaças desta fronteira deixaram de existir. O número fica, para as setas do diagrama não mudarem de nome.
+Com o .NET fora, o site é um processo só, sem porta interna. O número fica para as outras fronteiras não mudarem de nome.
 
 ### 3. Site ↔ serviços de fora
 
@@ -93,7 +93,7 @@ Até a #86, a API em .NET ficava na frente e repassava ao Go, num processo filho
 | **Adulteração** | Resposta alterada no caminho | HTTPS. A resposta é lida em tipos, com validação | — |
 | **Repúdio** | Não saber o que foi trazido | `SincronizacaoLog` | — |
 | **Vazamento** | O destino fica sabendo mais do que deve | Só o mínimo, por HTTPS ([tabela](SEGURANCA.md#o-que-sai-para-a-internet)). O Client Secret só vai para a Pluggy. As fontes de notícias recebem só o pedido do feed, e só com o módulo ligado (desligado por padrão, ADR 0067) | Os códigos dos ativos, com as datas, mostram a carteira ao Yahoo (#68, complemento) |
-| **Negação de serviço** | Um serviço de fora trava, cai ou passa a recusar o pedido | Tempo limite em cada cliente, e a falha de cotação não para o resto. A fonte que recusa (o bloqueio do Mercado Bitcoin em 11/2026, que levou à troca pela Binance, ADR 0073) é registrada como erro, uma vez, e a tela marca a cotação como desatualizada. As notícias: 15 s e 2 MB por fonte, e uma fonte que falha não derruba as outras | — |
+| **Negação de serviço** | Um serviço de fora trava, cai ou passa a recusar o pedido | Tempo limite em cada cliente, e a falha de cotação não para o resto. A fonte que recusa é registrada como erro, uma vez, e a tela marca a cotação como desatualizada. As notícias: 15 s e 2 MB por fonte, e uma fonte que falha não derruba as outras | — |
 | **Aumento de privilégio** | Texto de fora vira código | O Angular escapa o texto, não há `innerHTML`, e as consultas são parametrizadas. O link de uma notícia só é guardado se for `https://` no domínio da fonte (barra `javascript:`), e abre fora do site com `noopener noreferrer` (#10) | — |
 
 ### 4. Gerenciador ↔ GitHub
@@ -109,7 +109,7 @@ Até a #86, a API em .NET ficava na frente e repassava ao Go, num processo filho
 
 ### 5. A pasta `dados`, no disco
 
-Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na pasta `dados` do projeto na instalação pelos scripts (Windows ou Linux). A proteção muda com o jeito de instalar, como a tabela diz.
+Onde fica: [SEGURANCA.md](SEGURANCA.md). A proteção muda com o jeito de instalar, como a tabela diz.
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
@@ -136,7 +136,7 @@ O gerenciador roda na sua conta, fora da API. Ele pergunta à API se o site resp
 
 ### 7. Celular ↔ site, pela rede de casa (#328)
 
-Só existe com o acesso pelo celular ligado (Configurações › Segurança, [ADR 0061](adr/0061-acesso-pelo-celular-na-rede-local.md)). O site abre um segundo servidor no IP escolhido (um IPv4 privado deste computador), com o mesmo login, CSRF e cabeçalhos do servidor de `127.0.0.1`.
+Só existe com o acesso pelo celular ligado ([ADR 0061](adr/0061-acesso-pelo-celular-na-rede-local.md)): um segundo servidor no IP escolhido, com o mesmo login, CSRF e cabeçalhos; o detalhe está em [SEGURANCA.md](SEGURANCA.md#detalhes-técnicos).
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
