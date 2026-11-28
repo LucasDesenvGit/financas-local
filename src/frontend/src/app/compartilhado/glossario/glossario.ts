@@ -52,7 +52,7 @@ export const GLOSSARIO = {
   },
   reservaEmergencia: {
     termo: 'Reserva de emergência',
-    definicao: 'Dinheiro com resgate rápido para imprevistos, medido em meses de gastos sem renda. Conta as contas, a renda fixa e as reservas; ações, FIIs e ETFs ficam de fora, porque o preço oscila e a venda leva dias.'
+    definicao: 'Dinheiro com resgate rápido para imprevistos, medido em meses de gastos sem renda. Conta as contas, a renda fixa e os cofrinhos; ações, FIIs e ETFs ficam de fora, porque o preço oscila e a venda leva dias.'
   },
   comprometimento: {
     termo: 'Comprometimento com parcelas',
@@ -126,6 +126,10 @@ export const GLOSSARIO = {
     termo: 'Criptomoeda',
     definicao: 'Dinheiro digital negociado pela internet, sem banco central por trás, como o Bitcoin. O preço é livre e muda o tempo todo, 24 horas por dia, inclusive no fim de semana; por isso varia muito mais que o dólar.',
     exemplo: 'Um Bitcoin a R$ 419.000 pode valer R$ 400.000 no dia seguinte.'
+  },
+  openFinance: {
+    termo: 'Open Finance',
+    definicao: 'O sistema do Banco Central em que o seu banco compartilha os seus dados com outro serviço, só com o seu consentimento. No site, os extratos, os cartões e os investimentos chegam por ele, pelo Meu Pluggy.'
   },
   ptax: {
     termo: 'PTAX',
