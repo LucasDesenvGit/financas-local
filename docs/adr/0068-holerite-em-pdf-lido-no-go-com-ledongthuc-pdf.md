@@ -4,6 +4,8 @@
 - **Data:** 2026-11-14
 - **Relacionadas:** [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (bibliotecas do Go), [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md) (módulos), [0065](0065-trabalho-emprego-salario-com-vigencia-e-tabelas-oficiais.md) (Trabalho), [0026](0026-manual-do-site-como-dados-no-front-end.md) (dado no código), [0027](0027-conferencia-de-investimentos-com-previa-e-desfazer.md) (prévia e desfazer), [0030](0030-regras-de-descricao-em-tabela-propria.md) (texto normalizado e a escolha lembrada)
 
+Os passos da leitura em detalhe e o relato da revisão do #706 (os PDFs que travaram a leitura) ficaram na [versão anterior desta ADR](https://github.com/LucasDesenvGit/financas-local/blob/2790797b27114f4f7561300c2084101cad9a57cd/docs/adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md).
+
 ## Contexto
 
 No Trabalho (#209), o holerite do mês (#211) é digitado linha a linha, todo mês. A #228 pede para mandar o **PDF do holerite** e o site preencher o mês: proventos, descontos, bases e líquido. A pessoa só confere.

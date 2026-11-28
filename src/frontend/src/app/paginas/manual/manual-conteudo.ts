@@ -62,6 +62,7 @@ export const MANUAL: CapituloManual[] = [
           'Para a internet saem só cotações e taxas; valores e dados pessoais não saem.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
+        termos: ['openFinance'],
         detalhes: [
           'O endereço começa com https://localhost ou https://127.0.0.1. No celular, com o acesso pelo celular ligado, é o IP do computador na rede de casa.',
           'Saem para a internet: pedidos de cotação e de taxas (códigos de ativos e de moedas e datas), a conversa com a Pluggy e, no gerenciador, a procura de versão nova no GitHub.',
@@ -162,7 +163,7 @@ export const MANUAL: CapituloManual[] = [
           '“informado pelo banco” → já está certo.',
           '“estimada” ou “para conferir” → clique em “conferir saldo” e digite o valor do app do banco.'
         ],
-        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        abrir: [{ rotulo: 'Abrir os cofrinhos', rota: '/investimentos', params: { aba: 'reservas' } }],
         termos: ['ptax'],
         detalhes: [
           'A linha “Reservado” com “restante do total do banco” não se confere: ela se ajusta quando você confere as outras.',
@@ -247,8 +248,9 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'O Open Finance só entrega os dados do banco com o seu consentimento. O Meu Pluggy é o caminho.',
         topicos: [
           'Crie a sua conta em meu.pluggy.ai e conecte cada banco.',
-          'O consentimento é dado no aplicativo do banco e vale por até 12 meses.'
+          'Você dá o consentimento no aplicativo do banco, e ele vale por até 12 meses.'
         ],
+        termos: ['openFinance'],
         detalhes: [
           'Use o fluxo oficial do Open Finance para conectar cada banco.',
           'O Meu Pluggy atualiza os dados dos bancos mais ou menos uma vez por dia.'
@@ -268,7 +270,7 @@ export const MANUAL: CapituloManual[] = [
         ],
         abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }],
         detalhes: [
-          'O Client Secret fica guardado criptografado e nunca é mostrado de novo. Para trocar, cole o novo; para manter, deixe o campo vazio.'
+          'O Client Secret fica guardado criptografado, e o site não o mostra de novo. Para trocar, cole o novo; para manter, deixe o campo vazio.'
         ]
       },
       {
@@ -525,7 +527,7 @@ export const MANUAL: CapituloManual[] = [
           'As regras ficam em Categorias › Regras automáticas › “Regras de descrição”. “+ Regra de descrição” cria uma direto, com prévia de quantas transações renomeia; dá para editar, desligar ou excluir.',
           'Uma regra de descrição também pega o nome dado por outra, mas cada regra vale uma vez só para a mesma transação: não há volta sem fim. Quando uma regra muda nomes, as regras de categoria valem de novo nessas transações (menos onde você escolheu a categoria à mão).',
           'Mesma descrição do banco e valores diferentes (duas contas do condomínio)? Preencha “E o valor”, “De” e “Até”, sem sinal (“De R$ 150,00 Até R$ 250,00” pega a despesa de R$ 200,00). Crie uma regra por valor; a com valor vem antes das outras.',
-          'Nome trocado à mão (pelo ✎ “Só nesta” ou pelo formulário) não é mudado por nenhuma regra. Para a regra valer nela, use “Também nas outras” de novo a partir dela.'
+          'Nenhuma regra muda o nome trocado à mão (pelo ✎ “Só nesta” ou pelo formulário). Para a regra valer nela, use “Também nas outras” de novo a partir dela.'
         ]
       },
       {
@@ -900,7 +902,7 @@ export const MANUAL: CapituloManual[] = [
           'Com conta ligada (“Acompanhar saldo de uma conta”) → progresso = valor inicial + saldo da conta.',
           'Mercado Pago → dá para escolher um cofrinho; o progresso usa o saldo dele.'
         ],
-        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Conferir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Conferir os cofrinhos', rota: '/investimentos', params: { aba: 'reservas' } }],
         detalhes: ['“confira em Reservas” aparece quando o saldo do cofrinho é estimado: confira o real em Investimentos › Reservas.']
       },
       {
@@ -1321,13 +1323,13 @@ export const MANUAL: CapituloManual[] = [
         id: 'reservas',
         titulo: 'Reservas (cofrinhos do Mercado Pago)',
         paraQueServe: 'Contar no patrimônio o dinheiro guardado em cofrinhos da conta.',
-        print: { id: 'reservas', alt: 'Aba Reservas de Investimentos: tabela com cada reserva, a conta, o guardado, o retirado, o saldo e a base do saldo.' },
+        print: { id: 'reservas', alt: 'Aba Reservas de Investimentos: tabela com cada cofrinho, a conta, o guardado, o retirado, o saldo e a base do saldo.' },
         topicos: [
           'Saldo → aba Reservas: “informado pelo banco” ou estimado pelo extrato.',
           'Estimado → “conferir saldo” e informe o valor real de vez em quando.',
           'Gasto direto do cofrinho → “registrar saída” na linha, ou “+ Lançamento” em Transações.'
         ],
-        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        abrir: [{ rotulo: 'Abrir os cofrinhos', rota: '/investimentos', params: { aba: 'reservas' } }],
         termos: ['reservaEmergencia'],
         detalhes: [
           'Quando o banco informa só o total da conta, cada cofrinho continua estimado. O que sobra do total aparece em “Reservado” (“restante do total do banco”).',
@@ -1336,7 +1338,7 @@ export const MANUAL: CapituloManual[] = [
           'Conta paga com cofrinho também baixa a estimativa (veja “Conta paga com um cofrinho”).',
           'Se o saldo informado ficar abaixo da estimativa, marque “Registrar a diferença (…) como gasto do cofrinho”.',
           'Valor muito diferente do esperado pede confirmação.',
-          'Reservas “para conferir” geram aviso no sino da barra de cima.'
+          'Cofrinhos “para conferir” geram aviso no sino da barra de cima.'
         ]
       },
       {
@@ -1347,7 +1349,7 @@ export const MANUAL: CapituloManual[] = [
           'Onde → aba Reservas: o Méli Dólar aparece com a quantidade em dólar e a PTAX do dia.',
           'Acertar → “conferir saldo”; em “Informado em”, escolha reais ou dólares.'
         ],
-        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        abrir: [{ rotulo: 'Abrir os cofrinhos', rota: '/investimentos', params: { aba: 'reservas' } }],
         termos: ['ptax'],
         detalhes: [
           'A quantidade vem das compras e vendas do extrato. O saldo em reais usa a última PTAX e entra no patrimônio.',
@@ -1365,6 +1367,7 @@ export const MANUAL: CapituloManual[] = [
           'Câmbio → pode trocar pelo da corretora.'
         ],
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
+        termos: ['ptax'],
         detalhes: [
           'Os valores são convertidos para reais pela cotação do Banco Central, guardada no computador.'
         ]
@@ -1505,7 +1508,7 @@ export const MANUAL: CapituloManual[] = [
           'A estimativa não conta a TR. Confira com o app de vez em quando.',
           '“Os últimos meses” mostra a correção, o depósito, os saques e o saldo; “conferido” marca o mês igual ao do app.',
           'Com mais de um emprego CLT, escolha o emprego no alto da tela.',
-          'A empresa deposita até o dia 20 do mês seguinte. Diferença grande pode ser depósito que não foi feito.',
+          'A empresa deposita até o dia 20 do mês seguinte. Diferença grande pode ser depósito que a empresa não fez.',
           '“Excluir” apaga um lançamento, e o saldo é recalculado.',
           'O FGTS não entra no patrimônio do Painel nem nos relatórios. O saque entra pela transação na conta.',
           'Estágio e PJ não têm FGTS.'
@@ -1685,7 +1688,7 @@ export const MANUAL: CapituloManual[] = [
           'A conversa com a Pluggy é do Open Finance. Para as taxas, saem datas (Selic e câmbio, no Banco Central); para as cotações, códigos de ativos (Yahoo Finance) e o pedido das criptomoedas à Binance, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
           'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
           'Com o acesso pelo celular ligado (Configurações › Segurança), o site também atende os aparelhos da sua rede de casa, que chegam à tela de entrar. Nada vai para a internet por causa disso, e fora de casa o celular não chega ao site.',
-          'Do Pix e da TED, o nome e o CPF de quem pagou ou recebeu não são guardados à parte: fica o meio e se as duas pontas são a mesma pessoa. Mas a descrição vem do banco como está e costuma trazer o nome (“PIX ENVIADO FULANO”); ela fica guardada, só no seu computador.'
+          'Do Pix e da TED, o site não guarda à parte o nome e o CPF de quem pagou ou recebeu: fica o meio e se as duas pontas são a mesma pessoa. Mas a descrição vem do banco como está e costuma trazer o nome (“PIX ENVIADO FULANO”); ela fica guardada, só no seu computador.'
         ]
       },
       {
