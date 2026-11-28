@@ -30,7 +30,7 @@ Esta lista é a fonte (até a #729, era a "Convenções do código Go" da ADR 00
 | Hora | `relogio.Relogio` injetado; `relogio.Hoje(r)` e `relogio.AgoraLocal(r)` para data de negócio em Brasília; carimbo (`CriadoEm`) em UTC | Regras de ouro, `internal/plataforma/relogio/relogio.go` |
 | Tipos do banco | `tipos.Decimal`, `Data`, `DataHora`, `Guid`: `sql.Scanner`, `driver.Valuer` e JSON, com teste de ida e volta e fuzz. Objeto de valor novo (`Dinheiro`, `Mes`, `Ticker`) só quando um assunto precisar | ADR 0056 ("DDD tático, só onde paga") |
 | Ordem que é contrato | `slices.SortStableFunc` com o desempate explícito (`sort.Slice` não é estável) | [pacote slices](https://pkg.go.dev/slices) |
-| Log | `log/slog` em JSON, com o atributo `"origem"` pelas constantes de `internal/plataforma/erros` (`erros.OrigemAPI`…), para cair no lugar certo de Configurações › Erros | README do Go, "Como roda no site" |
+| Log | `log/slog` em JSON, com o atributo `"origem"` pelas constantes de `internal/plataforma/erros` (`erros.OrigemAPI`…), para cair no lugar certo de Configurações › Erros | `origensConhecidas`, em `internal/plataforma/erros/fila.go` |
 | Nome de pacote | curto, minúsculo, sem `_` nem plural genérico (`contasagendadas`, `regrasdescricao`), nada de `util`/`comum` | [CodeReviewComments: package names](https://go.dev/wiki/CodeReviewComments#package-names) |
 | Receptor | uma ou duas letras, o mesmo em todos os métodos do tipo (`func (s *Servico)`) | [CodeReviewComments: receiver names](https://go.dev/wiki/CodeReviewComments#receiver-names) |
 | Comentário de documentação | frase completa, em português, começando pelo nome (`// Hoje devolve...`) | [Go Doc Comments](https://go.dev/doc/comment) |

@@ -4,7 +4,7 @@
 - **Data:** 2026-10-25 (proposta); 2026-10-27 (aceita); 2026-10-28 (testada num Linux de verdade, #417)
 - **Relacionadas:** [0028](0028-gerenciador-do-windows-e-atualizacao-pelo-github.md) e [0033](0033-gerenciador-no-linux-com-avalonia.md) (o gerenciador em C#, que esta substituiu); [0040](0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md) (atualizar pelo develop); [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (o `.msi`); [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (o back-end em Go); épico #70
 
-**Os detalhes** (como a janela imita a do C#, a bandeja, o que foi conferido no Linux, a instalação e as medições dos protótipos) estão no [README do gerenciador](../../src/gerenciador-go/README.md). Esta ADR guarda a decisão, as alternativas e o custo.
+**Compilar, testar e instalar** estão no [README do gerenciador](../../src/gerenciador-go/README.md); o que ele faz para quem usa, em [docs/INSTALADOR-E-GERENCIADOR.md](../INSTALADOR-E-GERENCIADOR.md#o-gerenciador). Esta ADR guarda a decisão, as alternativas e o custo.
 
 ## Contexto
 
@@ -68,7 +68,7 @@ O gerenciador passa para Go como **um programa com o [Wails v3](https://pkg.go.d
 - **Na prática:**
   - o Wails e o go-winres entram na lista de bibliotecas da [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md), só para o gerenciador;
   - o `.msi` (#277) e os scripts (#430 no Windows, #277 no Linux) instalam o gerenciador em Go, com o nome `Financas.Gerenciador.exe` no Windows, para os atalhos e o "Iniciar com o Windows" de quem atualiza continuarem valendo;
-  - compilar, testar e os detalhes de cada parte: [README do gerenciador](../../src/gerenciador-go/README.md).
+  - compilar e testar: [README do gerenciador](../../src/gerenciador-go/README.md).
 
 ## Atualizações (02 e 03/11/2026: o gerenciador em Go instalado, e o C# fora)
 

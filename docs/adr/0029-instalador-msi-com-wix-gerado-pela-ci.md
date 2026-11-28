@@ -36,7 +36,7 @@ O `.msi` é gerado por `instalador/gerar-msi.ps1` a partir de `instalador/Financ
 - **Negativas:**
   - **sem assinatura de código** (em aberto na #119), o Windows mostra "Editor desconhecido" ao abrir o `.msi`. Assinar exige um certificado de código pago;
   - **dois caminhos de instalação no Windows:** mudança no certificado, no serviço ou na pasta de dados precisa ser feita no `instalar-windows.ps1` e no `configurar.ps1`, que tem as mesmas restrições do PowerShell 5.1 (ASCII, sem `??`);
-  - **o pacote fica grande**, na casa de dezenas de MB (era o runtime do .NET dentro; com o Go, caiu, veja o README);
+  - **o pacote fica grande**, na casa de dezenas de MB (era o runtime do .NET dentro; com o Go, caiu: a medida está nos [requisitos não funcionais](../REQUISITOS-NAO-FUNCIONAIS.md#eficiência));
   - **migração automática:** a pasta antiga fica, mas o serviço antigo é removido. Para voltar, rode o `instalar-windows.cmd` antigo de novo. Se o banco da instalação antiga não for achado, a instalação **para sem mudar nada**, em vez de começar com um banco vazio;
   - **só Windows x64.** No Linux continuam os scripts.
 - **Na prática:** mudou serviço, certificado ou pastas? Ajuste também o `instalar-windows.ps1` (e vice-versa). Publicar uma versão e testar uma mudança: [README do instalador](../../instalador/README.md).
