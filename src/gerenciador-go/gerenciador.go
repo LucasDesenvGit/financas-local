@@ -22,6 +22,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/icones"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/preferencias"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/primeiroacesso"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/protecao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/restauracao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/situacao"
@@ -409,6 +410,14 @@ func (g *gerenciador) abrirPasta() {
 	}
 }
 
+// enderecoDoSite é o que "Abrir o site" abre: uma página do site, ou, enquanto o site não tem usuário e dá para ler o
+// segredo da pasta das chaves, o link do primeiro acesso (#68, ADR 0075).
+func (g *gerenciador) enderecoDoSite(pagina string) string {
+	ctx, cancelar := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelar()
+	return primeiroacesso.Endereco(ctx, g.consulta.Cliente, g.inst, pagina, time.Now())
+}
+
 func (g *gerenciador) abrirNoNavegador(endereco string) {
 	if err := g.app.Browser.OpenURL(endereco); err != nil {
 		log.Print(err)
@@ -443,7 +452,7 @@ func (g *gerenciador) rotas() http.Handler {
 			http.Error(w, "página desconhecida", http.StatusBadRequest)
 			return
 		}
-		g.abrirNoNavegador(g.inst.Pagina(pagina))
+		g.abrirNoNavegador(g.enderecoDoSite(pagina))
 		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("POST /acao/{acao}", func(w http.ResponseWriter, r *http.Request) {
@@ -632,7 +641,7 @@ func (g *gerenciador) montarBandeja() {
 	menu := g.app.NewMenu()
 	g.itemSituacao = menu.Add("Finanças Local: " + tela.Verificando.Curto()).SetEnabled(false)
 	menu.AddSeparator()
-	menu.Add("Abrir o site").OnClick(func(*application.Context) { g.abrirNoNavegador(g.inst.Pagina("")) })
+	menu.Add("Abrir o site").OnClick(func(*application.Context) { g.abrirNoNavegador(g.enderecoDoSite("")) })
 	menu.Add("Mostrar o gerenciador").OnClick(func(*application.Context) { g.abrir() })
 	menu.AddSeparator()
 	menu.Add("Sair").OnClick(func(*application.Context) { g.app.Quit() })

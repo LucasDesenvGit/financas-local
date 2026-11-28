@@ -160,7 +160,10 @@ jobs:
           '{"login":"verificador","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
           curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
-          curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
+          # #68, item 4: o primeiro usuario so com o token do link do primeiro acesso (o .msi guarda as chaves em ProgramData).
+          $link = & "$env:ProgramFiles\FinancasLocal\financas-go.exe" link-de-configuracao -chaves "$env:ProgramData\FinancasLocal\dados\chaves"
+          $token = ($link -split "configurar=")[1]
+          curl.exe --ssl-no-revoke -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "X-Configurar-Token: $token" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
           if (-not (curl.exe --ssl-no-revoke -fsS "$env:SITE/api/auth/estado" | ConvertFrom-Json).configurado) { throw "usuário não foi criado" }
           # #85: o Go sozinho responde, com o login dele.
           $saude = $null
@@ -361,7 +364,10 @@ jobs:
           '{"login":"antigo","senha":"Teste#Msi2026"}' | Set-Content corpo.json -NoNewline
           curl.exe -k -fsS -c c.txt -b c.txt "$env:SITE/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] })
-          curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
+          # #68, item 4: o primeiro usuario so com o token do link do primeiro acesso (instalacao pelos scripts).
+          $link = & "publicado\api\financas-go.exe" link-de-configuracao -chaves "dados\chaves"
+          $token = ($link -split "configurar=")[1]
+          curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "X-Configurar-Token: $token" -H "Content-Type: application/json" -d "@corpo.json" "$env:SITE/api/auth/configurar" | Out-Null
           # #277: a chave dos segredos do Go (o Go só a cria no primeiro segredo; aqui, uma de mentira, que ninguém lê
           # antes da conferência). A migração tem de levá-la igual, junto das chaves do .NET.
           if (-not (Test-Path dados\chaves\segredos.chave)) { [IO.File]::WriteAllBytes("$PWD\dados\chaves\segredos.chave", [byte[]](1..64)) }

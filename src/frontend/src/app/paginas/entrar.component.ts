@@ -27,6 +27,9 @@ import { Icones } from '../compartilhado/ui/icones';
           <p class="texto-suave">Carregando…</p>
         } @else if (!configurado()) {
           <h1>Primeiro acesso</h1>
+          @if (!tokenDeConfiguracao) {
+            <p class="aviso-inline">Para criar o usuário, abra o site pelo gerenciador (“Abrir o site”) ou pelo link que a instalação mostrou. O link vale por 10 minutos.</p>
+          } @else {
           <p class="texto-suave">Crie o usuário que vai proteger o sistema. A senha precisa ter pelo menos 8 caracteres.</p>
           <form (ngSubmit)="configurar()" #f="ngForm">
             <label>Usuário
@@ -41,6 +44,7 @@ import { Icones } from '../compartilhado/ui/icones';
             @if (erro()) { <p class="erro">{{ erro() }}</p> }
             <button class="botao botao-primario largura-total" [disabled]="enviando() || f.invalid">Criar e entrar</button>
           </form>
+          }
         } @else {
           <h1>Entrar</h1>
           @if (expirada()) { <p class="aviso-inline">Sua sessão expirou. Entre novamente.</p> }
@@ -66,6 +70,8 @@ export class EntrarComponent implements OnInit {
 
   /** Query string ?expirada=1 (vinculada pelo router). */
   readonly expirada = input<string | undefined>();
+  /** Query string ?configurar=<token>: o link do primeiro acesso (#68). Sai da barra de endereço depois de lido. */
+  readonly tokenDoLink = input<string | undefined>(undefined, { alias: 'configurar' });
 
   readonly carregando = signal(true);
   readonly configurado = signal(true);
@@ -75,8 +81,13 @@ export class EntrarComponent implements OnInit {
   login = '';
   senha = '';
   confirmacao = '';
+  tokenDeConfiguracao = '';
 
   async ngOnInit(): Promise<void> {
+    this.tokenDeConfiguracao = this.tokenDoLink() ?? '';
+    if (this.tokenDeConfiguracao) {
+      void this.router.navigate([], { queryParams: { configurar: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
     try {
       const estado = await this.auth.carregarEstado();
       this.configurado.set(estado.configurado);
@@ -96,7 +107,7 @@ export class EntrarComponent implements OnInit {
       this.erro.set('As senhas não conferem.');
       return;
     }
-    this.enviar(() => this.auth.configurar(this.login.trim(), this.senha));
+    this.enviar(() => this.auth.configurar(this.login.trim(), this.senha, this.tokenDeConfiguracao));
   }
 
   private enviar(acao: () => ReturnType<AuthService['entrar']>): void {

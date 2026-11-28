@@ -112,3 +112,4 @@ As ADRs 0002 a 0006 e 0014 a 0021 foram escritas depois das decisões, a partir 
 | [0072](0072-cotacoes-de-acoes-e-fiis-so-pelo-yahoo-sem-a-brapi.md) | Cotações de ações e FIIs só pelo Yahoo Finance, sem a brapi (#763) | Aceita |
 | [0073](0073-cotacao-de-criptomoedas-pela-binance.md) | Cotação de criptomoedas pela API pública da Binance, no lugar do Mercado Bitcoin (#762) | Aceita |
 | [0074](0074-consultas-escritas-a-mao-sem-o-sqlc.md) | Consultas escritas à mão, sem o `sqlc`: 16 consultas geradas e 48 structs, 1 usada; o `DBTX` vai para `plataforma/banco` (#771) | Aceita |
+| [0075](0075-configuracao-inicial-so-com-o-segredo-do-gerenciador.md) | Configuração inicial só com o segredo do gerenciador: o primeiro usuário se cria por um link com token de 10 minutos (#68, item 4) | Proposta |

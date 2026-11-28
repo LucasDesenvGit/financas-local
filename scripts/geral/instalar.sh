@@ -64,4 +64,4 @@ if [[ "$SO" == linux && "$com_gerenciador" -eq 1 ]]; then
 fi
 
 echo ''
-echo -e "\033[32mInstalacao concluida. Abra https://localhost:5443 no navegador.\033[0m"
+echo -e "\033[32mInstalacao concluida. Abra https://localhost:5443 no navegador (na primeira vez, pelo link do primeiro acesso mostrado acima).\033[0m"

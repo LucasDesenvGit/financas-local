@@ -57,13 +57,14 @@ class Sessao:
         self.porta = porta
         self.cookies = {}
 
-    def pedir(self, metodo, caminho, corpo=None):
+    def pedir(self, metodo, caminho, corpo=None, extras=None):
         conexao = http.client.HTTPSConnection("127.0.0.1", self.porta, context=SEM_VERIFICAR, timeout=120)
         cabecalhos = {"Cookie": "; ".join(f"{k}={v}" for k, v in self.cookies.items())}
         if corpo is not None:
             cabecalhos["Content-Type"] = "application/json"
             cabecalhos["X-XSRF-TOKEN"] = self.cookies.get("__Host-XSRF-TOKEN", "")
             corpo = json.dumps(corpo)
+        cabecalhos.update(extras or {})
         try:
             conexao.request(metodo, caminho, corpo, cabecalhos)
             resposta = conexao.getresponse()
@@ -82,9 +83,9 @@ class Sessao:
         except OSError:
             return False
 
-    def enviar(self, caminho, corpo):
+    def enviar(self, caminho, corpo, extras=None):
         self.pedir("GET", "/api/auth/estado")  # traz o cookie anti-CSRF
-        return self.pedir("POST", caminho, corpo)
+        return self.pedir("POST", caminho, corpo, extras)
 
 
 def internet_recusada():
@@ -109,6 +110,14 @@ def subir(api, pasta, porta, ambiente):
                              "-certificado-temporario", "-banco", str(pasta / "dados/sql/FinancasLocal.db"),
                              "-chaves", str(pasta / "dados/chaves"), "-aplicar-esquema", "-rotinas-de-partida"],
                             cwd=api, env=ambiente, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def token_de_configuracao(api, pasta):
+    """O token do primeiro acesso (#68, item 4): o executável o gera com o segredo que o site criou em dados/chaves."""
+    nome = "financas-go.exe" if os.name == "nt" else "financas-go"
+    link = subprocess.run([str(api / nome), "link-de-configuracao", "-chaves", str(pasta / "dados/chaves")],
+                          capture_output=True, text=True, check=True).stdout
+    return link.strip().split("configurar=")[1]
 
 
 def parar(processo):
@@ -171,7 +180,8 @@ def medir(args, pasta):
     processo = subir(api, pasta, args.porta, ambiente)
     try:
         esperar_site(sessao, processo)
-        if sessao.enviar("/api/auth/configurar", {"login": LOGIN, "senha": SENHA}) not in (200, 204):
+        token = {"X-Configurar-Token": token_de_configuracao(api, pasta)}
+        if sessao.enviar("/api/auth/configurar", {"login": LOGIN, "senha": SENHA}, token) not in (200, 204):
             sys.exit("Não deu para criar o usuário de teste.")
     finally:
         parar(processo)

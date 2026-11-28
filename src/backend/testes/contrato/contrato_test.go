@@ -14,6 +14,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/autenticacao"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/celular"
 )
 
 // InicioPadrao é o instante em que o relógio do servidor sob teste começa (faketime no .NET). Em Brasília ainda é
@@ -83,7 +86,11 @@ func TestContrato(t *testing.T) {
 	}
 	defer db.Close()
 
-	ex := &execucao{alvo: enderecoAlvo, raizes: raizes, n: n, db: db, sessoes: map[string]*Sessao{}, variaveis: map[string]string{}}
+	segredo, err := celular.LerChaveDoGerenciador(filepath.Dir(*raiz))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ex := &execucao{segredo: segredo, partida: instanteInicio, comecou: time.Now(), alvo: enderecoAlvo, raizes: raizes, n: n, db: db, sessoes: map[string]*Sessao{}, variaveis: map[string]string{}}
 	escolhidos := map[string]bool{}
 	for _, nome := range strings.Split(*somente, ",") {
 		if nome = strings.TrimSpace(nome); nome != "" {
@@ -100,6 +107,9 @@ func TestContrato(t *testing.T) {
 }
 
 type execucao struct {
+	segredo   string    // o do gerenciador, na pasta das chaves (para o token do configurar)
+	partida   time.Time // o instante do relógio do servidor quando o contrato começou
+	comecou   time.Time // o relógio do computador, no mesmo instante
 	alvo      *url.URL
 	raizes    *x509.CertPool
 	n         Normalizador
@@ -202,6 +212,21 @@ func (ex *execucao) sessao(arquivo ArquivoCasos, nome string) (*Sessao, error) {
 	return s, nil
 }
 
+// cabecalhosExtras é o token do configurar, pelo relógio do servidor (que anda desde o -inicio).
+func (ex *execucao) cabecalhosExtras(caso Caso) (map[string]string, error) {
+	agora := ex.partida.Add(time.Since(ex.comecou))
+	switch caso.TokenConfiguracao {
+	case "":
+		return nil, nil
+	case "valido":
+	case "vencido":
+		agora = agora.Add(-autenticacao.ValidadeTokenConfiguracao - time.Minute)
+	default:
+		return nil, fmt.Errorf("tokenConfiguracao %q: use valido ou vencido", caso.TokenConfiguracao)
+	}
+	return map[string]string{autenticacao.CabecalhoTokenConfiguracao: autenticacao.TokenDeConfiguracao(ex.segredo, agora)}, nil
+}
+
 func (ex *execucao) rodarCaso(ctx context.Context, arquivo ArquivoCasos, caso Caso) (*Resultado, error) {
 	s, err := ex.sessao(arquivo, caso.Sessao)
 	if err != nil {
@@ -239,7 +264,11 @@ func (ex *execucao) rodarCaso(ctx context.Context, arquivo ArquivoCasos, caso Ca
 	if err != nil {
 		return nil, fmt.Errorf("ler o banco antes: %w", err)
 	}
-	resp, err := s.enviar(ctx, caso.Metodo, caminho, corpo, tipoCorpo, csrf)
+	extras, err := ex.cabecalhosExtras(caso)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := s.enviar(ctx, caso.Metodo, caminho, corpo, tipoCorpo, csrf, extras)
 	if err != nil {
 		return nil, err
 	}

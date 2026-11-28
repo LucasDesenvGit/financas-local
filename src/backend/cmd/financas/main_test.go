@@ -57,7 +57,7 @@ func TestNovoAcessoCelular(t *testing.T) {
 	log := slog.New(slog.DiscardHandler)
 	for endereco, ok := range map[string]bool{"127.0.0.1:5443": true, "127.0.0.1": false, "127.0.0.1:porta": false} {
 		_, err := novoAcessoCelular(db, relogio.Fixo{Instante: testeapoio.InstanteDosTestes}, log,
-			servidor.Opcoes{Config: config.Config{Endereco: endereco, PastaChaves: t.TempDir()}, Log: log})
+			servidor.Opcoes{Config: config.Config{Endereco: endereco, PastaChaves: t.TempDir()}, Log: log}, "")
 		if (err == nil) != ok {
 			t.Errorf("%s: %v", endereco, err)
 		}

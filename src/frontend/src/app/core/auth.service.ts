@@ -22,8 +22,11 @@ export class AuthService {
     return this.http.post<EstadoAutenticacao>('/api/auth/entrar', { login, senha }).pipe(tap((e) => this.estado.set(e)));
   }
 
-  configurar(login: string, senha: string): Observable<EstadoAutenticacao> {
-    return this.http.post<EstadoAutenticacao>('/api/auth/configurar', { login, senha }).pipe(tap((e) => this.estado.set(e)));
+  /** Primeiro acesso (#68): o token vem do link que o gerenciador abre (ADR 0075) e vai no cabeçalho. */
+  configurar(login: string, senha: string, token: string): Observable<EstadoAutenticacao> {
+    return this.http
+      .post<EstadoAutenticacao>('/api/auth/configurar', { login, senha }, { headers: { 'X-Configurar-Token': token } })
+      .pipe(tap((e) => this.estado.set(e)));
   }
 
   async sair(): Promise<void> {

@@ -27,6 +27,24 @@
     }
   },
   {
+    "nome": "configurar sem o token do gerenciador",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 403,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Para criar o usuário, abra o site pelo gerenciador (Abrir o site) ou pelo link que a instalação mostrou: o link vale por 10 minutos."
+    }
+  },
+  {
+    "nome": "configurar com token vencido",
+    "requisicao": "POST /api/auth/configurar",
+    "status": 403,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Para criar o usuário, abra o site pelo gerenciador (Abrir o site) ou pelo link que a instalação mostrou: o link vale por 10 minutos."
+    }
+  },
+  {
     "nome": "configurar com corpo inválido",
     "requisicao": "POST /api/auth/configurar",
     "status": 400,

@@ -41,18 +41,30 @@ var ErrSemRede = errors.New("este computador não tem endereço numa rede de cas
 // MensagemSemRede é a do ErrSemRede.
 const MensagemSemRede = "Este computador não está numa rede de casa (Wi-Fi ou cabo): não há endereço para o celular abrir."
 
+// LerChaveDoGerenciador lê o segredo da pasta das chaves, sem criar nada (quem só confere ou gera link com ele): o
+// arquivo que não existe dá fs.ErrNotExist. Arquivo com outro tamanho ou que não é hexadecimal é erro: apagar faz o
+// site criar outro.
+func LerChaveDoGerenciador(pasta string) (string, error) {
+	caminho := filepath.Join(pasta, ArquivoChaveGerenciador)
+	dados, err := os.ReadFile(caminho)
+	if err != nil {
+		return "", fmt.Errorf("ler a chave do gerenciador %s: %w", caminho, err)
+	}
+	chave := strings.TrimSpace(string(dados))
+	if b, err := hex.DecodeString(chave); err != nil || len(b) != tamanhoChaveGerenciador {
+		return "", fmt.Errorf("a chave do gerenciador %s não é válida: apague o arquivo para o site criar outra", caminho)
+	}
+	return chave, nil
+}
+
 // CarregarChaveDoGerenciador lê o segredo da pasta das chaves, ou o cria (O_EXCL: se outro processo criou agora, fica
-// o dele). Arquivo com outro tamanho ou que não é hexadecimal é erro: apagar faz o site criar outro.
+// o dele).
 func CarregarChaveDoGerenciador(pasta string) (string, error) {
 	caminho := filepath.Join(pasta, ArquivoChaveGerenciador)
-	if dados, err := os.ReadFile(caminho); err == nil {
-		chave := strings.TrimSpace(string(dados))
-		if b, err := hex.DecodeString(chave); err != nil || len(b) != tamanhoChaveGerenciador {
-			return "", fmt.Errorf("a chave do gerenciador %s não é válida: apague o arquivo para o site criar outra", caminho)
-		}
+	if chave, err := LerChaveDoGerenciador(pasta); err == nil {
 		return chave, nil
 	} else if !errors.Is(err, fs.ErrNotExist) {
-		return "", fmt.Errorf("ler a chave do gerenciador %s: %w", caminho, err)
+		return "", err
 	}
 
 	if err := os.MkdirAll(pasta, 0o700); err != nil {

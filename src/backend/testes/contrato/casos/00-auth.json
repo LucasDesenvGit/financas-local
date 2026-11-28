@@ -4,7 +4,8 @@
     "segundo-ip": { "origem": "127.0.0.2" },
     "terceiro-ip": { "origem": "127.0.0.3" },
     "quarto-ip": { "origem": "127.0.0.4" },
-    "quinto-ip": { "origem": "127.0.0.5" }
+    "quinto-ip": { "origem": "127.0.0.5" },
+    "sexto-ip": { "origem": "127.0.0.6" }
   },
   "casos": [
     {
@@ -21,10 +22,28 @@
       "corpo": { "login": "ana.teste", "senha": "Senha-Forte-123" }
     },
     {
+      "nome": "configurar sem o token do gerenciador",
+      "comentario": "#68, item 4: só quem lê o segredo do gerenciador cria o usuário. O 403 vem antes do corpo e antes de olhar se já há usuário. 1ª de 127.0.0.6.",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "sessao": "sexto-ip",
+      "corpo": { "login": "intruso", "senha": "Senha-Forte-123" }
+    },
+    {
+      "nome": "configurar com token vencido",
+      "comentario": "2ª de 127.0.0.6. O token vale 10 minutos.",
+      "metodo": "POST",
+      "caminho": "/api/auth/configurar",
+      "sessao": "sexto-ip",
+      "tokenConfiguracao": "vencido",
+      "corpo": { "login": "intruso", "senha": "Senha-Forte-123" }
+    },
+    {
       "nome": "configurar com corpo inválido",
       "comentario": "2ª de 127.0.0.1. Validação dos atributos do CredenciaisDto (mensagens padrão do ASP.NET).",
       "metodo": "POST",
       "caminho": "/api/auth/configurar",
+      "tokenConfiguracao": "valido",
       "corpo": { "login": "ab" }
     },
     {
@@ -32,6 +51,7 @@
       "comentario": "3ª de 127.0.0.1.",
       "metodo": "POST",
       "caminho": "/api/auth/configurar",
+      "tokenConfiguracao": "valido",
       "corpo": { "login": "ana.teste", "senha": "curta" }
     },
     {
@@ -39,6 +59,7 @@
       "comentario": "4ª de 127.0.0.1. A comparação ignora maiúsculas.",
       "metodo": "POST",
       "caminho": "/api/auth/configurar",
+      "tokenConfiguracao": "valido",
       "corpo": { "login": "ana.teste", "senha": "minha-ANA.TESTE-123" }
     },
     {
@@ -46,6 +67,7 @@
       "comentario": "5ª de 127.0.0.1. O login chega com espaços e é gravado sem eles.",
       "metodo": "POST",
       "caminho": "/api/auth/configurar",
+      "tokenConfiguracao": "valido",
       "corpo": { "login": "  ana.teste ", "senha": "Senha-Forte-123" }
     },
     {
@@ -60,6 +82,7 @@
       "metodo": "POST",
       "caminho": "/api/auth/configurar",
       "sessao": "segundo-ip",
+      "tokenConfiguracao": "valido",
       "corpo": { "login": "outra", "senha": "Senha-Forte-123" }
     },
     {
