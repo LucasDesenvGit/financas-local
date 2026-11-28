@@ -1194,7 +1194,7 @@ export const MANUAL: CapituloManual[] = [
         abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['precoMedio', 'dy', 'dyNaCompra', 'yieldOnCost', 'ptax'],
         detalhes: [
-          '“Câmbio”: dólar, euro e iene em reais, pela PTAX de compra do Banco Central. “Mais 7 moedas” traz as outras. Sem internet, fica a última cotação, com a data.',
+          '“Câmbio”: dólar, euro e iene em reais, pela PTAX de compra do Banco Central. “Mais moedas” traz as outras. Sem internet, fica a última cotação, com a data.',
           '“Mais análises”, no fim do Resumo: distribuição por tipo e rentabilidade de cada ativo contra a Selic.',
           '“Criptomoedas”: Bitcoin, Ethereum, Solana e Tether em reais, pelo último negócio na Binance, atualizado a cada 30 minutos. Com mais de 2 horas, diz “desatualizada”. É preço de referência e muda muito: confira na sua corretora.',
           'Câmbio e criptomoedas não somem com “ocultar valores”, porque não são dados seus.'
@@ -1331,7 +1331,7 @@ export const MANUAL: CapituloManual[] = [
           'Sem nada do banco, o saldo vem dos lançamentos “Dinheiro reservado” e “Dinheiro retirado”.',
           'Já aparece com outro nome? Confira esta com zero para não contar duas vezes.',
           'Conta paga com cofrinho também baixa a estimativa (veja “Conta paga com um cofrinho”).',
-          'Se o saldo informado ficar abaixo da estimativa, marque “Registrar a diferença como gasto do cofrinho”.',
+          'Se o saldo informado ficar abaixo da estimativa, marque “Registrar a diferença (…) como gasto do cofrinho”.',
           'Valor muito diferente do esperado pede confirmação.',
           'Reservas “para conferir” geram aviso no sino da barra de cima.'
         ]
