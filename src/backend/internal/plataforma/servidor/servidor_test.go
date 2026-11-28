@@ -93,6 +93,7 @@ func TestRespostasComoODotnet(t *testing.T) {
 		{"css com hash", "GET", "/styles-ABCD1234.css", 200, "public, max-age=31536000, immutable", "", "text/css", false},
 		{"hash com minúsculas: cache de um ano (#305)", "GET", "/chunk-1dMxoNi3.js", 200, "public, max-age=31536000, immutable", "", "text/javascript", false},
 		{"manifesto", "GET", "/manifest.webmanifest", 200, "no-cache", "", "application/manifest+json", false},
+		{"print do Manual em WebP (ADR 0071)", "GET", "/imagens/manual/exemplo-claro.webp", 200, "no-cache", "", "image/webp", false},
 		{"rota do Angular: index.html sem Cache-Control", "GET", "/transacoes", 200, "", "", "text/html", false},
 		{"rota do Angular com barra no fim", "GET", "/media/", 200, "", "", "text/html", false},
 		{"arquivo que não existe: 401 (política de login do .NET)", "GET", "/nao-existe.js", 401, "", "", "", true},

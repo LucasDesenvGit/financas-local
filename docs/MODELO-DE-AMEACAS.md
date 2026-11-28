@@ -2,7 +2,7 @@
 
 De quem o sistema se protege, onde e como, e o que fica de fora. A proteção do dia a dia está em [SEGURANCA.md](SEGURANCA.md), os dados em [DADOS-PESSOAIS.md](DADOS-PESSOAIS.md), e a avaliação com a nota e o que melhorar na #68.
 
-> **Data:** 14/11/2026, revisado no módulo Notícias (#10, ADR 0067): três saídas de rede novas (G1, BBC News Brasil e TabNews), só com o módulo ligado, com o link das notícias filtrado pelo domínio da fonte. Antes, 09/11/2026, no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
+> **Data:** 27/11/2026, revisado no aviso do gerenciador (#68, itens 2 e 14): disco sem criptografia e pasta de dados na nuvem. Antes, 14/11/2026, no módulo Notícias (#10, ADR 0067): três saídas de rede novas (G1, BBC News Brasil e TabNews), só com o módulo ligado, com o link das notícias filtrado pelo domínio da fonte. Antes, 09/11/2026, no gerenciador que liga e desliga o acesso pelo celular (#684): duas rotas sem login nem CSRF, só para o próprio computador e com um segredo do gerenciador. Antes, no mesmo dia, no gerenciador que mostra o acesso (#679). Antes, 07/11/2026, no acesso pelo celular (#328, ADR 0061): a rede de casa vira uma fronteira, a 7, só com o acesso ligado. Antes, 03/11/2026, na remoção do .NET (#86): o site é um processo só, em Go, e a fronteira "API ↔ Go" deixou de existir. Revise este modelo quando mudar uma fronteira: uma saída de rede nova, um processo ou uma porta nova, a pasta `dados` ou o login.
 
 ## De quem o sistema se protege
 
@@ -15,7 +15,7 @@ O sistema escuta em `127.0.0.1`, então, com o acesso pelo celular desligado (o 
 ## Fora do escopo
 
 - **Quem já é administrador da máquina:** lê a memória, as chaves e o banco.
-- **Disco sem criptografia:** a recomendação é ativar o BitLocker ou o LUKS.
+- **Disco sem criptografia:** a recomendação é ativar o BitLocker ou o LUKS; o gerenciador avisa quando o disco da pasta `dados` está sem (#68, item 2).
 - **Comprometimento da Pluggy ou do banco:** o sistema confia no que o Open Finance entrega.
 
 ## Fronteiras de confiança
@@ -72,7 +72,7 @@ flowchart TB
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização) e limite por minuto (`internal/plataforma/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | Sair não invalida a sessão no servidor (#68, item 3). Política de senha (#68, item 8) |
+| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização, e mudar o bloqueio pede a senha atual, #68 item 8) e limite por minuto (`internal/plataforma/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | A senha mínima é de 8 caracteres, sem outra regra (decisão de 27/11/2026) |
 | **Adulteração** | Um site aberto no navegador manda um pedido em seu nome (CSRF), ou aponta um domínio para `127.0.0.1` (DNS rebinding) | Token antifalsificação em todo pedido que grava e `AllowedHosts` restrito | — |
 | **Repúdio** | Negar uma ação feita no site | `AuditoriaAcesso`: login, falhas, bloqueios, senha, parâmetros, credenciais, conexões, alterações em lote nas transações e conferências de investimentos, cada um com o desfazer | A auditoria fica no banco: quem tem o arquivo pode mudá-la |
 | **Vazamento** | O holerite em PDF (CPF, salário) ou a senha dele ficam no disco ou no log (#228) | O PDF e a senha só existem durante a leitura: não são gravados, e o erro e o log não levam texto do PDF; só os valores confirmados vão para o holerite ([ADR 0068](adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) | — |
@@ -113,10 +113,10 @@ Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na p
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Outro usuário usa os arquivos | Sem senha de banco: vale a permissão do sistema. No `.msi`, só o sistema e os administradores; pelos scripts no Linux, só a sua conta (`chmod 700`); pelos scripts no Windows, a permissão que a pasta do projeto já tinha | — |
-| **Adulteração** | Um usuário sem privilégio troca os arquivos do serviço | No `.msi`, as pastas são protegidas | O serviço como SYSTEM a partir de pastas alteráveis, na instalação pelos scripts (#68, item 1) |
+| **Falsificação** | Outro usuário usa os arquivos | Sem senha de banco: vale a permissão do sistema. No Windows (`.msi` e scripts), só o sistema e os administradores; pelos scripts no Linux, só a sua conta (`chmod 700`) | — |
+| **Adulteração** | Um usuário sem privilégio troca os arquivos do serviço | No `.msi` e pelos scripts no Windows (#68, item 1), o que o serviço executa e os dados só mudam pelo sistema e pelos administradores, donos das pastas (`Proteger-Pasta`, [ADR 0012](adr/0012-instalador-do-windows-em-powershell.md)); o teste de instalação no Windows confere | Pelos scripts no Windows, com o serviço parado, quem roda na sua conta pode renomear `publicado` ou a pasta do projeto e pôr outra no lugar, e a instalação elevada compila o `src` da sua conta: o `.msi` não tem isso |
 | **Repúdio** | Apagar o rastro no banco | — | A auditoria não tem cópia fora do banco |
-| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com AES-256-GCM (`internal/plataforma/segredos`), com a chave em `dados/chaves/segredos.chave`, protegida pelo DPAPI no Windows e pela permissão do arquivo no Linux. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `AplicarEsquema`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2) |
+| **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com AES-256-GCM (`internal/plataforma/segredos`), com a chave em `dados/chaves/segredos.chave`, protegida pelo DPAPI no Windows e pela permissão do arquivo no Linux. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `AplicarEsquema`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2): a decisão é a criptografia do disco, e o gerenciador avisa quando ela falta ou quando a pasta está numa pasta da nuvem (item 14). Só avisa com certeza: disco que o sistema não diz (pasta de rede, FUSE, ZFS, Windows sem a informação do BitLocker) fica sem aviso |
 | **Negação de serviço** | O banco corrompe ou some | Cópia antes de mudar a estrutura, e o [guia de restaurar](OPERACAO.md#restaurar-uma-cópia) | — |
 | **Aumento de privilégio** | O serviço é usado para rodar outra coisa | No Linux, roda na conta do usuário | O serviço do Linux sem isolamento (#68, item 6) |
 
@@ -140,7 +140,7 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Alguém no Wi-Fi tenta adivinhar a senha | O mesmo login da fronteira 1: bloqueio por tentativas e limite de 5 por minuto **por IP** (cada aparelho tem o seu) | A senha passa a ser a barreira: sem política de senha (#68, item 8), uma senha fraca é risco real. A tela de ligar avisa |
+| **Falsificação** | Alguém no Wi-Fi tenta adivinhar a senha | O mesmo login da fronteira 1: bloqueio por tentativas e limite de 5 por minuto **por IP** (cada aparelho tem o seu) | A senha passa a ser a barreira: com só o mínimo de 8 caracteres (#68, item 8), uma senha fraca é risco real. A tela de ligar avisa |
 | **Falsificação** | Um aparelho da rede se passa pelo site para o celular (homem no meio), para pegar a senha | HTTPS com o certificado de uma autoridade local que o celular instalou; a tela mostra a impressão digital para conferir | Na primeira vez, o celular baixa a autoridade por uma conexão em que ainda não confia: quem estiver no meio nesse momento pode trocar o arquivo. Conferir a impressão digital fecha isso, mas depende da pessoa (*julgamento*) |
 | **Adulteração** | Um site de fora aponta um domínio para o IP da rede (DNS rebinding) | O servidor da rede só aceita o próprio IP no `Host` | — |
 | **Repúdio** | Não saber qual aparelho entrou ou ligou o acesso | A auditoria grava o IP de cada login e o ligar e desligar | — |
@@ -155,11 +155,12 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 | Item da #68 | Onde está aqui |
 |---|---|
 | 1. Serviço como SYSTEM a partir de pastas alteráveis | Fronteira 5, adulteração |
-| 2. Banco e cópias sem criptografia | Fronteira 5, vazamento |
-| 3. Sair não invalida a sessão no servidor | Fronteira 1, falsificação |
+| 2. Banco e cópias sem criptografia | Fronteira 5, vazamento (aviso no gerenciador) |
+| 3. Sair não invalida a sessão e a sessão sem teto (resolvido) | Fronteira 1, falsificação |
 | 4. Configuração inicial aberta | Fronteira 1, aumento de privilégio |
 | 5. Certificado confiável para a máquina inteira | Fronteira 1, vazamento |
 | 6. Serviço do Linux sem isolamento | Fronteira 5, aumento de privilégio |
 | 7. CI e cadeia de dependências | Fronteira 4, aumento de privilégio |
-| 8. Política de senha e bloqueio | Fronteira 1, falsificação |
+| 8. Política de senha e bloqueio | Fronteira 1, falsificação. Resolvido: mudar o bloqueio pede a senha atual; o mínimo de 8 caracteres ficou por decisão |
 | 9. Sobras da instalação antiga com IIS | Fora daqui: não muda uma fronteira |
+| 14. Pasta sincronizada com a nuvem | Fronteira 5, vazamento (aviso no gerenciador) |

@@ -149,7 +149,7 @@ var dependencias = []struct {
 		"a lista do mês e a sugestão (#39) usam a base dos relatórios, os totais de empréstimos, os parâmetros e o tipo da transação (#79)"},
 	{"internal/partida", []string{"internal/patrimonio/carteira", "internal/ajustes/categorizacao", "internal/movimentacao/cobrancas", "internal/movimentacao/transferencias"},
 		"as sete rotinas que acertam dados ao subir chamam a regra de cada assunto, na ordem do .NET: nenhuma regra mora aqui (#444)"},
-	{"internal/ajustes/parametros", nil, "só os transversais (auditoria, configuração)"},
+	{"internal/ajustes/parametros", []string{"internal/plataforma/autenticacao"}, "os transversais (auditoria, configuração) e a senha atual, que mudar a segurança do login pede (#68)"},
 	{"internal/analises/painel", []string{"internal/patrimonio/cambio", "internal/patrimonio/carteira", "internal/movimentacao/contas", "internal/movimentacao/contasagendadas",
 		"internal/patrimonio/emprestimos", "internal/movimentacao/extrato", "internal/movimentacao/faturas", "internal/movimentacao/poucoinformativa", "internal/analises/relatorios",
 		"internal/patrimonio/reservas", "internal/movimentacao/transacoes"},

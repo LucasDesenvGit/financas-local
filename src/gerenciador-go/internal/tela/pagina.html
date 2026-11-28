@@ -80,6 +80,10 @@
         <button class="info" type="button" aria-expanded="false" aria-controls="info-desenvolvimento" aria-label="O que são as versões de desenvolvimento">{{.Glifo "informacao"}}</button>
       </div>
       <p class="info-texto" id="info-desenvolvimento" hidden>Saem a cada mudança no código, antes de virar versão publicada: chegam antes, mas são menos testadas. Desligando de novo, só vem versão publicada mais nova que a que estiver instalada.</p>{{end}}
+      <!-- #68: o aviso sobre a pasta de dados (disco sem criptografia, pasta na nuvem); só avisa. -->
+      <div class="protecao" id="protecao"{{if not .TextoProtecao}} hidden{{end}}>
+        <p role="status"><span id="texto-protecao">{{.TextoProtecao}}</span> <a href="{{comoProteger}}">Por que e como resolver</a></p>
+      </div>
       <p class="rodape">Dados em {{.PastaDados}}. Endereço: {{.Endereco}}</p>
     </section>
   </main>
@@ -220,8 +224,8 @@
   $('notas-fechar').addEventListener('click', function () { dialogoNotas.close(); });
   dialogoNotas.addEventListener('close', ajustarAltura); // Fechar ou Esc: a janela volta ao tamanho do conteúdo
   $('notas-pagina').addEventListener('click', function () { abrirLink(notas.pagina); });
-  // Os links das notas abrem no navegador, e não dentro da janela do gerenciador.
-  $('notas-texto').addEventListener('click', function (e) {
+  // Os links (das notas e do aviso da pasta de dados) abrem no navegador, e não dentro da janela do gerenciador.
+  document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href]');
     if (!a) return;
     e.preventDefault();
@@ -294,6 +298,8 @@
       if ($('texto-sem-login').textContent !== e.textoSemLogin) $('texto-sem-login').textContent = e.textoSemLogin;
       $('botao-sem-login').hidden = e.semLogin !== 'nao';
     }
+    $('protecao').hidden = !e.textoProtecao;
+    if ($('texto-protecao').textContent !== e.textoProtecao) $('texto-protecao').textContent = e.textoProtecao;
     if ($('procurar')) {
       $('procurar').disabled = !e.procurarHabilitado;
       $('atualizar').hidden = $('notas').hidden = !e.nova;

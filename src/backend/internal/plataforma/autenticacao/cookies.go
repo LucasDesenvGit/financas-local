@@ -39,6 +39,18 @@ type conteudoSessao struct {
 	Carimbo tipos.Guid `json:"c"`
 	Emitido int64      `json:"e"` // Unix, segundos
 	Expira  int64      `json:"x"`
+	Inicio  int64      `json:"i"` // o login original, que a renovação não muda; 0 nos cookies de antes do teto (vale o Emitido)
+}
+
+// tetoSessao é o prazo máximo desde o login, por mais que a sessão seja renovada: um cookie roubado não vale para
+// sempre só porque o dono continuou usando o site. Passou disso, é preciso entrar de novo.
+const tetoSessao = 12 * time.Hour
+
+func (s conteudoSessao) inicio() int64 {
+	if s.Inicio == 0 {
+		return s.Emitido
+	}
+	return s.Inicio
 }
 
 func assinar(chave []byte, uso string, dados []byte) []byte {
@@ -72,7 +84,7 @@ func lerSessao(chave []byte, valor string, agora time.Time) (conteudoSessao, boo
 	if err := json.Unmarshal(dados, &s); err != nil || s.Usuario <= 0 {
 		return conteudoSessao{}, false
 	}
-	if agora.Unix() >= s.Expira {
+	if agora.Unix() >= s.Expira || agora.Unix() >= s.inicio()+int64(tetoSessao/time.Second) {
 		return conteudoSessao{}, false
 	}
 	return s, true

@@ -46,3 +46,11 @@ Para reduzir a duplicação, o `.ps1` **não tem lista própria de colunas novas
 - **Código comum do PowerShell:** `scripts/windows/comum.ps1`. O `instalador/configurar.ps1` (`.msi`) usa só o `Confiar-No-Certificado` (#775): o `gerar-msi.ps1` leva o arquivo junto, e o resto do `.msi` não depende dele.
 - **Custo:** quem usa o Git Bash no Windows passa a rodar o PowerShell por baixo, com a saída, o log e a exigência de Administrador dele. Quem pulou todas as versões entre a #154 e a #655 e roda o comando antigo do gerenciador em C# precisa usar os caminhos de `scripts/geral/`.
 - **Regra que deixa de valer:** "mudou `1-preparar-ambiente.sh` ou `3-publicar-atualizar.sh`, confira o `.ps1`". Continua valendo: coluna nova só em `ColunasNovas` (desde a #723, ninguém lê isso de bash), e serviço, certificado e pastas de dados também no `instalador/configurar.ps1`.
+
+## Atualização de 2026-11-27: pastas do serviço protegidas (#68, item 1)
+
+**Decisão (do usuário, 27/11/2026):** o serviço roda como SYSTEM (a conta continua LocalSystem, [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md), porque outra conta perderia o DPAPI dos segredos). Por isso o `instalar-windows.ps1` deixa `publicado\api` (com `api-anterior` e `preparo`), `dados` e `backups` só para SYSTEM e Administradores, que passam a ser os donos, com Usuários só lendo e executando a publicação. É o `Proteger-Pasta` do `comum.ps1`, o mesmo do `.msi`. O teste de instalação no Windows confere as permissões.
+
+- **O resto da pasta do projeto continua da sua conta** (`src`, `ferramentas`, `publicado\gerenciador`): compilar e o `instalar-gerenciador.ps1` seguem sem administrador.
+- **Custo:** no Windows, o `2-criar-banco.sh` e o `4-backup.sh` pedem o Git Bash como Administrador, e o backup agendado roda com privilégios mais altos.
+- **O que não cobre:** com o serviço parado, quem roda na sua conta pode renomear `publicado` (ou a pasta do projeto) e pôr outra no lugar, e a instalação elevada compila o `src` da sua conta. O caminho seguro para quem só usa continua o `.msi`.

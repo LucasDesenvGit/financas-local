@@ -57,6 +57,7 @@ type ParametroDto struct {
 	Minimo    *int    `json:"minimo"`
 	Maximo    *int    `json:"maximo"`
 	Unidade   *string `json:"unidade"`
+	PedeSenha bool    `json:"pedeSenha"` // #68: mudar o valor pede a senha atual
 }
 
 // InfoSistemaDto, na ordem dos campos do JSON. DotNet e SistemaOperacional dizem o ambiente do Go (a versão do Go e o
@@ -127,7 +128,7 @@ func (s *Servico) Listar(ctx context.Context) ([]ParametroDto, error) {
 			}
 		}
 		dto := ParametroDto{Chave: d.Chave, Grupo: d.Grupo, Nome: d.Nome, Descricao: d.Descricao, Tipo: d.Tipo,
-			Valor: valor, Padrao: padrao, Unidade: d.Unidade}
+			Valor: valor, Padrao: padrao, Unidade: d.Unidade, PedeSenha: d.PedeSenha()}
 		if d.Tipo == Inteiro {
 			dto.Minimo, dto.Maximo = &d.Minimo, &d.Maximo
 		}

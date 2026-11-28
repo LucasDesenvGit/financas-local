@@ -67,11 +67,26 @@
       }
     },
     {
+      "nome": "salvar o bloqueio sem a senha",
+      "comentario": "#68: mudar um parâmetro de segurança pede a senha atual; sem ela, nada é gravado, nem os outros.",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": { "valores": { "Painel.DiasProximosVencimentos": 90, "Seguranca.MinutosBloqueio": 1440 } }
+    },
+    {
+      "nome": "salvar o bloqueio com a senha errada",
+      "comentario": "#68: a mesma mensagem do alterar-senha; não conta como tentativa de login.",
+      "metodo": "PUT",
+      "caminho": "/api/parametros",
+      "corpo": { "valores": { "Seguranca.MinutosBloqueio": 1440 }, "senhaAtual": "nao-e-esta" }
+    },
+    {
       "nome": "salvar",
-      "comentario": "Atualiza os que existem no banco, cria os que não existem; booleano vira true/false no banco. Devolve a lista nova.",
+      "comentario": "Atualiza os que existem no banco, cria os que não existem; booleano vira true/false no banco. Devolve a lista nova. O bloqueio muda com a senha atual (a do 00-auth, depois de trocada).",
       "metodo": "PUT",
       "caminho": "/api/parametros",
       "corpo": {
+        "senhaAtual": "Outra-Senha-456",
         "valores": {
           "Sincronizacao.IntervaloHoras": 12,
           "Sincronizacao.Habilitada": 1,

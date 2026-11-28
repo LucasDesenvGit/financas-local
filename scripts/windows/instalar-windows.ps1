@@ -9,8 +9,8 @@
       2) Banco SQLite: o executavel do Go (subcomando aplicar-esquema, #723) aplica a estrutura, as colunas
          novas e os dados iniciais, que ficam embutidos nele
       3) Compila o front-end e o back-end em Go (financas-go.exe, o site desde a #86), publica em
-         publicado\api, gera/reaproveita o certificado HTTPS
-         e registra o servico do Windows "FinancasLocal"
+         publicado\api, gera/reaproveita o certificado HTTPS, deixa publicado\api e dados so para o sistema e os
+         administradores e registra o servico do Windows "FinancasLocal"
 
     Precisa ser executado como Administrador (registro do servico). O instalar-windows.cmd, na raiz,
     pede a elevacao e chama este script. Pode ser executado de novo para atualizar: nao apaga dados.
@@ -468,6 +468,15 @@ function Publicar {
     $global:LASTEXITCODE = 0
     Ok "arquivos publicados"
 
+    # #68, item 1: o servico roda como SYSTEM. So SYSTEM e Administradores mudam o que ele executa (publicado\api, e o
+    # que a instalacao poe la: api-anterior e preparo) e os dados (dados e backups, com o banco); Usuarios leem e executam a
+    # publicacao (o gerenciador le os appsettings). O resto da pasta do projeto (src, ferramentas, publicado\gerenciador)
+    # continua da sua conta, para compilar e rodar o instalar-gerenciador.ps1 sem administrador.
+    Etapa "[3/3] Protegendo as pastas do servico"
+    foreach ($p in $destino, $anterior, $preparo) { if (Test-Path -LiteralPath $p) { Proteger-Pasta $p -UsuariosLeem } }
+    foreach ($p in $Dados, $PastaBackups) { Proteger-Pasta $p }
+    Ok "publicado\api, dados e backups: so o sistema e os administradores mudam"
+
     # ------------------------------------------------------------ Servico do Windows
     Etapa "[3/3] Registrando o servico $NomeServico"
     # #84: o ponto unico que diz o que o servico executa: o Go sozinho, que aplica o esquema e roda as rotinas de
@@ -564,17 +573,20 @@ function Mostrar-EventosServico([datetime]$desde) {
 
 # #655: o backup agendado antes da #154 chama o repasse scripts\4-backup.sh. Troca pelo caminho novo, mantendo
 # horario e --manter, para o repasse poder sair sem o backup parar em silencio.
+# #68: dados e backups so abrem para administradores, entao o backup agendado roda com privilegios mais altos.
 function Migrar-BackupAgendado {
     $tarefa = Get-ScheduledTask -TaskName "FinancasLocal - Backup diario" -ErrorAction SilentlyContinue
     if (-not $tarefa) { return }
     $acao = $tarefa.Actions[0]
-    if ($acao.Arguments -notmatch '\\scripts\\4-backup\.sh') { return }
+    $caminhoAntigo = $acao.Arguments -match '\\scripts\\4-backup\.sh'
+    if (-not $caminhoAntigo -and $tarefa.Principal.RunLevel -eq "Highest") { return }
     try {
         $acao.Arguments = $acao.Arguments -replace '\\scripts\\4-backup\.sh', '\scripts\geral\4-backup.sh'
-        Set-ScheduledTask -TaskName $tarefa.TaskName -TaskPath $tarefa.TaskPath -Action $acao | Out-Null
-        Ok "Backup agendado passou para o caminho novo (scripts\geral\4-backup.sh)."
+        $tarefa.Principal.RunLevel = "Highest"
+        Set-ScheduledTask -TaskName $tarefa.TaskName -TaskPath $tarefa.TaskPath -Action $acao -Principal $tarefa.Principal | Out-Null
+        Ok "Backup agendado: scripts\geral\4-backup.sh, com privilegios mais altos (a pasta dados e so dos administradores)."
     } catch {
-        Aviso "Nao deu para trocar o backup agendado. No Git Bash, rode: scripts/geral/4-backup.sh --agendar"
+        Aviso "Nao deu para trocar o backup agendado. No Git Bash aberto como Administrador, rode: scripts/geral/4-backup.sh --agendar"
     }
 }
 

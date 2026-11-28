@@ -1,0 +1,53 @@
+# ADR 0071 (#752): regera os prints do Manual sempre no mesmo ambiente (Windows, Chromium do Playwright), para a fonte
+# e o desenho não mudarem conforme a máquina de quem roda. Só à mão ("Run workflow", na branch da versão estável).
+# Não faz commit: um push com o GITHUB_TOKEN não dispara a CI do PR. Baixe o artefato "prints-manual", copie por cima
+# de src/frontend/ e commite o que mudou.
+name: Prints do Manual
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prints:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Dependências (npm ci)
+        working-directory: src/frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Navegador (Chromium do Playwright)
+        working-directory: src/frontend
+        run: npx playwright install chromium
+
+      - name: Regerar os prints (npm run prints:manual)
+        working-directory: src/frontend
+        run: npm run prints:manual
+
+      - name: O que mudou
+        shell: bash
+        run: |
+          {
+            echo "### Prints do Manual"
+            mudou=$(git status --porcelain -- src/frontend/public/imagens/manual src/frontend/src/app/paginas/manual/prints-manual.ts)
+            if [ -z "$mudou" ]; then echo "Nada mudou em relação à branch."; else echo '```'; echo "$mudou"; echo '```'; fi
+            echo "Total: $(du -sk src/frontend/public/imagens/manual | cut -f1) KiB"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Artefato com os prints
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints-manual
+          path: |
+            src/frontend/public/imagens/manual/
+            src/frontend/src/app/paginas/manual/prints-manual.ts
+          retention-days: 14

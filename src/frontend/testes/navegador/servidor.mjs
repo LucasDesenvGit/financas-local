@@ -38,7 +38,7 @@ if (!/script-src\s+'self'/.test(csp) || !/default-src/.test(csp)) {
 }
 const tipos = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
-  '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png', '.webmanifest': 'application/manifest+json',
+  '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.png': 'image/png', '.webp': 'image/webp', '.webmanifest': 'application/manifest+json',
   '.woff2': 'font/woff2'
 };
 
