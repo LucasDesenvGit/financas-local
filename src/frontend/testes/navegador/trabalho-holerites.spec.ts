@@ -42,10 +42,10 @@ test('Trabalho › Holerites: o mês, os lançamentos e fechar', async ({ page }
   await page.route('**/api/trabalho/holerites/5/recebimentos', (r) => {
     if (r.request().method() === 'POST') {
       pedidos.push(`ligar ${r.request().postData()}`);
-      return r.fulfill(responder({ liquido: 5053.13, recebido: 5053.13, diferenca: 0, sugestoes: [], outros: [],
+      return r.fulfill(responder({ liquido: 5053.13, adiantamento: null, esperado: 5053.13, recebido: 5053.13, diferenca: 0, sugestoes: [], outros: [],
         recebimentos: [{ ...credito, livre: 0, valorLigado: 5053.13 }] }));
     }
-    return r.fulfill(responder({ liquido: 5053.13, recebido: 0, diferenca: -5053.13, recebimentos: [], outros: [],
+    return r.fulfill(responder({ liquido: 5053.13, adiantamento: null, esperado: 5053.13, recebido: 0, diferenca: -5053.13, recebimentos: [], outros: [],
       sugestoes: [{ ...credito, motivos: ['Valor perto do líquido do holerite', 'O banco marcou como salário'] }] }));
   });
   await page.route('**/api/trabalho/holerites/5/fechar', (r) => {
@@ -143,7 +143,7 @@ test('Trabalho › Holerites: ler o holerite em PDF', async ({ page, problemas }
     return r.fulfill({ status: 204 });
   });
   await page.route('**/api/trabalho/holerites/9', (r) => r.fulfill(responder(gravado)));
-  await page.route('**/api/trabalho/holerites/9/recebimentos', (r) => r.fulfill(responder({ liquido: 4485.99, recebido: 0, diferenca: -4485.99,
+  await page.route('**/api/trabalho/holerites/9/recebimentos', (r) => r.fulfill(responder({ liquido: 4485.99, adiantamento: null, esperado: 4485.99, recebido: 0, diferenca: -4485.99,
     recebimentos: [], sugestoes: [], outros: [] })));
 
   await page.goto('/trabalho/holerites');
@@ -203,7 +203,7 @@ test('Trabalho › Holerites: crédito que sumiu, virou débito ou mudou de valo
   await page.route('**/api/trabalho/empregos/1/holerites', (r) => r.fulfill(responder([])));
   await page.route('**/api/trabalho/holerites/5', (r) => r.fulfill(responder(holerite)));
   const base = { contaId: 1, conta: 'Conta salário', livre: 0 };
-  await page.route('**/api/trabalho/holerites/5/recebimentos', (r) => r.fulfill(responder({ liquido: 5053.13, recebido: 3000, diferenca: -2053.13,
+  await page.route('**/api/trabalho/holerites/5/recebimentos', (r) => r.fulfill(responder({ liquido: 5053.13, adiantamento: null, esperado: 5053.13, recebido: 3000, diferenca: -2053.13,
     sugestoes: [], outros: [], recebimentos: [
       { ...base, id: 1, data: '2026-11-05', descricao: 'CREDITO', valor: 3000, valorLigado: 3000, sumiu: true, debito: false, valorMudou: false },
       { ...base, id: 2, data: '2026-10-20', descricao: 'ESTORNO', valor: -2000, valorLigado: 2000, sumiu: false, debito: true, valorMudou: false },
@@ -214,4 +214,32 @@ test('Trabalho › Holerites: crédito que sumiu, virou débito ou mudou de valo
   await expect(recebido).toContainText('Virou débito: não conta como recebido.');
   await expect(recebido).toContainText('O banco mudou o valor desta transação para R$ 800,00, abaixo da parte ligada');
   await expect(recebido.getByRole('button', { name: /^Desligar/ })).toHaveCount(3);
+});
+
+// #768: o holerite que desconta o adiantamento: o esperado em partes, e os dois créditos explicados (adiantamento e saldo).
+test('Trabalho › Holerites: recebido com o adiantamento descontado', async ({ page }) => {
+  const responder = (corpo: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(corpo) });
+  await page.route('**/api/modulos', (r) => r.fulfill(responder([trabalho])));
+  await page.route('**/api/trabalho/empregos', (r) => r.fulfill(responder([emprego])));
+  await page.route('**/api/trabalho/empregos/1/holerites', (r) => r.fulfill(responder([])));
+  await page.route('**/api/trabalho/holerites/5', (r) => r.fulfill(responder(holerite)));
+  const base = { contaId: 1, conta: 'Conta salário' };
+  await page.route('**/api/trabalho/holerites/5/recebimentos', (r) => r.fulfill(responder({ liquido: 3723.75, adiantamento: 3200, esperado: 6923.75,
+    recebido: 3200, diferenca: -3723.75, outros: [],
+    recebimentos: [{ ...base, id: 1, data: '2026-10-15', descricao: 'ADIANTAMENTO', valor: 3200, livre: 0, valorLigado: 3200, sumiu: false,
+      debito: false, valorMudou: false }],
+    sugestoes: [{ ...base, id: 31, data: '2026-10-30', descricao: 'SALARIO', valor: 3723.75, livre: 3723.75,
+      motivos: ['Parece o saldo (o líquido do holerite)'] }] })));
+  await page.goto('/trabalho/holerites?holerite=5');
+  const recebido = page.locator('section.recebimento');
+  await expect(recebido).toContainText(/Esperado: adiantamento R\$\s3\.200,00 \+ saldo R\$\s3\.723,75 = R\$\s6\.923,75/);
+  await expect(recebido).toContainText('Parece o saldo (o líquido do holerite)');
+  await expect(recebido).toContainText('ADIANTAMENTO (Conta salário)'); // o nome da conta separado da descrição
+  await expect(recebido).toContainText(/Faltam R\$\s3\.723,75 para o esperado/);
+  await expect(recebido).toContainText(/Recebido: R\$\s3\.200,00 de R\$\s6\.923,75 esperados/);
+  const pasta = process.env['FOTOS_PASTA'];
+  if (pasta) {
+    mkdirSync(pasta, { recursive: true });
+    await recebido.screenshot({ path: join(pasta, `trabalho-recebido-adiantamento-${test.info().project.name}.png`) });
+  }
 });

@@ -13,6 +13,12 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tarefas"
 )
 
+// Registrador é onde as rotas de um assunto do módulo entram: o *Rotas, que as guarda (desligado, 409). Os pacotes
+// de assunto recebem esta interface, e os testes passam um mux simples.
+type Registrador interface {
+	HandleFunc(padrao string, h func(http.ResponseWriter, *http.Request))
+}
+
 // Rotas é o mux que o módulo recebe no Registrar: cada rota passa antes pela checagem de ligado.
 type Rotas struct {
 	mux    *http.ServeMux
@@ -25,7 +31,7 @@ type Rotas struct {
 // HandleFunc registra a rota do módulo, guardada. O caminho tem de começar em /api/<id> (o padrão do Go 1.22, com
 // ou sem o método: "GET /api/trabalho/emprego"); fora disso é pânico na montagem, para o módulo não esconder rota fora
 // do prefixo dele, sem a checagem.
-func (r *Rotas) HandleFunc(padrao string, h http.HandlerFunc) {
+func (r *Rotas) HandleFunc(padrao string, h func(http.ResponseWriter, *http.Request)) {
 	caminho := padrao
 	if _, depois, temMetodo := strings.Cut(padrao, " "); temMetodo {
 		caminho = depois

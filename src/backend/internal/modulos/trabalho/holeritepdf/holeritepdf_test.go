@@ -14,13 +14,10 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/leitor/ficticios"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
-
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
 
 type ambiente struct {
 	t         *testing.T
@@ -37,7 +34,7 @@ func novo(t *testing.T) ambiente {
 	empregos := emprego.NovoServico(db, r, log)
 	holerites := holerite.NovoServico(db, empregos, r, log)
 	s := NovoServico(db, empregos, holerites, r, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, s)
@@ -420,7 +417,7 @@ func TestConfirmarRecusa(t *testing.T) {
 		{"meio centavo", linha(`,"valor":1.005`), "O valor de cada linha vai de R$ 0,01 a R$ 9.999.999,99, em centavos."},
 		{"mês antes da admissão", `{"mes":"2020-01-01","rubricas":[{"descricao":"Salário","valor":100,"tipo":0}]}`,
 			"O mês do holerite é de antes da admissão ou depois da saída deste emprego."},
-		{"JSON quebrado", `{"mes":`, MensagemJSONInvalido},
+		{"JSON quebrado", `{"mes":`, respostas.MensagemFormatoEsperado},
 		{"FGTS do mês negativo", rodape("2026-10-01", `"fgtsDoMes":-5000`), MensagemRodape},
 		{"salário base grande", rodape("2026-10-01", `"salarioBase":10000000`), MensagemRodape},
 		{"base do INSS com meio centavo", rodape("2026-10-01", `"baseInss":1.005`), MensagemRodape},

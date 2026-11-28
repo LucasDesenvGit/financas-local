@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -39,7 +40,7 @@ func TestPontuarESugerir(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			p, m := Pontuar(c.t, liquido("4738.02"), "Fictícia Comércio Ltda", &conta)
+			p, m := Pontuar(c.t, liquido("4738.02"), decimal.Zero, "Fictícia Comércio Ltda", &conta)
 			if p != c.pontos || strings.Join(m, " | ") != c.motivos || Sugerir(p, m) != c.sugerir {
 				t.Fatalf("pontos %d %v, sugerir %v; quer %d %q %v", p, m, Sugerir(p, m), c.pontos, c.motivos, c.sugerir)
 			}
@@ -60,7 +61,7 @@ func TestReligarDebitoEArredondar(t *testing.T) {
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, rel, log)
 	holerites := holerite.NovoServico(db, empregos, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, NovoServico(db, empregos, holerites, rel, log))
@@ -211,7 +212,7 @@ func TestReligarNaoRepeteATransacaoDoHolerite(t *testing.T) {
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, rel, log)
 	holerites := holerite.NovoServico(db, empregos, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, NovoServico(db, empregos, holerites, rel, log))
@@ -307,7 +308,7 @@ func TestReligarQueFalhaNaoDerrubaATela(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(&registro, nil))
 	empregos := emprego.NovoServico(db, rel, log)
 	holerites := holerite.NovoServico(db, empregos, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, NovoServico(db, empregos, holerites, rel, log))

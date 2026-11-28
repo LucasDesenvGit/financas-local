@@ -5,7 +5,7 @@ import { AvisosService } from '../../core/avisos.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { RecebimentosHolerite } from '../../core/modelos';
 import { MoedaPipe } from '../../compartilhado/moeda.pipe';
-import { situacaoDoRecebimento } from './recebimento';
+import { esperadoEmPartes, situacaoDoRecebimento } from './recebimento';
 
 /**
  * #212 (ADR 0065): "Recebido na conta", dentro do holerite. Os créditos ligados (com a parte de cada um), a diferença
@@ -21,11 +21,12 @@ import { situacaoDoRecebimento } from './recebimento';
     <section class="recebimento" aria-labelledby="titulo-recebimento">
       <h3 id="titulo-recebimento">Recebido na conta</h3>
       @if (dados(); as r) {
+        @if (partes(); as p) { <p class="texto-suave esperado">Esperado: {{ p }}.</p> }
         <p [class]="'situacao tom-' + situacao().tom">{{ situacao().texto }}</p>
         @if (r.recebimentos.length) {
           <ul class="creditos">
             @for (c of r.recebimentos; track c.id) {
-              <li><span>{{ c.data | date: 'dd/MM' }} · {{ c.descricao }}@if (c.conta) { <span class="texto-suave">({{ c.conta }})</span> }
+              <li><span>{{ c.data | date: 'dd/MM' }} · {{ c.descricao }}@if (c.conta) { <span class="texto-suave"> ({{ c.conta }})</span> }
                   @if (c.sumiu) { <span class="aviso-linha">A transação sumiu na sincronização (o banco pode ter trocado o código dela): o site religa
                     quando a nova aparecer. Se não voltar, desligue.</span> }
                   @if (c.debito) { <span class="aviso-linha">Virou débito: não conta como recebido. Desligue.</span> }
@@ -35,7 +36,7 @@ import { situacaoDoRecebimento } from './recebimento';
                 <button type="button" class="botao botao-pequeno" [disabled]="ocupado()" (click)="desligar(c.id)">Desligar<span class="so-leitor"> o crédito de {{ c.data | date: 'dd/MM' }}</span></button></li>
             }
           </ul>
-          <p class="texto-suave">Recebido: {{ r.recebido | currency }}@if (r.liquido !== null) { de {{ r.liquido | currency }} estimados}.</p>
+          <p class="texto-suave">Recebido: {{ r.recebido | currency }}@if (esperado() !== null) { de {{ esperado() | currency }} {{ r.adiantamento ? 'esperados' : 'estimados' }}}.</p>
         }
         @if (r.sugestoes.length) {
           <h4>Parece o salário</h4>
@@ -88,6 +89,8 @@ export class RecebimentoHoleriteComponent {
   readonly dados = signal<RecebimentosHolerite | null>(null);
   readonly ocupado = signal(false);
   readonly situacao = computed(() => situacaoDoRecebimento(this.dados()!));
+  readonly esperado = computed(() => this.dados()!.esperado ?? this.dados()!.liquido);
+  readonly partes = computed(() => esperadoEmPartes(this.dados()!));
   /** O último pedido: a resposta de um pedido velho (o holerite anterior) é ignorada (revisão do #703). */
   private pedido = 0;
 

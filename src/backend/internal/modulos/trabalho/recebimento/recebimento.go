@@ -4,16 +4,13 @@
 package recebimento
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/shopspring/decimal"
@@ -22,6 +19,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
@@ -33,8 +31,11 @@ var Folga = decimal.RequireFromString("0.05")
 
 // Motivos da sugestão, em texto (Nielsen 1: por que o site sugere).
 const (
-	MotivoValor        = "Valor perto do líquido do holerite"
-	MotivoParte        = "Menor que o líquido: pode ser o adiantamento ou o saldo"
+	MotivoValor = "Valor perto do líquido do holerite"
+	MotivoParte = "Menor que o líquido: pode ser o adiantamento ou o saldo"
+	// Com o adiantamento descontado no holerite (#768): o crédito perto de um dos dois.
+	MotivoAdiantamento = "Parece o adiantamento descontado no holerite"
+	MotivoSaldo        = "Parece o saldo (o líquido do holerite)"
 	MotivoSalario      = "O banco marcou como salário"
 	MotivoEmpregador   = "Cita o empregador"
 	MotivoContaSalario = "Na conta do salário"
@@ -67,8 +68,10 @@ var ParteMinima = decimal.RequireFromString("0.20")
 
 // Pontuar diz o quanto o crédito parece o salário do holerite e por quê. Vira sugestão com 2 pontos ou mais e pelo
 // menos um motivo forte (o valor, o banco marcou como salário, cita o empregador): a parte e a conta do salário, sozinhas,
-// não bastam (revisão do #703). A transferência entre contas suas nunca vira sugestão.
-func Pontuar(t Transacao, liquido *tipos.Decimal, empregador string, contaDoSalario *int64) (int, []string) {
+// não bastam (revisão do #703). A transferência entre contas suas nunca vira sugestão. Com o adiantamento descontado
+// no holerite (#768), o líquido é o saldo e o crédito é comparado com os dois: o mais perto dá o motivo, e no empate
+// vale o adiantamento, que vem primeiro no mês.
+func Pontuar(t Transacao, liquido *tipos.Decimal, adiantamento decimal.Decimal, empregador string, contaDoSalario *int64) (int, []string) {
 	pontos, motivos := 0, []string{}
 	if t.Transferencia {
 		return 0, motivos
@@ -76,8 +79,16 @@ func Pontuar(t Transacao, liquido *tipos.Decimal, empregador string, contaDoSala
 	livre := t.Livre.Decimal()
 	if liquido != nil && liquido.Decimal().IsPositive() {
 		l := liquido.Decimal()
-		if livre.Sub(l).Abs().LessThanOrEqual(l.Mul(Folga)) {
-			pontos, motivos = pontos+3, append(motivos, MotivoValor)
+		perto := func(alvo decimal.Decimal) bool { return livre.Sub(alvo).Abs().LessThanOrEqual(alvo.Mul(Folga)) }
+		if adiantamento.IsPositive() && perto(adiantamento) &&
+			(!perto(l) || livre.Sub(adiantamento).Abs().LessThanOrEqual(livre.Sub(l).Abs())) {
+			pontos, motivos = pontos+3, append(motivos, MotivoAdiantamento)
+		} else if perto(l) {
+			motivo := MotivoValor
+			if adiantamento.IsPositive() {
+				motivo = MotivoSaldo
+			}
+			pontos, motivos = pontos+3, append(motivos, motivo)
 		} else if livre.LessThan(l) && !livre.LessThan(l.Mul(ParteMinima)) {
 			pontos, motivos = pontos+1, append(motivos, MotivoParte)
 		}
@@ -100,7 +111,7 @@ func Sugerir(pontos int, motivos []string) bool {
 		return false
 	}
 	for _, m := range motivos {
-		if m == MotivoValor || m == MotivoSalario || m == MotivoEmpregador {
+		if m == MotivoValor || m == MotivoAdiantamento || m == MotivoSaldo || m == MotivoSalario || m == MotivoEmpregador {
 			return true
 		}
 	}
@@ -136,12 +147,28 @@ type Recebimento struct {
 
 // Resposta é o recebimento do holerite: o líquido, o que já foi ligado, a diferença e as sugestões.
 type Resposta struct {
-	Liquido      *tipos.Decimal `json:"liquido"` // nil: holerite sem cálculo
+	Liquido *tipos.Decimal `json:"liquido"` // nil: holerite sem cálculo
+	// Adiantamento é o adiantamento descontado no holerite (as linhas TipoAdiantamento, #768); nil: não tem a linha
+	// (a estimativa do site nunca tem), e o esperado é o líquido.
+	Adiantamento *tipos.Decimal `json:"adiantamento"`
+	Esperado     *tipos.Decimal `json:"esperado"` // líquido + adiantamento; nil: holerite sem cálculo
 	Recebido     tipos.Decimal  `json:"recebido"`
-	Diferenca    *tipos.Decimal `json:"diferenca"` // recebido - líquido
+	Diferenca    *tipos.Decimal `json:"diferenca"` // recebido - esperado
 	Recebimentos []Recebimento  `json:"recebimentos"`
 	Sugestoes    []Sugestao     `json:"sugestoes"`
 	Outros       []Transacao    `json:"outros"` // os outros créditos livres da janela, para ligar à mão
+}
+
+// adiantamentoDe soma as linhas do adiantamento descontado no holerite (só o lido do PDF as tem, #228). O holerite
+// calculado não estima o adiantamento: seria um número inventado (#768, *inferido*).
+func adiantamentoDe(c holerite.Calculo) decimal.Decimal {
+	soma := decimal.Zero
+	for _, l := range c.Descontos {
+		if l.Tipo == holerite.TipoAdiantamento {
+			soma = soma.Add(l.Valor.Decimal())
+		}
+	}
+	return soma
 }
 
 // Servico liga as transações aos holerites.
@@ -222,8 +249,16 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 		return Resposta{}, err
 	}
 	r := Resposta{Recebimentos: []Recebimento{}, Sugestoes: []Sugestao{}, Outros: []Transacao{}}
+	adiantamento := decimal.Zero
 	if h.Calculo != nil {
 		r.Liquido = &h.Calculo.Liquido
+		adiantamento = adiantamentoDe(*h.Calculo)
+		esperado := tipos.Centavos(h.Calculo.Liquido.Decimal().Add(adiantamento))
+		r.Esperado = &esperado
+		if adiantamento.IsPositive() {
+			a := tipos.Centavos(adiantamento)
+			r.Adiantamento = &a
+		}
 	}
 	// Religar é conserto: se falhar, a ligação continua "sumida" e a tela abre do mesmo jeito (revisão do #703).
 	if err := s.religar(ctx, holeriteId); err != nil {
@@ -248,8 +283,8 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 		r.Recebimentos = append(r.Recebimentos, rec)
 	}
 	r.Recebido = tipos.DeDecimal(recebido.Round(2))
-	if r.Liquido != nil {
-		d := tipos.DeDecimal(recebido.Sub(r.Liquido.Decimal()).Round(2))
+	if r.Esperado != nil {
+		d := tipos.Centavos(recebido.Sub(r.Esperado.Decimal()))
 		r.Diferenca = &d
 	}
 
@@ -263,7 +298,7 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 		if ligadas[t.Id] || !t.Livre.Decimal().IsPositive() {
 			continue
 		}
-		pontos, motivos := Pontuar(t, r.Liquido, e.Empregador, e.ContaId)
+		pontos, motivos := Pontuar(t, r.Liquido, adiantamento, e.Empregador, e.ContaId)
 		if Sugerir(pontos, motivos) {
 			r.Sugestoes = append(r.Sugestoes, Sugestao{Transacao: t, Motivos: motivos, Pontos: pontos})
 		} else {
@@ -274,7 +309,7 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 	return r, nil
 }
 
-// Ligar liga a transação ao holerite. valor nil: a parte livre da transação, até o que falta do líquido. A transação
+// Ligar liga a transação ao holerite. valor nil: a parte livre da transação, até o que falta do esperado (o líquido mais o adiantamento descontado, #768). A transação
 // sem categoria passa para "Salário", como escolha manual (as regras não mexem mais).
 func (s *Servico) Ligar(ctx context.Context, holeriteId, transacaoId int64, valor *tipos.Decimal) (Resposta, error) {
 	atual, err := s.Obter(ctx, holeriteId)
@@ -295,8 +330,8 @@ func (s *Servico) Ligar(ctx context.Context, holeriteId, transacaoId int64, valo
 	}
 	t := ts[0]
 	falta := decimal.Zero
-	if atual.Liquido != nil {
-		falta = atual.Liquido.Decimal().Sub(atual.Recebido.Decimal())
+	if atual.Esperado != nil {
+		falta = atual.Esperado.Decimal().Sub(atual.Recebido.Decimal())
 	}
 	// A conferência do que sobra do crédito e a gravação vão na mesma transação: dois pedidos juntos não ligam o crédito
 	// acima do valor dele (revisão do #703). A parte é arredondada antes de conferir.
@@ -473,21 +508,11 @@ func (s *Servico) Desligar(ctx context.Context, holeriteId, recebimentoId int64)
 
 /* ------------------------------------------------------------ HTTP */
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do recebimento, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/holerites/{id}/recebimentos", s.obterHTTP)
 	r.HandleFunc("POST /api/trabalho/holerites/{id}/recebimentos", s.ligarHTTP)
 	r.HandleFunc("DELETE /api/trabalho/holerites/{id}/recebimentos/{recebimento}", s.desligarHTTP)
-}
-
-func idDe(r *http.Request, nome string) int64 {
-	id, _ := strconv.ParseInt(r.PathValue(nome), 10, 64) // id que não é número vira 0: não existe (404)
-	return id
 }
 
 func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Resposta, err error) {
@@ -506,28 +531,23 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Respos
 }
 
 func (s *Servico) obterHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := s.Obter(r.Context(), idDe(r, "id"))
+	c, err := s.Obter(r.Context(), respostas.IdDe(r, "id"))
 	s.responder(w, r, c, err)
 }
 
 func (s *Servico) ligarHTTP(w http.ResponseWriter, r *http.Request) {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return
-	}
 	var dto struct {
 		TransacaoId int64          `json:"transacaoId"`
 		Valor       *tipos.Decimal `json:"valor"`
 	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(&dto); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, "Os dados enviados não estão no formato esperado.")
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
-	c, err := s.Ligar(r.Context(), idDe(r, "id"), dto.TransacaoId, dto.Valor)
+	c, err := s.Ligar(r.Context(), respostas.IdDe(r, "id"), dto.TransacaoId, dto.Valor)
 	s.responder(w, r, c, err)
 }
 
 func (s *Servico) desligarHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := s.Desligar(r.Context(), idDe(r, "id"), idDe(r, "recebimento"))
+	c, err := s.Desligar(r.Context(), respostas.IdDe(r, "id"), respostas.IdDe(r, "recebimento"))
 	s.responder(w, r, c, err)
 }

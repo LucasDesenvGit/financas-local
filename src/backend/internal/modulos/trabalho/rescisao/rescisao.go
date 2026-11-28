@@ -1,7 +1,6 @@
 package rescisao
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -20,6 +19,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/fgts"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -29,7 +29,6 @@ import (
 const (
 	MensagemSemRescisao      = "Estágio e PJ não têm as verbas da rescisão da CLT."
 	MensagemSemTabela        = "Ainda não há tabela do INSS ou do IRRF para o mês da saída."
-	MensagemJSONInvalido     = "Os dados enviados não estão no formato esperado."
 	MensagemTipo             = "Escolha o tipo: sem justa causa, pedido de demissão, acordo, justa causa ou fim da experiência."
 	MensagemAviso            = "Escolha o aviso: trabalhado ou indenizado."
 	MensagemSaida            = "A saída vai da admissão em diante, com o salário do mês cadastrado."
@@ -56,7 +55,6 @@ func NovoServico(db *sql.DB, empregos *emprego.Servico, holerites *holerite.Serv
 
 var (
 	errSemRescisao = errors.New("sem rescisão")
-	errSemTabela   = errors.New("sem tabela")
 	errRegistrada  = errors.New("já registrada")
 )
 
@@ -101,19 +99,8 @@ func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, sai
 	if entrada.SomaVariaveis, _, err = s.holerites.VariaveisEntre(ctx, empregoId, mes.SomarMeses(-12), mes, salario.SalarioBruto); err != nil {
 		return Calculo{}, err
 	}
-	inss, err := encargos.LerTabelasInss(ctx, s.db)
-	if err != nil {
+	if entrada.Inss, entrada.Irrf, err = encargos.TabelasDoMes(ctx, s.db, mes); err != nil {
 		return Calculo{}, err
-	}
-	irrf, err := encargos.LerTabelasIrrf(ctx, s.db)
-	if err != nil {
-		return Calculo{}, err
-	}
-	var okInss, okIrrf bool
-	entrada.Inss, okInss = encargos.Vigente(inss, mes)
-	entrada.Irrf, okIrrf = encargos.Vigente(irrf, mes)
-	if !okInss || !okIrrf {
-		return Calculo{}, errSemTabela
 	}
 
 	_, projetada := AvisoPago(tipo, aviso, e.Admissao, saida)
@@ -296,23 +283,13 @@ func (s *Servico) Desfazer(ctx context.Context, empregoId int64) error {
 
 /* ------------------------------------------------------------ HTTP */
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // RegistrarRotas põe as rotas da rescisão, em /api/trabalho/ (o Registrar é o da rescisão real).
-func RegistrarRotas(r Registrador, s *Servico) {
+func RegistrarRotas(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/rescisao/simular", s.simularHTTP)
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/rescisao/comparar", s.compararHTTP)
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/rescisao", s.registradaHTTP)
 	r.HandleFunc("POST /api/trabalho/empregos/{id}/rescisao", s.registrarHTTP)
 	r.HandleFunc("DELETE /api/trabalho/empregos/{id}/rescisao", s.desfazerHTTP)
-}
-
-func idDe(r *http.Request) int64 {
-	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64) // id que não é número vira 0: não existe (404)
-	return id
 }
 
 func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, corpo any, err error) {
@@ -330,7 +307,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, 
 		respostas.Mensagem(w, http.StatusBadRequest, string(v))
 	case errors.Is(err, errSemRescisao):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemSemRescisao)
-	case errors.Is(err, errSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	case errors.Is(err, errRegistrada):
 		respostas.Mensagem(w, http.StatusConflict, MensagemJaRegistrada)
@@ -374,7 +351,7 @@ func (s *Servico) simularHTTP(w http.ResponseWriter, r *http.Request) {
 	if errAviso != nil {
 		aviso = SemAviso
 	}
-	c, err := s.Simular(r.Context(), idDe(r), tipo, aviso, saida, saque)
+	c, err := s.Simular(r.Context(), respostas.IdDe(r, "id"), tipo, aviso, saida, saque)
 	s.responder(w, r, http.StatusOK, c, err)
 }
 
@@ -389,16 +366,16 @@ func (s *Servico) compararHTTP(w http.ResponseWriter, r *http.Request) {
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemSaqueAniversario)
 		return
 	}
-	lista, err := s.Comparar(r.Context(), idDe(r), saida, saque)
+	lista, err := s.Comparar(r.Context(), respostas.IdDe(r, "id"), saida, saque)
 	s.responder(w, r, http.StatusOK, lista, err)
 }
 
 func (s *Servico) registradaHTTP(w http.ResponseWriter, r *http.Request) {
-	if _, err := s.empregos.Obter(r.Context(), idDe(r)); err != nil {
+	if _, err := s.empregos.Obter(r.Context(), respostas.IdDe(r, "id")); err != nil {
 		s.responder(w, r, 0, nil, err)
 		return
 	}
-	c, err := s.Registrada(r.Context(), idDe(r))
+	c, err := s.Registrada(r.Context(), respostas.IdDe(r, "id"))
 	if errors.Is(err, sql.ErrNoRows) {
 		respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, map[string]any{"registrada": nil})
 		return
@@ -407,24 +384,23 @@ func (s *Servico) registradaHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Servico) registrarHTTP(w http.ResponseWriter, r *http.Request) {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return
-	}
 	var dto struct {
 		Tipo             int64       `json:"tipo"`
 		Aviso            int64       `json:"aviso"`
 		Saida            *tipos.Data `json:"saida"`
 		SaqueAniversario *bool       `json:"saqueAniversario"` // a resposta da pessoa; sem ela, o site deduz (#751)
 	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(&dto); err != nil || dto.Saida == nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
-	c, err := s.Registrar(r.Context(), idDe(r), dto.Tipo, dto.Aviso, *dto.Saida, dto.SaqueAniversario)
+	if dto.Saida == nil {
+		respostas.Mensagem(w, http.StatusBadRequest, respostas.MensagemFormatoEsperado)
+		return
+	}
+	c, err := s.Registrar(r.Context(), respostas.IdDe(r, "id"), dto.Tipo, dto.Aviso, *dto.Saida, dto.SaqueAniversario)
 	s.responder(w, r, http.StatusCreated, c, err)
 }
 
 func (s *Servico) desfazerHTTP(w http.ResponseWriter, r *http.Request) {
-	s.responder(w, r, http.StatusNoContent, nil, s.Desfazer(r.Context(), idDe(r)))
+	s.responder(w, r, http.StatusNoContent, nil, s.Desfazer(r.Context(), respostas.IdDe(r, "id")))
 }

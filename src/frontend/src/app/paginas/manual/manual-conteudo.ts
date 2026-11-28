@@ -1444,6 +1444,7 @@ export const MANUAL: CapituloManual[] = [
           'PLR tem imposto próprio: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
           'Hora extra à noite: lance as horas com o percentual somado (50% sobre 20% dá 80%), sem lançar o adicional noturno de novo.',
           'Em “Recebido na conta”, o site sugere os créditos de “Parece o salário”. “Outros créditos do período” deixa ligar qualquer um. “Desligar” desfaz.',
+          'Holerite que desconta o adiantamento (a linha “Adiantamento”, vinda do PDF): o esperado é o líquido mais o adiantamento, então os dois créditos do mês fecham a conta. Sem essa linha, o site não estima o adiantamento.',
           'O holerite não é receita: a receita continua sendo a transação do salário.',
           'PDF com senha (parte do CPF, data de nascimento): o site pede e não guarda. O PDF é lido neste computador e não fica guardado.',
           'Na prévia, troque o tipo ou o valor de uma linha, ou deixe-a de fora. A prova real avisa se a soma não bate com o total do PDF.',

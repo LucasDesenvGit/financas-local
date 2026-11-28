@@ -3,6 +3,7 @@ package recebimento
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -44,7 +45,7 @@ func TestPontuar(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {
 			t.Parallel()
-			p, m := Pontuar(c.t, c.liquido, "Fictícia Comércio Ltda", c.conta)
+			p, m := Pontuar(c.t, c.liquido, decimal.Zero, "Fictícia Comércio Ltda", c.conta)
 			if p != c.pontos || strings.Join(m, " | ") != c.motivos {
 				t.Fatalf("pontos %d %v; quer %d %q", p, m, c.pontos, c.motivos)
 			}
@@ -71,10 +72,6 @@ func TestCitaEmpregador(t *testing.T) {
 	}
 }
 
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 func TestRecebimentoNaoContaDuasVezes(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBancoVazio(t)
@@ -82,7 +79,7 @@ func TestRecebimentoNaoContaDuasVezes(t *testing.T) {
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, rel, log)
 	holerites := holerite.NovoServico(db, empregos, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, NovoServico(db, empregos, holerites, rel, log))

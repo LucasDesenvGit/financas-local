@@ -3,7 +3,10 @@ package encargos
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/shopspring/decimal"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -73,3 +76,27 @@ func LerTabelasIrrf(ctx context.Context, db *sql.DB) ([]TabelaIrrf, error) {
 	}
 	return tabelas, linhas.Err()
 }
+
+// ErrSemTabela é o mês sem tabela do INSS ou do IRRF vigente (cada rota dá a mensagem do contexto dela).
+var ErrSemTabela = errors.New("sem tabela do INSS ou do IRRF para o mês")
+
+// TabelasDoMes lê as tabelas e devolve as vigentes no mês: ErrSemTabela se faltar a do INSS ou a do IRRF.
+func TabelasDoMes(ctx context.Context, db *sql.DB, mes tipos.Data) (TabelaInss, TabelaIrrf, error) {
+	inss, err := LerTabelasInss(ctx, db)
+	if err != nil {
+		return TabelaInss{}, TabelaIrrf{}, err
+	}
+	irrf, err := LerTabelasIrrf(ctx, db)
+	if err != nil {
+		return TabelaInss{}, TabelaIrrf{}, err
+	}
+	tInss, okInss := Vigente(inss, mes)
+	tIrrf, okIrrf := Vigente(irrf, mes)
+	if !okInss || !okIrrf {
+		return TabelaInss{}, TabelaIrrf{}, ErrSemTabela
+	}
+	return tInss, tIrrf, nil
+}
+
+// AliquotaFgts é o depósito mensal do empregador: 8% da remuneração.
+var AliquotaFgts = decimal.RequireFromString("0.08")

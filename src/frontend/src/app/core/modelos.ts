@@ -1034,6 +1034,8 @@ export interface RecebimentoHolerite extends CreditoSalario { valorLigado: numbe
 export interface SugestaoRecebimento extends CreditoSalario { motivos: string[]; }
 export interface RecebimentosHolerite {
   liquido: number | null; recebido: number; diferenca: number | null;
+  /** #768: o adiantamento descontado no holerite (só o lido do PDF; null se não tem) e o esperado (líquido + adiantamento). */
+  adiantamento: number | null; esperado: number | null;
   recebimentos: RecebimentoHolerite[]; sugestoes: SugestaoRecebimento[]; outros: CreditoSalario[];
 }
 
