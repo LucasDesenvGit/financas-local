@@ -144,6 +144,13 @@ func TestPonteiroESubstituir(t *testing.T) {
 	if err != nil || s != `{"chave":"abc","id":7}` {
 		t.Errorf("substituir = %q, %v", s, err)
 	}
+	s, err = substituir(`{"contaId":"{{#id}}","texto":"{{id}}"}`, map[string]string{"id": "8"})
+	if err != nil || s != `{"contaId":8,"texto":"8"}` {
+		t.Errorf("substituir com número = %q, %v", s, err)
+	}
+	if _, err := substituir(`{"contaId":"{{#id}}"}`, map[string]string{"id": "abc"}); err == nil {
+		t.Error("número capturado que não é inteiro tem de dar erro")
+	}
 	if _, err := substituir("/api/x/{{falta}}", nil); err == nil {
 		t.Error("variável não capturada tem de dar erro")
 	}

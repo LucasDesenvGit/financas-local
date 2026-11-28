@@ -5,12 +5,12 @@
     {
       "nome": "o recebimento de outubro",
       "metodo": "GET",
-      "caminho": "/api/trabalho/holerites/1/recebimentos"
+      "caminho": "/api/trabalho/holerites/{{idHoleriteOutubro}}/recebimentos"
     },
     {
       "nome": "ligar uma transação que não existe",
       "metodo": "POST",
-      "caminho": "/api/trabalho/holerites/1/recebimentos",
+      "caminho": "/api/trabalho/holerites/{{idHoleriteOutubro}}/recebimentos",
       "corpo": {
         "transacaoId": 999999
       }

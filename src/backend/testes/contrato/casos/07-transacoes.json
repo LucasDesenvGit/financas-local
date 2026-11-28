@@ -989,6 +989,15 @@
       }
     },
     {
+      "nome": "achar o lado da transferência entre contas manuais",
+      "comentario": "A transferência não devolve os ids: o id de um lado vem daqui, para o caso de excluir mais adiante (#725).",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?contaId=3&busca=Saque%20para%20Carteira&tamanhoPagina=5",
+      "capturar": {
+        "idLadoDaTransferencia": "/itens/0/id"
+      }
+    },
+    {
       "nome": "transferir sem descrição",
       "metodo": "POST",
       "caminho": "/api/transacoes/transferencia",
@@ -1099,7 +1108,7 @@
     {
       "nome": "excluir um lado da transferência entre contas manuais",
       "metodo": "DELETE",
-      "caminho": "/api/transacoes/172",
+      "caminho": "/api/transacoes/{{idLadoDaTransferencia}}",
       "corpo": "Os dois lados saem (o mesmo TransferenciaGrupo)."
     },
     {

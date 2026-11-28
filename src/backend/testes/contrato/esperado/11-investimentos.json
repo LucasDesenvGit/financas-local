@@ -387,7 +387,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 179,
+            "Id": 12001,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -448,7 +448,7 @@
           "descricaoOriginal": null,
           "emergencia": false,
           "estabelecimento": null,
-          "id": 179,
+          "id": 12001,
           "ignorarRelatorios": false,
           "observacao": null,
           "openFinance": false,
@@ -537,7 +537,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 180,
+            "Id": 12002,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -671,7 +671,7 @@
           "descricaoOriginal": null,
           "emergencia": false,
           "estabelecimento": null,
-          "id": 180,
+          "id": 12002,
           "ignorarRelatorios": false,
           "observacao": null,
           "openFinance": false,
@@ -713,7 +713,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 179,
+            "Id": 12001,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -754,7 +754,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 180,
+            "Id": 12002,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1512,8 +1512,8 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "ativoId": 6,
-      "id": 8,
+      "ativoId": 12001,
+      "id": 12001,
       "ticker": "KNRI11"
     },
     "banco": {
@@ -1522,7 +1522,7 @@
           {
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "FonteCotacao": null,
-            "Id": 6,
+            "Id": 12001,
             "Moeda": "BRL",
             "Nome": null,
             "PrecoAnterior": null,
@@ -1538,11 +1538,11 @@
       "OperacaoAtivo": {
         "inseridas": [
           {
-            "AtivoId": 6,
+            "AtivoId": 12001,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-01",
-            "Id": 8,
+            "Id": 12001,
             "Observacao": null,
             "Origem": 1,
             "PluggyTransacaoId": null,
@@ -1558,15 +1558,15 @@
   },
   {
     "nome": "as operações do ativo novo",
-    "requisicao": "GET /api/carteira/ativos/6/operacoes",
+    "requisicao": "GET /api/carteira/ativos/{{idAtivoNovo}}/operacoes",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": [
       {
-        "ativoId": 6,
+        "ativoId": 12001,
         "cambio": 1.0,
         "data": "2026-10-01",
-        "id": 8,
+        "id": 12001,
         "moeda": "BRL",
         "observacao": null,
         "origem": 1,
@@ -1589,19 +1589,19 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "ativoId": 6,
-      "id": 9,
+      "ativoId": 12001,
+      "id": 12002,
       "ticker": "KNRI11"
     },
     "banco": {
       "OperacaoAtivo": {
         "inseridas": [
           {
-            "AtivoId": 6,
+            "AtivoId": 12001,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-02",
-            "Id": 9,
+            "Id": 12002,
             "Observacao": "Venda parcial",
             "Origem": 1,
             "PluggyTransacaoId": null,
@@ -1639,8 +1639,8 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
-      "ativoId": 7,
-      "id": 10,
+      "ativoId": 12002,
+      "id": 12003,
       "ticker": "MSFT"
     },
     "banco": {
@@ -1649,7 +1649,7 @@
           {
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "FonteCotacao": null,
-            "Id": 7,
+            "Id": 12002,
             "Moeda": "USD",
             "Nome": null,
             "PrecoAnterior": null,
@@ -1665,11 +1665,11 @@
       "OperacaoAtivo": {
         "inseridas": [
           {
-            "AtivoId": 7,
+            "AtivoId": 12002,
             "Cambio": "5.4321",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-01",
-            "Id": 10,
+            "Id": 12003,
             "Observacao": null,
             "Origem": 1,
             "PluggyTransacaoId": null,
@@ -1690,7 +1690,7 @@
     "tipo": "application/json; charset=utf-8",
     "corpo": {
       "ativoId": 4,
-      "id": 11,
+      "id": 12004,
       "ticker": "VOO"
     },
     "banco": {
@@ -1701,7 +1701,7 @@
             "Cambio": "5.4129",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-14",
-            "Id": 11,
+            "Id": 12004,
             "Observacao": null,
             "Origem": 1,
             "PluggyTransacaoId": null,
@@ -1725,7 +1725,7 @@
         "ativoId": 4,
         "cambio": 5.4129,
         "data": "2026-10-14",
-        "id": 11,
+        "id": 12004,
         "moeda": "USD",
         "observacao": null,
         "origem": 1,
@@ -2037,14 +2037,14 @@
   },
   {
     "nome": "alterar a compra",
-    "requisicao": "PUT /api/carteira/operacoes/8",
+    "requisicao": "PUT /api/carteira/operacoes/{{idCompra}}",
     "status": 204,
     "banco": {
       "OperacaoAtivo": {
         "alteradas": [
           {
             "chave": {
-              "Id": 8
+              "Id": 12001
             },
             "colunas": {
               "Observacao": {
@@ -2071,15 +2071,15 @@
   },
   {
     "nome": "as operações depois da alteração",
-    "requisicao": "GET /api/carteira/ativos/6/operacoes",
+    "requisicao": "GET /api/carteira/ativos/{{idAtivoNovo}}/operacoes",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": [
       {
-        "ativoId": 6,
+        "ativoId": 12001,
         "cambio": 1.0,
         "data": "2026-10-02",
-        "id": 9,
+        "id": 12002,
         "moeda": "BRL",
         "observacao": "Venda parcial",
         "origem": 1,
@@ -2095,10 +2095,10 @@
         "variacaoPreco": null
       },
       {
-        "ativoId": 6,
+        "ativoId": 12001,
         "cambio": 1.0,
         "data": "2026-10-01",
-        "id": 8,
+        "id": 12001,
         "moeda": "BRL",
         "observacao": "Corrigida",
         "origem": 1,
@@ -2117,7 +2117,7 @@
   },
   {
     "nome": "alterar deixando a venda maior",
-    "requisicao": "PUT /api/carteira/operacoes/8",
+    "requisicao": "PUT /api/carteira/operacoes/{{idCompra}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2126,7 +2126,7 @@
   },
   {
     "nome": "alterar trocando o ativo",
-    "requisicao": "PUT /api/carteira/operacoes/8",
+    "requisicao": "PUT /api/carteira/operacoes/{{idCompra}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2149,7 +2149,7 @@
   },
   {
     "nome": "alterar com a data no futuro",
-    "requisicao": "PUT /api/carteira/operacoes/8",
+    "requisicao": "PUT /api/carteira/operacoes/{{idCompra}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2158,7 +2158,7 @@
   },
   {
     "nome": "alterar com a quantidade zero",
-    "requisicao": "PUT /api/carteira/operacoes/8",
+    "requisicao": "PUT /api/carteira/operacoes/{{idCompra}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2174,7 +2174,7 @@
   },
   {
     "nome": "excluir a compra de que a venda depende",
-    "requisicao": "DELETE /api/carteira/operacoes/8",
+    "requisicao": "DELETE /api/carteira/operacoes/{{idCompra}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2183,17 +2183,17 @@
   },
   {
     "nome": "excluir a venda",
-    "requisicao": "DELETE /api/carteira/operacoes/9",
+    "requisicao": "DELETE /api/carteira/operacoes/{{idVenda}}",
     "status": 204,
     "banco": {
       "OperacaoAtivo": {
         "removidas": [
           {
-            "AtivoId": 6,
+            "AtivoId": 12001,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-02",
-            "Id": 9,
+            "Id": 12002,
             "Observacao": "Venda parcial",
             "Origem": 1,
             "PluggyTransacaoId": null,
@@ -2209,17 +2209,17 @@
   },
   {
     "nome": "excluir a compra",
-    "requisicao": "DELETE /api/carteira/operacoes/8",
+    "requisicao": "DELETE /api/carteira/operacoes/{{idCompra}}",
     "status": 204,
     "banco": {
       "OperacaoAtivo": {
         "removidas": [
           {
-            "AtivoId": 6,
+            "AtivoId": 12001,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-01",
-            "Id": 8,
+            "Id": 12001,
             "Observacao": "Corrigida",
             "Origem": 1,
             "PluggyTransacaoId": null,
@@ -2249,14 +2249,14 @@
   },
   {
     "nome": "alterar o ativo",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 204,
     "banco": {
       "Ativo": {
         "alteradas": [
           {
             "chave": {
-              "Id": 6
+              "Id": 12001
             },
             "colunas": {
               "Nome": {
@@ -2275,14 +2275,14 @@
   },
   {
     "nome": "alterar o ativo para preço manual",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 204,
     "banco": {
       "Ativo": {
         "alteradas": [
           {
             "chave": {
-              "Id": 6
+              "Id": 12001
             },
             "colunas": {
               "FonteCotacao": {
@@ -2317,21 +2317,21 @@
   },
   {
     "nome": "as operações com o preço manual",
-    "requisicao": "GET /api/carteira/ativos/6/operacoes",
+    "requisicao": "GET /api/carteira/ativos/{{idAtivoNovo}}/operacoes",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": []
   },
   {
     "nome": "tirar o preço manual",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 204,
     "banco": {
       "Ativo": {
         "alteradas": [
           {
             "chave": {
-              "Id": 6
+              "Id": 12001
             },
             "colunas": {
               "PrecoManual": {
@@ -2346,7 +2346,7 @@
   },
   {
     "nome": "preço manual sem o preço",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2355,7 +2355,7 @@
   },
   {
     "nome": "tipo de ativo fora da lista",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2364,7 +2364,7 @@
   },
   {
     "nome": "segmento fora da lista",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2396,7 +2396,7 @@
   },
   {
     "nome": "nome longo demais",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2412,7 +2412,7 @@
   },
   {
     "nome": "preço negativo no ativo",
-    "requisicao": "PUT /api/carteira/ativos/6",
+    "requisicao": "PUT /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2428,7 +2428,7 @@
   },
   {
     "nome": "excluir o ativo",
-    "requisicao": "DELETE /api/carteira/ativos/6",
+    "requisicao": "DELETE /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 204,
     "banco": {
       "Ativo": {
@@ -2436,7 +2436,7 @@
           {
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "FonteCotacao": "Manual",
-            "Id": 6,
+            "Id": 12001,
             "Moeda": "BRL",
             "Nome": null,
             "PrecoAnterior": null,
@@ -2453,7 +2453,7 @@
   },
   {
     "nome": "excluir um ativo que não existe",
-    "requisicao": "DELETE /api/carteira/ativos/6",
+    "requisicao": "DELETE /api/carteira/ativos/{{idAtivoNovo}}",
     "status": 404,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -2713,7 +2713,7 @@
           "diferencaSelic": -9.04,
           "dividendYield12Meses": null,
           "fonteCotacao": null,
-          "id": 7,
+          "id": 12002,
           "lucroRealizado": 0,
           "moeda": "USD",
           "nome": null,
@@ -2925,7 +2925,7 @@
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2025-11-03",
-            "Id": 12,
+            "Id": 12005,
             "Observacao": "Importada do extrato",
             "Origem": 3,
             "PluggyTransacaoId": null,
@@ -3140,7 +3140,7 @@
         "ativoId": 1,
         "cambio": 1.0,
         "data": "2025-11-03",
-        "id": 12,
+        "id": 12005,
         "moeda": "BRL",
         "observacao": "Importada do extrato",
         "origem": 3,
@@ -3394,7 +3394,7 @@
           "data": "2025-11-03",
           "dyAtual12Meses": 2.12,
           "dyNaCompra": null,
-          "operacaoId": 12,
+          "operacaoId": 12005,
           "origem": 3,
           "precoAtual": 158.32,
           "precoPago": 150.123457,

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -59,6 +60,10 @@ type Caso struct {
 }
 
 var nomeVariavel = regexp.MustCompile(`\{\{([A-Za-z0-9_.-]+)\}\}`)
+
+// numeroCapturado é `"{{#nome}}"` num corpo: o arquivo de casos tem de ser JSON válido, então o número vai entre aspas
+// e sai sem elas (`"contaId": "{{#idCartao}}"` vira `"contaId": 8`).
+var numeroCapturado = regexp.MustCompile(`"\{\{#([A-Za-z0-9_.-]+)\}\}"`)
 
 // lerCasos lê todos os casos/*.json, em ordem de nome.
 func lerCasos(pasta string) ([]string, map[string]ArquivoCasos, error) {
@@ -118,9 +123,22 @@ func validarArquivo(a ArquivoCasos) error {
 	return nil
 }
 
-// substituir troca {{nome}} pelo valor capturado num caso anterior.
+// substituir troca {{nome}} pelo valor capturado num caso anterior (e "{{#nome}}" pelo número, sem as aspas).
 func substituir(texto string, variaveis map[string]string) (string, error) {
 	var faltando []string
+	texto = numeroCapturado.ReplaceAllStringFunc(texto, func(m string) string {
+		nome := numeroCapturado.FindStringSubmatch(m)[1]
+		valor, ok := variaveis[nome]
+		if !ok {
+			faltando = append(faltando, nome)
+			return m
+		}
+		if _, err := strconv.ParseInt(valor, 10, 64); err != nil {
+			faltando = append(faltando, nome+" (não é inteiro)")
+			return m
+		}
+		return valor
+	})
 	resultado := nomeVariavel.ReplaceAllStringFunc(texto, func(m string) string {
 		nome := nomeVariavel.FindStringSubmatch(m)[1]
 		valor, ok := variaveis[nome]

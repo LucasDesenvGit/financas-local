@@ -12,13 +12,14 @@ import (
 	_ "modernc.org/sqlite" // driver "sqlite", Go puro
 )
 
-// TabelasComJanela são as tabelas AUTOINCREMENT que mais de um arquivo de casos grava e cujo id nenhum caso escreve à
-// mão num caminho ou corpo. Nas outras (como Transacao), o id já é o do caso, e um caso novo antes desloca o dos
-// seguintes: o caso troca o id literal por `capturar` para entrar aqui.
-var TabelasComJanela = []string{"AuditoriaAcesso", "RegraDescricao"}
+// TabelasComJanela são as tabelas AUTOINCREMENT que mais de um arquivo de casos grava. Cada arquivo começa os ids dela na
+// própria janela, então um caso novo num arquivo não muda os ids dos seguintes. Caso que escreve o id de uma linha criada
+// por outro caso usa `capturar` (README, "Ids estáveis"), nunca o número fixo.
+var TabelasComJanela = []string{"AuditoriaAcesso", "RegraDescricao", "Transacao", "Conta", "Ativo", "OperacaoAtivo", "Holerite"}
 
-// TamanhoDaJanela é quantos ids cada arquivo de casos pode criar por tabela (janelaDeIds).
-const TamanhoDaJanela = 100
+// TamanhoDaJanela é quantos ids cada arquivo de casos pode criar por tabela (janelaDeIds). 1000, e não 100, porque o
+// base.sql já tem 170 transações: a primeira janela (00-auth) tem de começar acima delas.
+const TamanhoDaJanela = 1000
 
 // Foto é o conteúdo do banco num momento: tabela → linhas em ordem de chave primária.
 type Foto map[string]*fotoTabela
@@ -98,8 +99,7 @@ func fotografar(ctx context.Context, db *sql.DB, tabelas []string) (Foto, error)
 	return foto, nil
 }
 
-// janelaDeIds põe o próximo id de cada tabela de TabelasComJanela no começo da janela do arquivo de casos (número*1000
-// + 1000). Sem isso, um caso novo num arquivo desloca os ids de todos os arquivos seguintes e muda os esperados
+// janelaDeIds põe o próximo id de cada tabela de TabelasComJanela no começo da janela do arquivo de casos ((número+1)*TamanhoDaJanela). Sem isso, um caso novo num arquivo desloca os ids de todos os arquivos seguintes e muda os esperados
 // deles. Os ids continuam os de verdade, só que estáveis. Falha se um arquivo anterior estourou a janela.
 func janelaDeIds(ctx context.Context, caminho string, numero int) error {
 	p := url.Values{}

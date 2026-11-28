@@ -13,7 +13,7 @@ A rede de segurança do back-end ([#72](https://github.com/LucasDesenvGit/financ
 | `rodar.sh` | monta o banco, sobe o Go como o serviço instalado, sem rede e com o relógio controlado, e roda o comparador |
 | `*.go` | o gravador e o comparador (Go puro; `go test ./...` roda os testes deles sem servidor) |
 
-Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (205), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (138), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (64, #83), `17-erros` (52) e `90-go` (4, o diagnóstico `/api/go/saude`).
+Hoje: `00-auth` (40 casos), `01-parametros` (14), `02-cambio` (15), `03-cripto` (2), `04-contas` (65), `05-categorias` (33), `06-regras` (38), `07-transacoes` (206), `08-orcamentos` (41), `09-metas` (49), `10-contas-agendadas` (44), `11-investimentos` (138), `12-conferencia-investimentos` (42), `13-painel` (10), `14-relatorios` (29), `15-emprestimos` (2), `16-open-finance` (64, #83), `17-erros` (52) e `90-go` (4, o diagnóstico `/api/go/saude`).
 
 ## Rodar
 
@@ -114,7 +114,7 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 |---|---|
 | `nome` | único no arquivo; liga o caso ao esperado |
 | `metodo`, `caminho` | a requisição; o caminho aceita `{{variavel}}` |
-| `corpo` | enviado como JSON; aceita `{{variavel}}` (entre aspas para texto, sem aspas para número) |
+| `corpo` | enviado como JSON; aceita `{{variavel}}` dentro de um texto e `"{{#variavel}}"` para número (sai sem as aspas) |
 | `corpoTexto` | enviado como está, para JSON quebrado |
 | `sessao` | o "navegador" (cookies próprios); vazio é `principal`, a logada |
 | `novaSessao` | apaga os cookies da sessão antes (navegador recém-aberto) |
@@ -157,7 +157,11 @@ Só o que muda sozinho a cada execução é trocado por um marcador (`normalizar
 
 **Exceção documentada:** em `GET /api/parametros/sistema`, a versão do runtime (`dotNet`) e do sistema operacional, a hora em que o processo subiu (`iniciadoEm`) e o tamanho do arquivo do banco são do ambiente: o caso confere só o tipo (`normalizar`).
 
-Os ids do `AUTOINCREMENT` não viram marcador, mas ficam estáveis: no começo de cada arquivo, o próximo id de `AuditoriaAcesso` e de `RegraDescricao` vai para a janela dele (`(NN+1)*100`, `janelaDeIds` em `banco.go`). Um caso novo no `04-contas` não muda mais o id da auditoria do `07-transacoes`. Passar de 100 linhas numa tabela dentro de um arquivo dá erro no arquivo seguinte (`TamanhoDaJanela`). Ficaram de fora, com o id como vem, as tabelas cujo id um caso escreve à mão no caminho ou no corpo (`Transacao`, `Conta`, `Ativo`, `OperacaoAtivo`, `Holerite`): para entrar na janela, o caso troca o id fixo por `capturar` e a tabela entra em `TabelasComJanela`.
+### Ids estáveis
+
+Os ids do `AUTOINCREMENT` não viram marcador, mas ficam estáveis: no começo de cada arquivo, o próximo id de cada tabela de `TabelasComJanela` (`AuditoriaAcesso`, `RegraDescricao`, `Transacao`, `Conta`, `Ativo`, `OperacaoAtivo`, `Holerite`) vai para a janela dele, `(NN+1)*1000` (`janelaDeIds` em `banco.go`). Um caso novo no `04-contas` não muda os ids do `07-transacoes` nem dos seguintes. Passar de 1000 linhas numa tabela dentro de um arquivo dá erro no arquivo seguinte (`TamanhoDaJanela`; é 1000, e não 100, porque o `base.sql` já tem 170 transações).
+
+Por isso, **caso nenhum escreve à mão o id de uma linha que outro caso criou**: o caso que cria guarda o id (`"capturar": {"idCartao": "/id"}`) e os seguintes usam `{{idCartao}}` no caminho. No corpo, o JSON do arquivo tem de ser válido, então o número vai entre aspas e sai sem elas: `"contaId": "{{#idCartao}}"` vira `"contaId": 8`. O que não devolve o id (a transferência entre contas) ganha um caso de leitura que o captura. Ids de linhas do `base.sql` (`/api/contas/2`, `transacaoId: 41`) continuam fixos.
 
 ## O ambiente no contrato
 
