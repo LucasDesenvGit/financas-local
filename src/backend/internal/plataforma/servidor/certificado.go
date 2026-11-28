@@ -69,6 +69,9 @@ func novoCertificado(agora time.Time, validade time.Duration) (*ecdsa.PrivateKey
 		NotAfter:     agora.Add(validade),
 		KeyUsage:     x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		// Folha, não autoridade: explícito, para nenhum cliente tratar o certificado como CA.
+		BasicConstraintsValid: true,
+		IsCA:                  false,
 	}
 	der, err := x509.CreateCertificate(rand.Reader, modelo, modelo, &chave.PublicKey, chave)
 	if err != nil {

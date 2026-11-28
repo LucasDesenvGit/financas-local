@@ -74,8 +74,8 @@ export const MANUAL: CapituloManual[] = [
         paraQueServe: 'Criar o seu usuário e proteger o acesso ao site.',
         topicos: [
           'Na primeira vez, crie um usuário e uma senha (8 caracteres ou mais).',
-          'Depois, entre com eles. Para sair: menu do usuário (iniciais, no canto superior direito) › “Sair”.',
-          'A sessão termina sozinha depois de um tempo sem uso; é só entrar de novo.'
+          'Depois, entre com eles. “Sair” (menu do usuário, no canto de cima) encerra o acesso em todos os aparelhos.',
+          'A sessão cai depois de 2 h sem uso ou 12 h depois de entrar; é só entrar de novo.'
         ],
         abrir: [{ rotulo: 'Trocar a senha', rota: '/configuracoes', params: { aba: 'seguranca' } }],
         detalhes: [
@@ -1566,9 +1566,9 @@ export const MANUAL: CapituloManual[] = [
           'Cada parâmetro mostra o que faz, a faixa válida e o padrão: sincronização, Painel, segurança do login e por quanto tempo o histórico de acessos fica guardado, orçamentos, metas, transações e erros.',
           'Mude o valor e salve: vale na hora.',
           'Mudar a segurança do login (tentativas antes do bloqueio, tempo de bloqueio e por quanto tempo o histórico de acessos fica guardado) pede a sua senha atual: o campo aparece ao lado de “Salvar parâmetros”. Assim, quem achar o site aberto não afrouxa o bloqueio.',
-          'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.'
+          'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.',
+          '“A senha atual não confere”: a senha digitada não é a de entrar no site. Digite de novo e salve; nada foi gravado.'
         ],
-        erros: ['“A senha atual não confere”: a senha digitada não é a de entrar no site. Digite de novo e salve; nada foi gravado.'],
         abrir: [{ rotulo: 'Abrir a Parametrização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
       },
       {

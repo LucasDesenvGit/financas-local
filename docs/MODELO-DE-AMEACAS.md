@@ -72,7 +72,7 @@ flowchart TB
 
 | | Ameaça | Proteção que existe | O que falta |
 |---|---|---|---|
-| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização, e mudar o bloqueio pede a senha atual, #68 item 8) e limite por minuto (`internal/plataforma/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | Sair não invalida a sessão no servidor (#68, item 3). A senha mínima é de 8 caracteres, sem outra regra (decisão de 27/11/2026) |
+| **Falsificação** | Outro processo tenta entrar como você | Senha com hash PBKDF2, bloqueio por tentativas (padrão de 5 erros e 15 min, ajustável em Parametrização, e mudar o bloqueio pede a senha atual, #68 item 8) e limite por minuto (`internal/plataforma/autenticacao`), cookie `__Host-` `HttpOnly`, `Secure` e `SameSite=Strict` | A senha mínima é de 8 caracteres, sem outra regra (decisão de 27/11/2026) |
 | **Adulteração** | Um site aberto no navegador manda um pedido em seu nome (CSRF), ou aponta um domínio para `127.0.0.1` (DNS rebinding) | Token antifalsificação em todo pedido que grava e `AllowedHosts` restrito | — |
 | **Repúdio** | Negar uma ação feita no site | `AuditoriaAcesso`: login, falhas, bloqueios, senha, parâmetros, credenciais, conexões, alterações em lote nas transações e conferências de investimentos, cada um com o desfazer | A auditoria fica no banco: quem tem o arquivo pode mudá-la |
 | **Vazamento** | O holerite em PDF (CPF, salário) ou a senha dele ficam no disco ou no log (#228) | O PDF e a senha só existem durante a leitura: não são gravados, e o erro e o log não levam texto do PDF; só os valores confirmados vão para o holerite ([ADR 0068](adr/0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md)) | — |
@@ -156,7 +156,7 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 |---|---|
 | 1. Serviço como SYSTEM a partir de pastas alteráveis | Fronteira 5, adulteração |
 | 2. Banco e cópias sem criptografia | Fronteira 5, vazamento |
-| 3. Sair não invalida a sessão no servidor | Fronteira 1, falsificação |
+| 3. Sair não invalida a sessão e a sessão sem teto (resolvido) | Fronteira 1, falsificação |
 | 4. Configuração inicial aberta | Fronteira 1, aumento de privilégio |
 | 5. Certificado confiável para a máquina inteira | Fronteira 1, vazamento |
 | 6. Serviço do Linux sem isolamento | Fronteira 5, aumento de privilégio |

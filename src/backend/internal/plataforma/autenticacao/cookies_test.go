@@ -41,6 +41,28 @@ func TestSessaoAssinada(t *testing.T) {
 	}
 }
 
+// O teto vale desde o login original (Inicio), mesmo com a janela atual ainda aberta; cookie sem Inicio conta do Emitido.
+func TestTetoDaSessao(t *testing.T) {
+	login := time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC)
+	for nome, c := range map[string]struct {
+		s     conteudoSessao
+		agora time.Time
+		vale  bool
+	}{
+		"antes do teto":          {conteudoSessao{Usuario: 1, Inicio: login.Unix()}, login.Add(tetoSessao - time.Minute), true},
+		"no teto":                {conteudoSessao{Usuario: 1, Inicio: login.Unix()}, login.Add(tetoSessao), false},
+		"sem Inicio, do Emitido": {conteudoSessao{Usuario: 1, Emitido: login.Unix()}, login.Add(tetoSessao), false},
+		"sem Inicio, dentro":     {conteudoSessao{Usuario: 1, Emitido: login.Unix()}, login.Add(time.Hour), true},
+	} {
+		t.Run(nome, func(t *testing.T) {
+			c.s.Expira = c.agora.Add(time.Hour).Unix() // a janela atual está aberta
+			if _, ok := lerSessao(chaveDeTeste, valorSessao(chaveDeTeste, c.s), c.agora); ok != c.vale {
+				t.Errorf("valeu=%v, esperado %v", ok, c.vale)
+			}
+		})
+	}
+}
+
 // A renovação deslizante do .NET: só depois da metade da janela.
 func TestRenovacaoDaSessao(t *testing.T) {
 	inicio := time.Date(2026, 10, 15, 1, 0, 0, 0, time.UTC)

@@ -258,6 +258,49 @@ func TestSessaoExpiraERenova(t *testing.T) {
 	n.esperar(t, "GET", "/api/auth/estado", nil, 200, `"autenticado":false`)
 }
 
+// Regra (#68): "Sair" troca o carimbo, então o cookie copiado antes de sair não vale mais (a sessão é um HMAC sem
+// estado). O efeito colateral aceito: os outros aparelhos do usuário também caem.
+func TestSairInvalidaOCookieCopiadoEOutrosAparelhos(t *testing.T) {
+	a := novoAmbiente(t)
+	casa := a.navegador()
+	casa.esperar(t, "POST", "/api/auth/configurar", credenciais{"ana.teste", "Senha-Forte-123"}, 200, `"autenticado":true`)
+	celular := a.navegador()
+	celular.esperar(t, "POST", "/api/auth/entrar", credenciais{"ana.teste", "Senha-Forte-123"}, 200, `"autenticado":true`)
+	copiado := casa.cookie(CookieSessao)
+
+	casa.esperar(t, "POST", "/api/auth/sair", nil, 204, "")
+
+	for nome, cookie := range map[string]string{"cookie copiado": copiado, "outro aparelho": celular.cookie(CookieSessao)} {
+		r, _ := http.NewRequest("GET", a.srv.URL+"/api/auth/auditoria", nil)
+		r.AddCookie(&http.Cookie{Name: CookieSessao, Value: cookie})
+		resp, err := a.srv.Client().Do(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != 401 {
+			t.Errorf("%s depois de sair: %d, esperado 401", nome, resp.StatusCode)
+		}
+	}
+	casa.esperar(t, "POST", "/api/auth/entrar", credenciais{"ana.teste", "Senha-Forte-123"}, 200, `"autenticado":true`)
+}
+
+// Regra (#68): a renovação deslizante tem teto desde o login (12 h): quem fica usando continua, até o teto.
+func TestSessaoDeslizanteTemTeto(t *testing.T) {
+	a := novoAmbiente(t)
+	n := a.navegador()
+	n.esperar(t, "POST", "/api/auth/configurar", credenciais{"ana.teste", "Senha-Forte-123"}, 200, `"autenticado":true`)
+	for i := 0; i < 7; i++ { // 11h40 de uso: cada passo de 100 min renova a janela
+		a.relogio.andar(100 * time.Minute)
+		n.esperar(t, "GET", "/api/auth/estado", nil, 200, `"autenticado":true`)
+	}
+	a.relogio.andar(30 * time.Minute) // 12h10 desde o login, e o cookie renovado ainda não expirou
+	n.esperar(t, "GET", "/api/auth/estado", nil, 200, `"autenticado":false`)
+	if status, _ := n.pedir("GET", "/api/auth/auditoria", nil, false); status != 401 {
+		t.Errorf("passou do teto e ainda vê a auditoria: %d", status)
+	}
+}
+
 // Regra (#328): a autoridade do acesso pelo celular passa sem login, porque o celular a baixa antes de confiar no site e
 // de entrar (é só o certificado público). Aqui o mux não tem a rota: o 404 mostra que ela passou da autenticação.
 func TestAutoridadeDoCelularSemLogin(t *testing.T) {
