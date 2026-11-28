@@ -5,8 +5,9 @@ import { ChaveGlossario } from '../../compartilhado/glossario/glossario';
  * os testes conferem que todo link "Abrir a tela" aponta para uma rota que existe e que toda tela do menu tem seção.
  * Mudou o jeito de usar uma tela? Atualize a seção aqui (checklist do PR em CONTRIBUINDO.md).
  *
- * Linguagem: a de quem usa (Nielsen 2), passos curtos e concretos (Nielsen 10). Nomes de botões e campos entre
- * aspas curvas, exatamente como aparecem na tela.
+ * Linguagem: a de quem usa (Nielsen 2), frases curtas, voz ativa (#733). Nomes de botões e campos entre aspas curvas,
+ * exatamente como aparecem na tela. Cada seção é objetiva: uma linha, o print, até 4 tópicos e o resto em "Mais
+ * detalhes", fechado (divulgação progressiva, ADR 0071).
  */
 export interface LinkManual {
   rotulo: string;
@@ -21,13 +22,16 @@ export interface SecaoManual {
   titulo: string;
   /** Para que serve, em uma frase. */
   paraQueServe: string;
-  passos: string[];
-  /** Print da tela (ADR 0071): `imagens/manual/<id>-claro.webp` e `-escuro.webp`, gerados por `npm run prints:manual`. Complementa os passos, nunca os substitui. */
+  /** Print da tela (ADR 0071): `imagens/manual/<id>-claro.webp` e `-escuro.webp`, gerados por `npm run prints:manual`. Complementa o texto, nunca o substitui. */
   print?: { id: string; alt: string };
+  /** De 1 a 4 tópicos curtos, em lista sem numeração (o quê → onde). */
+  topicos: string[];
+  /** Só quando é passo a passo de verdade e a ordem importa: lista numerada, até 6 itens curtos. */
+  passos?: string[];
   /** "Abrir a tela": leva direto, já filtrada quando faz sentido (detalhe por navegação). */
   abrir?: LinkManual[];
-  dicas?: string[];
-  erros?: string[];
+  /** O resto, em "Mais detalhes" (fechado): teclado, celular, casos raros, o que antes eram "Dicas" e "Erros comuns". A busca também procura aqui. */
+  detalhes?: string[];
   /** Termos do glossário explicados com ⓘ nesta seção. */
   termos?: ChaveGlossario[];
 }
@@ -51,59 +55,64 @@ export const MANUAL: CapituloManual[] = [
         id: 'o-que-e',
         titulo: 'O que é o Finanças Local',
         paraQueServe: 'Um controle financeiro pessoal que roda no seu computador: seus dados ficam com você, não num serviço na internet.',
-        passos: [
-          'O site abre no seu navegador, mas quem responde é um programa instalado no seu computador (o endereço começa com https://localhost ou https://127.0.0.1; no celular, com o acesso pelo celular ligado, é o IP do computador na rede de casa).',
-          'Os dados ficam num arquivo de banco de dados na pasta “dados” da instalação.',
-          'Os extratos dos bancos chegam pelo Open Finance, através do Meu Pluggy, só quando você configura isso.',
-          'Para a internet saem só pedidos de cotação e de taxas (códigos de ativos e de moedas e datas), a conversa com a Pluggy e, no gerenciador, a procura de versão nova no GitHub. Valores e dados pessoais não saem.'
+        topicos: [
+          'O site abre no navegador, mas quem responde é um programa instalado no seu computador.',
+          'Os dados ficam num arquivo, na pasta “dados” da instalação.',
+          'Os extratos chegam pelo Open Finance (Meu Pluggy), só se você configurar.',
+          'Para a internet saem só cotações e taxas; valores e dados pessoais não saem.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
-        dicas: ['Veja o capítulo “Privacidade, backup e atualização” para saber exatamente o que sai do computador.']
+        detalhes: [
+          'O endereço começa com https://localhost ou https://127.0.0.1. No celular, com o acesso pelo celular ligado, é o IP do computador na rede de casa.',
+          'Saem para a internet: pedidos de cotação e de taxas (códigos de ativos e de moedas e datas), a conversa com a Pluggy e, no gerenciador, a procura de versão nova no GitHub.',
+          'Veja o capítulo “Privacidade, backup e atualização” para saber exatamente o que sai do computador.'
+        ]
       },
       {
         id: 'primeiro-acesso',
         titulo: 'Primeiro acesso, entrar e sair',
         paraQueServe: 'Criar o seu usuário e proteger o acesso ao site.',
-        passos: [
-          'Na primeira vez que o site abre, ele pede para criar um usuário e uma senha (pelo menos 8 caracteres).',
-          'Nas próximas vezes, entre com esse usuário e senha.',
-          'Para sair, use o menu do usuário (as iniciais, no canto superior direito) e “Sair”. Isso encerra o acesso em todos os aparelhos (computador e celular): em cada um, é preciso entrar de novo.',
-          'A sessão termina sozinha depois de 2 horas sem uso e, mesmo usando sempre, 12 horas depois de entrar; é só entrar de novo.'
+        topicos: [
+          'Na primeira vez, crie um usuário e uma senha (8 caracteres ou mais).',
+          'Depois, entre com eles. “Sair” (menu do usuário, no canto de cima) encerra o acesso em todos os aparelhos.',
+          'A sessão cai depois de 2 h sem uso ou 12 h depois de entrar; é só entrar de novo.'
         ],
         abrir: [{ rotulo: 'Trocar a senha', rota: '/configuracoes', params: { aba: 'seguranca' } }],
-        erros: ['Muitas senhas erradas seguidas bloqueiam o login por alguns minutos. Espere e tente de novo; o limite e o tempo ficam em Configurações › Parametrização.']
+        detalhes: [
+          'Muitas senhas erradas seguidas bloqueiam o login por alguns minutos. Espere e tente de novo; o limite e o tempo ficam em Configurações › Parametrização.'
+        ]
       },
       {
         id: 'conhecendo-a-tela',
         titulo: 'Conhecendo a tela',
         paraQueServe: 'Saber onde ficam o menu, o status da sincronização e as ferramentas que valem em qualquer tela.',
         print: { id: 'conhecendo-a-tela', alt: 'Menu lateral com os grupos de telas, a barra de cima com Ajuda, avisos e status da sincronização, e o começo do Painel.' },
-        passos: [
-          'À esquerda fica o menu com todas as telas, separadas por assunto: o Painel no topo; Movimentação (Transações, Contas e cartões, Contas a pagar); Planejamento (Orçamentos, Metas); Patrimônio (Investimentos, Empréstimos e financiamentos); Análises (Relatórios, Visão anual, Projeção); Ajustes (Categorias e regras, Configurações); e o Manual no rodapé.',
-          'Clique no nome de um grupo (ou use Enter ou Espaço) para mostrar ou esconder as telas dele. A seta indica se o grupo está aberto (para baixo) ou fechado (para o lado), e vários grupos podem ficar abertos ao mesmo tempo. Na primeira vez, todos vêm abertos; feche os que você não usa. A escolha fica salva neste navegador.',
-          'Ao entrar numa tela, o grupo dela abre sozinho. Se você fechar o grupo da tela em que está, o nome dele fica destacado, com um ponto, para mostrar onde você está.',
-          'No celular, o menu abre pelo botão ☰ no topo. Tocar no nome de um grupo só mostra ou esconde as telas dele; tocar numa tela leva até ela e fecha o menu. Para fechar sem escolher uma tela, toque no ✕, toque fora do menu ou arraste-o para a esquerda.',
-          'No computador, o mesmo botão ☰ esconde o menu para sobrar mais espaço para tabelas e gráficos; clique de novo para ele voltar. A escolha fica salva neste navegador.',
-          'Clicar em “Finanças” (no topo do menu, ou na barra de cima com o menu escondido) leva ao Painel, de qualquer tela.',
-          'Na barra de cima: o status da sincronização (“Atualizado há 2 h”, “Sincronizando…” ou “1 conexão com erro”, que leva às Configurações). Clicar em “Atualizado há…” sincroniza na hora; o aviso do resultado diz quantas transações são novas e quantas mudaram, e “Ver em Transações” abre só elas.',
-          'O sino, também na barra de cima, junta as notificações de qualquer tela: orçamentos estourados e avisos (conta vencida, consentimento vencendo, falha de sincronização, reserva para conferir, erros). O número nele conta o que está pendente. Detalhes em “Painel”, no capítulo das análises.',
-          'O botão do olho esconde todos os valores da tela — útil para mostrar a tela a alguém.',
-          'A calculadora abre no botão ao lado ou com Alt+C.',
-          'No menu do usuário ficam o tema (claro, escuro ou do sistema), as cores do site e o “Sair”.',
-          'O botão “Ajuda” abre este manual na parte que explica a tela em que você está.',
-          'Palavras com ⓘ têm explicação: clique (ou use Enter) no ⓘ para ver.',
-          'Campos de data: digite dd/mm/aaaa (as barras entram sozinhas) ou abra o calendário no botão ao lado. No calendário, ‹ › trocam o mês e « » o ano; para ir longe, clique no título (“outubro de 2026”) e escolha o mês, ou clique de novo (“2026”) e escolha o ano. Esc volta um passo e, nos dias, fecha o calendário.'
+        topicos: [
+          'Menu à esquerda → as telas, em grupos por assunto; clique no nome do grupo para abrir ou fechar.',
+          'Barra de cima → status da sincronização (clique para sincronizar), sino de avisos e “Ajuda”.',
+          'Olho → esconde os valores; calculadora → Alt+C; menu do usuário → tema, cores e “Sair”.',
+          'Palavras com ⓘ → clique para ver a explicação.'
+        ],
+        detalhes: [
+          'Grupos do menu: o Painel no topo; Movimentação (Transações, Contas e cartões, Contas a pagar); Planejamento (Orçamentos, Metas); Patrimônio (Investimentos, Empréstimos e financiamentos); Análises (Relatórios, Visão anual, Projeção); Ajustes (Categorias e regras, Configurações); e o Manual no rodapé.',
+          'Os grupos lembram se estavam abertos, neste navegador. Ao entrar numa tela, o grupo dela abre sozinho; se você o fechar, o nome fica destacado, com um ponto.',
+          'No celular, o menu abre pelo botão ☰. Tocar numa tela leva até ela e fecha o menu; para fechar sem escolher, toque no ✕, fora do menu, ou arraste-o para a esquerda.',
+          'No computador, o botão ☰ esconde o menu para sobrar espaço para tabelas e gráficos. Clicar em “Finanças” leva ao Painel, de qualquer tela.',
+          'Clicar em “Atualizado há…” sincroniza na hora. O aviso diz quantas transações são novas e quantas mudaram, e “Ver em Transações” abre só elas. “1 conexão com erro” leva às Configurações.',
+          'O sino junta as notificações de qualquer tela: orçamentos estourados e avisos (conta vencida, consentimento vencendo, falha de sincronização, erros). O número conta o que está pendente.',
+          'Campos de data: digite dd/mm/aaaa (as barras entram sozinhas) ou abra o calendário. ‹ › trocam o mês e « » o ano; clique no título para escolher o mês e, de novo, o ano. Esc volta um passo.'
         ]
       },
       {
         id: 'por-onde-comecar',
         titulo: 'Por onde começar',
         paraQueServe: 'Uma ordem que deixa os relatórios certos o quanto antes.',
+        topicos: ['Dados primeiro (bancos e contas), depois organização (categorias e regras) e, por fim, planejamento.'],
         passos: [
           'Conecte seus bancos pelo Open Finance (capítulo “Conectar seus bancos”).',
           'Confira as contas e cartões: o banco de cada um e a conta de cada cartão.',
           'Categorize as transações do mês, começando pelas “Sem categoria”.',
-          'Crie regras para o que se repete, para as próximas virem categorizadas.',
+          'Crie regras para o que se repete: as próximas já vêm categorizadas.',
           'Monte os orçamentos (dá para pedir uma sugestão).',
           'Crie suas metas e veja quanto guardar por mês.'
         ],
@@ -123,22 +132,24 @@ export const MANUAL: CapituloManual[] = [
         id: 'o-que-ja-se-acertou',
         titulo: 'O que já se acertou sozinho',
         paraQueServe: 'Saber o que não precisa ser refeito à mão depois da atualização.',
-        passos: [
+        topicos: ['Estorno no cartão (compra devolvida, cashback) deixou de contar como receita e passou a abater o gasto da…'],
+        detalhes: [
           'Estorno no cartão (compra devolvida, cashback) deixou de contar como receita e passou a abater o gasto da categoria.',
           'Pix e TED para outra pessoa contam como despesa ou receita; os que são entre contas suas ficam fora dos gastos.',
           'Pagamento de fatura que o banco mandou como boleto ou “outros” saiu dos gastos quando o crédito do mesmo valor aparece no cartão.',
           'Aplicação e resgate de RDB, CDB e poupança, e a compra e a venda de Méli Dólar, foram para “Investimentos” e não contam mais como gasto nem receita.',
           'A projeção não conta mais as parcelas em dobro, e a fatura do mês do cartão segue o ciclo do banco.',
-          'O lançamento pendente que o banco efetivou com outro código sai na próxima sincronização.'
+          'O lançamento pendente que o banco efetivou com outro código sai na próxima sincronização.',
+          'O que você categorizou à mão não foi mexido: as correções só valem para o que veio automático.'
         ],
-        abrir: [{ rotulo: 'Ver as transações', rota: '/transacoes' }],
-        dicas: ['O que você categorizou à mão não foi mexido: as correções só valem para o que veio automático.']
+        abrir: [{ rotulo: 'Ver as transações', rota: '/transacoes' }]
       },
       {
         id: 'passo-1-sincronizar',
         titulo: '1. Sincronize os bancos',
         paraQueServe: 'Trazer os dados novos que as correções usam: o valor reservado que o banco informa e as pendências que já viraram compra.',
-        passos: [
+        topicos: ['Abra Configurações › Open Finance e clique em “Sincronizar agora”.'],
+        detalhes: [
           'Abra Configurações › Open Finance e clique em “Sincronizar agora”.',
           'Espere a barra de cima mostrar “Atualizado agora”.'
         ],
@@ -148,7 +159,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'passo-2-reservas',
         titulo: '2. Confira as reservas, as caixinhas e o Méli Dólar',
         paraQueServe: 'Fazer o dinheiro guardado entrar certo no patrimônio.',
-        passos: [
+        topicos: ['Abra Investimentos, na aba Reservas.'],
+        detalhes: [
           'Abra Investimentos, na aba Reservas.',
           'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada. A linha “Reservado” com “restante do total do banco” também não se confere: ela se ajusta quando você confere as outras.',
           'Reserva “estimada” ou “para conferir”: clique em “conferir saldo” e digite o valor que o app do banco mostra, do jeito que aparece lá (ex.: 10.123,42).',
@@ -162,7 +174,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'passo-3-trocos',
         titulo: '3. Tire os trocos das compras de FIIs dos rendimentos',
         paraQueServe: 'Fazer os rendimentos dos FIIs baterem com o app da corretora.',
-        passos: [
+        topicos: ['Se o Painel avisa “N créditos de troco ou venda de FIIs e ações contando como rendimento”, clique em…'],
+        detalhes: [
           'Se o Painel avisa “N créditos de troco ou venda de FIIs e ações contando como rendimento”, clique em “Conferir investimentos” no aviso (ou no botão de Investimentos).',
           'Revise a lista “Troco ou venda contando como rendimento” e clique em “Corrigir selecionados”.',
           'Nada muda sem você confirmar, e o aviso tem “Desfazer” por 10 minutos.'
@@ -174,7 +187,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'passo-4-limite',
         titulo: '4. Responda a pergunta do limite do cartão',
         paraQueServe: 'Não tratar como dívida o limite que você tirou do cartão no app.',
-        passos: [
+        topicos: ['Abra Contas e cartões.'],
+        detalhes: [
           'Abra Contas e cartões.',
           'O cartão em que você reduziu o limite no app pergunta “Você reduziu o limite no app?”. Clique em “responder” e em “Sim, ajustei o limite”.',
           'Se a diferença for compra em processamento ou parcela, responda “Não”.'
@@ -186,7 +200,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'passo-5-nome',
         titulo: '5. Informe o seu nome como aparece nos Pix',
         paraQueServe: 'Separar o Pix para outra conta sua do Pix para outra pessoa, quando o banco não informa.',
-        passos: [
+        topicos: ['Abra Configurações › Open Finance.'],
+        detalhes: [
           'Abra Configurações › Open Finance.',
           'Em “Seu nome como aparece nos Pix”, digite o primeiro e o último nome (ex.: como aparece no comprovante) e clique em “Salvar nome”.',
           'As transferências são revistas na hora.'
@@ -197,7 +212,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'passo-6-assinaturas',
         titulo: '6. Cadastre as assinaturas e os débitos automáticos',
         paraQueServe: 'Saber o que cobra em cada cartão e conta todo mês, e ser avisado quando algo muda.',
-        passos: [
+        topicos: ['Abra Contas a pagar e veja as “Sugestões do extrato”: assinaturas nos cartões, débitos automáticos e contas…'],
+        detalhes: [
           'Abra Contas a pagar e veja as “Sugestões do extrato”: assinaturas nos cartões, débitos automáticos e contas que se repetem.',
           'Clique em “Cadastrar” nas que são suas; a forma de cobrança e o texto já vêm preenchidos. “ignorar” tira a sugestão.',
           'Na aba “Assinaturas e recorrentes”, confira onde cada uma cai e quanto vai por mês.'
@@ -211,16 +227,15 @@ export const MANUAL: CapituloManual[] = [
         id: 'passo-7-conferir',
         titulo: '7. Confira com os apps dos bancos',
         paraQueServe: 'Ter certeza de que o site bate com cada banco, e saber por que quando não bate.',
-        passos: [
+        topicos: ['Abra Contas e cartões e clique em “Conferir com o banco”.'],
+        detalhes: [
           'Abra Contas e cartões e clique em “Conferir com o banco”.',
           'Com o app de cada banco aberto, digite o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
-          '“bate”: está certo. Quando não bate, a pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”, com o link “ver” para corrigir.'
-        ],
-        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
-        dicas: [
+          '“bate”: está certo. Quando não bate, a pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”, com o link “ver” para corrigir.',
           'Fatura diferente do app? Veja se o app mostra a dívida total (com as parcelas futuras) ou compras que ainda estão pendentes: as duas aparecem como pista.',
           'Faça isso logo depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia.'
-        ]
+        ],
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }]
       }
     ]
   },
@@ -233,33 +248,36 @@ export const MANUAL: CapituloManual[] = [
         id: 'meu-pluggy',
         titulo: 'Autorizar seus bancos no Meu Pluggy',
         paraQueServe: 'O Open Finance precisa do seu consentimento em cada banco; o Meu Pluggy é o caminho para isso.',
-        passos: [
+        topicos: ['Crie sua conta em meu.pluggy.ai.'],
+        detalhes: [
           'Crie sua conta em meu.pluggy.ai.',
           'Conecte cada banco pelo fluxo oficial do Open Finance: o consentimento é dado no aplicativo do próprio banco.',
-          'O consentimento vale por até 12 meses.'
-        ],
-        dicas: ['O Meu Pluggy atualiza os dados dos bancos mais ou menos uma vez por dia.']
+          'O consentimento vale por até 12 meses.',
+          'O Meu Pluggy atualiza os dados dos bancos mais ou menos uma vez por dia.'
+        ]
       },
       {
         id: 'credenciais',
         titulo: 'Client ID e Client Secret',
         paraQueServe: 'As credenciais que deixam o Finanças Local buscar os seus dados na Pluggy.',
         print: { id: 'credenciais', alt: 'Configurações, aba Open Finance: os campos Client ID e Client Secret e os botões Testar conexão e Salvar.' },
-        passos: [
+        topicos: ['Em dashboard.pluggy.ai, crie uma conta de desenvolvedor.'],
+        detalhes: [
           'Em dashboard.pluggy.ai, crie uma conta de desenvolvedor.',
           'Adicione o conector “MeuPluggy” e crie uma aplicação de desenvolvimento.',
           'Copie o Client ID e o Client Secret da aplicação.',
           'No site, abra Configurações › Open Finance, cole os dois e clique em “Salvar”.',
-          'Clique em “Testar conexão” para confirmar.'
+          'Clique em “Testar conexão” para confirmar.',
+          'O Client Secret fica guardado criptografado e nunca é mostrado de novo. Para trocar, cole o novo; para manter, deixe o campo vazio.'
         ],
-        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }],
-        dicas: ['O Client Secret fica guardado criptografado e nunca é mostrado de novo. Para trocar, cole o novo; para manter, deixe o campo vazio.']
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
       },
       {
         id: 'conexoes',
         titulo: 'Adicionar as conexões (um Item ID por banco)',
         paraQueServe: 'Cada banco autorizado vira uma conexão, e as contas e cartões dele aparecem sozinhos.',
-        passos: [
+        topicos: ['No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize — uma vez para cada…'],
+        detalhes: [
           'No dashboard da Pluggy, na aplicação de demonstração, conecte o “MeuPluggy” e autorize — uma vez para cada banco.',
           'Cada autorização gera um Item ID (aparece no dashboard).',
           'Em Configurações › Open Finance, cole o Item ID no campo “Adicionar conexão” e clique em “Adicionar”.',
@@ -267,19 +285,18 @@ export const MANUAL: CapituloManual[] = [
           'Cada conexão mostra a situação em português: “Atualizada”, “Desatualizada”, “Erro de login no banco” ou “Precisa de ação sua” (aí é preciso entrar no Meu Pluggy). Os botões “Sincronizar”, “Pausar” e “Remover” ficam na própria linha.',
           'Clique em “Sincronizar agora”. Na primeira vez são buscados os últimos meses de histórico.',
           'Confira em Contas e cartões se as contas e cartões apareceram.',
-          'Pelo Meu Pluggy, toda conexão tem o mesmo nome de conector (“MeuPluggy”). O site mostra o banco, tirado das contas da conexão, e o conector ao lado (“via MeuPluggy”).'
-        ],
-        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }, { rotulo: 'Ver as contas', rota: '/contas' }],
-        dicas: [
+          'Pelo Meu Pluggy, toda conexão tem o mesmo nome de conector (“MeuPluggy”). O site mostra o banco, tirado das contas da conexão, e o conector ao lado (“via MeuPluggy”).',
           'Quanto histórico a primeira carga busca fica em Configurações › Parametrização › Sincronização.',
           'A conexão aparece com o nome errado? Escolha o banco certo numa das contas dela, em Contas e cartões › editar.'
-        ]
+        ],
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }, { rotulo: 'Ver as contas', rota: '/contas' }]
       },
       {
         id: 'sincronizacao',
         titulo: 'Sincronização automática',
         paraQueServe: 'Manter as transações em dia sem clicar em nada.',
-        passos: [
+        topicos: ['A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).'],
+        detalhes: [
           'A sincronização roda sozinha de tempos em tempos (padrão: a cada 6 horas).',
           'A cada vez, ela relê os últimos dias (padrão: 30) para pegar o que mudou ou entrou atrasado.',
           'O status aparece na barra de cima: “Atualizado há…”, “Sincronizando…” ou “1 conexão com erro”.',
@@ -294,14 +311,15 @@ export const MANUAL: CapituloManual[] = [
         id: 'consentimento-e-erros',
         titulo: 'Consentimento vencendo e erros de conexão',
         paraQueServe: 'Saber o que fazer quando um banco para de atualizar.',
-        passos: [
+        topicos: ['As notificações (o sino da barra de cima) avisam quando o consentimento de um banco vai expirar (padrão: 30…'],
+        detalhes: [
           'As notificações (o sino da barra de cima) avisam quando o consentimento de um banco vai expirar (padrão: 30 dias antes). Renove no Meu Pluggy.',
           'Se a barra de cima mostrar “1 conexão com erro”, clique nela: ela leva à lista de conexões, com o último erro de cada uma.',
           'Se pedir “ação no Meu Pluggy”, entre no Meu Pluggy e reautorize o banco.',
-          'Detalhes técnicos de falhas ficam em Configurações › Erros.'
+          'Detalhes técnicos de falhas ficam em Configurações › Erros.',
+          'Erro 401 ou 403 ao sincronizar: confira o Client ID e o Client Secret e se o MeuPluggy foi autorizado para aquele banco.'
         ],
-        abrir: [{ rotulo: 'Ver as conexões', rota: '/configuracoes' }, { rotulo: 'Ver os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }],
-        erros: ['Erro 401 ou 403 ao sincronizar: confira o Client ID e o Client Secret e se o MeuPluggy foi autorizado para aquele banco.']
+        abrir: [{ rotulo: 'Ver as conexões', rota: '/configuracoes' }, { rotulo: 'Ver os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }]
       }
     ]
   },
@@ -315,7 +333,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Contas do Open Finance e contas manuais',
         paraQueServe: 'Entender de onde vem o saldo de cada conta e quando criar uma conta à mão.',
         print: { id: 'tipos-de-conta', alt: 'Contas e cartões: resumo de saldo, faturas e dívida, os botões Conferir com o banco e Conta manual, e o início da lista de contas.' },
-        passos: [
+        topicos: ['Contas do Open Finance aparecem sozinhas depois da sincronização; saldo, limite e tipo vêm do banco.'],
+        detalhes: [
           'Contas do Open Finance aparecem sozinhas depois da sincronização; saldo, limite e tipo vêm do banco.',
           'Para dinheiro em espécie, banco sem Open Finance ou um controle separado, use “+ Conta manual”.',
           'Na conta manual você informa o tipo, o saldo inicial e, no cartão, limite, dia de fechamento e de vencimento.',
@@ -332,20 +351,22 @@ export const MANUAL: CapituloManual[] = [
         id: 'banco-da-conta',
         titulo: 'O banco de cada conta (o selo)',
         paraQueServe: 'Reconhecer de relance qual conta e qual cartão é de qual banco.',
-        passos: [
+        topicos: ['Cada conta mostra o selo do banco, reconhecido pelo nome da conta e da instituição.'],
+        detalhes: [
           'Cada conta mostra o selo do banco, reconhecido pelo nome da conta e da instituição.',
           'Se o banco estiver errado (ou não aparecer), clique em “editar” na conta.',
           'No campo “Banco”, escolha o banco certo. “Detectar pelo nome” volta para o reconhecimento automático.',
-          'Para não mostrar banco nenhum, escolha “Outro (sem banco)”.'
+          'Para não mostrar banco nenhum, escolha “Outro (sem banco)”.',
+          'O cartão desenhado fica com a cor do banco; a cor escolhida na conta só vale quando o banco não é identificado.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
-        dicas: ['O cartão desenhado fica com a cor do banco; a cor escolhida na conta só vale quando o banco não é identificado.']
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }]
       },
       {
         id: 'cartao-e-conta',
         titulo: 'Ligar o cartão à conta dele',
         paraQueServe: 'Mostrar de qual conta o cartão é (e de onde a fatura é paga), e o cartão usar o banco da conta.',
-        passos: [
+        topicos: ['Clique em “editar” no cartão.'],
+        detalhes: [
           'Clique em “editar” no cartão.',
           'Em “Conta do cartão”, escolha a conta do mesmo banco.',
           'Salve. O cartão passa a mostrar “da conta …”, e a conta mostra “Cartões: …”.'
@@ -356,7 +377,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'fatura-e-divida',
         titulo: 'Fatura do mês × dívida total',
         paraQueServe: 'Não confundir o que entrou no cartão neste mês com tudo o que você deve nele.',
-        passos: [
+        topicos: ['“Fatura de <mês>” é a fatura do cartão que fecha no mês: as compras desde o fechamento anterior e a parcela…'],
+        detalhes: [
           '“Fatura de <mês>” é a fatura do cartão que fecha no mês: as compras desde o fechamento anterior e a parcela das compras parceladas, menos os estornos. Depois de fechada, vale o total que o banco informou.',
           'Abaixo dela aparecem quando a fatura fecha, quando vence e a situação (paga, fechada ou em aberto). Ela aparece como paga quando o banco informa o pagamento ou quando o pagamento (por exemplo, “Pagamento recebido”) está nas transações do cartão, entre o vencimento anterior e o vencimento dela. Pagar antes do fechamento também conta.',
           'Para ver as faturas de outro mês, use o seletor de mês em “Cartões de crédito” (como no Painel). Muda a “Fatura de <mês>” de cada cartão e o total; saldo, dívida total, limite e “Fatura em aberto” continuam sendo os de hoje. “Voltar para o mês atual” volta. O link “Faturas do mês” do Painel abre esta tela no mesmo mês.',
@@ -374,21 +396,23 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Conferir com o banco',
         paraQueServe: 'Ver se o site bate com o app de cada banco e, quando não bate, por quê.',
         print: { id: 'conferir-banco', alt: 'Conferir com o banco: tabela de contas com o saldo no site, o campo para informar o valor do app do banco e o resultado.' },
-        passos: [
+        topicos: ['Em Contas e cartões, clique em “Conferir com o banco”.'],
+        detalhes: [
           'Em Contas e cartões, clique em “Conferir com o banco”.',
           'Abra o app de cada banco e digite o valor que aparece lá: o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
           'O site compara na hora: “bate”, ou quanto o app (ou o site) mostra a mais.',
           'Quando não bate, aparecem as pistas: quando o banco atualizou, reservas da conta, lançamentos pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”.',
-          'Cada pista tem o link “ver” para a tela com o detalhe. Nada é gravado: os valores digitados ficam só na tela.'
+          'Cada pista tem o link “ver” para a tela com o detalhe. Nada é gravado: os valores digitados ficam só na tela.',
+          'Faça isso depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia, e o app mostra o que aconteceu depois disso.'
         ],
-        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
-        dicas: ['Faça isso depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia, e o app mostra o que aconteceu depois disso.']
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }]
       },
       {
         id: 'limite-reduzido',
         titulo: 'Limite reduzido no app do banco',
         paraQueServe: 'Não confundir o limite que você tirou do cartão no app com dívida.',
-        passos: [
+        topicos: ['Se você reduz o limite no app do banco (por segurança, enquanto não usa), o “limite usado” que o banco…'],
+        detalhes: [
           'Se você reduz o limite no app do banco (por segurança, enquanto não usa), o “limite usado” que o banco informa fica bem maior que a dívida do cartão.',
           'Quando isso acontece, o cartão em Contas e cartões pergunta: “Você reduziu o limite no app?”. Clique em “responder” (ou em “editar”).',
           '“Sim, ajustei o limite”: o site usa o limite que ficou no app, e o cartão mostra “limite reduzido por você no app”.',
@@ -402,14 +426,15 @@ export const MANUAL: CapituloManual[] = [
         id: 'historico-faturas',
         titulo: 'Histórico de faturas',
         paraQueServe: 'Ver as faturas anteriores de um cartão, sem sair da tela.',
-        passos: [
+        topicos: ['No cartão, clique em “Histórico de faturas”.'],
+        detalhes: [
           'No cartão, clique em “Histórico de faturas”.',
           'Aparecem as faturas mais recentes: vencimento, quando fechou, total e situação.',
           'Use “Mostrar mais antigas” para ver o resto.',
-          'No Painel, clicar no nome de um cartão em “Faturas do mês” abre direto este histórico.'
+          'No Painel, clicar no nome de um cartão em “Faturas do mês” abre direto este histórico.',
+          'Cartão manual não tem histórico: as faturas vêm do banco pelo Open Finance.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
-        erros: ['Cartão manual não tem histórico: as faturas vêm do banco pelo Open Finance.']
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }]
       }
     ]
   },
@@ -423,77 +448,80 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Filtrar e buscar',
         paraQueServe: 'Encontrar rápido as transações que importam.',
         print: { id: 'filtros', alt: 'Transações com os botões do topo, os filtros de período, conta, categoria, tipo e lançamento, e a caixa de busca.' },
-        passos: [
-          'Escolha o período em “De” e “Até” (o padrão é o mês atual).',
-          'Filtre por conta, por uma ou várias categorias (inclusive “Sem categoria”), por tipo (despesas, receitas, transferências) e por “Lançamento” (Pix, compras no cartão, pagamento de fatura…).',
-          'Marque “Só emergências” ou “Descrição pouco informativa” quando precisar.',
-          'Digite em “Buscar” e aperte Enter para procurar na descrição, no estabelecimento e na observação.',
-          'Os filtros ativos aparecem em “Filtrando:”; o ✕ de cada um tira só aquele, e “Limpar filtros” tira todos.',
-          'Quem chega de outra tela com uma lista de lançamentos (o “Ver em Transações” do aviso da sincronização, os trocos do Painel, os FIIs) vê a origem em “Filtrando:”, por exemplo “Novas e atualizadas na sincronização: 5 lançamentos”; o ✕ tira esse filtro e mostra o período inteiro.',
-          'Para ordenar a lista, clique no nome da coluna: Data, Categoria, Conta ou Valor (a seta ▲ ▼ mostra qual vale e em que direção); clique de novo para inverter. Em Valor, o maior lançamento vem primeiro, seja gasto ou receita; as sem categoria ficam no fim. A ordem vale para todas as páginas e fica no endereço da página.'
+        topicos: [
+          'Período → “De” e “Até” (o padrão é o mês atual).',
+          'Conta, categorias, tipo e “Lançamento” (Pix, compras no cartão…) → filtros acima da lista.',
+          'Buscar → digite e aperte Enter (descrição, estabelecimento e observação).',
+          'Filtros ativos → ficam em “Filtrando:”; o ✕ tira um, “Limpar filtros” tira todos.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
-        dicas: ['O endereço da página guarda os filtros: dá para salvar nos favoritos ou mandar o link de uma lista filtrada.'],
-        termos: ['tipoLancamento']
+        termos: ['tipoLancamento'],
+        detalhes: [
+          'Marque “Só emergências” ou “Descrição pouco informativa” quando precisar.',
+          'Vindo de outra tela com uma lista de lançamentos (o “Ver em Transações” do aviso da sincronização, os trocos do Painel, os FIIs), a origem aparece em “Filtrando:”, por exemplo “Novas e atualizadas na sincronização: 5 lançamentos”. O ✕ tira esse filtro e mostra o período inteiro.',
+          'Para ordenar, clique no nome da coluna (Data, Categoria, Conta ou Valor); clique de novo para inverter. Em Valor, o maior lançamento vem primeiro, seja gasto ou receita; as sem categoria ficam no fim. A ordem vale para todas as páginas.',
+          'O endereço da página guarda os filtros: dá para salvar nos favoritos ou mandar o link de uma lista filtrada.'
+        ]
       },
       {
         id: 'etiquetas',
         titulo: 'O que cada etiqueta quer dizer',
         paraQueServe: 'Entender cada transação sem precisar abri-la.',
         print: { id: 'etiquetas', alt: 'Lista de transações com data, descrição, etiqueta de tipo, categoria, conta e valor.' },
-        passos: [
-          'Antes do nome, o selo do serviço quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber, TIM, Mercado Livre…); senão, o selo pelo tipo do lançamento (o do Pix em “Pix enviado” e “Pix recebido”; o logo do banco em “Pagamento de fatura”, quando o texto cita o banco); senão, o ícone da categoria (ex.: talheres em Alimentação, maleta em Salário); e, sem categoria, o ícone do tipo, o mesmo da etiqueta. O mesmo selo aparece no Painel e em Contas a pagar.',
-          'A primeira etiqueta diz como o dinheiro entrou ou saiu: “Compra no cartão”, “Pix enviado”, “Entre suas contas”, “Pagamento de fatura”, “Boleto ou débito automático”…',
-          '“fora dos gastos”: a transação não entra nas despesas nem nas receitas (transferência entre contas suas, pagamento de fatura, investimento ou “ignorar nos relatórios”).',
-          '“somando nos gastos” (ou “nas receitas”): um pagamento de fatura ou uma transferência entre contas suas está contando em dobro. Veja como corrigir no capítulo de categorização.',
-          '“2/10”: parcela 2 de 10. “pendente”: ainda não efetivada. “emergência”: gasto marcado como emergência. “open finance”: veio do banco.',
-          'Na coluna Conta, o selo do banco e “cartão de crédito” quando é cartão.'
+        topicos: [
+          'Selo antes do nome → o serviço, o tipo do lançamento ou o ícone da categoria.',
+          'Primeira etiqueta → como o dinheiro se moveu: “Compra no cartão”, “Pix enviado”, “Pagamento de fatura”.',
+          '“fora dos gastos” → não entra em despesas nem em receitas (transferência, fatura, investimento).',
+          '“somando nos gastos” (ou “nas receitas”) → está contando em dobro; veja o capítulo de categorização.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
-        termos: ['tipoLancamento']
+        termos: ['tipoLancamento'],
+        detalhes: [
+          'O selo do serviço aparece quando o site o reconhece pelo texto do banco (Netflix, iFood, Uber…). Senão, vem o selo do tipo (o do Pix; o logo do banco em “Pagamento de fatura”) e, por fim, o ícone da categoria. O mesmo selo aparece no Painel e em Contas a pagar.',
+          '“fora dos gastos” também vale para “ignorar nos relatórios”.',
+          '“somando nos gastos” aparece num pagamento de fatura ou numa transferência entre contas suas.',
+          '“2/10”: parcela 2 de 10. “pendente”: ainda não efetivada. “emergência”: gasto marcado como emergência. “open finance”: veio do banco.',
+          'Na coluna Conta, o selo do banco e “cartão de crédito” quando é cartão.'
+        ]
       },
       {
         id: 'editar-transacao',
         titulo: 'Abrir e ajustar uma transação',
         paraQueServe: 'Corrigir a categoria, dar um nome melhor ou marcar algo especial numa transação.',
-        passos: [
-          'Clique na linha da transação. Pelo teclado, chegue ao nome dela com Tab e aperte Enter.',
-          'Mude a “Descrição” para um nome que você reconheça (a original do banco continua guardada e é ela que as regras usam).',
-          'Escolha a “Categoria” — ou um dos atalhos em “Sugestões”. “Automática (regras)” volta para a categorização automática.',
-          'Use “Observação” para lembrar de algo.',
-          'Marque “Ignorar nos relatórios e totais” ou “Gasto de emergência” quando fizer sentido, e salve.'
+        topicos: [
+          'Abrir → clique na linha (no teclado: Tab até o nome e Enter).',
+          '“Descrição” → um nome que você reconheça; a do banco continua guardada.',
+          '“Categoria” → escolha uma ou use as “Sugestões”; “Automática (regras)” volta às regras.',
+          '“Ignorar nos relatórios e totais” e “Gasto de emergência” → marque se fizer sentido e salve.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
-        erros: ['Transações do Open Finance não podem ser excluídas (o banco mandaria de novo). Para tirar dos totais, marque “Ignorar nos relatórios”.']
+        detalhes: [
+          'A descrição original do banco é a que as regras usam.',
+          'Use “Observação” para lembrar de algo.',
+          'Transações do Open Finance não podem ser excluídas (o banco mandaria de novo). Para tirar dos totais, marque “Ignorar nos relatórios”.'
+        ]
       },
       {
         id: 'renomear',
         titulo: 'Renomear: um nome claro, também para as próximas',
         paraQueServe: 'Trocar descrições como “PIX ENVIADO 12345” por um nome que você entenda daqui a meses, e fazer as próximas iguais já chegarem com ele.',
-        passos: [
-          'Em Transações, clique no ✎ ao lado da descrição (ou use Tab até ele e Enter).',
-          'Escreva o novo nome em “Nova descrição”. A descrição do banco aparece em cima, para comparar.',
-          'Em “Onde usar este nome”, escolha “Só nesta transação” ou “Também nas outras com esta descrição do banco e nas próximas que chegarem”.',
-          'Com “também nas outras”: escolha se a descrição do banco deve “for igual a”, “contiver” ou “começar com” o texto. O site mostra quantas transações vão mudar antes de salvar.',
-          'Salve. O aviso tem “Desfazer”. Na lista, o nome novo fica em cima e a descrição do banco embaixo, menor (“do banco: …”).',
-          'Para voltar, abra o ✎ de novo e use “Voltar à descrição do banco”.',
-          'Várias de uma vez: marque as transações e use “✎ Renomear” na barra de seleção. Com “Nas selecionadas e nas próximas”, o site cria uma regra por descrição do banco.',
-          'Uma regra de descrição também pega o nome dado por outra: “PIX TRANSF 123” → “Aluguel” e, depois, “Aluguel” → “Aluguel apto 12”. Cada regra vale uma vez só para a mesma transação, então não há volta sem fim. Quando uma regra de descrição muda nomes, as regras de categoria valem de novo nessas transações (menos onde você escolheu a categoria à mão).',
-          'As regras ficam em Categorias › Regras automáticas › “Regras de descrição”. “+ Regra de descrição” cria uma direto (com prévia de quantas transações renomeia), e dá para editar, desligar ou excluir.',
-          'Mesma descrição do banco e valores diferentes (ex.: duas contas do condomínio)? Na regra de descrição, preencha “E o valor”: “De” e “Até” (um dos dois basta). Crie uma regra para cada valor, cada uma com o seu nome. A regra com valor vem antes das outras.'
+        topicos: [
+          'Em Transações, clique no ✎ ao lado da descrição e escreva a “Nova descrição”.',
+          '“Onde usar este nome” → só nesta transação, ou também nas outras iguais e nas próximas.',
+          'Salve. O aviso tem “Desfazer”; depois, ✎ › “Voltar à descrição do banco”.',
+          'Várias de uma vez → marque as transações e use “✎ Renomear” na barra de seleção.'
         ],
         abrir: [
           { rotulo: 'Ver as descrições pouco informativas', rota: '/transacoes', params: { generica: '1' } },
           { rotulo: 'Ver as regras de descrição', rota: '/categorias' }
         ],
-        dicas: [
-          'Para PIX e boletos com número que muda todo mês, use “contiver” e deixe só a parte fixa (o site já sugere o texto sem os números).',
-          'A busca acha a transação pelo nome novo e pela descrição do banco. A categoria continua vindo da descrição do banco (as regras de categoria não mudam).',
-          'Uma transação renomeada sai do filtro “Descrição pouco informativa”.',
-          'O valor da regra é sem o sinal: “De R$ 150,00 Até R$ 250,00” pega a despesa de R$ 200,00. Deixe dar uma folga (a conta de R$ 200 pode vir R$ 203 com juros).'
-        ],
-        erros: [
-          'Nome trocado à mão (pelo ✎ “Só nesta” ou pelo formulário da transação) não é mudado por nenhuma regra. Para a regra valer nela, use “Também nas outras” de novo a partir dela.'
+        detalhes: [
+          'Com “também nas outras”, escolha se a descrição do banco deve “for igual a”, “contiver” ou “começar com” o texto. O site mostra quantas transações mudam antes de salvar. Para PIX e boletos com número que muda todo mês, use “contiver” e deixe só a parte fixa.',
+          'Na lista, o nome novo fica em cima e a descrição do banco embaixo, menor (“do banco: …”). A busca acha pelos dois. Uma transação renomeada sai do filtro “Descrição pouco informativa”.',
+          'As regras ficam em Categorias › Regras automáticas › “Regras de descrição”. “+ Regra de descrição” cria uma direto, com prévia de quantas transações renomeia; dá para editar, desligar ou excluir.',
+          'Uma regra de descrição também pega o nome dado por outra, mas cada regra vale uma vez só para a mesma transação: não há volta sem fim. Quando uma regra muda nomes, as regras de categoria valem de novo nessas transações (menos onde você escolheu a categoria à mão).',
+          'Mesma descrição do banco e valores diferentes (duas contas do condomínio)? Preencha “E o valor”, “De” e “Até”, sem sinal (“De R$ 150,00 Até R$ 250,00” pega a despesa de R$ 200,00). Crie uma regra por valor; a com valor vem antes das outras.',
+          'Nome trocado à mão (pelo ✎ “Só nesta” ou pelo formulário) não é mudado por nenhuma regra. Para a regra valer nela, use “Também nas outras” de novo a partir dela.'
         ]
       },
       {
@@ -501,44 +529,47 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Lançamento manual e transferência',
         paraQueServe: 'Registrar o que o banco não informa, como gastos em dinheiro ou uma compra paga direto de um cofrinho.',
         print: { id: 'lancamento-manual', alt: 'Janela Novo lançamento com tipo, conta, data, valor, descrição, categoria, observação e as caixas de marcar.' },
-        passos: [
-          'Crie antes uma conta manual (ex.: “Carteira”) em Contas e cartões.',
-          'Em Transações, clique em “+ Lançamento”: tipo, conta, data, valor, descrição e categoria.',
-          'Compra paga direto de um cofrinho (ex.: no Mercado Livre, no débito de um cofrinho do Mercado Pago)? Em “Conta”, escolha a conta do banco no grupo “Gasto pago por um cofrinho” e o cofrinho no campo que aparece. Entra como despesa e baixa o saldo estimado do cofrinho; o saldo da conta não muda. Na lista, o lançamento leva a etiqueta “cofrinho …”.',
-          'Marque “Pendente” para algo que ainda vai acontecer.',
-          'Para dinheiro que passou de uma conta para outra, use “⇄ Transferência”: ela não conta como gasto nem como receita.'
+        topicos: [
+          'Antes, crie uma conta manual (ex.: “Carteira”) em Contas e cartões.',
+          '“+ Lançamento” → tipo, conta, data, valor, descrição e categoria.',
+          '“Pendente” → marque para algo que ainda vai acontecer.',
+          '“⇄ Transferência” → dinheiro entre contas; não conta como gasto nem como receita.'
         ],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }, { rotulo: 'Criar uma conta manual', rota: '/contas' }],
-        dicas: [
-          'A transferência é lançada só nas contas manuais; o lado do Open Finance chega pela sincronização.',
-          'Só aparecem no grupo do cofrinho as contas do Open Finance que têm cofrinho em Investimentos › Reservas.'
+        detalhes: [
+          'Compra paga direto de um cofrinho (no Mercado Livre, no débito de um cofrinho do Mercado Pago)? Em “Conta”, escolha a conta do banco no grupo “Gasto pago por um cofrinho” e o cofrinho no campo que aparece. Entra como despesa e baixa o saldo estimado do cofrinho; o saldo da conta não muda. Na lista, leva a etiqueta “cofrinho …”.',
+          'Só aparecem nesse grupo as contas do Open Finance que têm cofrinho em Investimentos › Reservas.',
+          'A transferência é lançada só nas contas manuais; o lado do Open Finance chega pela sincronização.'
         ]
       },
       {
         id: 'ignorar-e-emergencia',
         titulo: 'Quando usar “ignorar nos relatórios” e “emergência”',
         paraQueServe: 'Deixar os totais e orçamentos refletindo a sua rotina.',
-        passos: [
-          '“Ignorar nos relatórios”: para o que não é gasto nem receita de verdade (ex.: um reembolso que entrou e saiu, um valor duplicado).',
-          '“Gasto de emergência”: para despesas fora da rotina (conserto, remédio, viagem urgente). Elas continuam nos totais, mas aparecem em laranja nos orçamentos e relatórios.',
-          'Em lote: selecione várias linhas e use “Marcar emergência” na barra que aparece.'
+        topicos: [
+          '“Ignorar nos relatórios” → o que não é gasto nem receita (reembolso que entrou e saiu, valor duplicado).',
+          '“Gasto de emergência” → despesa fora da rotina (conserto, remédio, viagem urgente).',
+          'Em lote → selecione as linhas e use “Marcar emergência” na barra que aparece.'
         ],
-        abrir: [{ rotulo: 'Ver só as emergências', rota: '/transacoes', params: { emergencias: '1' } }]
+        abrir: [{ rotulo: 'Ver só as emergências', rota: '/transacoes', params: { emergencias: '1' } }],
+        detalhes: ['A emergência continua nos totais, mas aparece em laranja nos orçamentos e relatórios.']
       },
       {
         id: 'selecionar-varias',
         titulo: 'Selecionar várias transações',
         paraQueServe: 'Aplicar a mesma ação (categoria, nome, emergência…) a várias transações de uma vez.',
-        passos: [
-          'Clique na caixa à esquerda da linha (ou em qualquer lugar daquela célula). A linha fica destacada.',
-          'Para um intervalo: marque uma, segure Shift e clique em outra. Todas entre as duas são marcadas (ou desmarcadas).',
-          'A caixa do cabeçalho seleciona todas desta página. Com só algumas marcadas, ela mostra um traço; clique nela para marcar todas.',
-          'A barra de ações aparece no topo e acompanha a rolagem. Ela diz quantas estão selecionadas e quantas estão em outras páginas.',
-          'Esc ou “✕ Limpar seleção” desmarcam tudo.'
+        topicos: [
+          'Marcar → caixa à esquerda da linha; com Shift, marca o intervalo entre duas.',
+          'Caixa do cabeçalho → marca todas desta página.',
+          'Barra de ações no topo → diz quantas estão marcadas, inclusive em outras páginas.',
+          'Esc ou “✕ Limpar seleção” → desmarca tudo.'
         ],
-        dicas: ['Trocar de página mantém a seleção: dá para juntar transações de várias páginas e aplicar a ação de uma vez.'],
-        erros: ['Trocar o filtro (busca, período, categoria…) limpa a seleção, com um aviso. Assim nenhuma ação em lote pega uma transação que não aparece no filtro atual.'],
-        abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }]
+        abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
+        detalhes: [
+          'Trocar de página mantém a seleção: dá para juntar transações de várias páginas e aplicar a ação de uma vez.',
+          'Trocar o filtro (busca, período, categoria…) limpa a seleção, com um aviso. Assim nenhuma ação em lote pega uma transação que não aparece no filtro atual.',
+          'Com só algumas marcadas, a caixa do cabeçalho mostra um traço; clique nela para marcar todas.'
+        ]
       }
     ]
   },
@@ -551,19 +582,21 @@ export const MANUAL: CapituloManual[] = [
         id: 'por-que',
         titulo: 'Por que categorizar faz diferença',
         paraQueServe: 'Quase tudo no site depende da categoria de cada transação.',
-        passos: [
+        topicos: ['Gastos por categoria no Painel e nos Relatórios.'],
+        detalhes: [
           'Gastos por categoria no Painel e nos Relatórios.',
           'Orçamentos e a sugestão de orçamentos.',
           'O assistente de metas (a sobra prevista) e a distribuição da renda (50/30/20).',
-          'Categoria errada distorce tudo isso — e “Sem categoria” some das análises por categoria.'
-        ],
-        dicas: ['Uma rotina de 10 minutos por semana revisando “Sem categoria” e “Descrição pouco informativa” mantém tudo em dia.']
+          'Categoria errada distorce tudo isso — e “Sem categoria” some das análises por categoria.',
+          'Uma rotina de 10 minutos por semana revisando “Sem categoria” e “Descrição pouco informativa” mantém tudo em dia.'
+        ]
       },
       {
         id: 'automatica-x-manual',
         titulo: 'Categoria automática × escolhida à mão',
         paraQueServe: 'Saber o que muda sozinho e o que fica como você deixou.',
-        passos: [
+        topicos: ['Ao chegar, cada transação recebe uma categoria automática: primeiro pelas suas regras, depois pela categoria…'],
+        detalhes: [
           'Ao chegar, cada transação recebe uma categoria automática: primeiro pelas suas regras, depois pela categoria que o banco informa.',
           'Quando você escolhe a categoria, ela passa a ser “escolhida à mão” e não muda mais sozinha.',
           'Para devolver à categorização automática, escolha “Automática (regras)”.'
@@ -574,38 +607,41 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Várias de uma vez: “Editar categorias”',
         paraQueServe: 'Arrumar dezenas de transações rápido, sem abrir uma por uma.',
         print: { id: 'modo-edicao', alt: 'Lista de transações no modo de edição, com uma lista suspensa de categoria em cada linha.' },
-        passos: [
+        topicos: ['Em Transações, filtre o que quer arrumar (ex.: o mês, “Sem categoria”).'],
+        detalhes: [
           'Em Transações, filtre o que quer arrumar (ex.: o mês, “Sem categoria”).',
           'Clique em “✎ Editar categorias”. Cada linha ganha um seletor de categoria.',
           'Troque a categoria nas linhas. A linha fica marcada “alterada” — nada é gravado ainda. Esc numa linha desfaz a troca dela.',
           'Para várias linhas iguais: marque-as e use “Trocar nas selecionadas” na barra de seleção.',
           'Para tudo o que está no filtro (inclusive outras páginas): use “Todas as N transações do filtro” e confirme.',
           'Clique em “Salvar alterações (N)”. O aviso que aparece tem “Desfazer”.',
-          'Se várias transações iguais foram para a mesma categoria, a tela oferece “Criar regra” para as próximas.'
+          'Se várias transações iguais foram para a mesma categoria, a tela oferece “Criar regra” para as próximas.',
+          'Mudar de página ou de filtro com trocas não salvas pede confirmação — salve antes para não perder.'
         ],
-        abrir: [{ rotulo: 'Editar as sem categoria', rota: '/transacoes', params: { categoria: 'sem', editar: '1' } }],
-        erros: ['Mudar de página ou de filtro com trocas não salvas pede confirmação — salve antes para não perder.']
+        abrir: [{ rotulo: 'Editar as sem categoria', rota: '/transacoes', params: { categoria: 'sem', editar: '1' } }]
       },
       {
         id: 'sugestoes',
         titulo: 'Sugestões de categoria',
         paraQueServe: 'Deixar o site propor a categoria pelo seu histórico, em grupos de transações parecidas.',
-        passos: [
+        topicos: ['Em Transações, clique em “✦ Sugestões de categoria”.'],
+        detalhes: [
           'Em Transações, clique em “✦ Sugestões de categoria”.',
           'Escolha “Sem categoria” ou “Revisar automáticas”.',
           'Cada grupo mostra quantas transações tem, a sugestão e a confiança (alta, média, palavra-chave).',
           'Ajuste a categoria se precisar, marque a caixa da coluna “Regra” se quiser que as próximas venham sozinhas, e clique em “Aplicar”.',
           '“Aplicar as N de confiança alta” resolve de uma vez os grupos mais certos.',
-          'O texto da regra sai da descrição do banco, que é o que a regra confere. A caixa vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em transações de outras categorias, ou quando outra linha pede a mesma regra para outra categoria. Sem um texto que identifique só aquele grupo (ex.: Pix para pessoas diferentes), não há regra: categorize sem ela.'
+          'O texto da regra sai da descrição do banco, que é o que a regra confere. A caixa vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em transações de outras categorias, ou quando outra linha pede a mesma regra para outra categoria. Sem um texto que identifique só aquele grupo (ex.: Pix para pessoas diferentes), não há regra: categorize sem ela.',
+          'Duas linhas com a mesma regra (ex.: “contém MERCADOLIVRE”) e categorias diferentes: só uma regra pode valer. “Aplicar as N de confiança alta” categoriza as duas, mas não cria essa regra; escolha a categoria certa e crie a regra numa das linhas, ou em Categorias e regras.'
         ],
-        erros: ['Duas linhas com a mesma regra (ex.: “contém MERCADOLIVRE”) e categorias diferentes: só uma regra pode valer. “Aplicar as N de confiança alta” categoriza as duas, mas não cria essa regra; escolha a categoria certa e crie a regra numa das linhas, ou em Categorias e regras.'],
         abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }]
       },
       {
         id: 'zerar-a-fila',
         titulo: 'Zerar a fila: sem categoria e descrição pouco informativa',
         paraQueServe: 'Encontrar o que ainda não tem categoria certa.',
-        passos: [
+        topicos: ['Abra Transações com o filtro “Sem categoria” e categorize (de preferência no “Editar categorias”).'],
+        detalhes: [
           'Abra Transações com o filtro “Sem categoria” e categorize (de preferência no “Editar categorias”).',
           'Marque o filtro “Descrição pouco informativa”: aparecem as transações cuja descrição não diz o que foi (“PIX ENVIADO”, “PAGAMENTO”).',
           'Para cada uma: escolha a categoria, dê um nome melhor na descrição ou clique em “✓ marcar como revisada”.',
@@ -621,7 +657,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'gasto-em-dobro',
         titulo: 'Pagamento de fatura e transferências contando em dobro',
         paraQueServe: 'Evitar que o pagamento da fatura (ou dinheiro passando entre suas contas) apareça como gasto novo.',
-        passos: [
+        topicos: ['As compras do cartão já entram como gasto. Pagar a fatura não é um gasto novo — só tira dinheiro da conta…'],
+        detalhes: [
           'As compras do cartão já entram como gasto. Pagar a fatura não é um gasto novo — só tira dinheiro da conta para o cartão.',
           'Filtre “Lançamento” por “Pagamento de fatura” (ou “Entre suas contas”) e procure a etiqueta “somando nos gastos”.',
           'Entre no “Editar categorias”, use “Todas as N transações do filtro” e escolha a categoria “Pagamento de fatura” (ou “Transferências”).',
@@ -639,7 +676,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'estornos',
         titulo: 'Estornos no cartão',
         paraQueServe: 'Entender por que um estorno aparece em verde, mas não aumenta a sua receita.',
-        passos: [
+        topicos: ['No cartão, todo crédito que não é o pagamento da fatura é estorno: compra devolvida, “crédito de confiança”…'],
+        detalhes: [
           'No cartão, todo crédito que não é o pagamento da fatura é estorno: compra devolvida, “crédito de confiança”, cashback.',
           'O estorno abate o gasto da categoria no mês (ex.: compra de R$ 100 em Compras + estorno de R$ 100 = R$ 0 em Compras) e não conta como receita.',
           'O crédito do pagamento da fatura no cartão (“Pagamento recebido”) fica fora dos gastos, mesmo quando chega sem a categoria “Pagamento de fatura”.',
@@ -661,7 +699,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'o-que-e-regra',
         titulo: 'O que é uma regra',
         paraQueServe: 'Dizer uma vez “descrição contém UBER → Transporte” e nunca mais categorizar isso à mão.',
-        passos: [
+        topicos: ['Uma regra olha a descrição original que veio do banco.'],
+        detalhes: [
           'Uma regra olha a descrição original que veio do banco.',
           'Se a descrição bate com o texto da regra, a transação recebe a categoria da regra.',
           'As regras valem para as transações que chegam e para as que voltam para “Automática”.'
@@ -672,23 +711,25 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Criar uma regra',
         paraQueServe: 'Categorizar sozinho o que se repete.',
         print: { id: 'criar-regra', alt: 'Aba Regras automáticas de Categorias e regras, com o botão Regra, a tabela de regras e a seção de regras de descrição.' },
-        passos: [
+        topicos: ['Abra Categorias e regras › “Regras automáticas” e clique em “+ Regra”.'],
+        detalhes: [
           'Abra Categorias e regras › “Regras automáticas” e clique em “+ Regra”.',
           'Em “Quando a descrição”, escolha “contém”, “começa com” ou “é igual a”.',
           'Em “Texto”, escreva o trecho da descrição (sem acento ou maiúscula fazendo diferença).',
           'O texto vale pela descrição do banco e também pelo nome que a transação tem agora (o dado por uma regra de descrição ou por você): “contém Aluguel” pega a transação que uma regra de descrição renomeou para “Aluguel”.',
           'Escolha a “Categoria”.',
           'Em “Prioridade”, um número menor vence quando duas regras batem com a mesma transação.',
-          'Salve. Para atualizar as transações que já existem, use “Reaplicar regras em todas as transações”.'
+          'Salve. Para atualizar as transações que já existem, use “Reaplicar regras em todas as transações”.',
+          'Também dá para criar regra direto do “Editar categorias” e das “Sugestões de categoria”.'
         ],
-        abrir: [{ rotulo: 'Abrir Categorias e regras', rota: '/categorias' }],
-        dicas: ['Também dá para criar regra direto do “Editar categorias” e das “Sugestões de categoria”.']
+        abrir: [{ rotulo: 'Abrir Categorias e regras', rota: '/categorias' }]
       },
       {
         id: 'reaplicar',
         titulo: 'Reaplicar as regras',
         paraQueServe: 'Atualizar as transações antigas depois de criar ou mudar regras.',
-        passos: [
+        topicos: ['Em Categorias e regras › “Regras automáticas”, clique em “Reaplicar regras em todas as transações”.'],
+        detalhes: [
           'Em Categorias e regras › “Regras automáticas”, clique em “Reaplicar regras em todas as transações”.',
           'Só mudam as transações com categoria automática; as escolhidas à mão ficam como estão.'
         ],
@@ -698,7 +739,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'boas-praticas',
         titulo: 'Boas práticas',
         paraQueServe: 'Regras que acertam e não atrapalham.',
-        passos: [
+        topicos: ['Use um texto curto e específico: o nome da loja ou do serviço (“IFOOD”, “NETFLIX”).'],
+        detalhes: [
           'Use um texto curto e específico: o nome da loja ou do serviço (“IFOOD”, “NETFLIX”).',
           'Evite palavras genéricas como “PIX”, “PAGAMENTO” ou “COMPRA”: elas pegam transações demais.',
           'Antes de criar, procure o texto na busca de Transações para ver o que ele pegaria.',
@@ -710,7 +752,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'categorias-do-banco',
         titulo: 'Categorias que vêm do banco',
         paraQueServe: 'Aproveitar a categoria que o banco já informa, ligada às suas categorias.',
-        passos: [
+        topicos: ['Abra Categorias e regras › “Categorias do banco”.'],
+        detalhes: [
           'Abra Categorias e regras › “Categorias do banco”.',
           'Para cada categoria do Open Finance, escolha a sua categoria correspondente.',
           'Quando nenhuma regra sua bate, vale esse mapeamento.'
@@ -729,7 +772,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Criar e organizar categorias',
         paraQueServe: 'Ter as categorias do seu jeito.',
         print: { id: 'criar-categoria', alt: 'Janela Nova categoria com nome, tipo, subcategoria de, natureza do gasto, cor e a caixa Ativa.' },
-        passos: [
+        topicos: ['Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.'],
+        detalhes: [
           'Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.',
           'Dê um “Nome”, escolha o “Tipo” (despesa, receita ou transferência) e uma cor.',
           'Cada categoria aparece com um ícone na cor dela (talheres em Alimentação, casa em Moradia…) no Painel, nas Análises, em Categorias e regras e em Orçamentos. Categoria criada por você aparece com a primeira letra do nome.',
@@ -742,7 +786,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'tipo-transferencia',
         titulo: 'Por que transferência não conta como gasto',
         paraQueServe: 'Evitar contar o mesmo dinheiro duas vezes.',
-        passos: [
+        topicos: ['Categorias do tipo transferência (como “Transferências” e “Pagamento de fatura”) ficam fora das despesas e…'],
+        detalhes: [
           'Categorias do tipo transferência (como “Transferências” e “Pagamento de fatura”) ficam fora das despesas e receitas.',
           'Dinheiro que só muda de conta não é gasto; o pagamento da fatura não é gasto novo, porque as compras já entraram no cartão.',
           'Na lista de Transações, elas aparecem com a etiqueta “fora dos gastos”.'
@@ -752,7 +797,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'natureza',
         titulo: 'Essencial × estilo de vida (50/30/20)',
         paraQueServe: 'Ver quanto da renda vai para o necessário e quanto para o resto.',
-        passos: [
+        topicos: ['Em cada categoria de despesa, escolha a “Natureza do gasto”: essencial (moradia, mercado, saúde) ou estilo de…'],
+        detalhes: [
           'Em cada categoria de despesa, escolha a “Natureza do gasto”: essencial (moradia, mercado, saúde) ou estilo de vida (lazer, restaurantes).',
           'A Visão anual e a sugestão de orçamentos usam isso na divisão 50/30/20: até 50% para essenciais, 30% para estilo de vida e pelo menos 20% para guardar.',
           'Na Visão anual, clique em Essenciais, Estilo de vida ou Guardado (na barra ou na legenda) para ver em Transações o que forma cada parte.'
@@ -772,7 +818,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Definir os limites do mês',
         paraQueServe: 'Combinar consigo mesmo quanto gastar em cada categoria.',
         print: { id: 'definir-limites', alt: 'Orçamentos do mês: totais orçado, gasto e disponível e a tabela de categorias com o campo de limite de cada uma.' },
-        passos: [
+        topicos: ['Abra Orçamentos e escolha o mês no seletor.'],
+        detalhes: [
           'Abra Orçamentos e escolha o mês no seletor.',
           'Na coluna “Limite (R$)”, digite o limite de cada categoria. Em branco = sem orçamento.',
           'Subcategorias somam no orçamento da categoria pai.',
@@ -784,21 +831,23 @@ export const MANUAL: CapituloManual[] = [
         id: 'sugerir',
         titulo: '✨ Sugerir orçamentos',
         paraQueServe: 'Partir de valores que cabem na sua renda, calculados pelos seus gastos.',
-        passos: [
+        topicos: ['Clique em “✨ Sugerir orçamentos”.'],
+        detalhes: [
           'Clique em “✨ Sugerir orçamentos”.',
           'Cada categoria recebe um valor pela mediana dos últimos 6 meses (sem emergências, compras parceladas e picos isolados), com o motivo.',
           'A soma cabe na renda média menos as parcelas e a meta de poupança; quando não cabe, a tela diz quanto falta.',
           'Revise e edite os valores; categoria que já tem orçamento vem desmarcada.',
-          'Clique em aplicar para gravar os marcados.'
+          'Clique em aplicar para gravar os marcados.',
+          'A meta de poupança e os níveis de uso do cartão ficam em Configurações › Parametrização › Orçamentos.'
         ],
-        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }],
-        dicas: ['A meta de poupança e os níveis de uso do cartão ficam em Configurações › Parametrização › Orçamentos.']
+        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }]
       },
       {
         id: 'acompanhar',
         titulo: 'Acompanhar durante o mês',
         paraQueServe: 'Perceber cedo quando uma categoria está passando do limite.',
-        passos: [
+        topicos: ['A barra de cada categoria mostra quanto do limite já foi.'],
+        detalhes: [
           'A barra de cada categoria mostra quanto do limite já foi.',
           'Laranja quer dizer que passou do limite só por causa de gastos de emergência.',
           'O sino da barra do topo junta os orçamentos estourados num card, com o link para as despesas de cada categoria. O menu “Ocultar” minimiza o card ou o oculta até o mês que vem.',
@@ -818,7 +867,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Criar uma meta',
         paraQueServe: 'Dar nome, valor e prazo a um objetivo.',
         print: { id: 'criar-meta', alt: 'Janela Nova meta com nome, valor alvo, data alvo, conta, valor inicial, quanto guardar por mês, ícone e cor.' },
-        passos: [
+        topicos: ['Abra Metas e clique em “+ Nova meta”.'],
+        detalhes: [
           'Abra Metas e clique em “+ Nova meta”.',
           'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
           'Em “Valor inicial já guardado”, coloque o que você já tem para essa meta.',
@@ -835,7 +885,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'acompanhar-meta',
         titulo: 'Acompanhar o progresso',
         paraQueServe: 'Fazer a meta andar sozinha ou registrar cada aporte.',
-        passos: [
+        topicos: ['Sem conta ligada: registre cada valor guardado em “+ Aporte”.'],
+        detalhes: [
           'Sem conta ligada: registre cada valor guardado em “+ Aporte”.',
           'Com uma conta ligada (“Acompanhar saldo de uma conta”): o progresso é o valor inicial mais o saldo da conta.',
           'Na conta do Mercado Pago, dá para escolher um cofrinho (reserva): o progresso usa o saldo dele.',
@@ -847,7 +898,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'quanto-guardar',
         titulo: 'Prioridade e quanto guardar por mês',
         paraQueServe: 'Saber quanto guardar este mês em cada meta, pelo dinheiro que de fato entra e sai, contando a fatura do cartão.',
-        passos: [
+        topicos: ['Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence −…'],
+        detalhes: [
           'Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence − outras despesas) e, numa caixa em destaque, quanto guardar no total (e o limite, quando houver).',
           'Em “Guardar X% da sobra”, escolha quanto da sobra vai para as metas; o resto fica livre para imprevistos.',
           'Use ↑ e ↓ em cada meta para definir a prioridade.',
@@ -856,20 +908,19 @@ export const MANUAL: CapituloManual[] = [
           'Na meta em que você disse “Quanto vou guardar por mês”, o plano guarda esse valor todo mês, antes das outras e pela prioridade, mas nunca mais do que a parte da sobra que vai para as metas: se num mês não der, um aviso amarelo diz quanto dá e o resto fica para os meses seguintes.',
           'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
           '“Plano mês a mês” mostra os próximos 5 meses e para no mês em que a meta é alcançada; “Mostrar mais” acrescenta 5 de cada vez, até 12, e “Mostrar menos” volta aos 5. “Como calculei” explica a conta.',
-          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ Aporte” muda o gráfico, e embaixo ficam os últimos aportes, com a data e a hora. A escala acompanha os aportes: todos no mesmo dia, um ponto por aporte, na hora e minuto; todos no mesmo mês, um ponto por dia; em meses diferentes, mês a mês, com o plano. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.'
-        ],
-        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
-        termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas'],
-        dicas: [
+          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ Aporte” muda o gráfico, e embaixo ficam os últimos aportes, com a data e a hora. A escala acompanha os aportes: todos no mesmo dia, um ponto por aporte, na hora e minuto; todos no mesmo mês, um ponto por dia; em meses diferentes, mês a mês, com o plano. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.',
           'Dinheiro que vai para cofrinho ou investimento precisa estar como transferência; lançado como despesa, ele diminui a sobra.',
           'O valor de “Consigo guardar” é só uma simulação: para valer, registre o aporte na meta.'
-        ]
+        ],
+        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
+        termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas']
       },
       {
         id: 'ideias-de-metas',
         titulo: 'Ideias de metas (e como definir valor e prazo)',
         paraQueServe: 'Começar por objetivos que costumam fazer diferença.',
-        passos: [
+        topicos: ['Reserva de emergência: de 3 a 6 meses dos seus gastos essenciais (veja a média na Visão anual). Sem data…'],
+        detalhes: [
           'Reserva de emergência: de 3 a 6 meses dos seus gastos essenciais (veja a média na Visão anual). Sem data, prioridade 1.',
           'Quitar o cartão ou um empréstimo: o valor da dívida total; prazo curto, porque juros de cartão crescem rápido.',
           'Viagem: o custo estimado (passagem, hospedagem, dia a dia) e a data da viagem.',
@@ -891,7 +942,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Cadastrar uma conta a pagar',
         paraQueServe: 'Ser lembrado dos vencimentos no Painel.',
         print: { id: 'cadastrar-conta', alt: 'Janela Nova conta a pagar com descrição, valor, vencimento, recorrência, categoria, como é cobrada e conta de pagamento.' },
-        passos: [
+        topicos: ['Abra Contas a pagar e clique em “+ Nova conta”.'],
+        detalhes: [
           'Abra Contas a pagar e clique em “+ Nova conta”.',
           'Informe a descrição, o valor, o “Próximo vencimento” e a recorrência (mensal, anual ou única).',
           'Para conta que acaba (escola até dezembro, parcelas de um curso), preencha “Até (opcional)” ou “quantos pagamentos faltam”.',
@@ -905,21 +957,23 @@ export const MANUAL: CapituloManual[] = [
         id: 'cobrada-sozinha',
         titulo: 'Assinaturas e débitos automáticos (cobrados sozinhos)',
         paraQueServe: 'Saber qual assinatura cai em qual cartão e qual débito automático sai de qual conta, sem precisar clicar em “Pagar”.',
-        passos: [
+        topicos: ['No cadastro, escolha “débito automático” ou “no cartão de crédito” e preencha o “Texto da cobrança no…'],
+        detalhes: [
           'No cadastro, escolha “débito automático” ou “no cartão de crédito” e preencha o “Texto da cobrança no extrato”: o que a descrição do banco contém (ex.: NETFLIX).',
           'Quando a cobrança com esse texto chega no extrato, a conta se dá como paga sozinha: o último pagamento vai para a data dela e o vencimento avança.',
           'Por isso a conta cobrada sozinha não tem o botão “Pagar”. Sem o texto, ela continua com o “Pagar”.',
           'A lista mostra, em cada conta, como ela é cobrada e onde cai.',
-          'O que cai no cartão não aparece nos “Próximos vencimentos” do Painel: entra na fatura, que já está lá.'
+          'O que cai no cartão não aparece nos “Próximos vencimentos” do Painel: entra na fatura, que já está lá.',
+          'O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
-        dicas: ['O texto vale pela descrição original do banco: renomear a transação (Transações › renomear) não atrapalha.']
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
       },
       {
         id: 'pago-com-cofrinho',
         titulo: 'Conta paga com um cofrinho',
         paraQueServe: 'Registrar a conta que o banco paga direto com o dinheiro de um cofrinho (por exemplo, o débito automático pelo “Emergência” no Mercado Pago). Esse pagamento não passa pela conta e não chega pelo Open Finance.',
-        passos: [
+        topicos: ['No cadastro, escolha a conta de pagamento do Open Finance onde fica o cofrinho. Aparece o campo “Pago com o…'],
+        detalhes: [
           'No cadastro, escolha a conta de pagamento do Open Finance onde fica o cofrinho. Aparece o campo “Pago com o cofrinho”.',
           'Em “Pago com o cofrinho”, escolha o cofrinho pelo nome. Se ele ainda não aparece na lista, use “Outro…” e digite o nome como está no app do banco. Para o dinheiro sair da conta, escolha “Nenhum”.',
           'Com “débito automático”, o site lança a despesa sozinho no dia do vencimento, com o valor e a categoria da conta a pagar, e o vencimento avança. Com “paga à mão”, o “Pagar” já vem com o cofrinho.',
@@ -928,17 +982,18 @@ export const MANUAL: CapituloManual[] = [
           'Na lista aparece “paga pelo cofrinho … em …”. Use “ajustar valor” quando a conta veio diferente (luz, água) e “desfazer” se ela não foi paga assim. Desfeita a baixa automática, o site não lança de novo aquele vencimento sozinho: use “Pagar” se ela foi paga.',
           'Se a cobrança chegar pelo extrato mesmo assim (o cofrinho estava sem saldo e o banco tirou da conta), com o “Texto da cobrança no extrato”, vale a do banco e a despesa do site sai sozinha.',
           'Não marcou o cofrinho e o débito automático não apareceu? Depois de uma sincronização sem erro, com os dados do banco já de depois do vencimento, o aviso “não veio” pergunta “Foi paga com um cofrinho?”. Se a cobrança chegar pelo extrato depois mesmo assim, vale a do banco, e a despesa pelo cofrinho sai sozinha. O botão abre o “Pagar” com o cofrinho e a data do vencimento, lança a despesa e, marcado “Usar este cofrinho nas próximas”, guarda o “Pago com”.',
-          'O último pagamento ficou sem a despesa (dado antes de marcar o cofrinho)? A conta mostra “o pagamento de … está sem a despesa” com “lançar pelo cofrinho”, que lança no valor da conta a pagar.'
+          'O último pagamento ficou sem a despesa (dado antes de marcar o cofrinho)? A conta mostra “o pagamento de … está sem a despesa” com “lançar pelo cofrinho”, que lança no valor da conta a pagar.',
+          'Se o cofrinho mudar de nome no app do banco, a conta a pagar avisa “não encontrado”: edite e escolha o novo nome.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
-        dicas: ['Se o cofrinho mudar de nome no app do banco, a conta a pagar avisa “não encontrado”: edite e escolha o novo nome.']
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
       },
       {
         id: 'assinaturas-recorrentes',
         titulo: 'Assinaturas e recorrentes: onde cada cobrança cai',
         paraQueServe: 'Ver de uma vez qual assinatura cai em qual cartão e qual débito automático sai de qual conta, e quanto vai por mês.',
         print: { id: 'assinaturas-recorrentes', alt: 'Aba Assinaturas e recorrentes de Contas a pagar, com os totais por mês e por ano e as contas em que cada cobrança cai.' },
-        passos: [
+        topicos: ['Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.'],
+        detalhes: [
           'Em Contas a pagar, abra a aba “Assinaturas e recorrentes”.',
           'No topo: quanto vai por mês e por ano nas cobranças que se repetem (a anual entra dividida por 12).',
           'Embaixo, um bloco por cartão ou conta, com o selo do banco, o total por mês e cada cobrança: como é cobrada, o dia, a última cobrança e o valor.',
@@ -947,16 +1002,17 @@ export const MANUAL: CapituloManual[] = [
           'Para achar onde cai uma assinatura, digite o nome em “Onde cai…?” (ex.: netflix).',
           'Filtre por conta ou cartão e pela forma de cobrança; “Mostrar as encerradas” traz também as que acabaram. Os filtros aparecem embaixo, com ✕ para tirar.',
           '“ver as cobranças” abre Transações com as cobranças do último ano, na conta ou cartão dela.',
-          'Em Contas e cartões, cada cartão e conta mostra a linha “N assinaturas · R$ X/mês”, que abre esta aba já filtrada.'
+          'Em Contas e cartões, cada cartão e conta mostra a linha “N assinaturas · R$ X/mês”, que abre esta aba já filtrada.',
+          'Trocou de cartão? Filtre pelo cartão antigo para ver o que ainda cobra nele e precisa ser trocado nos serviços.'
         ],
-        abrir: [{ rotulo: 'Abrir Assinaturas e recorrentes', rota: '/contas-a-pagar', params: { aba: 'recorrentes' } }],
-        dicas: ['Trocou de cartão? Filtre pelo cartão antigo para ver o que ainda cobra nele e precisa ser trocado nos serviços.']
+        abrir: [{ rotulo: 'Abrir Assinaturas e recorrentes', rota: '/contas-a-pagar', params: { aba: 'recorrentes' } }]
       },
       {
         id: 'avisos-recorrentes',
         titulo: 'Avisos das recorrentes',
         paraQueServe: 'Saber quando uma cobrança que se repete não veio, mudou de cartão, mudou de valor, ou cai num cartão que você arquivou.',
-        passos: [
+        topicos: ['Os avisos aparecem no topo de Contas a pagar, com a ação ao lado quando dá para resolver no site.'],
+        detalhes: [
           'Os avisos aparecem no topo de Contas a pagar, com a ação ao lado quando dá para resolver no site.',
           '“Não veio”: a cobrança automática passou 5 dias do vencimento e não apareceu no extrato. Pode ter sido cancelada, ou o cartão recusou. Também aparece nas notificações (o sino da barra de cima).',
           '“Mudou de cartão”: a última cobrança veio em outra conta ou cartão. “Atualizar o catálogo” passa a conta a pagar para lá.',
@@ -970,7 +1026,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'pagar',
         titulo: 'Registrar o pagamento',
         paraQueServe: 'Marcar como paga e já ir para o próximo vencimento.',
-        passos: [
+        topicos: ['Clique em “Pagar” na conta.'],
+        detalhes: [
           'Clique em “Pagar” na conta.',
           'Confira a data. Se a conta de pagamento for manual, ou se a conta é paga com um cofrinho, dá para lançar a despesa junto.',
           'Confirme: o vencimento avança um mês (ou um ano). No último pagamento antes da data limite, a conta é encerrada sozinha.'
@@ -981,7 +1038,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'sugestoes-extrato',
         titulo: 'Sugestões do extrato',
         paraQueServe: 'Cadastrar em um clique os pagamentos que se repetem todo mês (ou todo ano).',
-        passos: [
+        topicos: ['Em “Sugestões do extrato”, aparecem boletos, débitos automáticos e Pix que se repetem e ainda não estão na…'],
+        detalhes: [
           'Em “Sugestões do extrato”, aparecem boletos, débitos automáticos e Pix que se repetem e ainda não estão na lista.',
           'Também aparecem as assinaturas dos cartões: a mesma cobrança, todo mês, com o valor igual (até 5% de diferença nas últimas). Parcelas e gastos frequentes (mercado, aplicativo de corrida) ficam de fora.',
           'Assinatura anual aparece quando o histórico importado tem as duas últimas cobranças, com um ano de diferença. Se não tiver, cadastre à mão.',
@@ -991,29 +1049,28 @@ export const MANUAL: CapituloManual[] = [
           'Pode trocar o nome ao cadastrar (ex.: “PIX ENVIADO LIVEPIX LTDA” vira “Manwha”): a conta guarda de qual pagamento do banco ela veio, e a sugestão não volta.',
           'Conta que você cadastrou à mão também tira a sugestão, quando o valor (até 15% de diferença), o dia do vencimento (até 3 dias) e a conta batem.',
           'Se não der para ter certeza (duas contas parecidas, ou a conta a pagar sem a conta escolhida), a sugestão mostra “parece ser …”. Clique em “é a mesma” para ligar as duas: a sugestão some e não volta.',
-          'Conta em débito automático ou no cartão que dá baixa sozinha também fica ligada ao pagamento do banco na primeira cobrança.'
+          'Conta em débito automático ou no cartão que dá baixa sozinha também fica ligada ao pagamento do banco na primeira cobrança.',
+          'Clicou em “é a mesma” por engano? Use “Desfazer” no aviso que aparece logo depois: a sugestão volta. Excluir a conta a pagar também a traz de volta.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }],
-        erros: ['Clicou em “é a mesma” por engano? Use “Desfazer” no aviso que aparece logo depois: a sugestão volta. Excluir a conta a pagar também a traz de volta.']
+        abrir: [{ rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }]
       },
       {
         id: 'mesmo-nome-valores-diferentes',
         titulo: 'Duas contas com a mesma descrição do banco',
         paraQueServe: 'Separar cobranças que chegam do banco com o mesmo nome e só mudam no valor, como duas contas do condomínio.',
-        passos: [
+        topicos: ['Em Categorias e regras › Regras automáticas › “Regras de descrição”, clique em “+ Regra de descrição”.'],
+        detalhes: [
           'Em Categorias e regras › Regras automáticas › “Regras de descrição”, clique em “+ Regra de descrição”.',
           'Em “Texto”, escreva a descrição do banco (ex.: CONDOMINIO). Em “E o valor”, a faixa da primeira conta (ex.: De R$ 800,00 Até R$ 900,00). Em “Mostrar como”, o nome dela (ex.: “Condomínio — taxa”). Salve.',
           'Repita para a outra conta, com a faixa e o nome dela (ex.: Até R$ 250,00, “Condomínio — fundo de reserva”).',
           'Em Contas a pagar, as “Sugestões do extrato” passam a mostrar as duas separadas, cada uma com o seu nome e o texto da cobrança igual a ele.',
-          'Já tinha cadastrado as contas? Abra cada uma e troque o “texto da cobrança” pelo nome da regra (ex.: CONDOMINIO — TAXA). Assim a baixa sozinha e os avisos não confundem uma com a outra.'
+          'Já tinha cadastrado as contas? Abra cada uma e troque o “texto da cobrança” pelo nome da regra (ex.: CONDOMINIO — TAXA). Assim a baixa sozinha e os avisos não confundem uma com a outra.',
+          'Com um texto da cobrança que as duas têm (ex.: só CONDOMINIO), a baixa sozinha e o aviso “aumentou” misturam as duas: use o nome inteiro da regra.',
+          'Conta que mudou de valor e saiu da faixa volta ao nome do banco. Edite a faixa da regra: as transações são renomeadas de novo.'
         ],
         abrir: [
           { rotulo: 'Abrir Categorias e regras', rota: '/categorias' },
           { rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' }
-        ],
-        erros: [
-          'Com um texto da cobrança que as duas têm (ex.: só CONDOMINIO), a baixa sozinha e o aviso “aumentou” misturam as duas: use o nome inteiro da regra.',
-          'Conta que mudou de valor e saiu da faixa volta ao nome do banco. Edite a faixa da regra: as transações são renomeadas de novo.'
         ]
       }
     ]
@@ -1028,29 +1085,32 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Painel',
         paraQueServe: 'Responder “como estou hoje?” e “como está este mês?”.',
         print: { id: 'painel', alt: 'Começo do Painel: a situação de hoje, com patrimônio líquido, saldo em contas, dívida dos cartões e investimentos.' },
-        passos: [
-          '“Situação hoje”: patrimônio, saldo em contas, dívida total nos cartões, investimentos e próximos vencimentos — não muda com o mês escolhido.',
-          'O card “Fatura em aberto” soma a fatura que ainda recebe compras (a do mês, enquanto não fecha; depois, a próxima) dos cartões em que “Fatura no Painel” está ligado, em Contas e cartões; “ver detalhes” mostra a de cada cartão.',
-          '“Mês de …”: receitas, despesas, resultado e faturas do mês; troque o mês no seletor: ‹ › andam um mês; o nome do mês abre os 12 meses, e o ano, em cima deles, abre uma página de 12 anos (como no calendário dos campos de data). Esc volta um nível.',
-          'O sino da barra do topo (em qualquer tela) mostra quantas notificações estão pendentes e, ao clicar, os orçamentos estourados e os avisos. Esc ou um clique fora fecham. Lá, o card “orçamentos estourados” junta as categorias que passaram do limite no mês, as piores primeiro: quanto passou, em reais e em %, e uma barra (a parte clara é o limite). Clique no nome da categoria para ver as despesas dela no mês. “Ver todos” mostra as demais.',
-          'Abaixo dele, o card de avisos mostra o resto do que precisa de atenção (conta vencida, consentimento expirando, falha de sincronização, erros). O que você oculta ou minimiza sai da conta do sino.',
-          'O menu “Ocultar” de cada card tem duas opções, e nas duas fica a linha com o título e “Mostrar” para abrir de novo. “Minimizar” fica lembrado neste navegador: o card continua recolhido sempre que você abrir as notificações, até clicar em “Mostrar”. “Ocultar até o mês que vem” (orçamentos) é lembrado neste navegador, e o card abre de novo sozinho no mês seguinte, se outra categoria estourar, ou se uma já estourada piorar de faixa (passar de 120%, 150%, 200% ou 300%). “Ocultar até aparecer um novo” faz o mesmo com os outros avisos.',
-          '“Mais análises” abre a evolução de 12 meses e as últimas transações. “Últimas transações” vai até hoje; as que têm data depois de hoje (parcelas que o banco já lançou) ficam em “Futuras (N)”, com o ano na data. “ver todas” abre Transações no mesmo recorte.',
-          '“Gastos por categoria” mostra o total do mês no centro da rosca; as categorias menores que 3% ficam juntas na fatia “Outras”. A lista embaixo traz cada categoria com o ícone, uma barrinha do tamanho do gasto, o valor e o %; mostra as 8 maiores, e “Mostrar todas” abre o resto.',
-          'Ao lado, “Orçamentos” mostra cada orçamento do mês com o ícone da categoria e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.',
-          'Clique num total por categoria para ver as transações por trás dele; na fatia “Outras”, abrem todas as despesas do mês.'
+        topicos: [
+          '“Situação hoje” → patrimônio, saldo em contas, dívida dos cartões e vencimentos; não muda com o mês.',
+          '“Mês de …” → receitas, despesas e resultado; troque o mês com ‹ › ou clicando no nome do mês.',
+          '“Gastos por categoria” e “Orçamentos” → clique num valor para ver as transações por trás dele.',
+          'Sino na barra de cima → orçamentos estourados e avisos, de qualquer tela.'
         ],
         abrir: [{ rotulo: 'Abrir o Painel', rota: '/painel' }],
-        termos: ['dividaCartoes', 'patrimonioSemRendaVariavel']
+        termos: ['dividaCartoes', 'patrimonioSemRendaVariavel'],
+        detalhes: [
+          'O card “Fatura em aberto” soma a fatura que ainda recebe compras dos cartões em que “Fatura no Painel” está ligado, em Contas e cartões; “ver detalhes” mostra a de cada cartão.',
+          'Seletor de mês: o nome do mês abre os 12 meses e o ano, em cima deles, abre uma página de 12 anos (como no calendário dos campos de data). Esc volta um nível.',
+          'No sino, “orçamentos estourados” junta as categorias que passaram do limite, as piores primeiro, com quanto passou em reais e em %. Clique no nome da categoria para ver as despesas dela no mês; “Ver todos” mostra as demais. Os avisos trazem o resto (conta vencida, consentimento expirando, falha de sincronização, erros).',
+          'O menu “Ocultar” de cada card tem “Minimizar” (o card fica recolhido neste navegador até você clicar em “Mostrar”) e “Ocultar até o mês que vem” ou “até aparecer um novo”. O card volta sozinho se outra categoria estourar ou se uma já estourada piorar de faixa (120%, 150%, 200% ou 300%). O que você oculta sai da conta do sino.',
+          '“Mais análises” abre a evolução de 12 meses e as últimas transações. As que têm data depois de hoje (parcelas que o banco já lançou) ficam em “Futuras (N)”. “ver todas” abre Transações no mesmo recorte.',
+          '“Gastos por categoria” mostra o total do mês no centro da rosca; as categorias menores que 3% ficam juntas em “Outras”. A lista mostra as 8 maiores; “Mostrar todas” abre o resto. Na fatia “Outras”, o clique abre todas as despesas do mês.',
+          '“Orçamentos” mostra cada orçamento do mês com o ícone da categoria e, no rodapé, o total gasto, o total orçado e quantos passaram do limite.'
+        ]
       },
       {
         id: 'visao-anual',
         titulo: 'Visão anual',
         paraQueServe: 'Responder “como foi o meu ano?”.',
         print: { id: 'visao-anual', alt: 'Visão anual com o seletor de ano e de comparação e os primeiros indicadores de saúde financeira, como taxa de poupança e reserva de emergência.' },
-        passos: [
-          'Poupança acumulada, patrimônio estimado e para onde vai a sua renda (50/30/20).',
-          'Despesas e receitas mês a mês, comparação de categorias com outro ano e o mapa de gastos.',
+        topicos: [
+          'Poupança acumulada, patrimônio estimado e para onde vai a renda (50/30/20).',
+          'Despesas e receitas mês a mês, comparação de categorias com outro ano e mapa de gastos.',
           'Clique nos valores para ver as transações.'
         ],
         abrir: [{ rotulo: 'Abrir a Visão anual', rota: '/anual' }],
@@ -1061,37 +1121,41 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Relatórios',
         paraQueServe: 'Responder “para onde foi o meu dinheiro?”.',
         print: { id: 'relatorios-tela', alt: 'Relatórios com os filtros de período e de visão e os totais de receitas, despesas e saldo do período.' },
-        passos: [
-          'Fluxo de caixa mensal: barras de receitas e despesas de cada mês e, por cima delas, a linha lilás do saldo acumulado, com um ponto em cada mês. O valor de cada ponto está na última coluna da tabela, "Saldo acumulado".',
+        topicos: [
+          'Fluxo de caixa mensal → barras de receitas e despesas e, por cima, a linha lilás do saldo acumulado.',
           'Despesas (ou receitas) por categoria no período.',
-          'Maiores despesas do período. Clique numa delas para abrir Transações no dia e na conta dela, com a despesa destacada.'
+          'Maiores despesas → clique numa para abrir Transações no dia e na conta dela.'
         ],
-        abrir: [{ rotulo: 'Abrir Relatórios', rota: '/relatorios' }]
+        abrir: [{ rotulo: 'Abrir Relatórios', rota: '/relatorios' }],
+        detalhes: ['O valor de cada ponto da linha está na última coluna da tabela, “Saldo acumulado”.']
       },
       {
         id: 'projecao',
         titulo: 'Projeção',
         paraQueServe: 'Responder “quanto vou ter no fim do mês (e nos próximos)?”.',
         print: { id: 'projecao', alt: 'Projeção com a escolha de 3, 6 ou 12 meses, receita e despesa médias, disponível hoje e saldo previsto.' },
-        passos: [
-          'Os meses seguintes usam a média das receitas, a média das despesas à vista e as parcelas já contratadas.',
-          'O mês atual junta o que já aconteceu com a média do que falta.',
-          '“Disponível hoje” é o saldo das contas menos as faturas dos cartões. As parcelas que vencem nos meses seguintes ficam fora dele e entram na despesa do mês em que vencem: cada parcela conta uma vez só.',
-          'Use o gráfico para ver a tendência e a tabela mês a mês para os números.',
-          'Quando o saldo previsto troca de sinal, o mês da virada ganha o selo “saldo volta ao positivo” ou “saldo fica negativo”, e a frase do gráfico diz o mês.',
-          '“Gasto médio por categoria” mostra a média por mês das despesas à vista e, ao lado, o último mês comparado com essa média (em vermelho, mais de 10% acima; em verde, mais de 10% abaixo). Clique no nome da categoria para ver as transações dela nesses meses.'
+        topicos: [
+          'Meses seguintes → média das receitas, média das despesas à vista e parcelas já contratadas.',
+          'Mês atual → o que já aconteceu, mais a média do que falta.',
+          '“Disponível hoje” → saldo das contas menos as faturas dos cartões.',
+          'Gráfico → a tendência; tabela → os números mês a mês.'
         ],
         abrir: [{ rotulo: 'Abrir a Projeção', rota: '/projecao' }],
-        termos: ['sobraPrevista']
+        termos: ['sobraPrevista'],
+        detalhes: [
+          'As parcelas que vencem nos meses seguintes ficam fora do “Disponível hoje” e entram na despesa do mês em que vencem: cada parcela conta uma vez só.',
+          'Quando o saldo previsto troca de sinal, o mês da virada ganha o selo “saldo volta ao positivo” ou “saldo fica negativo”, e a frase do gráfico diz o mês.',
+          '“Gasto médio por categoria” mostra a média por mês das despesas à vista e, ao lado, o último mês comparado com ela (vermelho: mais de 10% acima; verde: mais de 10% abaixo). Clique no nome da categoria para ver as transações dela.'
+        ]
       },
       {
         id: 'como-ler-graficos',
         titulo: 'Como ler os gráficos',
         paraQueServe: 'Tirar a conclusão certa de cada gráfico.',
-        passos: [
+        topicos: [
           'Todo gráfico tem um título, uma frase com a conclusão e uma linha “como ler”.',
           'Com mais de uma série, a legenda diz o que é cada cor.',
-          'Com “ocultar valores” ligado, a frase-resumo também esconde os valores.'
+          'Com “Ocultar valores” ligado, a frase-resumo também esconde os valores.'
         ]
       }
     ]
@@ -1106,7 +1170,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Carteira de renda variável',
         paraQueServe: 'Acompanhar ações, FIIs, ETFs e BDRs com preço médio e proventos.',
         print: { id: 'carteira', alt: 'Investimentos: botões do topo e os resumos de total investido, renda variável, carteira contra a Selic, proventos e Selic.' },
-        passos: [
+        topicos: ['Abra Investimentos e clique em “+ Lançar compra/venda”.'],
+        detalhes: [
           'Abra Investimentos e clique em “+ Lançar compra/venda”.',
           'Informe o código da B3 (ex.: MXRF11), a quantidade, o preço pago e a data.',
           'A carteira mostra preço médio, cotação atual, valorização e proventos.',
@@ -1122,7 +1187,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'importar',
         titulo: 'Importar compras e vendas',
         paraQueServe: 'Não digitar o que já está no extrato ou no Open Finance.',
-        passos: [
+        topicos: ['“⇣ Importar do extrato” procura compras e vendas nas descrições das transações e deixa você escolher o que…'],
+        detalhes: [
           '“⇣ Importar do extrato” procura compras e vendas nas descrições das transações e deixa você escolher o que importar.',
           'Na aba Open Finance, “Registrar compras na carteira” transforma posições do banco em operações da carteira.'
         ],
@@ -1132,32 +1198,30 @@ export const MANUAL: CapituloManual[] = [
         id: 'conferir',
         titulo: 'Conferir investimentos',
         paraQueServe: 'Achar e corrigir de uma vez o que costuma sair errado com ações e FIIs vindos do Open Finance.',
-        passos: [
+        topicos: ['Em Investimentos, clique em “Conferir investimentos”. O site compara a carteira com a posição da corretora e…'],
+        detalhes: [
           'Em Investimentos, clique em “Conferir investimentos”. O site compara a carteira com a posição da corretora e com o extrato.',
           '“FII cadastrado como outro tipo”: o nome do fundo diz que é FII, mas ele está como ação e fica fora do total de FIIs.',
           '“Cotas que faltam”: a corretora informa mais cotas do que a carteira tem. Quando um débito de compra do extrato explica a diferença, ele já vem escolhido, com o preço calculado. Confira as cotas e o preço.',
           '“Troco ou venda contando como rendimento”: créditos da corretora que são troco de uma compra ou o valor de uma venda vão para “Investimentos”.',
           '“Rendimento contando como investimento”: os outros créditos da corretora são proventos e voltam a contar como receita.',
           '“Taxa da B3 que falta nas compras”: em cada dia de compras, o que saiu da conta menos o troco e menos cotas × preço é a taxa da bolsa. Ela entra no custo e no preço médio da compra (o “valor final da compra” do app). Só aparece depois que o troco teve tempo de voltar (5 dias).',
-          'Desmarque o que não quiser mudar e clique em “Corrigir selecionados”. O aviso tem “Desfazer” por 10 minutos.'
-        ],
-        abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
-        dicas: [
+          'Desmarque o que não quiser mudar e clique em “Corrigir selecionados”. O aviso tem “Desfazer” por 10 minutos.',
           'Quando a carteira tem cotas diferentes da corretora, a própria tela de Investimentos avisa no topo.',
           'O troco “sem dúvida” vai sozinho para “Investimentos” depois da sincronização: o dia de compras tem pelo menos 5 dias, todas as compras têm operação e a conta do dia sobra só a taxa da B3. O Painel avisa, com “Ver em Transações”, “Desfazer” e “Ok”.',
           'O resto (troco de compra recente, venda, ou o que não fecha a conta do dia) o Painel avisa e leva à conferência: você vê a prévia e escolhe.',
-          'A compra lançada por aqui fica ligada ao débito do extrato e não trava as próximas compras que chegam pelo Open Finance.'
-        ],
-        erros: [
+          'A compra lançada por aqui fica ligada ao débito do extrato e não trava as próximas compras que chegam pelo Open Finance.',
           'Mudar todos os “Valor recebido de Investimentos” para Investimentos de uma vez: os proventos deixam de contar como receita. A conferência separa o troco do rendimento.'
         ],
+        abrir: [{ rotulo: 'Abrir Investimentos', rota: '/investimentos' }],
         termos: ['trocoDeCompra', 'taxaB3']
       },
       {
         id: 'selic-fiis',
         titulo: 'Comparação com a Selic e FIIs',
         paraQueServe: 'Saber se a carteira está rendendo mais que a renda fixa.',
-        passos: [
+        topicos: ['O Resumo compara o seu dinheiro na renda variável com o mesmo valor aplicado na Selic no mesmo período.'],
+        detalhes: [
           'O Resumo compara o seu dinheiro na renda variável com o mesmo valor aplicado na Selic no mesmo período.',
           'A aba FIIs mostra renda, compras × hoje, proventos por mês e rentabilidade × Selic e IFIX.'
         ],
@@ -1168,7 +1232,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'total-fiis',
         titulo: 'Total da carteira de FIIs',
         paraQueServe: 'Ver de uma vez quanto os seus FIIs valem, quanto você investiu e quanto eles rendem por mês.',
-        passos: [
+        topicos: ['Abra Investimentos › FIIs e desça até “Meus FIIs”. Ao lado do título fica o valor atual da carteira, com o…'],
+        detalhes: [
           'Abra Investimentos › FIIs e desça até “Meus FIIs”. Ao lado do título fica o valor atual da carteira, com o investido do lado.',
           'A última linha da tabela, “Total”, soma os fundos, coluna por coluna:',
           '“investido”, na coluna do preço médio: a soma de cotas × preço médio de cada fundo, o que você pagou;',
@@ -1176,32 +1241,32 @@ export const MANUAL: CapituloManual[] = [
           'Valorização: o valor atual menos o que você pagou, em R$ e em % sobre o investido, com o sinal (+ ou −);',
           '“ao mês”, no yield on cost: a renda do mês sobre o investido;',
           'Renda/mês: a soma da renda estimada de cada fundo (último rendimento × suas cotas). O peso do total é 100%.',
-          'Fundo sem cotação (o Yahoo Finance não respondeu ou não conhece o código): ele entra no investido e na renda, mas fica fora do valor atual e da valorização, e o total avisa (“1 fundo sem cotação, fora do valor atual”).'
-        ],
-        abrir: [{ rotulo: 'Abrir Meus FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
-        dicas: [
+          'Fundo sem cotação (o Yahoo Finance não respondeu ou não conhece o código): ele entra no investido e na renda, mas fica fora do valor atual e da valorização, e o total avisa (“1 fundo sem cotação, fora do valor atual”).',
           'Com “ocultar valores”, o total esconde os reais e mostra só os percentuais, como o resto da tabela.',
           'O card “Patrimônio em FIIs”, no topo da aba, conta o fundo sem cotação pelo preço médio. Por isso, só quando falta uma cotação, ele pode ficar diferente do total da tabela.'
         ],
+        abrir: [{ rotulo: 'Abrir Meus FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
         termos: ['precoMedio', 'yieldOnCost']
       },
       {
         id: 'fonte-das-cotacoes',
         titulo: 'Fonte das cotações',
         paraQueServe: 'Saber de onde vêm as cotações dos seus ativos e o que sai do seu computador para buscá-las.',
-        passos: [
+        topicos: ['Abra Investimentos, na aba Renda variável, e clique em “fonte das cotações”, ao lado de “Mostrar encerradas”.'],
+        detalhes: [
           'Abra Investimentos, na aba Renda variável, e clique em “fonte das cotações”, ao lado de “Mostrar encerradas”.',
-          'As cotações e os proventos vêm do Yahoo Finance (gratuito, sem cadastro e não oficial), e a Selic, do Banco Central. Só o código do ativo é enviado.'
+          'As cotações e os proventos vêm do Yahoo Finance (gratuito, sem cadastro e não oficial), e a Selic, do Banco Central. Só o código do ativo é enviado.',
+          'Se o Yahoo Finance não responder, o ativo fica com a última cotação guardada, e a próxima atualização tenta de novo.'
         ],
-        abrir: [{ rotulo: 'Abrir a Renda variável', rota: '/investimentos', params: { aba: 'rv' } }],
-        dicas: ['Se o Yahoo Finance não responder, o ativo fica com a última cotação guardada, e a próxima atualização tenta de novo.']
+        abrir: [{ rotulo: 'Abrir a Renda variável', rota: '/investimentos', params: { aba: 'rv' } }]
       },
       {
         id: 'mes-a-mes',
         titulo: 'Mês a mês dos FIIs',
         paraQueServe: 'Acompanhar cada mês da carteira de FIIs como no app da corretora: quanto entrou, quanto rendeu e quanto as cotas valorizaram.',
         print: { id: 'mes-a-mes', alt: 'Gráfico Mês a mês dos FIIs, com os rendimentos e a valorização de cada mês, e o começo da tabela com os aportes.' },
-        passos: [
+        topicos: ['Abra Investimentos › FIIs e desça até “Mês a mês”. Escolha “12 meses” ou “24 meses”.'],
+        detalhes: [
           'Abra Investimentos › FIIs e desça até “Mês a mês”. Escolha “12 meses” ou “24 meses”.',
           'O gráfico mostra, por mês, os rendimentos e a valorização; os aportes ficam na tabela, para um aporte grande não achatar o resto. A frase acima dele resume o último mês.',
           'Na tabela, o mês mais recente vem primeiro. “Aportes” são as compras do mês; subscrições e vendas aparecem embaixo, à parte.',
@@ -1209,44 +1274,40 @@ export const MANUAL: CapituloManual[] = [
           'No mês atual, “a receber (data-com)” é o provento dos fundos com data-com no mês, que costuma cair no mês seguinte.',
           '“por fundo”, embaixo dos rendimentos, abre quanto cada FII pagou no mês. O crédito que vem sem o código do fundo (“Valor recebido de Investimentos”) é ligado ao fundo pelo valor (cotas na data-com × valor por cota, pago até 40 dias depois); o que não liga aparece como “sem fundo identificado”, sem sumir da soma.',
           '“Valorização” é quanto as cotas ganharam ou perderam de preço no mês, sem contar aportes nem rendimentos. “Saldo no fim” é quanto a carteira valia no último dia do mês.',
-          '“ver lançamentos”, em Aportes e em Rendimentos, abre Transações no mês e só com os lançamentos que formam aquele número. O filtro aparece em “Filtrando:”; o ✕ o tira, e o voltar do navegador leva de volta aos FIIs. Clicar num mês do gráfico faz o mesmo com os rendimentos.'
-        ],
-        abrir: [{ rotulo: 'Abrir o mês a mês dos FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
-        dicas: [
+          '“ver lançamentos”, em Aportes e em Rendimentos, abre Transações no mês e só com os lançamentos que formam aquele número. O filtro aparece em “Filtrando:”; o ✕ o tira, e o voltar do navegador leva de volta aos FIIs. Clicar num mês do gráfico faz o mesmo com os rendimentos.',
           'Para os rendimentos baterem com o app, confira os créditos da corretora em “Conferir investimentos”: ali o troco e o rendimento aparecem separados.',
           'Os aportes são cotas × preço, como as “Entradas” do app. A taxa da B3, de alguns centavos por compra, fica no custo e no preço médio: “Conferir investimentos” a calcula pelo extrato e lança com um clique.',
-          'Compras lançadas à mão na carteira entram nos aportes, mas não aparecem em “ver lançamentos”: elas não vieram do banco.'
-        ],
-        erros: [
+          'Compras lançadas à mão na carteira entram nos aportes, mas não aparecem em “ver lançamentos”: elas não vieram do banco.',
           'A valorização pode diferir um pouco da do app: o site usa o fechamento do mês de outra fonte de cotação (no mês atual, a cotação de hoje).'
         ],
+        abrir: [{ rotulo: 'Abrir o mês a mês dos FIIs', rota: '/investimentos', params: { aba: 'fii' } }],
         termos: ['valorizacaoMes', 'trocoDeCompra']
       },
       {
         id: 'caixinhas',
         titulo: 'Caixinhas, CDBs e outros investimentos do banco',
         paraQueServe: 'Achar a caixinha do Nubank, o CDB do Mercado Pago e o que mais o banco informa pelo Open Finance.',
-        passos: [
+        topicos: ['Abra Investimentos, na aba Open Finance. Cada investimento que o banco informa é uma linha, com o saldo, a…'],
+        detalhes: [
           'Abra Investimentos, na aba Open Finance. Cada investimento que o banco informa é uma linha, com o saldo, a rentabilidade e a comparação com a Selic.',
           'O nome mostra o produto e o banco: a caixinha do Nubank aparece como “CDB · Nubank”, e o CDB do Mercado Pago como “CDB · Mercado Pago”. Embaixo fica o nome que o banco usa (“no banco: …”), para achar no app.',
           'Clique em “renomear” para dar o seu nome (ex.: “Caixinha viagem”). A sincronização não muda o nome que você escolher.',
           'Para voltar ao nome automático, abra “renomear” e clique em “Voltar ao nome automático” (ou salve com o campo vazio).',
           'A coluna Instituição mostra o banco da conexão.',
           '“Rendimento por mês”, embaixo da tabela, mostra quanto os investimentos renderam em cada mês: quanto o saldo cresceu além do valor aplicado (o que você guardou ou tirou não conta). O mês mais recente já vem aberto por investimento: cada um numa linha, do que mais rendeu ao que menos, com uma barrinha do tamanho do rendimento; “por investimento” abre os outros meses. O ⓘ “Como o rendimento é calculado” explica a conta.',
-          'A tabela dos investimentos recolhe pelo título “Investimentos do Open Finance”: recolhida, mostra só quantos são e o total. A escolha fica guardada neste navegador.'
-        ],
-        abrir: [{ rotulo: 'Abrir Investimentos › Open Finance', rota: '/investimentos', params: { aba: 'of' } }],
-        dicas: [
+          'A tabela dos investimentos recolhe pelo título “Investimentos do Open Finance”: recolhida, mostra só quantos são e o total. A escolha fica guardada neste navegador.',
           'O rendimento da caixinha fica no saldo dela e não vira lançamento no extrato. Os “Valor recebido de Investimentos” do extrato do Nubank são proventos dos FIIs ou troco das compras (veja “Conferir investimentos”).',
           'O Open Finance manda só o saldo de hoje: o site guarda um por dia desde a atualização que trouxe o “Rendimento por mês”. Os meses de antes não aparecem, e o primeiro conta a partir daquele dia.'
-        ]
+        ],
+        abrir: [{ rotulo: 'Abrir Investimentos › Open Finance', rota: '/investimentos', params: { aba: 'of' } }]
       },
       {
         id: 'reservas',
         titulo: 'Reservas (cofrinhos do Mercado Pago)',
         paraQueServe: 'Contar no patrimônio o dinheiro guardado em cofrinhos e reservas da conta.',
         print: { id: 'reservas', alt: 'Aba Reservas de Investimentos: tabela com cada reserva, a conta, o guardado, o retirado, o saldo e a base do saldo.' },
-        passos: [
+        topicos: ['Quando o banco informa pelo Open Finance o valor de uma reserva, pelo nome, ele vale: só essa reserva aparece…'],
+        detalhes: [
           'Quando o banco informa pelo Open Finance o valor de uma reserva, pelo nome, ele vale: só essa reserva aparece como “informado pelo banco” e não precisa de conferência.',
           'Quando o banco informa só o total reservado da conta, cada reserva continua estimada e com “conferir saldo”. O que o total passa da soma delas aparece numa linha “Reservado” (“restante do total do banco”): conferir as outras reservas ajusta esse valor.',
           'Reserva do extrato que não está na lista que o banco manda continua estimada e com “conferir saldo”. Se ela já aparece com outro nome, confira esta com zero para não contar duas vezes.',
@@ -1264,25 +1325,25 @@ export const MANUAL: CapituloManual[] = [
         id: 'meli-dolar',
         titulo: 'Méli Dólar (dólar do Mercado Pago)',
         paraQueServe: 'Contar no patrimônio os dólares comprados no Mercado Pago, que o Open Finance não informa.',
-        passos: [
+        topicos: ['Abra Investimentos, na aba Reservas. O Méli Dólar aparece como uma reserva da conta do Mercado Pago, com a…'],
+        detalhes: [
           'Abra Investimentos, na aba Reservas. O Méli Dólar aparece como uma reserva da conta do Mercado Pago, com a quantidade em dólar e a PTAX do dia.',
           'A quantidade vem das compras e vendas do extrato: pelo “MUSD” da descrição, quando o banco manda, ou pelo valor em reais dividido pela PTAX do dia.',
           'O saldo em reais é essa quantidade pela última PTAX. Ele entra no patrimônio e no total investido.',
           'Para acertar o valor, clique em “conferir saldo” e informe o que o app do Mercado Pago mostra. Pode ser em reais ou em dólares: escolha em “Informado em”.',
-          'Compra e venda de Méli Dólar ficam na categoria Investimentos e não contam como gasto nem receita.'
-        ],
-        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
-        dicas: [
+          'Compra e venda de Méli Dólar ficam na categoria Investimentos e não contam como gasto nem receita.',
           'A PTAX é a cotação do Banco Central, um pouco diferente da cotação do Mercado Pago. Por isso a estimativa pode ter alguns centavos de diferença; a conferência acerta.',
           'Uma compra ou venda que você colocou à mão em outra categoria continua como está. Para mudar, edite a transação ou use “Reaplicar regras” em Categorias e regras.'
         ],
+        abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
         termos: ['ptax']
       },
       {
         id: 'exterior',
         titulo: 'Ativos e moeda no exterior',
         paraQueServe: 'Somar investimentos em dólar e outras moedas no patrimônio em reais.',
-        passos: [
+        topicos: ['Ao lançar a compra de um ativo no exterior (ex.: AAPL), escolha a moeda: o câmbio vem preenchido com a PTAX…'],
+        detalhes: [
           'Ao lançar a compra de um ativo no exterior (ex.: AAPL), escolha a moeda: o câmbio vem preenchido com a PTAX do dia e pode ser trocado pelo da corretora.',
           'Os valores são convertidos para reais pela cotação do Banco Central, guardada no computador.'
         ],
@@ -1292,7 +1353,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'emprestimos',
         titulo: 'Empréstimos e financiamentos',
         paraQueServe: 'Ver saldo devedor, parcelas e atrasos dos contratos que vêm do Open Finance.',
-        passos: [
+        topicos: ['Abra Empréstimos e financiamentos: financiamentos (imóvel, veículo) e empréstimos aparecem separados.'],
+        detalhes: [
           'Abra Empréstimos e financiamentos: financiamentos (imóvel, veículo) e empréstimos aparecem separados.',
           'Cada contrato mostra saldo devedor, parcelas, taxa, CET e pagamentos.',
           'O patrimônio no Painel já desconta esses saldos devedores.'
@@ -1311,7 +1373,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'ligar-trabalho',
         titulo: 'Ligar o Trabalho',
         paraQueServe: 'O Trabalho é um módulo: vem desligado, para o menu não ficar mais pesado para quem não usa.',
-        passos: [
+        topicos: ['Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário, Férias…'],
+        detalhes: [
           'Abra Configurações › Módulos e ligue “Trabalho”. O grupo “Trabalho” (Salário, Holerites, 13º salário, Férias, FGTS e Rescisão) aparece no menu na hora.',
           'Ou abra o endereço do Trabalho com ele desligado: a tela mostra o que ele faz e o botão “Ligar Trabalho”.',
           'O Trabalho não acessa a internet. Desligar de novo esconde o grupo e guarda os dados.'
@@ -1322,7 +1385,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'salario',
         titulo: 'Salário',
         paraQueServe: 'Saber o bruto, para onde vão os descontos e o líquido do mês, com o histórico de aumentos. É estimativa, não holerite.',
-        passos: [
+        topicos: ['Abra Trabalho › Salário. Na primeira vez, cadastre o emprego: empregador, CNPJ (opcional), admissão, regime…'],
+        detalhes: [
           'Abra Trabalho › Salário. Na primeira vez, cadastre o emprego: empregador, CNPJ (opcional), admissão, regime, jornada mensal (220 h na CLT), dependentes para o IR, a conta onde o salário cai e o salário bruto. Se o salário vem em duas vezes (o adiantamento no dia 15 e o saldo no fim do mês), marque “Recebo em duas vezes”: o holerite do mês continua um só, o do fim do mês, que desconta o adiantamento.',
           '“O mês” mostra o salário bruto, o INSS, o IRRF e o líquido estimado. Use ‹ › ou o nome do mês para ver outro mês.',
           '“Como calculei” abre a conta linha a linha: as faixas do INSS, a dedução usada no IRRF (o INSS e os dependentes, ou o desconto simplificado, o que der menos imposto), a faixa, a redução da Lei 15.270/2025 (de 2026 em diante, para rendimento de até R$ 7.350,00) e a fonte de cada tabela.',
@@ -1330,21 +1394,20 @@ export const MANUAL: CapituloManual[] = [
           '“Apagar” tira um salário do histórico (os meses dele passam a usar o anterior). O primeiro salário, o da admissão, não sai: para mudar o valor dele, grave outro valor no mesmo mês.',
           'Corrigiu a admissão? O primeiro salário passa a valer desde o mês da nova admissão, para antes ou para depois. Para depois, ela fica antes do primeiro aumento (ou apague o aumento antes). A saída não pode ficar antes de um salário do histórico: apague esse salário antes.',
           'Estágio e PJ ficam sem o cálculo do INSS e do IRRF.',
-          '“+ Outro emprego” cadastra mais um; os outros aparecem em “Outros empregos”. “Editar emprego” muda os dados ou exclui o emprego.'
-        ],
-        dicas: [
+          '“+ Outro emprego” cadastra mais um; os outros aparecem em “Outros empregos”. “Editar emprego” muda os dados ou exclui o emprego.',
           'Nada do Trabalho entra nos relatórios: a receita continua sendo a transação do salário na conta. O Trabalho explica esse dinheiro (bruto, descontos), sem contar duas vezes.',
           'O valor que vale é o do seu holerite: convenção coletiva, benefícios da empresa e arredondamentos mudam o número.',
-          '“O mês” usa o salário cheio, mesmo no mês da admissão, da saída ou do aumento. O holerite do mês (Trabalho › Holerites) é que conta os dias.'
+          '“O mês” usa o salário cheio, mesmo no mês da admissão, da saída ou do aumento. O holerite do mês (Trabalho › Holerites) é que conta os dias.',
+          '“Ainda não há tabela do INSS ou do IRRF para esse mês”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026. Para meses antes disso, não há estimativa.'
         ],
-        erros: ['“Ainda não há tabela do INSS ou do IRRF para esse mês”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026. Para meses antes disso, não há estimativa.'],
         abrir: [{ rotulo: 'Abrir o Salário', rota: '/trabalho/salario' }]
       },
       {
         id: 'holerites',
         titulo: 'Holerites',
         paraQueServe: 'Montar o holerite de cada mês pelo salário bruto, com as horas extras e os descontos, ou ler o PDF que a empresa manda, e guardar o histórico.',
-        passos: [
+        topicos: ['Abra Trabalho › Holerites, escolha o mês e clique em “Abrir o holerite do mês”. O salário vem do Trabalho ›…'],
+        detalhes: [
           'Abra Trabalho › Holerites, escolha o mês e clique em “Abrir o holerite do mês”. O salário vem do Trabalho › Salário, proporcional se você entrou ou saiu no meio do mês (o mês tem 30 dias, como na folha).',
           'Os lançamentos que você marcou “Repetir nos próximos meses” no último holerite (plano de saúde, pensão) já vêm no mês novo.',
           '“+ Lançamento” acrescenta: horas extras (as horas e o percentual, 50% ou 100%), adicional noturno (as horas, 20% se não disser), outro provento (bônus, PLR, comissão, ajuda de custo: marque se tem INSS e IRRF), vale-transporte (o custo do mês; o desconto fica em até 6% do salário), VR/VA, plano de saúde, pensão alimentícia (deduz do IR) e outro desconto (marque se deduz do IR).',
@@ -1361,17 +1424,13 @@ export const MANUAL: CapituloManual[] = [
           'A prévia mostra cada linha do PDF: o tipo que o site deu (salário, horas extras, DSR, INSS, IRRF, vale-transporte, plano de saúde, adiantamento…), o valor e o trecho do PDF de onde saiu. A situação diz “reconhecido”, “reconhecido pelo que você escolheu antes” ou “escolha o tipo”. Dá para trocar o tipo, corrigir o valor ou deixar a linha de fora.',
           'A prova real confere a soma de cada coluna com o total impresso e proventos menos descontos com o líquido. Se não bater, ela diz qual total e por quanto: o leitor errou alguma linha, ou alguma ficou de fora.',
           'A prévia também mostra o INSS, o IRRF e o líquido lidos ao lado dos calculados pelas tabelas, e avisa do que não confere: o CNPJ do PDF não é o do emprego, o salário base é outro (se foi aumento, registre em Trabalho › Salário), o mês já está fechado, o emprego recebe em duas vezes e o PDF não desconta o adiantamento (costuma ser o recibo do dia 15, que não se grava: o do mês é o do fim do mês).',
-          'Nada é gravado até “Confirmar e gravar”. O holerite lido entra fechado e marcado “Lido do PDF”: vale o que a empresa pagou, e o 13º, as férias, o FGTS e a rescisão passam a usar esses números. O aviso traz “Desfazer” por alguns segundos; depois, “Reabrir” volta para a estimativa do site.'
-        ],
-        dicas: [
+          'Nada é gravado até “Confirmar e gravar”. O holerite lido entra fechado e marcado “Lido do PDF”: vale o que a empresa pagou, e o 13º, as férias, o FGTS e a rescisão passam a usar esses números. O aviso traz “Desfazer” por alguns segundos; depois, “Reabrir” volta para a estimativa do site.',
           'Rubrica que o site não conhece (“escolha o tipo”): ela vem sem tipo, e o “Confirmar e gravar” espera você escolher (ou deixar a linha de fora). Escolha uma vez, e no mês seguinte do mesmo emprego ela já vem reconhecida. Vale também para a que você corrigiu.',
           'O PDF é lido no seu computador, sem nenhum serviço de fora, e não fica guardado: só os valores do holerite.',
           'PLR tem tributação própria, fora do holerite do mês: deixe “Tem INSS” e “Tem IRRF” desmarcados.',
           'Hora extra feita à noite: o adicional noturno entra na base dela (OJ 97 do TST), e o site não junta os dois sozinho. Lance essas horas com o percentual somado: 50% de hora extra sobre a hora noturna de 20% dá 1,2 × 1,5 = 1,8, ou seja, 80%. Nessas horas, não lance também o adicional noturno: os 80% já o contam, e lançar os dois paga a noite duas vezes. E lance as horas noturnas já convertidas: a hora noturna tem 52 minutos e 30 segundos, então 7 horas de relógio entre 22h e 5h valem 8.',
           'O mês tem 30 dias, como na folha: quem entra no dia 15 recebe 16 dias (30 − 15 + 1), também em fevereiro.',
-          'O holerite não é receita: a receita continua sendo a transação do salário na conta. Ligar o crédito ao holerite só explica esse dinheiro, e os relatórios contam a receita uma vez só.'
-        ],
-        erros: [
+          'O holerite não é receita: a receita continua sendo a transação do salário na conta. Ligar o crédito ao holerite só explica esse dinheiro, e os relatórios contam a receita uma vez só.',
           '“Este PDF é uma imagem”: o PDF escaneado ou a foto não têm texto, e por enquanto o leitor só lê PDF com texto. Digite o holerite com “Abrir o holerite do mês”.',
           '“Não achei a tabela do holerite”: o PDF não tem as colunas de vencimentos e de descontos, ou não é um holerite. Digite o holerite.',
           '“O PDF passa do limite”: o arquivo vai até 700 KB e 5 páginas. Mande só o holerite do mês.',
@@ -1383,24 +1442,26 @@ export const MANUAL: CapituloManual[] = [
         id: 'decimo-terceiro',
         titulo: '13º salário',
         paraQueServe: 'Saber quanto vem de 13º, em quais datas, e quanto já veio adiantado.',
-        passos: [
+        topicos: ['Abra Trabalho › 13º salário e escolha o ano em ‹ ›.'],
+        detalhes: [
           'Abra Trabalho › 13º salário e escolha o ano em ‹ ›.',
           'O 13º é proporcional: conta cada mês do ano em que você trabalhou 15 dias ou mais (os avos, de 12). O salário é o de dezembro (ou o do mês da saída), mais a média das horas extras, do adicional noturno e do DSR dos holerites do ano. O mês da admissão ou da saída com menos de 15 dias não conta avo, e as horas dele também ficam fora da média. As horas de cada mês valem pelo salário de agora (Súmula 347 do TST): um aumento no ano não deixa a média menor. O mês sem holerite entra como zero, e a tela avisa quantos meses têm.',
           'A 1ª parcela, até 30/11, é metade do 13º, sem desconto. A 2ª, até 20/12, é o 13º menos o INSS, o IRRF e a 1ª parcela.',
           'O IR do 13º é separado do salário: só as deduções da lei (INSS e dependentes), e a redução da Lei 15.270/2025 também vale para ele.',
           'Se a 1ª parcela veio antes (com as férias) ou num valor diferente, informe em “A 1ª parcela que veio”: a 2ª é recalculada. Só a data, sem o valor, mantém a metade calculada. “Voltar ao padrão” desfaz.',
-          '“Como calculei” mostra cada passo da conta.'
+          '“Como calculei” mostra cada passo da conta.',
+          'Se você saiu no ano, o 13º proporcional vem na rescisão, e a tela avisa.',
+          '“Estágio e PJ não têm 13º salário pela CLT”: o emprego cadastrado não é CLT.',
+          '“A 1ª parcela informada passa do 13º líquido”: a 2ª fica zero, e a diferença a empresa desconta. Confira o valor informado; ele não pode passar do 13º do ano inteiro.'
         ],
-        dicas: ['Se você saiu no ano, o 13º proporcional vem na rescisão, e a tela avisa.'],
-        erros: ['“Estágio e PJ não têm 13º salário pela CLT”: o emprego cadastrado não é CLT.',
-          '“A 1ª parcela informada passa do 13º líquido”: a 2ª fica zero, e a diferença a empresa desconta. Confira o valor informado; ele não pode passar do 13º do ano inteiro.'],
         abrir: [{ rotulo: 'Abrir o 13º salário', rota: '/trabalho/decimo-terceiro' }]
       },
       {
         id: 'ferias',
         titulo: 'Férias',
         paraQueServe: 'Saber quantos dias de férias você tem, até quando tirar, agendar e calcular quanto vem, inclusive vendendo dias.',
-        passos: [
+        topicos: ['Abra Trabalho › Férias. Cada período aquisitivo (12 meses de trabalho, contados da admissão) mostra os dias…'],
+        detalhes: [
           'Abra Trabalho › Férias. Cada período aquisitivo (12 meses de trabalho, contados da admissão) mostra os dias de direito, os agendados, os vendidos, quantos sobram e até quando tirar (o concessivo, os 12 meses seguintes).',
           '“Vencida” quer dizer que o prazo passou com dias sobrando: a empresa paga essas férias em dobro. “Vencendo”: faltam 60 dias ou menos para o prazo.',
           'As faltas sem justificativa no período diminuem os dias de direito: até 5, 30 dias; de 6 a 14, 24; de 15 a 23, 18; de 24 a 32, 12; acima de 32, nenhum (CLT, art. 130). Digite as faltas no período.',
@@ -1409,43 +1470,43 @@ export const MANUAL: CapituloManual[] = [
           'Férias marcadas depois do prazo (o fim do concessivo) saem em dobro: os dias depois do prazo a empresa paga duas vezes (CLT, art. 137).',
           '“Ver a conta” mostra as férias e o 1/3 (com INSS e IRRF), o abono e o 1/3 dele (sem desconto), o 13º adiantado e o que cai na conta, até 2 dias antes do início. A remuneração é o salário do mês mais a média das horas extras dos 12 meses antes.',
           '“Comparar” mostra lado a lado tirar todos os dias de direito × vender 1/3 deles (30 × vender 10; com 24 de direito, 24 × vender 8): quanto entra em cada caso.',
-          '“Desmarcar” apaga um agendamento e devolve os dias ao período.'
-        ],
-        dicas: ['O salário do mês seguinte às férias vem menor: os dias de férias já foram pagos antes.',
+          '“Desmarcar” apaga um agendamento e devolve os dias ao período.',
+          'O salário do mês seguinte às férias vem menor: os dias de férias já foram pagos antes.',
           'Com o 13º junto, a 2ª parcela em Trabalho › 13º salário já desconta o que veio com as férias. Só informe a 1ª parcela lá se a empresa pagou outro valor.',
-          'Os dias depois do fim do prazo de concessão saem em dobro, também no “Ver a conta”. A dobra não paga INSS (Lei 8.212/1991, art. 28, § 9º, “d”); o IRRF é sobre o total.'],
-        erros: ['“As férias de um período começam depois que ele termina”: o período aquisitivo ainda não completou 12 meses na data escolhida.',
+          'Os dias depois do fim do prazo de concessão saem em dobro, também no “Ver a conta”. A dobra não paga INSS (Lei 8.212/1991, art. 28, § 9º, “d”); o IRRF é sobre o total.',
+          '“As férias de um período começam depois que ele termina”: o período aquisitivo ainda não completou 12 meses na data escolhida.',
           '“Com N faltas, o direito cai para…”: as faltas novas deixariam o direito menor que o já agendado. Desmarque férias antes.',
-          '“As férias começam depois da saída do emprego”: as férias que sobraram vêm na rescisão (Trabalho › Rescisão).'],
+          '“As férias começam depois da saída do emprego”: as férias que sobraram vêm na rescisão (Trabalho › Rescisão).'
+        ],
         abrir: [{ rotulo: 'Abrir as Férias', rota: '/trabalho/ferias' }]
       },
       {
         id: 'fgts',
         titulo: 'FGTS',
         paraQueServe: 'Acompanhar o FGTS do emprego: quanto entra por mês, o saldo e os saques.',
-        passos: [
+        topicos: ['Abra Trabalho › FGTS. O saldo é estimado mês a mês desde a admissão: 8% da base do INSS do holerite do mês…'],
+        detalhes: [
           'Abra Trabalho › FGTS. O saldo é estimado mês a mês desde a admissão: 8% da base do INSS do holerite do mês (ou do salário, sem holerite), mais 8% do 13º (a 1ª parcela no mês em que foi paga, o resto em dezembro) e das férias (com o 1/3) no mês em que começam, corrigido a 3% ao ano. Os dias de férias saem do salário do mês: as férias já pagam esses dias.',
           'Com mais de um emprego CLT, escolha o emprego no alto da tela: o FGTS de um emprego antigo continua lá, e depois da saída o saldo segue corrigido, sem depósito.',
           'Em “Lançar”, escolha “Saldo que vi no app do FGTS” e digite o saldo do app: a estimativa recomeça dali, e a tela mostra a diferença entre o app e o que o site estimava. A empresa deposita o FGTS do mês até o dia 20 do mês seguinte (até 02/2024, até o dia 7): o site soma depois da conferência os depósitos que o app ainda não mostrava naquele dia, e a tela diz quanto somou. Por isso o saldo pode passar do que você digitou. Diferença grande pode ser depósito que a empresa não fez.',
           'Saque: escolha o motivo (rescisão, saque-aniversário, compra de imóvel ou outro). Distribuição de resultados: o valor que a Caixa creditou.',
           '“Os últimos meses” mostra a correção, o depósito, os saques e o saldo de cada mês; “conferido” marca o mês em que o saldo é o do app.',
-          '“Excluir” apaga um lançamento, e o saldo é recalculado.'
-        ],
-        dicas: [
+          '“Excluir” apaga um lançamento, e o saldo é recalculado.',
           'O FGTS não entra no patrimônio do Painel nem nos relatórios: é seu, mas só sai em casos da lei. O saque entra pela transação na conta, como qualquer crédito.',
           'A correção oficial é a TR mais 3% ao ano; a TR fica de fora da estimativa. Por isso, confira com o app de vez em quando.',
           'Com o saque-aniversário, se você for demitido sem justa causa, sai só a multa de 40%: o saldo fica bloqueado.',
           'As férias pagas em dobro (tiradas depois do prazo) não têm FGTS sobre a dobra, só sobre as férias e o 1/3 normais.',
-          'No ano em que você sai do emprego, o FGTS do 13º não aparece aqui: ele vem no depósito da rescisão.'
+          'No ano em que você sai do emprego, o FGTS do 13º não aparece aqui: ele vem no depósito da rescisão.',
+          '“Estágio e PJ não têm FGTS”: o emprego cadastrado não é CLT.'
         ],
-        erros: ['“Estágio e PJ não têm FGTS”: o emprego cadastrado não é CLT.'],
         abrir: [{ rotulo: 'Abrir o FGTS', rota: '/trabalho/fgts' }]
       },
       {
         id: 'rescisao',
         titulo: 'Rescisão',
         paraQueServe: 'Simular quanto se recebe ao sair do emprego em cada tipo de desligamento, e registrar a rescisão real.',
-        passos: [
+        topicos: ['Abra Trabalho › Rescisão, escolha o tipo (dispensa sem justa causa, pedido de demissão, acordo, justa causa…'],
+        detalhes: [
           'Abra Trabalho › Rescisão, escolha o tipo (dispensa sem justa causa, pedido de demissão, acordo, justa causa ou fim do contrato de experiência), o aviso prévio e a data de saída, e clique em “Simular”.',
           '“A conta” mostra as verbas: o saldo de salário, o aviso prévio indenizado (30 dias mais 3 por ano de casa, até 90; no acordo, a metade), o 13º e as férias proporcionais (com o 1/3) e as férias vencidas (em dobro, se o prazo para tirar passou). E os descontos: INSS e IRRF do saldo de salário e do 13º, a 1ª parcela do 13º que já veio e, no pedido de demissão sem cumprir o aviso, 30 dias de salário.',
           'O aviso indenizado conta como tempo de serviço: a data projetada aparece e vale para o 13º e as férias.',
@@ -1454,11 +1515,11 @@ export const MANUAL: CapituloManual[] = [
           '“Estou no saque-aniversário do FGTS” vem marcado pelo que o site viu nos seus saques. Se você voltou ao saque-rescisão, desmarque: a conta refaz na hora, e o registro guarda a sua resposta.',
           'O aviso indenizado conta como tempo de serviço: se ele passa do ano, o 13º ganha os avos do ano seguinte. Saindo depois de 20/12, o 13º do ano já veio inteiro e não entra. No acordo, o aviso é pago pela metade, com o meio dia.',
           '“Comparar os tipos” mostra, na mesma data, quanto cai na conta e quanto sai do FGTS em cada tipo.',
-          '“Registrar esta rescisão” guarda a conta como está e fecha o emprego na data de saída. “Desfazer o registro” reabre.'
+          '“Registrar esta rescisão” guarda a conta como está e fecha o emprego na data de saída. “Desfazer o registro” reabre.',
+          'Na justa causa, só vêm o saldo de salário e as férias vencidas.',
+          'As férias indenizadas e o aviso indenizado não têm INSS nem IR; o 13º tem os dele, separados.',
+          '“Ainda não há tabela do INSS ou do IRRF para o mês da saída”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026.'
         ],
-        dicas: ['Na justa causa, só vêm o saldo de salário e as férias vencidas.',
-          'As férias indenizadas e o aviso indenizado não têm INSS nem IR; o 13º tem os dele, separados.'],
-        erros: ['“Ainda não há tabela do INSS ou do IRRF para o mês da saída”: o site traz as tabelas de 2025 (o IRRF desde maio) e de 2026.'],
         abrir: [{ rotulo: 'Abrir a Rescisão', rota: '/trabalho/rescisao' }]
       }
     ]
@@ -1472,19 +1533,20 @@ export const MANUAL: CapituloManual[] = [
         id: 'noticias',
         titulo: 'Notícias',
         paraQueServe: 'Ver as principais notícias do dia no mesmo lugar das finanças.',
-        passos: [
+        topicos: ['Ligue o módulo em Configurações › Módulos (ou pelo botão “Ligar Notícias” no endereço da tela). Ligado, ele…'],
+        detalhes: [
           'Ligue o módulo em Configurações › Módulos (ou pelo botão “Ligar Notícias” no endereço da tela). Ligado, ele acessa g1.globo.com, feeds.bbci.co.uk e www.tabnews.com.br; desligado, nada sai do computador.',
           'Com o módulo ligado, o site busca as notícias a cada 45 minutos e guarda as 20 mais novas de cada fonte. A tela “Notícias” aparece no menu.',
           'Cada notícia mostra o título, a fonte e quando saiu. Clique no título para ler no site da notícia, em outra aba.',
           'Os botões no topo filtram por fonte. Embaixo deles, a situação de cada fonte: quando foi atualizada e se a última tentativa falhou (as outras continuam aparecendo).',
-          '“Atualizar agora” busca na hora, no máximo uma vez a cada 5 minutos.'
-        ],
-        dicas: ['Só o pedido de cada fonte sai do computador, sem nada seu. As fontes ficam sabendo o endereço de internet da sua casa, como em qualquer site que você abre.',
-          'As imagens das notícias não aparecem: o site não carrega nada de fora (é a regra de segurança dele).'],
-        erros: ['“As notícias foram atualizadas há pouco”: espere 5 minutos para o “Atualizar agora”.',
+          '“Atualizar agora” busca na hora, no máximo uma vez a cada 5 minutos.',
+          'Só o pedido de cada fonte sai do computador, sem nada seu. As fontes ficam sabendo o endereço de internet da sua casa, como em qualquer site que você abre.',
+          'As imagens das notícias não aparecem: o site não carrega nada de fora (é a regra de segurança dele).',
+          '“As notícias foram atualizadas há pouco”: espere 5 minutos para o “Atualizar agora”.',
           'Uma fonte com “a última tentativa falhou”: o site dela não respondeu ou mudou o formato. Os detalhes ficam em Configurações › Erros.',
           '“As notícias estão sendo buscadas agora”: a busca de 45 minutos está rodando; veja de novo em alguns segundos.',
-          '“Não deu para ler as notícias”: o site não respondeu (ele pode estar reiniciando). “Tentar de novo” lê outra vez.'],
+          '“Não deu para ler as notícias”: o site não respondeu (ele pode estar reiniciando). “Tentar de novo” lê outra vez.'
+        ],
         abrir: [{ rotulo: 'Abrir as Notícias', rota: '/noticias' }, { rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       }
     ]
@@ -1498,14 +1560,15 @@ export const MANUAL: CapituloManual[] = [
         id: 'parametrizacao',
         titulo: 'Parametrização',
         paraQueServe: 'Ajustar o comportamento do site sem mexer em arquivo nenhum.',
-        passos: [
+        topicos: ['Abra Configurações › Parametrização.'],
+        detalhes: [
           'Abra Configurações › Parametrização.',
           'Cada parâmetro mostra o que faz, a faixa válida e o padrão: sincronização, Painel, segurança do login e por quanto tempo o histórico de acessos fica guardado, orçamentos, metas, transações e erros.',
           'Mude o valor e salve: vale na hora.',
           'Mudar a segurança do login (tentativas antes do bloqueio, tempo de bloqueio e por quanto tempo o histórico de acessos fica guardado) pede a sua senha atual: o campo aparece ao lado de “Salvar parâmetros”. Assim, quem achar o site aberto não afrouxa o bloqueio.',
-          'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.'
+          'O bloco “Sistema” mostra a versão, os caminhos e o tamanho do banco.',
+          '“A senha atual não confere”: a senha digitada não é a de entrar no site. Digite de novo e salve; nada foi gravado.'
         ],
-        erros: ['“A senha atual não confere”: a senha digitada não é a de entrar no site. Digite de novo e salve; nada foi gravado.'],
         abrir: [{ rotulo: 'Abrir a Parametrização', rota: '/configuracoes', params: { aba: 'parametrizacao' } }]
       },
       {
@@ -1513,14 +1576,15 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Módulos',
         paraQueServe: 'Ligar só as partes do site que vão além do básico das finanças e que você quer usar. Desligado, o módulo some do menu, não roda nada em segundo plano e não acessa a internet.',
         print: { id: 'modulos', alt: 'Configurações, aba Módulos: interruptor do módulo Notícias, desligado, com a explicação do que ele acessa.' },
-        passos: [
+        topicos: ['Abra Configurações › Módulos.'],
+        detalhes: [
           'Abra Configurações › Módulos.',
           'Cada módulo mostra o que faz e se acessa a internet (e para onde). Ligue ou desligue pelo interruptor: vale na hora, sem recarregar a página, e em qualquer navegador.',
           'Ligado, a tela do módulo aparece no menu, e o que ele faz em segundo plano (buscar as notícias, por exemplo) roda na hora. Desligado, ela some; se você abrir o endereço dela, o site mostra que o módulo está desligado, com o botão para ligar.',
           'Desligar não apaga nada: os dados do módulo ficam guardados e voltam quando você ligar de novo.',
-          'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).'
+          'Módulo que acessa a internet vem desligado. Ligar e desligar aparecem nos acessos recentes (Configurações › Segurança).',
+          '“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). O aviso aparece no menu e em Configurações › Módulos: clique em “Tentar de novo”, que diz “Tentando…” enquanto lê. Enquanto isso, as telas dos módulos ficam fora do menu.'
         ],
-        erros: ['“Não deu para ler os módulos”: o site não respondeu na hora (por exemplo, reiniciando depois de uma atualização). O aviso aparece no menu e em Configurações › Módulos: clique em “Tentar de novo”, que diz “Tentando…” enquanto lê. Enquanto isso, as telas dos módulos ficam fora do menu.'],
         abrir: [{ rotulo: 'Abrir os módulos', rota: '/configuracoes', params: { aba: 'modulos' } }]
       },
       {
@@ -1528,7 +1592,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Aparência',
         paraQueServe: 'Deixar o site com as suas cores.',
         print: { id: 'aparencia', alt: 'Configurações, aba Aparência: as paletas de cores Lavanda, Oceano, Floresta, Grafite, Pôr do sol e Sua cor.' },
-        passos: [
+        topicos: ['Abra Configurações › Aparência.'],
+        detalhes: [
           'Abra Configurações › Aparência.',
           'Escolha uma paleta pronta (cada uma tem versão clara e escura) ou uma cor personalizada.',
           'A escolha fica salva neste navegador.'
@@ -1540,7 +1605,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Segurança',
         paraQueServe: 'Trocar a senha e ver os acessos recentes.',
         print: { id: 'seguranca', alt: 'Configurações, aba Segurança: formulário para alterar a senha e a lista de acessos recentes.' },
-        passos: [
+        topicos: ['Abra Configurações › Segurança.'],
+        detalhes: [
           'Abra Configurações › Segurança.',
           'Em “Alterar senha”, informe a atual e a nova duas vezes. As outras sessões abertas são encerradas.',
           '“Acessos recentes” mostra os últimos acessos e mudanças: quando você entrou ou saiu do site, senha errada, login bloqueado, senha e parâmetros alterados, módulos ligados ou desligados, credenciais da Pluggy, conexões do Open Finance adicionadas ou removidas, as mudanças em várias transações de uma vez (categoria, renomear, regras de descrição) e as conferências de investimentos, com o “Desfazer” de cada uma. “Acesso local” quer dizer que veio deste computador; com o acesso pelo celular ligado, o celular aparece pelo IP dele na rede.',
@@ -1553,7 +1619,8 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Acesso pelo celular',
         paraQueServe: 'Abrir o site no celular, na mesma rede Wi-Fi de casa. Vem desligado: assim, o site só abre neste computador.',
         print: { id: 'acesso-pelo-celular', alt: 'Bloco Acesso pelo celular com o aviso de segurança, o endereço do computador na rede e o botão para ligar.' },
-        passos: [
+        topicos: ['Abra Configurações › Segurança e, em “Acesso pelo celular”, escolha o endereço deste computador na rede (o do…'],
+        detalhes: [
           'Abra Configurações › Segurança e, em “Acesso pelo celular”, escolha o endereço deste computador na rede (o do Wi-Fi ou do cabo da sua casa).',
           'Clique em “Ligar o acesso pelo celular” e confirme. Ligado, qualquer aparelho da sua rede chega à tela de entrar: use uma senha forte e não ligue em rede pública (café, aeroporto).',
           'No Windows, a porta abre no firewall só para a rede de casa, e só se a rede estiver como Particular. Se a tela avisar que a rede está como Pública e esta for a sua casa, mude para Particular em Configurações › Rede e Internet. No Linux, se o firewall (ufw ou firewalld) estiver ligado, a tela mostra o comando para rodar uma vez.',
@@ -1572,15 +1639,16 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Erros do sistema',
         paraQueServe: 'Ver o que deu errado (sincronização, cotações, telas) sem procurar em logs.',
         print: { id: 'erros-do-sistema', alt: 'Configurações, aba Erros: filtros de situação, origem, nível e datas e a tabela de erros do sistema.' },
-        passos: [
+        topicos: ['Abra Configurações › Erros.'],
+        detalhes: [
           'Abra Configurações › Erros.',
           'Filtre por situação, origem, nível e período. O mesmo erro repetido aparece uma vez, com quantas vezes aconteceu.',
           '“detalhe” mostra a explicação técnica; “Resolvido” tira da lista (e “Reabrir” traz de volta).',
           'Tokens, senhas, CPF e valores são removidos antes de gravar.',
           '“Reportar para o Claude” copia o erro (a mensagem, a tela, quantas vezes, a explicação técnica e a versão do site, sem o seu login) num texto que começa com /reportar-erro. Cole no Claude Code: ele procura se já existe uma issue, analisa o erro e pergunta se resolve agora, só cataloga ou se é do ambiente de desenvolvimento. O site não manda nada para a internet: quem envia é você, ao colar.',
-          'Se o navegador não deixar copiar sozinho, o texto aparece embaixo do erro, já selecionado: copie com Ctrl+C.'
+          'Se o navegador não deixar copiar sozinho, o texto aparece embaixo do erro, já selecionado: copie com Ctrl+C.',
+          'O repositório do projeto é público. Antes de abrir uma issue, o Claude relê o texto e tira o que sobrou de dado pessoal (nomes, descrições de transação).'
         ],
-        dicas: ['O repositório do projeto é público. Antes de abrir uma issue, o Claude relê o texto e tira o que sobrou de dado pessoal (nomes, descrições de transação).'],
         abrir: [{ rotulo: 'Abrir os erros do sistema', rota: '/configuracoes', params: { aba: 'erros' } }]
       }
     ]
@@ -1594,7 +1662,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'o-que-sai',
         titulo: 'O que fica e o que sai do computador',
         paraQueServe: 'Saber exatamente para onde vão os seus dados.',
-        passos: [
+        topicos: ['Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.'],
+        detalhes: [
           'Fica no computador: todas as transações, contas, categorias, metas, orçamentos e a carteira.',
           'Sai, por HTTPS: a conversa com a Pluggy (Open Finance), com as credenciais que você informou; datas para a taxa Selic e a cotação de moedas no Banco Central; códigos de ativos para as cotações (Yahoo Finance); e o pedido das cotações de criptomoedas à Binance, só com os pares fixos (Bitcoin, Ethereum, Solana e Tether, em reais).',
           'O gerenciador do Windows consulta o GitHub para saber se há versão nova e para baixá-la, sem mandar nada seu. O do Linux só vai ao GitHub na instalação de desenvolvimento, quando você clica em “Atualizar para a última do develop”.',
@@ -1607,7 +1676,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'ocultar-valores',
         titulo: 'Ocultar valores',
         paraQueServe: 'Mostrar a tela a alguém sem mostrar quanto você tem.',
-        passos: [
+        topicos: ['Clique no botão do olho na barra de cima.'],
+        detalhes: [
           'Clique no botão do olho na barra de cima.',
           'Todos os valores ficam escondidos, inclusive nas frases dos gráficos. O olho fica riscado e o botão destacado enquanto os valores estão escondidos.',
           'Clique de novo para mostrar.'
@@ -1617,7 +1687,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'backup',
         titulo: 'Backup',
         paraQueServe: 'Não perder os seus dados se o computador der problema.',
-        passos: [
+        topicos: ['Pelo gerenciador (Windows e Linux): abra “Mais opções”, clique em “Salvar uma cópia do banco…” e escolha onde…'],
+        detalhes: [
           'Pelo gerenciador (Windows e Linux): abra “Mais opções”, clique em “Salvar uma cópia do banco…” e escolha onde guardar (pendrive, disco externo, nuvem). No Windows, ele pede permissão de administrador.',
           'Instalou pelos scripts? Você também pode rodar scripts/geral/4-backup.sh (de preferência agendado), que copia o banco para a pasta “backups” do projeto. Copie essa pasta de vez em quando para um disco externo ou outro lugar seguro.',
           'A cópia tem todos os seus dados financeiros: guarde em lugar seguro.',
@@ -1628,7 +1699,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'restaurar',
         titulo: 'Restaurar uma cópia',
         paraQueServe: 'Voltar o banco para uma cópia salva, depois de um problema.',
-        passos: [
+        topicos: ['Pelo gerenciador (Windows e Linux): abra “Mais opções” e clique em “Restaurar uma cópia…”. Ele diz o que muda…'],
+        detalhes: [
           'Pelo gerenciador (Windows e Linux): abra “Mais opções” e clique em “Restaurar uma cópia…”. Ele diz o que muda e, se você seguir, pede o arquivo da cópia. No Windows, pede permissão de administrador.',
           'O gerenciador confere que o arquivo é uma cópia do banco do Finanças Local antes de desligar o site. Depois desliga, guarda o banco de agora na pasta dados, em “antes-de-restaurar”, põe a cópia no lugar (sem os arquivos -wal e -shm do banco antigo) e liga o site de novo. Se algo der errado no meio, ele devolve o banco de antes.',
           'Abra o site, entre e confira a última transação e Configurações › Erros. Deu tudo certo? Apague a pasta “antes-de-restaurar”.',
@@ -1637,9 +1709,7 @@ export const MANUAL: CapituloManual[] = [
           'Guarde o banco atual: copie os arquivos FinancasLocal.db* da pasta dados/sql para outra pasta.',
           'Copie a cópia por cima de dados/sql/FinancasLocal.db.',
           'Apague os arquivos FinancasLocal.db-wal e FinancasLocal.db-shm da pasta dados/sql. Se ficarem, a cópia pode corromper.',
-          'Ligue o site (“Ligar” no gerenciador), abra-o e confira a última transação.'
-        ],
-        dicas: [
+          'Ligue o site (“Ligar” no gerenciador), abra-o e confira a última transação.',
           'Tudo volta para a data da cópia, inclusive a senha do site: entre com a senha que valia naquele dia.',
           'O que veio do Open Finance depois da cópia volta na próxima sincronização; o que você lançou à mão, não.',
           'Antes de cada atualização que muda o banco, o sistema guarda uma cópia em dados/backups.',
@@ -1650,7 +1720,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'atualizar',
         titulo: 'Atualizar e parar o sistema',
         paraQueServe: 'Manter o site em dia e saber desligar tudo.',
-        passos: [
+        topicos: ['Pelo gerenciador do Windows (instalação pelo .msi): quando aparecer “Tem versão nova”, veja “O que mudou” e…'],
+        detalhes: [
           'Pelo gerenciador do Windows (instalação pelo .msi): quando aparecer “Tem versão nova”, veja “O que mudou” e clique em “Atualizar para …”. Ele baixa, confere e abre o instalador; é só avançar. O site fica fora do ar por alguns segundos. Sem o gerenciador, baixe o .msi novo da página de versões no GitHub e abra.',
           'Nenhuma atualização apaga dados. Antes de mudar a estrutura do banco, a versão nova guarda uma cópia em dados/backups.',
           'Para parar o site: “Desligar” no gerenciador; “Ligar” volta. Sem isso, o site liga sozinho com o computador.',
@@ -1661,7 +1732,8 @@ export const MANUAL: CapituloManual[] = [
         id: 'problemas-comuns',
         titulo: 'Problemas comuns',
         paraQueServe: 'Resolver sozinho os tropeços mais frequentes.',
-        passos: [
+        topicos: ['O navegador alerta sobre o certificado: abra o mesmo .msi de novo e escolha “Reparar”, que recoloca o…'],
+        detalhes: [
           'O navegador alerta sobre o certificado: abra o mesmo .msi de novo e escolha “Reparar”, que recoloca o certificado nos confiáveis. Instalou pelos scripts? Rode scripts/geral/instalar.sh de novo.',
           '“Não foi possível falar com a API”: abra o gerenciador e veja a situação. Desligado, clique em “Ligar”; “ligado, mas não responde”, espere alguns segundos e clique em “Reiniciar”.',
           'O Client Secret da Pluggy não abre mais (depois de trocar de computador): informe o Client Secret de novo em Configurações.',
