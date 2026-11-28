@@ -5,7 +5,9 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "adiantamento": null,
       "diferenca": -5292.62,
+      "esperado": 5292.62,
       "liquido": 5292.62,
       "outros": [],
       "recebido": 0.00,
@@ -148,7 +150,9 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "adiantamento": null,
       "diferenca": -4498.49,
+      "esperado": 4498.49,
       "liquido": 4498.49,
       "outros": [
         {
@@ -194,7 +198,9 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "adiantamento": null,
       "diferenca": 0.00,
+      "esperado": 4498.49,
       "liquido": 4498.49,
       "outros": [
         {
@@ -286,7 +292,9 @@
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
+      "adiantamento": null,
       "diferenca": -4498.49,
+      "esperado": 4498.49,
       "liquido": 4498.49,
       "outros": [
         {
