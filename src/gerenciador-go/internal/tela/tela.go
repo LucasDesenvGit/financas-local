@@ -98,6 +98,9 @@ type Tela struct {
 	CelularMudando string
 	// AvisoCelular é o resultado da última vez que ligou ou desligou, quando não foi o esperado ("" se deu certo).
 	AvisoCelular string
+	// DiscoSemCriptografia e DadosNaNuvem (#68): onde fica a pasta de dados, só quando o gerenciador tem certeza.
+	DiscoSemCriptografia bool
+	DadosNaNuvem         bool
 }
 
 // NaoDeuCerto é o detalhe quando ligar, desligar ou reiniciar falha: o motivo, quando o sistema diz (no Linux, o do
@@ -140,6 +143,28 @@ func (t Tela) TextoSemLogin() string {
 	default:
 		return ""
 	}
+}
+
+// ComoProteger é o trecho da documentação que explica a criptografia do disco e por que os dados não vão para a nuvem.
+const ComoProteger = "https://github.com/LucasDesenvGit/financas-local/blob/main/docs/SEGURANCA.md#recomendações"
+
+// TextoProtecao é o aviso sobre a pasta de dados (#68, itens 2 e 14): o disco sem criptografia e a pasta sincronizada
+// com a nuvem. Só avisa, sem recusar nada; "" quando não há o que avisar.
+func (t Tela) TextoProtecao() string {
+	var partes []string
+	if t.DiscoSemCriptografia {
+		ative := "Ative o BitLocker."
+		if t.Linux {
+			ative = "Use a criptografia do disco (LUKS)."
+		}
+		partes = append(partes, "O disco da pasta de dados não está criptografado: quem levar o computador ou o disco "+
+			"lê o banco e as cópias. "+ative)
+	}
+	if t.DadosNaNuvem {
+		partes = append(partes, "A pasta de dados está numa pasta sincronizada com a nuvem (OneDrive, Dropbox, Google "+
+			"Drive, iCloud): o banco e as cópias vão sem criptografia para lá. Instale fora dela.")
+	}
+	return strings.Join(partes, " ")
 }
 
 // RotuloMais é o nome do "Mais opções" fechado, que diz o que tem dentro.
@@ -383,6 +408,7 @@ type Atualizacao struct {
 	AcaoCelular         string `json:"acaoCelular"`
 	CelularHabilitado   bool   `json:"celularHabilitado"`
 	AvisoCelular        string `json:"avisoCelular"`
+	TextoProtecao       string `json:"textoProtecao"`
 }
 
 // Atualizacao da tela, com as mesmas regras da página inteira.
@@ -399,7 +425,7 @@ func (t Tela) Atualizacao() Atualizacao {
 		NotasDevelop: t.Develop.Notas, ReabrirGerenciador: t.Develop.ReabrirGerenciador, SemLogin: t.SemLogin, TextoSemLogin: t.TextoSemLogin(),
 		CelularVisivel: t.CelularVisivel(), PontoCelular: t.PontoCelular(), TextoCelular: t.TextoCelular(),
 		BotaoCelular: t.BotaoCelular(), AcaoCelular: t.AcaoCelular(), CelularHabilitado: t.CelularHabilitado(),
-		AvisoCelular: t.AvisoCelular,
+		AvisoCelular: t.AvisoCelular, TextoProtecao: t.TextoProtecao(),
 	}
 }
 
@@ -482,7 +508,8 @@ var Estilo []byte
 var textoDaPagina string
 
 var pagina = template.Must(template.New("pagina").Funcs(template.FuncMap{
-	"dica": func() string { return DicaSiteDesligado },
+	"dica":         func() string { return DicaSiteDesligado },
+	"comoProteger": func() string { return ComoProteger },
 }).Parse(textoDaPagina))
 
 // Glifo é o desenho do ícone: o caractere da fonte de ícones do Windows ou, no Linux, o SVG do lucide, na cor do
