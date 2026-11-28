@@ -10,13 +10,16 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/acessocelular"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/copia"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/desenvolvimento"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/primeiroacesso"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/restauracao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/servico"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/situacao"
@@ -59,6 +62,13 @@ func main() {
 	// acessocelular.Resultado (0 = feito).
 	if len(os.Args) == 3 && os.Args[1] == "--celular" && (os.Args[2] == "ligar" || os.Args[2] == "desligar") {
 		os.Exit(int(acessocelular.NaInstalacao(instalacao.Atual(), os.Args[2] == "ligar")))
+	}
+	// --primeiro-acesso <canal> (#68, item 4): a instância elevada que lê o segredo e devolve só o token do link do
+	// primeiro acesso, pelo pipe que a instância sem elevação criou (primeiroacesso.Elevado). Código de saída 0 = feito.
+	if len(os.Args) == 3 && os.Args[1] == "--primeiro-acesso" {
+		os.Exit(primeiroacesso.Elevado(os.Args[2], func(w io.Writer) error {
+			return primeiroacesso.GerarEEnviar(instalacao.Atual(), time.Now(), w)
+		}))
 	}
 	if len(os.Args) == 2 && os.Args[1] == "--instalar-pelos-scripts" {
 		os.Exit(desenvolvimento.ReinstalarElevado())

@@ -100,7 +100,11 @@ jobs:
           c="$RUNNER_TEMP/cookies.txt"
           curl -k -fsS -c "$c" -b "$c" "$site/api/auth/estado" >/dev/null
           token() { awk '$6 == "__Host-XSRF-TOKEN" { print $7 }' "$c" | tail -n1; }
-          curl -k -fsS -c "$c" -b "$c" -H "X-XSRF-TOKEN: $(token)" -H 'Content-Type: application/json' \
+          # #68, item 4: o primeiro usuario so com o token do link que o instalador mostra (so quem le dados/chaves o gera).
+          [[ "$(curl -k -s -b "$c" -o /dev/null -w '%{http_code}' -H "X-XSRF-TOKEN: $(token)" -H 'Content-Type: application/json' \
+            -d '{"login":"intruso","senha":"Teste#Linux2026"}' "$site/api/auth/configurar")" == 403 ]] || { echo "::error::configurar sem o token devia ser 403"; exit 1; }
+          link="$(publicado/api/financas-go link-de-configuracao -chaves dados/chaves)"
+          curl -k -fsS -c "$c" -b "$c" -H "X-XSRF-TOKEN: $(token)" -H "X-Configurar-Token: ${link##*configurar=}" -H 'Content-Type: application/json' \
             -d '{"login":"verificador","senha":"Teste#Linux2026"}' "$site/api/auth/configurar" >/dev/null
           [[ "$(curl -k -s -o /dev/null -w '%{http_code}' "$site/api/go/saude")" == 401 ]] || { echo "::error::sem login devia ser 401"; exit 1; }
           saude="$(curl -k -fsS -b "$c" "$site/api/go/saude")"

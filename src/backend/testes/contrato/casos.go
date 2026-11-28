@@ -45,6 +45,9 @@ type Caso struct {
 	CorpoTexto *string         `json:"corpoTexto,omitempty"`
 	// SemCsrf não manda o cabeçalho X-XSRF-TOKEN (por padrão, todo método que não é GET manda).
 	SemCsrf bool `json:"semCsrf,omitempty"`
+	// TokenConfiguracao manda o token do POST /api/auth/configurar (#68, item 4): "valido" é o de agora, gerado com o
+	// segredo do gerenciador que fica ao lado do certificado (-raiz); "vencido" é o de 11 minutos antes. Vazio não manda.
+	TokenConfiguracao string `json:"tokenConfiguracao,omitempty"`
 	// Capturar guarda valores da resposta em variáveis, usadas nos casos seguintes como {{nome}} no caminho e no
 	// corpo. A chave é o nome da variável; o valor, um JSON Pointer (RFC 6901) no corpo da resposta: "/itens/0/id".
 	Capturar map[string]string `json:"capturar,omitempty"`

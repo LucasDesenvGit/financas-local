@@ -22,7 +22,7 @@ cd financas-local/scripts/geral
 ./3-publicar-atualizar.sh    # compila e publica como serviço do sistema
 ```
 
-Depois, abra **https://localhost:5443**. No primeiro acesso você cria o usuário e a senha (mínimo de 8 caracteres).
+Depois, abra **o link do primeiro acesso** que o `3-publicar-atualizar.sh` mostra no fim (ou "Abrir o site", no gerenciador): é ele que deixa criar o usuário e a senha (mínimo de 8 caracteres), e vale 10 minutos. Venceu? Gere outro com `publicado/api/financas-go link-de-configuracao -chaves dados/chaves` (no Windows, `publicado\api\financas-go.exe`). Quem abre só `https://localhost:5443` vê a explicação.
 
 ### Gerenciador do Finanças Local
 

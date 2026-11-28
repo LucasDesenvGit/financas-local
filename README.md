@@ -59,7 +59,7 @@ cd financas-local
 scripts/geral/instalar.sh
 ```
 
-O site vira um serviço do seu usuário (systemd) e fica em **https://localhost:5443**; no primeiro acesso, crie o usuário e a senha. O gerenciador entra no menu de aplicativos. Para o navegador confiar no certificado, a instalação mostra o comando da sua distribuição. Etapa por etapa, gerenciador e problemas: [Instalar a partir do código](docs/INSTALACAO-PELO-CODIGO.md).
+O site vira um serviço do seu usuário (systemd) e fica em **https://localhost:5443**; no primeiro acesso, abra o link que a instalação mostra (vale 10 minutos) e crie o usuário e a senha. O gerenciador entra no menu de aplicativos. Para o navegador confiar no certificado, a instalação mostra o comando da sua distribuição. Etapa por etapa, gerenciador e problemas: [Instalar a partir do código](docs/INSTALACAO-PELO-CODIGO.md).
 
 ## Conectar seus bancos (Open Finance)
 

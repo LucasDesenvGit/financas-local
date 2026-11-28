@@ -102,7 +102,10 @@ jobs:
           '{"login":"verificador","senha":"Teste#Win2026"}' | Set-Content corpo.json -NoNewline
           curl.exe -k -fsS -c c.txt -b c.txt "$site/api/auth/estado" | Out-Null
           $xsrf = (Get-Content c.txt | Where-Object { $_ -match "__Host-XSRF-TOKEN" } | ForEach-Object { ($_ -split "`t")[6] }) | Select-Object -Last 1
-          curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "Content-Type: application/json" -d "@corpo.json" "$site/api/auth/configurar" | Out-Null
+          # #68, item 4: o primeiro usuario so com o token do link que o instalador mostra (so quem le dados\chaves o gera).
+          $link = & "publicado\api\financas-go.exe" link-de-configuracao -chaves "dados\chaves"
+          $token = ($link -split "configurar=")[1]
+          curl.exe -k -fsS -c c.txt -b c.txt -H "X-XSRF-TOKEN: $xsrf" -H "X-Configurar-Token: $token" -H "Content-Type: application/json" -d "@corpo.json" "$site/api/auth/configurar" | Out-Null
           if ($LASTEXITCODE -ne 0) { throw "nao deu para criar o usuario" }
           $semLogin = curl.exe -k -s -o NUL -w "%{http_code}" "$site/api/go/saude"
           if ($semLogin -ne "401") { throw "GET /api/go/saude sem login: $semLogin (esperado 401)" }

@@ -74,8 +74,13 @@ func (a *Autenticacao) estado(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, resposta)
 }
 
-// configurar cria o único usuário do sistema; só funciona enquanto não houver nenhum.
+// configurar cria o único usuário do sistema; só funciona enquanto não houver nenhum, e só com o token de quem lê o
+// segredo do gerenciador (configuracao.go): o token vem antes de tudo, nem o corpo é lido sem ele.
 func (a *Autenticacao) configurar(w http.ResponseWriter, r *http.Request) {
+	if !TokenDeConfiguracaoValido(a.o.ChaveConfiguracao, r.Header.Get(CabecalhoTokenConfiguracao), a.o.Relogio.Agora()) {
+		respostas.Mensagem(w, http.StatusForbidden, MensagemSemTokenConfiguracao)
+		return
+	}
 	login := &respostas.CampoTexto{Propriedade: "Login", Minimo: 3, Maximo: 100}
 	senha := &respostas.CampoTexto{Propriedade: "Senha", Maximo: 200}
 	if !respostas.LerTextos(w, r, login, senha) {

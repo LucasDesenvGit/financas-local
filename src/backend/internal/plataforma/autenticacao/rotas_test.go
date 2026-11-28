@@ -58,7 +58,7 @@ func novoAmbiente(t *testing.T) *ambiente {
 		t.Fatal(err)
 	}
 	auth := Nova(Opcoes{DB: db, Relogio: rel, Log: log, Chave: chave, Versao: "teste", MinutosSessao: 120,
-		MaximoTentativasLogin: 5, MinutosBloqueio: 15})
+		MaximoTentativasLogin: 5, MinutosBloqueio: 15, ChaveConfiguracao: segredoDeTeste})
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { respostas.SemCorpo(w, http.StatusNotFound) })
 	auth.Registrar(mux)
@@ -71,7 +71,14 @@ func novoAmbiente(t *testing.T) *ambiente {
 type navegador struct {
 	a       *ambiente
 	cliente *http.Client
+	// tokenDeConfiguracao, se não vazio, vai no lugar do token válido que o "configurar" leva por padrão (como o link
+	// que o gerenciador abre); semToken tira o cabeçalho.
+	tokenDeConfiguracao string
+	semToken            bool
 }
+
+// segredoDeTeste é o segredo do gerenciador do ambiente.
+const segredoDeTeste = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 func (a *ambiente) navegador() *navegador {
 	pote, _ := cookiejar.New(nil)
@@ -102,6 +109,13 @@ func (n *navegador) pedir(metodo, caminho string, corpo any, semCsrf bool) (int,
 	r, _ := http.NewRequest(metodo, n.a.srv.URL+caminho, leitor)
 	if corpo != nil {
 		r.Header.Set("Content-Type", "application/json")
+	}
+	if caminho == "/api/auth/configurar" && !n.semToken {
+		token := n.tokenDeConfiguracao
+		if token == "" {
+			token = TokenDeConfiguracao(segredoDeTeste, n.a.relogio.Agora())
+		}
+		r.Header.Set(CabecalhoTokenConfiguracao, token)
 	}
 	if metodo != http.MethodGet && !semCsrf {
 		if n.cookie(CookieXsrf) == "" {

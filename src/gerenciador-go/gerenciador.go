@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -22,6 +23,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/icones"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/instalacao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/preferencias"
+	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/primeiroacesso"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/protecao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/restauracao"
 	"github.com/LucasDesenvGit/financas-local/src/gerenciador-go/internal/situacao"
@@ -67,6 +69,8 @@ type gerenciador struct {
 	exemplo     bool // -mostrar: a situação fica fixa
 	ocupado     bool // ligando, desligando ou reiniciando
 	consultando bool
+	// pedindoLink: o UAC do link do primeiro acesso está aberto (#68).
+	pedindoLink atomic.Bool
 	maisOpcoes  bool
 	ultimaCopia string // o arquivo da última cópia do banco, para "Abrir a pasta"
 	nova        versaoNova
@@ -409,6 +413,24 @@ func (g *gerenciador) abrirPasta() {
 	}
 }
 
+// enderecoDoSite é o que "Abrir o site" abre: uma página do site, ou, enquanto o site não tem usuário, o link do primeiro
+// acesso (#68, ADR 0075). No Windows, se a pasta das chaves não abre para esta conta, o link vem de uma instância elevada
+// (UAC, uma vez); sem o UAC, abre a página de sempre e avisa na bandeja. O navegador abre aqui, sem elevação. Um pedido
+// de cada vez: outro clique enquanto o aviso do UAC está aberto só abre a página de sempre.
+func (g *gerenciador) enderecoDoSite(pagina string) string {
+	if !g.pedindoLink.CompareAndSwap(false, true) {
+		return g.inst.Pagina(pagina)
+	}
+	defer g.pedindoLink.Store(false)
+	ctx, cancelar := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelar()
+	endereco, aviso := primeiroacesso.Endereco(ctx, g.consulta.Cliente, g.inst, pagina, time.Now(), primeiroacesso.Pedir)
+	if aviso != "" {
+		go avisarNaBandeja(tela.AvisoNaBandeja{Texto: aviso, Alerta: true})
+	}
+	return endereco
+}
+
 func (g *gerenciador) abrirNoNavegador(endereco string) {
 	if err := g.app.Browser.OpenURL(endereco); err != nil {
 		log.Print(err)
@@ -443,7 +465,7 @@ func (g *gerenciador) rotas() http.Handler {
 			http.Error(w, "página desconhecida", http.StatusBadRequest)
 			return
 		}
-		g.abrirNoNavegador(g.inst.Pagina(pagina))
+		g.abrirNoNavegador(g.enderecoDoSite(pagina))
 		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("POST /acao/{acao}", func(w http.ResponseWriter, r *http.Request) {
@@ -632,7 +654,7 @@ func (g *gerenciador) montarBandeja() {
 	menu := g.app.NewMenu()
 	g.itemSituacao = menu.Add("Finanças Local: " + tela.Verificando.Curto()).SetEnabled(false)
 	menu.AddSeparator()
-	menu.Add("Abrir o site").OnClick(func(*application.Context) { g.abrirNoNavegador(g.inst.Pagina("")) })
+	menu.Add("Abrir o site").OnClick(func(*application.Context) { g.abrirNoNavegador(g.enderecoDoSite("")) })
 	menu.Add("Mostrar o gerenciador").OnClick(func(*application.Context) { g.abrir() })
 	menu.AddSeparator()
 	menu.Add("Sair").OnClick(func(*application.Context) { g.app.Quit() })

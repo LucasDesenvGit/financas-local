@@ -28,6 +28,9 @@ type Opcoes struct {
 	Log     *slog.Logger
 	Chave   []byte // CarregarChave(Seguranca:PastaChaves)
 	Versao  string // a do sistema, no "estado" (EstadoAutenticacaoDto.Versao)
+	// ChaveConfiguracao é o segredo do gerenciador (celular.CarregarChaveDoGerenciador): com ele se confere o token do
+	// configurar. Vazio: ninguém configura.
+	ChaveConfiguracao string
 
 	MinutosSessao int // Seguranca:MinutosSessao (120)
 	// Padrões dos parâmetros de login; o valor gravado em Configuracao vale mais (ParametroService).

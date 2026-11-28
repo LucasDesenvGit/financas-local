@@ -644,8 +644,19 @@ try {
         Aviso "Para aceitar: em about:config, deixe security.enterprise_roots.enabled como true (ou use o Edge/Chrome)."
     }
 
+    # #68, item 4 (ADR 0075): sem usuario criado, o site so deixa cria-lo pelo link do primeiro acesso, que so quem le a
+    # pasta das chaves gera. O link vale 10 minutos; para outro, rode o mesmo comando (docs/INSTALACAO-PELO-CODIGO.md).
+    $estado = & curl.exe -k -fs "https://127.0.0.1:5443/api/auth/estado"
+    $global:LASTEXITCODE = 0
+    if ($estado -match '"configurado":\s*false') {
+        $link = & (Join-Path (Join-Path $PastaPublicado "api") "financas-go.exe") link-de-configuracao -chaves $PastaChaves -url "https://localhost:5443" 2>&1
+        if ($LASTEXITCODE -eq 0) { Ok "Primeiro acesso: abra este link no navegador (vale 10 minutos): $link" }
+        else { Aviso "Nao foi possivel gerar o link do primeiro acesso: $link" }
+        $global:LASTEXITCODE = 0
+    }
+
     Write-Host ""
-    Write-Host "Instalacao concluida. Abra https://localhost:5443 no navegador." -ForegroundColor Green
+    Write-Host "Instalacao concluida. Abra https://localhost:5443 no navegador (na primeira vez, pelo link do primeiro acesso mostrado acima)." -ForegroundColor Green
     Write-Host "Gerenciador (ver se o site esta no ar, ligar, desligar, copiar o banco): powershell -ExecutionPolicy Bypass -File scripts\windows\instalar-gerenciador.ps1"
 
 } catch {

@@ -269,6 +269,16 @@ else
     [[ -n "$ocupante" ]] && aviso "Quem esta na porta 5443 agora: $ocupante. Se nao for o Financas Local, feche esse programa."
 fi
 
+# #68, item 4 (ADR 0075): sem usuario criado, o site so deixa cria-lo pelo link do primeiro acesso, que so quem le a pasta
+# das chaves gera. O link vale 10 minutos; para outro, rode o mesmo comando (docs/INSTALACAO-PELO-CODIGO.md).
+if [[ "$sucesso" -eq 1 && "$resposta" == *'"configurado":false'* ]]; then
+    if link="$("$exe_servico" link-de-configuracao -chaves "$(caminho_nativo "$PastaChaves")" -url https://localhost:5443 2>&1)"; then
+        ok "Primeiro acesso: abra este link no navegador (vale 10 minutos): $link"
+    else
+        aviso "Nao foi possivel gerar o link do primeiro acesso: $link"
+    fi
+fi
+
 if [[ "$sucesso" -eq 1 ]]; then
     for velho in "$Ferramentas/dotnet" "$Ferramentas/dotnet-home" "$Ferramentas/nuget-pacotes" "$PastaPublicado/api-anterior"; do
         [[ -e "$velho" ]] || continue

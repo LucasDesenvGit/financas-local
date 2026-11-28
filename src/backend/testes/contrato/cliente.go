@@ -89,7 +89,7 @@ func (s *Sessao) tokenCsrf(ctx context.Context) (string, error) {
 	if v := s.cookie(cookieXsrf); v != "" {
 		return v, nil
 	}
-	r, err := s.enviar(ctx, http.MethodGet, "/api/auth/estado", nil, "", "")
+	r, err := s.enviar(ctx, http.MethodGet, "/api/auth/estado", nil, "", "", nil)
 	if err != nil {
 		return "", fmt.Errorf("pegar o token CSRF: %w", err)
 	}
@@ -119,7 +119,7 @@ type Resposta struct {
 	Corpo   []byte
 }
 
-func (s *Sessao) enviar(ctx context.Context, metodo, caminho string, corpo []byte, tipoCorpo, csrf string) (*Resposta, error) {
+func (s *Sessao) enviar(ctx context.Context, metodo, caminho string, corpo []byte, tipoCorpo, csrf string, extras map[string]string) (*Resposta, error) {
 	endereco := s.alvo.JoinPath() // cópia
 	caminhoURL, err := url.Parse(caminho)
 	if err != nil {
@@ -141,6 +141,9 @@ func (s *Sessao) enviar(ctx context.Context, metodo, caminho string, corpo []byt
 	}
 	if csrf != "" {
 		pedido.Header.Set(cabecalhoXsrf, csrf)
+	}
+	for nome, valor := range extras {
+		pedido.Header.Set(nome, valor)
 	}
 	resp, err := s.cliente.Do(pedido)
 	if err != nil {

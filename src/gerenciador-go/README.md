@@ -2,7 +2,7 @@
 
 A janela e o ícone na bandeja que mostram a situação do site, ligam, desligam e reiniciam o serviço, copiam e restauram o banco e atualizam o sistema, no Windows e no Linux, com o [Wails v3](https://pkg.go.dev/github.com/wailsapp/wails/v3) ([ADR 0052](../../docs/adr/0052-gerenciador-em-go-com-bandeja-e-pagina-local.md)). Onde ele fica: [docs/ARQUITETURA.md, "Gerenciador"](../../docs/ARQUITETURA.md#gerenciador--srcgerenciador-go); o que faz para quem usa: [docs/INSTALADOR-E-GERENCIADOR.md](../../docs/INSTALADOR-E-GERENCIADOR.md#o-gerenciador).
 
-É um módulo à parte (`go.mod` próprio), para a API não levar o Wails nem precisar de cgo. O `main.go` é a entrada e as ações que o gerenciador roda como administrador (`--servico`, `--backup`, `--restaurar`, `--celular`, `--instalar-pelos-scripts`) ou sem janela (`--situacao`, que a CI do Linux usa: 0 = no ar); o `gerenciador.go`, o Wails, com a página servida por dentro, **sem porta aberta**; os `*_windows.go` e `*_linux.go`, o que muda entre os dois; e um pacote por assunto em `internal/` (a página em `internal/tela`, testada sem janela).
+É um módulo à parte (`go.mod` próprio), para a API não levar o Wails nem precisar de cgo. O `main.go` é a entrada e as ações que o gerenciador roda como administrador (`--servico`, `--backup`, `--restaurar`, `--celular`, `--primeiro-acesso`, `--instalar-pelos-scripts`) ou sem janela (`--situacao`, que a CI do Linux usa: 0 = no ar); o `gerenciador.go`, o Wails, com a página servida por dentro, **sem porta aberta**; os `*_windows.go` e `*_linux.go`, o que muda entre os dois; e um pacote por assunto em `internal/` (a página em `internal/tela`, testada sem janela).
 
 ## Compilar e testar
 

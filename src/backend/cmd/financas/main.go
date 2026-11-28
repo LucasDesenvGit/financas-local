@@ -8,7 +8,8 @@
 //
 // O subcomando preparar-https (#84, #775) cuida do HTTPS da instalação: o .pfx (reaproveita o que ainda vale e gera outro
 // quando precisa), a senha dele e a configuração que o site lê (https.go). O subcomando aplicar-esquema (#723) cria
-// ou atualiza o banco e sai: é o que os scripts de instalação rodam antes de publicar (esquema.go).
+// ou atualiza o banco e sai: é o que os scripts de instalação rodam antes de publicar (esquema.go). O subcomando
+// link-de-configuracao (#68) imprime o endereço do primeiro acesso, com o token que só quem lê as chaves gera.
 //
 // Só para teste: -inicio-do-relogio 2026-10-15T01:00:00Z faz o relógio começar nesse instante e andar dali (#363);
 // o contrato usa. Sem a opção, o relógio do sistema.
@@ -55,6 +56,8 @@ func main() {
 		err = prepararHTTPS(os.Args[2:], os.Stdout, relogio.Sistema{})
 	case len(os.Args) > 1 && os.Args[1] == "aplicar-esquema":
 		err = aplicarEsquema(context.Background(), os.Args[2:], relogio.Sistema{})
+	case len(os.Args) > 1 && os.Args[1] == "link-de-configuracao":
+		err = linkDeConfiguracao(os.Args[2:], os.Stdout, relogio.Sistema{})
 	default:
 		err = servicosistema.Rodar(rodar)
 	}
@@ -151,9 +154,14 @@ func rodar(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	// O segredo do gerenciador (ADR 0061) também abre a configuração inicial (ADR 0075): sem ele, ninguém cria o usuário.
+	chaveGerenciador, err := celular.CarregarChaveDoGerenciador(cfg.PastaChaves)
+	if err != nil {
+		return err
+	}
 	auth := autenticacao.Nova(autenticacao.Opcoes{
 		DB: db, Relogio: rel, Log: log, Chave: chave, Versao: versao.Atual, MinutosSessao: cfg.MinutosSessao,
-		MaximoTentativasLogin: cfg.MaximoTentativasLogin, MinutosBloqueio: cfg.MinutosBloqueio,
+		MaximoTentativasLogin: cfg.MaximoTentativasLogin, MinutosBloqueio: cfg.MinutosBloqueio, ChaveConfiguracao: chaveGerenciador,
 	})
 	montado := api.Montar(api.Dependencias{DB: db, Log: log, Relogio: rel, Config: cfg})
 	rotas := montado.Rotas
@@ -190,7 +198,7 @@ func rodar(ctx context.Context) error {
 	site := servidor.Opcoes{Config: cfg, PastaSite: pastaSite, Certificado: certificado, Log: log, API: auth.Proteger(rotas)}
 	// #328 (ADR 0061): o acesso pelo celular, desligado por padrão. Ligado, escuta também no IP da rede de casa, com o
 	// mesmo pipeline do site, só com esse IP nos hosts permitidos e o certificado da autoridade local.
-	acessoCelular, err := novoAcessoCelular(db, rel, log, site)
+	acessoCelular, err := novoAcessoCelular(db, rel, log, site, chaveGerenciador)
 	if err != nil {
 		return err
 	}
@@ -206,7 +214,7 @@ func rodar(ctx context.Context) error {
 }
 
 // novoAcessoCelular monta o acesso pelo celular na porta do site.
-func novoAcessoCelular(db *sql.DB, rel relogio.Relogio, log *slog.Logger, site servidor.Opcoes) (*celular.Servico, error) {
+func novoAcessoCelular(db *sql.DB, rel relogio.Relogio, log *slog.Logger, site servidor.Opcoes, chaveGerenciador string) (*celular.Servico, error) {
 	_, textoPorta, err := net.SplitHostPort(site.Config.Endereco)
 	if err != nil {
 		return nil, fmt.Errorf("o endereço do site %q: %w", site.Config.Endereco, err)
@@ -214,10 +222,6 @@ func novoAcessoCelular(db *sql.DB, rel relogio.Relogio, log *slog.Logger, site s
 	porta, err := strconv.Atoi(textoPorta)
 	if err != nil {
 		return nil, fmt.Errorf("a porta do site %q: %w", site.Config.Endereco, err)
-	}
-	chaveGerenciador, err := celular.CarregarChaveDoGerenciador(site.Config.PastaChaves)
-	if err != nil {
-		return nil, err
 	}
 	return celular.Novo(celular.Opcoes{
 		DB: db, Relogio: rel, Log: log, PastaChaves: site.Config.PastaChaves, Porta: porta, Firewall: celular.FirewallDoSistema(),

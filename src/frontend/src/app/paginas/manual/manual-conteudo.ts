@@ -73,12 +73,13 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Primeiro acesso, entrar e sair',
         paraQueServe: 'Criar o seu usuário e proteger o acesso ao site.',
         topicos: [
-          'Na primeira vez, crie um usuário e uma senha (8 caracteres ou mais).',
+          'Na primeira vez, abra o site por “Abrir o site”, no gerenciador, e crie um usuário e uma senha (8 caracteres ou mais).',
           'Depois, entre com eles. “Sair” (menu do usuário, no canto de cima) encerra o acesso em todos os aparelhos.',
           'A sessão cai depois de 2 h sem uso ou 12 h depois de entrar; é só entrar de novo.'
         ],
         abrir: [{ rotulo: 'Trocar a senha', rota: '/configuracoes', params: { aba: 'seguranca' } }],
         detalhes: [
+          'Só esse link deixa criar o usuário: assim, outro programa do computador não o cria antes de você. No Windows, o gerenciador pede a permissão de administrador (UAC) nessa primeira vez; se você recusar, o site abre sem o link e avisa. O link vale 10 minutos; se vencer, clique em “Abrir o site” de novo.',
           'Muitas senhas erradas seguidas bloqueiam o login por alguns minutos. Espere e tente de novo; o limite e o tempo ficam em Configurações › Parametrização.'
         ]
       },
