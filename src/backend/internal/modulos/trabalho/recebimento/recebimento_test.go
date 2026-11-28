@@ -71,10 +71,6 @@ func TestCitaEmpregador(t *testing.T) {
 	}
 }
 
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 func TestRecebimentoNaoContaDuasVezes(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBancoVazio(t)
@@ -82,7 +78,7 @@ func TestRecebimentoNaoContaDuasVezes(t *testing.T) {
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, rel, log)
 	holerites := holerite.NovoServico(db, empregos, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, NovoServico(db, empregos, holerites, rel, log))

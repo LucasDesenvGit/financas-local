@@ -19,10 +19,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 type ambiente struct {
 	t         *testing.T
 	s         *Servico
@@ -38,7 +34,7 @@ func novo(t *testing.T) ambiente {
 	empregos := emprego.NovoServico(db, r, log)
 	holerites := holerite.NovoServico(db, empregos, r, log)
 	s := NovoServico(db, empregos, holerites, r, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, s)

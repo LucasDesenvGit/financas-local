@@ -89,8 +89,6 @@ type Irrf struct {
 	Fonte           string        `json:"fonte"`
 }
 
-// centavos arredonda ao centavo, com o empate saindo do zero (0,005 → 0,01), e deixa sempre duas casas.
-
 // CalcularInss é o INSS progressivo: cada faixa cobra a alíquota dela sobre o pedaço da base que cai nela, até o teto.
 // Arredonda só o total, ao centavo.
 func CalcularInss(t TabelaInss, base tipos.Decimal) Inss {

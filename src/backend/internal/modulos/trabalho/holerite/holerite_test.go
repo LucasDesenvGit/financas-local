@@ -12,14 +12,11 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
-
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
 
 type ambiente struct {
 	t *testing.T
@@ -34,7 +31,7 @@ func novo(t *testing.T) ambiente {
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, r, log)
 	s := NovoServico(db, empregos, r, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	Registrar(m, s)
 	return ambiente{t: t, s: s, h: m}
@@ -400,7 +397,7 @@ func TestReabrirRecusaQuandoOCalculoSumiria(t *testing.T) {
 // avisoDe acha o erro embrulhado, que a chave de mapa não achava (#750).
 func TestAvisoDeComErroEmbrulhado(t *testing.T) {
 	t.Parallel()
-	for _, err := range []error{ErrSemTabela, ErrSemSalario, ErrForaDoEmprego} {
+	for _, err := range []error{encargos.ErrSemTabela, ErrSemSalario, ErrForaDoEmprego} {
 		if aviso, motivo, ok := avisoDe(fmt.Errorf("contexto: %w", err)); !ok || aviso == "" || motivo == "" {
 			t.Errorf("%v embrulhado: %q %q %v", err, aviso, motivo, ok)
 		}

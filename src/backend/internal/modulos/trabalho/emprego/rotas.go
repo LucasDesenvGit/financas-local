@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
@@ -93,7 +94,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, 
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemUltimo)
 	case errors.Is(err, ErrPrimeiroSalario):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemPrimeiro)
-	case errors.Is(err, ErrSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	default:
 		s.log.ErrorContext(r.Context(), "trabalho: "+etapa, "erro", err)

@@ -55,7 +55,6 @@ func NovoServico(db *sql.DB, empregos *emprego.Servico, holerites *holerite.Serv
 
 var (
 	errSemRescisao = errors.New("sem rescisão")
-	errSemTabela   = errors.New("sem tabela")
 	errRegistrada  = errors.New("já registrada")
 )
 
@@ -100,19 +99,8 @@ func (s *Servico) Simular(ctx context.Context, empregoId, tipo, aviso int64, sai
 	if entrada.SomaVariaveis, _, err = s.holerites.VariaveisEntre(ctx, empregoId, mes.SomarMeses(-12), mes, salario.SalarioBruto); err != nil {
 		return Calculo{}, err
 	}
-	inss, err := encargos.LerTabelasInss(ctx, s.db)
-	if err != nil {
+	if entrada.Inss, entrada.Irrf, err = encargos.TabelasDoMes(ctx, s.db, mes); err != nil {
 		return Calculo{}, err
-	}
-	irrf, err := encargos.LerTabelasIrrf(ctx, s.db)
-	if err != nil {
-		return Calculo{}, err
-	}
-	var okInss, okIrrf bool
-	entrada.Inss, okInss = encargos.Vigente(inss, mes)
-	entrada.Irrf, okIrrf = encargos.Vigente(irrf, mes)
-	if !okInss || !okIrrf {
-		return Calculo{}, errSemTabela
 	}
 
 	_, projetada := AvisoPago(tipo, aviso, e.Admissao, saida)
@@ -319,7 +307,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, 
 		respostas.Mensagem(w, http.StatusBadRequest, string(v))
 	case errors.Is(err, errSemRescisao):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemSemRescisao)
-	case errors.Is(err, errSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	case errors.Is(err, errRegistrada):
 		respostas.Mensagem(w, http.StatusConflict, MensagemJaRegistrada)

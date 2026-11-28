@@ -82,11 +82,10 @@ func TestAvisoEAvos(t *testing.T) {
 
 func tabelas(t *testing.T) (encargos.TabelaInss, encargos.TabelaIrrf) {
 	t.Helper()
-	db := testeapoio.NovoBanco(t)
-	inss, _ := encargos.LerTabelasInss(t.Context(), db)
-	irrf, _ := encargos.LerTabelasIrrf(t.Context(), db)
-	ti, _ := encargos.Vigente(inss, dia(2026, 12, 1))
-	tr, _ := encargos.Vigente(irrf, dia(2026, 12, 1))
+	ti, tr, err := encargos.TabelasDoMes(t.Context(), testeapoio.NovoBanco(t), dia(2026, 12, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
 	return ti, tr
 }
 
@@ -158,10 +157,6 @@ func TestCalcularOsCincoTipos(t *testing.T) {
 	}
 }
 
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 func TestRescisaoPelaApi(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBancoVazio(t)
@@ -172,7 +167,7 @@ func TestRescisaoPelaApi(t *testing.T) {
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
 	oFgts := fgts.NovoServico(db, empregos, holerites, decimo, asFerias, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	ferias.Registrar(m, asFerias)
@@ -385,7 +380,7 @@ func TestRegistrarAoMesmoTempo(t *testing.T) {
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimo, asFerias, fgts.NovoServico(db, empregos, holerites, decimo, asFerias, rel, log), rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	var e emprego.Emprego
 	_ = json.Unmarshal(testeapoio.Chamar(t, m, "POST", "/api/trabalho/empregos", `{"empregador":"E","admissao":"2024-03-11","salarioBruto":6000}`).Corpo, &e)
@@ -427,7 +422,7 @@ func TestRescisaoComARespostaDoSaqueAniversario(t *testing.T) {
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
 	oFgts := fgts.NovoServico(db, empregos, holerites, decimo, asFerias, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	fgts.Registrar(m, oFgts)
 	RegistrarRotas(m, NovoServico(db, empregos, holerites, decimo, asFerias, oFgts, rel, log))

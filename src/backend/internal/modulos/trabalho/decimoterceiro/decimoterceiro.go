@@ -69,14 +69,13 @@ func Registrar(r modulos.Registrador, s *Servico) {
 
 var (
 	errSemDecimo = errors.New("sem 13º")
-	errSemTabela = errors.New("sem tabela")
 	errForaDoAno = errors.New("fora do ano")
 )
 
 // SemDecimo diz se o erro do Obter é só a falta do 13º no ano (não é CLT, o ano está fora do emprego, falta a tabela),
 // e não uma falha: quem soma o 13º (o FGTS) segue sem ele e devolve as outras.
 func SemDecimo(err error) bool {
-	return errors.Is(err, errSemDecimo) || errors.Is(err, errSemTabela) || errors.Is(err, errForaDoAno)
+	return errors.Is(err, errSemDecimo) || errors.Is(err, encargos.ErrSemTabela) || errors.Is(err, errForaDoAno)
 }
 
 // Obter calcula o 13º do emprego no ano.
@@ -107,18 +106,9 @@ func (s *Servico) Obter(ctx context.Context, empregoId int64, ano int) (Resposta
 	if err != nil {
 		return Resposta{}, err
 	}
-	inss, err := encargos.LerTabelasInss(ctx, s.db)
+	tInss, tIrrf, err := encargos.TabelasDoMes(ctx, s.db, mesBase)
 	if err != nil {
 		return Resposta{}, err
-	}
-	irrf, err := encargos.LerTabelasIrrf(ctx, s.db)
-	if err != nil {
-		return Resposta{}, err
-	}
-	tInss, okInss := encargos.Vigente(inss, mesBase)
-	tIrrf, okIrrf := encargos.Vigente(irrf, mesBase)
-	if !okInss || !okIrrf {
-		return Resposta{}, errSemTabela
 	}
 	entrada := Entrada{Ano: ano, Avos: avos, SalarioBase: salario.SalarioBruto, SomaVariaveis: soma, MesesComHolerite: meses,
 		Dependentes: e.Dependentes, Inss: tInss, Irrf: tIrrf}
@@ -200,7 +190,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Respos
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemSemDecimo)
 	case errors.Is(err, errForaDoAno):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemForaDoAno)
-	case errors.Is(err, errSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	default:
 		s.log.ErrorContext(r.Context(), "trabalho: 13º salário", "erro", err)

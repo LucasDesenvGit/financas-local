@@ -97,10 +97,6 @@ func TestEstimar(t *testing.T) {
 	}
 }
 
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 func TestFgtsPelaApi(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBancoVazio(t)
@@ -111,7 +107,7 @@ func TestFgtsPelaApi(t *testing.T) {
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimo, asFerias, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	ferias.Registrar(m, asFerias)
@@ -292,7 +288,7 @@ func TestParaRescisaoComSaques(t *testing.T) {
 	holerites := holerite.NovoServico(db, empregos, rel, log)
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimo, ferias.NovoServico(db, empregos, holerites, rel, log), rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	Registrar(m, s)
 	chamar := func(metodo, caminho, corpo string) testeapoio.Resposta {
@@ -382,7 +378,7 @@ func TestFeriasEmDobroForaDoFgts(t *testing.T) {
 	holerites := holerite.NovoServico(db, empregos, rel, log)
 	asFerias := ferias.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimoterceiro.NovoServico(db, empregos, holerites, rel, log), asFerias, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	ferias.Registrar(m, asFerias)
 	Registrar(m, s)
@@ -417,7 +413,7 @@ func TestParaRescisaoComConferenciaNoMesDaSaida(t *testing.T) {
 	holerites := holerite.NovoServico(db, empregos, rel, log)
 	decimo := decimoterceiro.NovoServico(db, empregos, holerites, rel, log)
 	s := NovoServico(db, empregos, holerites, decimo, ferias.NovoServico(db, empregos, holerites, rel, log), rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	Registrar(m, s)
 	var e emprego.Emprego

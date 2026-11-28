@@ -12,6 +12,7 @@ import (
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/decimoterceiro"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/ferias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
@@ -24,8 +25,6 @@ import (
 const (
 	MensagemSemFgts = "Estágio e PJ não têm FGTS."
 )
-
-var oitoPct = decimal.RequireFromString("0.08")
 
 // Resposta é o FGTS do emprego: a estimativa e os lançamentos.
 type Resposta struct {
@@ -90,7 +89,7 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 		if !doHolerite[mes.String()] {
 			if salario, ok := emprego.SalarioDoMes(e.Salarios, mes); ok {
 				dias := decimal.NewFromInt(int64(holerite.DiasTrabalhados(mes, e.Admissao, e.Saida)))
-				porMes[mes.String()] = salario.SalarioBruto.Decimal().Mul(dias).Div(decimal.NewFromInt(30)).Mul(oitoPct)
+				porMes[mes.String()] = salario.SalarioBruto.Decimal().Mul(dias).Div(decimal.NewFromInt(30)).Mul(encargos.AliquotaFgts)
 			}
 		}
 	}
@@ -112,8 +111,8 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 		// O mês fora do intervalo fica no mapa, mas o Estimar só lê os do intervalo.
 		primeira := d.Primeira.Valor.Decimal()
 		mesDaPrimeira, dezembro := emprego.InicioDoMes(d.Primeira.Data).String(), tipos.NovaData(ano, 12, 1).String()
-		porMes[mesDaPrimeira] = porMes[mesDaPrimeira].Add(primeira.Mul(oitoPct))
-		porMes[dezembro] = porMes[dezembro].Add(d.Total.Decimal().Sub(primeira).Mul(oitoPct))
+		porMes[mesDaPrimeira] = porMes[mesDaPrimeira].Add(primeira.Mul(encargos.AliquotaFgts))
+		porMes[dezembro] = porMes[dezembro].Add(d.Total.Decimal().Sub(primeira).Mul(encargos.AliquotaFgts))
 	}
 	periodos, err := s.ferias.Listar(ctx, e.Id)
 	if err != nil {
@@ -128,10 +127,10 @@ func (s *Servico) depositos(ctx context.Context, e emprego.Emprego, inicio, ate 
 			// A base é a do INSS das férias: férias + 1/3, sem a dobra do art. 137 nem o 1/3 dela. A Lei 8.036 (art. 15,
 			// § 6º) tira do FGTS o que a Lei 8.212 (art. 28, § 9º, "d") tira do INSS, e a dobra está lá (#751).
 			base := a.Calculo.Inss.Base.Decimal()
-			porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(oitoPct))
+			porMes[mes.String()] = porMes[mes.String()].Add(base.Mul(encargos.AliquotaFgts))
 			for m, dias := range diasDeFeriasPorMes(a.Inicio, a.Dias) {
 				if salario, ok := emprego.SalarioDoMes(e.Salarios, m); ok && !lido[m.String()] {
-					tirar := salario.SalarioBruto.Decimal().Mul(decimal.NewFromInt(int64(min(dias, 30)))).Div(decimal.NewFromInt(30)).Mul(oitoPct)
+					tirar := salario.SalarioBruto.Decimal().Mul(decimal.NewFromInt(int64(min(dias, 30)))).Div(decimal.NewFromInt(30)).Mul(encargos.AliquotaFgts)
 					porMes[m.String()] = decimal.Max(decimal.Zero, porMes[m.String()].Sub(tirar))
 				}
 			}

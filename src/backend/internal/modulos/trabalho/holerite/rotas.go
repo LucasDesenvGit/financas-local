@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -57,7 +58,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, status int, 
 	case errors.Is(err, ErrReabrirSemCalculo): // antes dos outros: vem embrulhado com o erro do cálculo
 		_, motivo, _ := avisoDe(err)
 		respostas.Mensagem(w, http.StatusConflict, "Não dá para reabrir: o cálculo guardado se perderia, porque "+motivo)
-	case errors.Is(err, ErrSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	case errors.Is(err, ErrSemSalario) || errors.Is(err, ErrForaDoEmprego):
 		aviso, _, _ := avisoDe(err)

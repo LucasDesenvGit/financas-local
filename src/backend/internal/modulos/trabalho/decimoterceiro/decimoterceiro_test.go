@@ -54,11 +54,10 @@ func TestAvos(t *testing.T) {
 
 func tabelas(t *testing.T) (encargos.TabelaInss, encargos.TabelaIrrf) {
 	t.Helper()
-	db := testeapoio.NovoBanco(t)
-	inss, _ := encargos.LerTabelasInss(t.Context(), db)
-	irrf, _ := encargos.LerTabelasIrrf(t.Context(), db)
-	ti, _ := encargos.Vigente(inss, testeapoio.Dia(2026, 12, 1))
-	tr, _ := encargos.Vigente(irrf, testeapoio.Dia(2026, 12, 1))
+	ti, tr, err := encargos.TabelasDoMes(t.Context(), testeapoio.NovoBanco(t), testeapoio.Dia(2026, 12, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
 	return ti, tr
 }
 
@@ -123,10 +122,6 @@ func TestCalcularDecimo(t *testing.T) {
 	}
 }
 
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 func TestDecimoPelaApi(t *testing.T) {
 	t.Parallel()
 	db := testeapoio.NovoBancoVazio(t)
@@ -134,7 +129,7 @@ func TestDecimoPelaApi(t *testing.T) {
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, rel, log)
 	holerites := holerite.NovoServico(db, empregos, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, NovoServico(db, empregos, holerites, rel, log))
@@ -335,7 +330,7 @@ func TestDecimoPontosDaRevisao(t *testing.T) {
 	log := slog.New(slog.DiscardHandler)
 	empregos := emprego.NovoServico(db, rel, log)
 	holerites := holerite.NovoServico(db, empregos, rel, log)
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	emprego.Registrar(m, empregos)
 	holerite.Registrar(m, holerites)
 	Registrar(m, NovoServico(db, empregos, holerites, rel, log))

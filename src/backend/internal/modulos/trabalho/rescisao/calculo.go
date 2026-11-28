@@ -155,7 +155,6 @@ var (
 	trinta = decimal.NewFromInt(30)
 	doze   = decimal.NewFromInt(12)
 	tres   = decimal.NewFromInt(3)
-	oito   = decimal.RequireFromString("0.08")
 )
 
 // diasNoMes são os dias do mês da saída que entram no saldo de salário: o dia da saída (o último dia do mês vale 30).
@@ -242,7 +241,7 @@ func Calcular(e Entrada) Calculo {
 
 	// O FGTS: o depósito da rescisão (o mês da saída, o aviso e o 13º do ano, que o saldo de antes não tem), a multa
 	// sobre todos os depósitos (sem descontar os saques) e o saque.
-	deposito := saldo.Add(aviso).Add(decimo).Add(e.Decimo13Pago.Decimal()).Mul(oito).Round(2)
+	deposito := saldo.Add(aviso).Add(decimo).Add(e.Decimo13Pago.Decimal()).Mul(encargos.AliquotaFgts).Round(2)
 	base := e.BaseMultaFgts.Decimal().Add(deposito)
 	multa, saque := 0, 0
 	switch e.Tipo {

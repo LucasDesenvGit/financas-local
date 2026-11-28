@@ -70,7 +70,6 @@ func NovoServico(db *sql.DB, empregos *emprego.Servico, holerites *holerite.Serv
 
 var (
 	errSemFerias = errors.New("sem férias")
-	errSemTabela = errors.New("sem tabela")
 )
 
 type erroDeValidacao string
@@ -142,18 +141,9 @@ func (s *Servico) calcular(ctx context.Context, e emprego.Emprego, inicio tipos.
 	if err != nil {
 		return Calculo{}, err
 	}
-	inss, err := encargos.LerTabelasInss(ctx, s.db)
+	tInss, tIrrf, err := encargos.TabelasDoMes(ctx, s.db, mes)
 	if err != nil {
 		return Calculo{}, err
-	}
-	irrf, err := encargos.LerTabelasIrrf(ctx, s.db)
-	if err != nil {
-		return Calculo{}, err
-	}
-	tInss, okInss := encargos.Vigente(inss, mes)
-	tIrrf, okIrrf := encargos.Vigente(irrf, mes)
-	if !okInss || !okIrrf {
-		return Calculo{}, errSemTabela
 	}
 	return Calcular(Entrada{Inicio: inicio, Dias: dias, DiasVendidos: vendidos, SalarioBase: salario.SalarioBruto,
 		SomaVariaveis: soma, Dependentes: e.Dependentes, AdiantarDecimo: adiantar, DiasEmDobro: emDobro, Inss: tInss, Irrf: tIrrf}), nil
@@ -211,7 +201,7 @@ func (s *Servico) Listar(ctx context.Context, empregoId int64) ([]PeriodoComFeri
 			switch {
 			case err == nil:
 				a.Calculo = &c
-			case !errors.Is(err, errSemTabela):
+			case !errors.Is(err, encargos.ErrSemTabela):
 				return nil, err
 			}
 			pf.DiasGozados += a.Dias
@@ -371,7 +361,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo any, e
 		respostas.Mensagem(w, http.StatusBadRequest, string(v))
 	case errors.Is(err, errSemFerias):
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemSemFerias)
-	case errors.Is(err, errSemTabela):
+	case errors.Is(err, encargos.ErrSemTabela):
 		respostas.Mensagem(w, http.StatusConflict, MensagemSemTabela)
 	default:
 		s.log.ErrorContext(r.Context(), "trabalho: férias", "erro", err)

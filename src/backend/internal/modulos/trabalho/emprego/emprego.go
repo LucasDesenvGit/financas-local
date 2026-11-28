@@ -35,7 +35,6 @@ var (
 	ErrUltimoSalario = errors.New("o emprego precisa de pelo menos um salário")
 	// ErrPrimeiroSalario: a vigência mais antiga é o salário da admissão e não sai.
 	ErrPrimeiroSalario = errors.New("o primeiro salário é o da admissão")
-	ErrSemTabela       = errors.New("sem tabela do INSS ou do IRRF para o mês")
 )
 
 // erroDeValidacao é o ErrInvalido com a mensagem para a pessoa.
@@ -440,7 +439,7 @@ type Estimativa struct {
 }
 
 // Estimar calcula o mês do emprego. Mês fora do emprego (antes da admissão ou depois da saída) é inválido; mês sem
-// tabela do INSS ou do IRRF é ErrSemTabela.
+// tabela do INSS ou do IRRF é encargos.ErrSemTabela.
 func (s *Servico) Estimar(ctx context.Context, id int64, mes tipos.Data) (Estimativa, error) {
 	e, err := s.Obter(ctx, id)
 	if err != nil {
@@ -459,18 +458,9 @@ func (s *Servico) Estimar(ctx context.Context, id int64, mes tipos.Data) (Estima
 		est.SemEncargos = true
 		return est, nil
 	}
-	tabelasInss, err := encargos.LerTabelasInss(ctx, s.db)
+	tInss, tIrrf, err := encargos.TabelasDoMes(ctx, s.db, mes)
 	if err != nil {
 		return Estimativa{}, err
-	}
-	tabelasIrrf, err := encargos.LerTabelasIrrf(ctx, s.db)
-	if err != nil {
-		return Estimativa{}, err
-	}
-	tInss, okInss := encargos.Vigente(tabelasInss, mes)
-	tIrrf, okIrrf := encargos.Vigente(tabelasIrrf, mes)
-	if !okInss || !okIrrf {
-		return Estimativa{}, ErrSemTabela
 	}
 	inss := encargos.CalcularInss(tInss, salario.SalarioBruto)
 	irrf := encargos.CalcularIrrf(tIrrf, salario.SalarioBruto, inss.Valor, int(e.Dependentes), tipos.Decimal{})

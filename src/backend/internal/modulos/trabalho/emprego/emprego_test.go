@@ -13,11 +13,6 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// mux é o http.ServeMux como Registrador (o site usa o modulos.Rotas, que guarda as rotas).
-type mux struct{ *http.ServeMux }
-
-func (m mux) HandleFunc(p string, h http.HandlerFunc) { m.ServeMux.HandleFunc(p, h) }
-
 type ambiente struct {
 	t   *testing.T
 	s   *Servico
@@ -30,7 +25,7 @@ func novo(t *testing.T) ambiente {
 	db := testeapoio.NovoBancoVazio(t)
 	r := testeapoio.HojeEmBrasilia(2026, 11, 13)
 	s := NovoServico(db, r, slog.New(slog.DiscardHandler))
-	m := mux{http.NewServeMux()}
+	m := http.NewServeMux()
 	Registrar(m, s)
 	return ambiente{t: t, s: s, h: m, fab: testeapoio.NovaFabrica(t, db, r)}
 }

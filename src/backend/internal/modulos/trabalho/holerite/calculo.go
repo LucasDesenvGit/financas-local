@@ -114,7 +114,6 @@ var (
 	cem      = decimal.NewFromInt(100)
 	trinta   = decimal.NewFromInt(30)
 	seisPct  = decimal.RequireFromString("0.06")
-	oitoPct  = decimal.RequireFromString("0.08")
 	vinteDef = decimal.NewFromInt(20)
 )
 
@@ -269,7 +268,7 @@ func Calcular(e Entrada) Calculo {
 		descontos = descontos.Add(inss.Valor.Decimal()).Add(irrf.Valor.Decimal())
 		c.Descontos = append(c.Descontos, Linha{Tipo: TipoInss, Descricao: "INSS", Valor: inss.Valor},
 			Linha{Tipo: TipoIrrf, Descricao: "IRRF", Valor: irrf.Valor})
-		c.FgtsDoMes = tipos.Centavos(baseInss.Mul(oitoPct))
+		c.FgtsDoMes = tipos.Centavos(baseInss.Mul(encargos.AliquotaFgts))
 	} else {
 		c.FgtsDoMes = tipos.Centavos(decimal.Zero)
 	}
