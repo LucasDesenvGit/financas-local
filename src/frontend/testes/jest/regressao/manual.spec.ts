@@ -53,14 +53,8 @@ describe('Regressão: Manual acompanha o site', () => {
   });
 
   // #817, ADR 0071: o Manual é objetivo. 1 a 4 tópicos curtos, passo a passo só com poucos itens; o resto vai em "Mais detalhes".
-  // (#817: os outros capítulos entram na próxima etapa, quando forem reescritos.)
   describe('seções objetivas (#817)', () => {
-    const CAPITULOS_CONVERTIDOS = ['primeiros-passos', 'transacoes', 'relatorios', 'conectar-bancos', 'configuracoes', 'privacidade'];
-    const secoes = MANUAL.filter((c) => CAPITULOS_CONVERTIDOS.includes(c.id)).flatMap((c) => c.secoes.map((s) => ({ onde: `${c.id}/${s.id}`, s })));
-
-    it('os capítulos convertidos existem', () => {
-      expect(secoes.length).toBeGreaterThan(15);
-    });
+    const secoes = MANUAL.flatMap((c) => c.secoes.map((s) => ({ onde: `${c.id}/${s.id}`, s })));
 
     it('de 1 a 4 tópicos (ou só passos), de até 120 caracteres cada, e no máximo 6 passos (também curtos)', () => {
       for (const { onde, s } of secoes) {

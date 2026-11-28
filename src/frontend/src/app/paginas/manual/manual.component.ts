@@ -104,7 +104,7 @@ function textoVisivel(secao: SecaoManual): string {
       }
     } @else {
       <header class="cabecalho-pagina"><h1>Manual</h1></header>
-      <p class="resumo-capitulo">Passo a passo para usar o Finanças Local: do primeiro acesso até transações bem categorizadas,
+      <p class="resumo-capitulo">O essencial de cada tela do Finanças Local, em poucos tópicos: do primeiro acesso até transações bem categorizadas,
         relatórios confiáveis e metas no caminho. Em qualquer tela, o botão “Ajuda” abre a parte que explica aquela tela.
         Várias partes trazem uma imagem da tela, no tema (claro ou escuro) que você está usando.</p>
 

@@ -155,7 +155,7 @@ export const MANUAL: CapituloManual[] = [
       },
       {
         id: 'passo-2-reservas',
-        titulo: '2. Confira as reservas, as caixinhas e o Méli Dólar',
+        titulo: '2. Confira os cofrinhos, as caixinhas e o Méli Dólar',
         paraQueServe: 'Fazer o dinheiro guardado entrar certo no patrimônio.',
         topicos: [
           'Onde → Investimentos, aba Reservas.',
@@ -168,7 +168,7 @@ export const MANUAL: CapituloManual[] = [
           'A linha “Reservado” com “restante do total do banco” não se confere: ela se ajusta quando você confere as outras.',
           'Digite o valor como o app mostra (ex.: 10.123,42).',
           'Méli Dólar: em “conferir saldo”, escolha digitar em reais ou em dólares, como o app do Mercado Pago mostra.',
-          'Depois, o patrimônio no Painel passa a somar essas reservas.'
+          'Depois, o patrimônio no Painel passa a somar esses cofrinhos.'
         ]
       },
       {
@@ -405,7 +405,7 @@ export const MANUAL: CapituloManual[] = [
         abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
         detalhes: [
           'A pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”.',
-          'As pistas cobrem: atualização do banco, reservas, pendentes, parcelas, estornos e compras repetidas.',
+          'As pistas cobrem: atualização do banco, cofrinhos, pendentes, parcelas, estornos e compras repetidas.',
           'Nada é gravado: o que você digita fica só na tela.',
           'Faça depois de sincronizar; o banco atualiza o Open Finance mais ou menos uma vez por dia.'
         ]
@@ -1181,8 +1181,8 @@ export const MANUAL: CapituloManual[] = [
   },
   {
     id: 'investimentos',
-    titulo: 'Investimentos, reservas e crédito',
-    resumo: 'Carteira de renda variável, importação, Selic, FIIs, reservas (cofrinhos), exterior e empréstimos.',
+    titulo: 'Investimentos, cofrinhos e crédito',
+    resumo: 'Carteira de renda variável, importação, Selic, FIIs, cofrinhos (aba Reservas), exterior e empréstimos.',
     secoes: [
       {
         id: 'carteira',
@@ -1746,7 +1746,7 @@ export const MANUAL: CapituloManual[] = [
         ],
         detalhes: [
           'O gerenciador baixa, confere e abre o instalador; é só avançar. O site fica fora do ar por alguns segundos. Sem o gerenciador, baixe o .msi novo da página de versões no GitHub e abra.',
-          'Instalou pelos scripts: para atualizar, rode scripts/geral/instalar.sh na pasta do projeto, que também traz o .NET e o Go das versões novas e faz backup do banco antes; para parar tudo, parar-windows.cmd no Windows ou scripts/geral/parar.sh no Linux.'
+          'Instalou pelos scripts: para atualizar, rode scripts/geral/instalar.sh na pasta do projeto, que também traz o Go da versão nova e faz backup do banco antes; para parar tudo, parar-windows.cmd no Windows ou scripts/geral/parar.sh no Linux.'
         ]
       },
       {
