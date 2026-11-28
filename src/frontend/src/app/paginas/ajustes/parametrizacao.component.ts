@@ -1,10 +1,11 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, inject, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { mensagemDeErro } from '../../core/erro.interceptor';
 import { InfoSistema, Parametro, TipoParametro } from '../../core/modelos';
 import { AvisosService } from '../../core/avisos.service';
+import { mudaParametroComSenha } from './parametrizacao';
 
 interface GrupoParametros { nome: string; itens: Parametro[]; }
 
@@ -53,6 +54,17 @@ interface GrupoParametros { nome: string; itens: Parametro[]; }
 
       @if (grupos().length) {
         <div class="rodape-form barra-salvar" [class.flutuante]="alterados()">
+          @if (pedeSenha()) {
+            <div class="campo-senha">
+              <label for="senha-parametros"><strong>Senha atual</strong></label>
+              <span class="texto-suave pequeno" id="dica-senha-parametros">Mudar a segurança do login pede a sua senha.</span>
+              <input #campoSenha id="senha-parametros" name="senhaAtual" type="password" autocomplete="current-password" required
+                [ngModel]="senhaAtual" (ngModelChange)="senhaAtual = $event; erroSenha.set('')"
+                [attr.aria-invalid]="erroSenha() ? 'true' : null"
+                [attr.aria-describedby]="erroSenha() ? 'dica-senha-parametros erro-senha-parametros' : 'dica-senha-parametros'">
+              @if (erroSenha()) { <p class="erro pequeno" id="erro-senha-parametros" role="alert">{{ erroSenha() }}</p> }
+            </div>
+          }
           <span class="texto-suave cresce">
             {{ alterados() ? alterados() + ' alteração(ões) não salva(s)' : 'Tudo salvo.' }}
             As mudanças valem na hora, sem reiniciar.
@@ -105,6 +117,9 @@ interface GrupoParametros { nome: string; itens: Parametro[]; }
       border-radius: var(--raio); box-shadow: var(--sombra); margin-bottom: 16px;
     }
     .barra-salvar > span { min-width: 220px; }
+    .campo-senha { flex-basis: 100%; display: grid; gap: 4px; justify-items: start; }
+    .campo-senha input { width: min(100%, 260px); }
+    .campo-senha p { margin: 0; }
     /* Só acompanha a rolagem quando há algo para salvar. */
     .barra-salvar.flutuante { position: sticky; bottom: 12px; z-index: 2; box-shadow: var(--sombra-forte); }
     .info-sistema { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 8px 16px; margin: 0; }
@@ -125,6 +140,10 @@ export class ParametrizacaoComponent implements OnInit {
   readonly salvando = signal(false);
   /** Valores em edição (o sinal "parametros" guarda os salvos). */
   valores: Record<string, number> = {};
+  /** #68: a senha atual, pedida só quando muda um parâmetro de segurança; o erro dela aparece embaixo do campo. */
+  senhaAtual = '';
+  readonly erroSenha = signal('');
+  private readonly campoSenha = viewChild<ElementRef<HTMLInputElement>>('campoSenha');
 
   readonly grupos = computed<GrupoParametros[]>(() => {
     const grupos: GrupoParametros[] = [];
@@ -148,6 +167,11 @@ export class ParametrizacaoComponent implements OnInit {
     return this.parametros().filter((p) => Number(this.valores[p.chave]) !== p.valor).length;
   }
 
+  /** #68: a edição muda algum parâmetro de segurança, e o salvar pede a senha atual. */
+  pedeSenha(): boolean {
+    return mudaParametroComSenha(this.parametros(), this.valores);
+  }
+
   desfazer(): void {
     this.carregar(this.parametros());
   }
@@ -164,8 +188,13 @@ export class ParametrizacaoComponent implements OnInit {
       mudancas[p.chave] = v;
     }
     if (!Object.keys(mudancas).length) return;
+    const pedeSenha = this.pedeSenha();
+    if (pedeSenha && !this.senhaAtual) {
+      this.mostrarErroSenha('Informe a senha atual para mudar os parâmetros de segurança.');
+      return;
+    }
     this.salvando.set(true);
-    this.api.salvarParametros(mudancas).subscribe({
+    this.api.salvarParametros(mudancas, pedeSenha ? this.senhaAtual : undefined).subscribe({
       next: (p) => {
         this.salvando.set(false);
         this.carregar(p);
@@ -173,7 +202,8 @@ export class ParametrizacaoComponent implements OnInit {
       },
       error: (e) => {
         this.salvando.set(false);
-        this.avisos.erro(mensagemDeErro(e));
+        if (pedeSenha) this.mostrarErroSenha(mensagemDeErro(e));
+        else this.avisos.erro(mensagemDeErro(e));
       }
     });
   }
@@ -186,5 +216,13 @@ export class ParametrizacaoComponent implements OnInit {
   private carregar(lista: Parametro[]): void {
     this.parametros.set(lista);
     this.valores = Object.fromEntries(lista.map((p) => [p.chave, p.valor]));
+    this.senhaAtual = '';
+    this.erroSenha.set('');
+  }
+
+  /** O erro fica embaixo do campo da senha, que recebe o foco (WCAG 3.3.1). */
+  private mostrarErroSenha(mensagem: string): void {
+    this.erroSenha.set(mensagem);
+    setTimeout(() => this.campoSenha()?.nativeElement.focus());
   }
 }

@@ -1,0 +1,78 @@
+[
+  {
+    "nome": "entrar para sair",
+    "requisicao": "POST /api/auth/entrar",
+    "status": 429,
+    "tipo": "application/json; charset=utf-8",
+    "corpo": {
+      "mensagem": "Acesso bloqueado temporariamente por excesso de tentativas. Tente novamente em 15 minuto(s)."
+    },
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "LoginBloqueado",
+            "Id": 54,
+            "Ip": "127.0.0.5",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "sair",
+    "requisicao": "POST /api/auth/sair",
+    "status": 204,
+    "cookies": [
+      "__Host-Financas=; expires=Thu, 01 Jan 1970 00:00:00 GMT; httponly; path=/; samesite=strict; secure",
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "banco": {
+      "AuditoriaAcesso": {
+        "inseridas": [
+          {
+            "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
+            "Evento": "Logout",
+            "Id": 55,
+            "Ip": "127.0.0.5",
+            "Login": "ana.teste",
+            "UserAgent": "contrato-financas-local"
+          }
+        ]
+      },
+      "Usuario": {
+        "alteradas": [
+          {
+            "chave": {
+              "Id": 1
+            },
+            "colunas": {
+              "CarimboSeguranca": {
+                "antes": "<GUID>",
+                "depois": "<GUID>"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "nome": "estado depois de sair",
+    "requisicao": "GET /api/auth/estado",
+    "status": 200,
+    "tipo": "application/json; charset=utf-8",
+    "cookies": [
+      "__Host-XSRF-TOKEN=<valor>; path=/; samesite=strict; secure"
+    ],
+    "corpo": {
+      "autenticado": false,
+      "configurado": true,
+      "login": null,
+      "versao": "<versao>"
+    }
+  }
+]

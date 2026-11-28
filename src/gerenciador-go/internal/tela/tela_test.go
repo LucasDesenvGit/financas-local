@@ -691,6 +691,41 @@ func TestTextoSemLogin(t *testing.T) {
 	}
 }
 
+// Regra (#68): o aviso da pasta de dados junta o disco sem criptografia (BitLocker no Windows, LUKS no Linux) e a pasta
+// na nuvem; sem nenhum dos dois, o bloco some. A página leva o texto e o link para a documentação.
+func TestTextoProtecao(t *testing.T) {
+	t.Parallel()
+	const disco = "O disco da pasta de dados não está criptografado: quem levar o computador ou o disco lê o banco e as cópias. "
+	const nuvem = "A pasta de dados está numa pasta sincronizada com a nuvem (OneDrive, Dropbox, Google Drive, iCloud): " +
+		"o banco e as cópias vão sem criptografia para lá. Instale fora dela."
+	casos := []struct {
+		tela     Tela
+		esperado string
+	}{
+		{Tela{}, ""},
+		{Tela{Linux: true}, ""},
+		{Tela{DiscoSemCriptografia: true}, disco + "Ative o BitLocker."},
+		{Tela{DiscoSemCriptografia: true, Linux: true}, disco + "Use a criptografia do disco (LUKS)."},
+		{Tela{DadosNaNuvem: true}, nuvem},
+		{Tela{DiscoSemCriptografia: true, DadosNaNuvem: true}, disco + "Ative o BitLocker. " + nuvem},
+	}
+	for _, c := range casos {
+		if c.tela.TextoProtecao() != c.esperado || c.tela.Atualizacao().TextoProtecao != c.esperado {
+			t.Errorf("%+v: %q", c.tela, c.tela.TextoProtecao())
+		}
+	}
+	html := escrever(t, Tela{DadosNaNuvem: true})
+	for _, trecho := range []string{`<div class="protecao" id="protecao">`, `<span id="texto-protecao">` + nuvem + `</span>`,
+		`<a href="https://github.com/LucasDesenvGit/financas-local/blob/main/docs/SEGURANCA.md#recomenda%c3%a7%c3%b5es">`} {
+		if !strings.Contains(html, trecho) {
+			t.Errorf("sem %s", trecho)
+		}
+	}
+	if !strings.Contains(escrever(t, Tela{}), `<div class="protecao" id="protecao" hidden>`) {
+		t.Error("sem aviso, o bloco aparece")
+	}
+}
+
 // Regra: a página no Linux: ícones em SVG (nenhum caractere da fonte do Windows), "Iniciar com o sistema", "Ver o
 // registro do serviço", o comando para copiar e o "sem login", e nada de .msi; no Windows, nada disso.
 func TestPaginaNoLinux(t *testing.T) {

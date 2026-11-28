@@ -1,0 +1,28 @@
+{
+  "descricao": "Sair derruba a sessão em todos os aparelhos (#68): troca o carimbo de segurança do usuário, e por isso roda por último, depois dos assuntos que usam a sessão 'principal'.",
+  "sessoes": {
+    "quinto-ip": { "origem": "127.0.0.5" }
+  },
+  "casos": [
+    {
+      "nome": "entrar para sair",
+      "metodo": "POST",
+      "caminho": "/api/auth/entrar",
+      "sessao": "quinto-ip",
+      "corpo": { "login": "ana.teste", "senha": "Outra-Senha-456" }
+    },
+    {
+      "nome": "sair",
+      "comentario": "Grava o Logout e troca o CarimboSeguranca.",
+      "metodo": "POST",
+      "caminho": "/api/auth/sair",
+      "sessao": "quinto-ip"
+    },
+    {
+      "nome": "estado depois de sair",
+      "metodo": "GET",
+      "caminho": "/api/auth/estado",
+      "sessao": "quinto-ip"
+    }
+  ]
+}

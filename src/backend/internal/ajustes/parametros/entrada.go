@@ -8,13 +8,20 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 )
 
-// caminhoValores é o caminho do erro em "valores": o nome do contrato (camelCase), não o que veio.
-const caminhoValores = "$.valores"
+// caminhoValores e caminhoSenha são os caminhos do erro em "valores" e "senhaAtual": o nome do contrato (camelCase),
+// não o que veio.
+const (
+	caminhoValores = "$.valores"
+	caminhoSenha   = "$.senhaAtual"
+)
 
 // corpoSalvar é o SalvarParametrosDto lido do JSON.
 type corpoSalvar struct {
 	nulo    bool    // o JSON inteiro era "null": vale como corpo vazio
 	valores []Valor // nil quando "valores" faltou ou veio null ([Required] recusa)
+	// senhaAtual é a senha do usuário logado, pedida só quando muda um parâmetro de segurança (#68); vazia quando
+	// faltou ou veio null.
+	senhaAtual string
 }
 
 // lerSalvar lê o corpo como JSON, na ordem do texto: a primeira coisa
@@ -46,7 +53,16 @@ func lerSalvar(corpo []byte) (corpoSalvar, *respostas.ErroJSON) {
 		if erro != nil {
 			return corpoSalvar{}, erro
 		}
-		if nome, _ := nomeToken.(string); !strings.EqualFold(nome, "valores") {
+		nome, _ := nomeToken.(string)
+		if strings.EqualFold(nome, "senhaAtual") {
+			senha, ok := valor.(string)
+			if !ok && valor != nil {
+				return corpoSalvar{}, l.Conversao(caminhoSenha)
+			}
+			resultado.senhaAtual = senha
+			continue
+		}
+		if !strings.EqualFold(nome, "valores") {
 			if erro := l.Pular(valor); erro != nil {
 				return corpoSalvar{}, erro
 			}
