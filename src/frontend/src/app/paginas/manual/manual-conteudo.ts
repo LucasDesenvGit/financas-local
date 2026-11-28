@@ -132,110 +132,108 @@ export const MANUAL: CapituloManual[] = [
         id: 'o-que-ja-se-acertou',
         titulo: 'O que já se acertou sozinho',
         paraQueServe: 'Saber o que não precisa ser refeito à mão depois da atualização.',
-        topicos: ['Estorno no cartão (compra devolvida, cashback) deixou de contar como receita e passou a abater o gasto da…'],
-        detalhes: [
-          'Estorno no cartão (compra devolvida, cashback) deixou de contar como receita e passou a abater o gasto da categoria.',
-          'Pix e TED para outra pessoa contam como despesa ou receita; os que são entre contas suas ficam fora dos gastos.',
-          'Pagamento de fatura que o banco mandou como boleto ou “outros” saiu dos gastos quando o crédito do mesmo valor aparece no cartão.',
-          'Aplicação e resgate de RDB, CDB e poupança, e a compra e a venda de Méli Dólar, foram para “Investimentos” e não contam mais como gasto nem receita.',
-          'A projeção não conta mais as parcelas em dobro, e a fatura do mês do cartão segue o ciclo do banco.',
-          'O lançamento pendente que o banco efetivou com outro código sai na próxima sincronização.',
-          'O que você categorizou à mão não foi mexido: as correções só valem para o que veio automático.'
+        topicos: [
+          'Estorno no cartão → abate o gasto da categoria, não conta como receita.',
+          'Pix e TED entre contas suas, pagamento de fatura e aplicação em RDB, CDB ou poupança → fora dos gastos.',
+          'Projeção e fatura do mês → sem parcela em dobro; a fatura segue o ciclo do banco.',
+          'O que você categorizou à mão → não foi mexido.'
         ],
-        abrir: [{ rotulo: 'Ver as transações', rota: '/transacoes' }]
+        abrir: [{ rotulo: 'Ver as transações', rota: '/transacoes' }],
+        detalhes: [
+          'Pix e TED para outra pessoa contam como despesa ou receita.',
+          'Pagamento de fatura que veio como boleto ou “outros” sai dos gastos quando o crédito do mesmo valor aparece no cartão.',
+          'A compra e a venda de Méli Dólar foram para “Investimentos”.',
+          'O lançamento pendente que o banco efetivou com outro código sai na próxima sincronização.'
+        ]
       },
       {
         id: 'passo-1-sincronizar',
         titulo: '1. Sincronize os bancos',
-        paraQueServe: 'Trazer os dados novos que as correções usam: o valor reservado que o banco informa e as pendências que já viraram compra.',
-        topicos: ['Abra Configurações › Open Finance e clique em “Sincronizar agora”.'],
-        detalhes: [
-          'Abra Configurações › Open Finance e clique em “Sincronizar agora”.',
-          'Espere a barra de cima mostrar “Atualizado agora”.'
-        ],
+        paraQueServe: 'Trazer os dados novos que as correções usam.',
+        topicos: ['Sincronizar → Configurações › Open Finance › “Sincronizar agora”.'],
+        passos: ['Abra Configurações › Open Finance.', 'Clique em “Sincronizar agora”.', 'Espere a barra de cima mostrar “Atualizado”.'],
         abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
       },
       {
         id: 'passo-2-reservas',
         titulo: '2. Confira as reservas, as caixinhas e o Méli Dólar',
         paraQueServe: 'Fazer o dinheiro guardado entrar certo no patrimônio.',
-        topicos: ['Abra Investimentos, na aba Reservas.'],
-        detalhes: [
-          'Abra Investimentos, na aba Reservas.',
-          'Reserva com “informado pelo banco”: já está certa, não precisa fazer nada. A linha “Reservado” com “restante do total do banco” também não se confere: ela se ajusta quando você confere as outras.',
-          'Reserva “estimada” ou “para conferir”: clique em “conferir saldo” e digite o valor que o app do banco mostra, do jeito que aparece lá (ex.: 10.123,42).',
-          'Méli Dólar: em “conferir saldo”, escolha se vai digitar em reais ou em dólares, como o app do Mercado Pago mostra.',
-          'Confira depois o patrimônio no Painel: ele passa a somar essas reservas.'
+        topicos: [
+          'Onde → Investimentos, aba Reservas.',
+          '“informado pelo banco” → já está certo.',
+          '“estimada” ou “para conferir” → clique em “conferir saldo” e digite o valor do app do banco.'
         ],
         abrir: [{ rotulo: 'Abrir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
-        termos: ['ptax']
+        termos: ['ptax'],
+        detalhes: [
+          'A linha “Reservado” com “restante do total do banco” não se confere: ela se ajusta quando você confere as outras.',
+          'Digite o valor como o app mostra (ex.: 10.123,42).',
+          'Méli Dólar: em “conferir saldo”, escolha digitar em reais ou em dólares, como o app do Mercado Pago mostra.',
+          'Depois, o patrimônio no Painel passa a somar essas reservas.'
+        ]
       },
       {
         id: 'passo-3-trocos',
         titulo: '3. Tire os trocos das compras de FIIs dos rendimentos',
         paraQueServe: 'Fazer os rendimentos dos FIIs baterem com o app da corretora.',
-        topicos: ['Se o Painel avisa “N créditos de troco ou venda de FIIs e ações contando como rendimento”, clique em…'],
-        detalhes: [
-          'Se o Painel avisa “N créditos de troco ou venda de FIIs e ações contando como rendimento”, clique em “Conferir investimentos” no aviso (ou no botão de Investimentos).',
-          'Revise a lista “Troco ou venda contando como rendimento” e clique em “Corrigir selecionados”.',
-          'Nada muda sem você confirmar, e o aviso tem “Desfazer” por 10 minutos.'
+        topicos: [
+          'Aviso no Painel → clique em “Conferir investimentos”.',
+          'Lista de troco ou venda → marque o que for e clique em “Corrigir selecionados”.'
         ],
         abrir: [{ rotulo: 'Abrir Conferir investimentos', rota: '/investimentos', params: { conferir: '1' } }],
-        termos: ['trocoDeCompra']
+        termos: ['trocoDeCompra'],
+        detalhes: ['Nada muda sem você confirmar, e o aviso tem “Desfazer” por 10 minutos.']
       },
       {
         id: 'passo-4-limite',
         titulo: '4. Responda a pergunta do limite do cartão',
         paraQueServe: 'Não tratar como dívida o limite que você tirou do cartão no app.',
-        topicos: ['Abra Contas e cartões.'],
-        detalhes: [
-          'Abra Contas e cartões.',
-          'O cartão em que você reduziu o limite no app pergunta “Você reduziu o limite no app?”. Clique em “responder” e em “Sim, ajustei o limite”.',
-          'Se a diferença for compra em processamento ou parcela, responda “Não”.'
-        ],
+        topicos: ['Contas e cartões → no cartão, “Você reduziu o limite no app?”: “responder” e “Sim, ajustei o limite”.'],
         abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
-        termos: ['limiteUsado']
+        termos: ['limiteUsado'],
+        detalhes: ['Se a diferença for compra em processamento ou parcela, responda “Não”.']
       },
       {
         id: 'passo-5-nome',
         titulo: '5. Informe o seu nome como aparece nos Pix',
         paraQueServe: 'Separar o Pix para outra conta sua do Pix para outra pessoa, quando o banco não informa.',
-        topicos: ['Abra Configurações › Open Finance.'],
+        topicos: ['Configurações › Open Finance → “Seu nome como aparece nos Pix” → “Salvar nome”.'],
+        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }],
         detalhes: [
-          'Abra Configurações › Open Finance.',
-          'Em “Seu nome como aparece nos Pix”, digite o primeiro e o último nome (ex.: como aparece no comprovante) e clique em “Salvar nome”.',
+          'Digite o primeiro e o último nome, como no comprovante.',
           'As transferências são revistas na hora.'
-        ],
-        abrir: [{ rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }]
+        ]
       },
       {
         id: 'passo-6-assinaturas',
         titulo: '6. Cadastre as assinaturas e os débitos automáticos',
         paraQueServe: 'Saber o que cobra em cada cartão e conta todo mês, e ser avisado quando algo muda.',
-        topicos: ['Abra Contas a pagar e veja as “Sugestões do extrato”: assinaturas nos cartões, débitos automáticos e contas…'],
-        detalhes: [
-          'Abra Contas a pagar e veja as “Sugestões do extrato”: assinaturas nos cartões, débitos automáticos e contas que se repetem.',
-          'Clique em “Cadastrar” nas que são suas; a forma de cobrança e o texto já vêm preenchidos. “ignorar” tira a sugestão.',
-          'Na aba “Assinaturas e recorrentes”, confira onde cada uma cai e quanto vai por mês.'
+        topicos: [
+          'Contas a pagar → “Sugestões do extrato”: “Cadastrar” nas que são suas; “ignorar” tira a sugestão.',
+          'Aba “Assinaturas e recorrentes” → onde cada uma cai e quanto vai por mês.'
         ],
         abrir: [
           { rotulo: 'Abrir Contas a pagar', rota: '/contas-a-pagar' },
           { rotulo: 'Abrir Assinaturas e recorrentes', rota: '/contas-a-pagar', params: { aba: 'recorrentes' } }
-        ]
+        ],
+        detalhes: ['Ao cadastrar, a forma de cobrança e o texto já vêm preenchidos.']
       },
       {
         id: 'passo-7-conferir',
         titulo: '7. Confira com os apps dos bancos',
         paraQueServe: 'Ter certeza de que o site bate com cada banco, e saber por que quando não bate.',
-        topicos: ['Abra Contas e cartões e clique em “Conferir com o banco”.'],
-        detalhes: [
-          'Abra Contas e cartões e clique em “Conferir com o banco”.',
-          'Com o app de cada banco aberto, digite o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
-          '“bate”: está certo. Quando não bate, a pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”, com o link “ver” para corrigir.',
-          'Fatura diferente do app? Veja se o app mostra a dívida total (com as parcelas futuras) ou compras que ainda estão pendentes: as duas aparecem como pista.',
-          'Faça isso logo depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia.'
+        topicos: ['Contas e cartões → “Conferir com o banco”: digite saldo, fatura e investimentos como estão no app.'],
+        passos: [
+          'Sincronize antes (passo 1).',
+          'Em Contas e cartões, clique em “Conferir com o banco”.',
+          'Digite o que o app de cada banco mostra.',
+          'Onde não “bate”, veja a pista “Explica a diferença” e clique em “ver”.'
         ],
-        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }]
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
+        detalhes: [
+          'Fatura diferente do app? Veja se o app mostra a dívida total (com as parcelas futuras) ou compras ainda pendentes: as duas aparecem como pista.',
+          'O banco atualiza o Open Finance mais ou menos uma vez por dia.'
+        ]
       }
     ]
   },
@@ -333,108 +331,111 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Contas do Open Finance e contas manuais',
         paraQueServe: 'Entender de onde vem o saldo de cada conta e quando criar uma conta à mão.',
         print: { id: 'tipos-de-conta', alt: 'Contas e cartões: resumo de saldo, faturas e dívida, os botões Conferir com o banco e Conta manual, e o início da lista de contas.' },
-        topicos: ['Contas do Open Finance aparecem sozinhas depois da sincronização; saldo, limite e tipo vêm do banco.'],
-        detalhes: [
-          'Contas do Open Finance aparecem sozinhas depois da sincronização; saldo, limite e tipo vêm do banco.',
-          'Para dinheiro em espécie, banco sem Open Finance ou um controle separado, use “+ Conta manual”.',
-          'Na conta manual você informa o tipo, o saldo inicial e, no cartão, limite, dia de fechamento e de vencimento.',
-          'Desmarque “Incluir no saldo total” para uma conta não somar no saldo (ex.: conta de outra pessoa).',
-          'Conta que não usa mais: marque “Arquivada” em vez de excluir.',
-          'Para ver as arquivadas, ligue o interruptor “Mostrar arquivadas” no topo da tela; elas aparecem com o selo “Arquivada”.'
+        topicos: [
+          'Open Finance → as contas aparecem sozinhas depois da sincronização.',
+          'Dinheiro em espécie ou banco sem Open Finance → “+ Conta manual”.',
+          'Conta que não usa mais → marque “Arquivada”, em vez de excluir.'
         ],
         abrir: [
           { rotulo: 'Abrir Contas e cartões', rota: '/contas' },
           { rotulo: 'Ver também as arquivadas', rota: '/contas', params: { arquivadas: '1' } }
+        ],
+        detalhes: [
+          'Na conta manual, informe o tipo e o saldo inicial; no cartão, limite e dias de fechamento e de vencimento.',
+          'Desmarque “Incluir no saldo total” para a conta não somar (ex.: conta de outra pessoa).',
+          'Para ver as arquivadas, ligue “Mostrar arquivadas” no topo; elas levam o selo “Arquivada”.'
         ]
       },
       {
         id: 'banco-da-conta',
         titulo: 'O banco de cada conta (o selo)',
         paraQueServe: 'Reconhecer de relance qual conta e qual cartão é de qual banco.',
-        topicos: ['Cada conta mostra o selo do banco, reconhecido pelo nome da conta e da instituição.'],
-        detalhes: [
-          'Cada conta mostra o selo do banco, reconhecido pelo nome da conta e da instituição.',
-          'Se o banco estiver errado (ou não aparecer), clique em “editar” na conta.',
-          'No campo “Banco”, escolha o banco certo. “Detectar pelo nome” volta para o reconhecimento automático.',
-          'Para não mostrar banco nenhum, escolha “Outro (sem banco)”.',
-          'O cartão desenhado fica com a cor do banco; a cor escolhida na conta só vale quando o banco não é identificado.'
+        topicos: [
+          'Selo errado ou ausente → “editar” na conta e escolha em “Banco”.',
+          '“Detectar pelo nome” → volta ao reconhecimento automático.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }]
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
+        detalhes: [
+          'Para não mostrar banco nenhum, escolha “Outro (sem banco)”.',
+          'O cartão desenhado usa a cor do banco; a cor da conta só vale quando o banco não é identificado.'
+        ]
       },
       {
         id: 'cartao-e-conta',
         titulo: 'Ligar o cartão à conta dele',
-        paraQueServe: 'Mostrar de qual conta o cartão é (e de onde a fatura é paga), e o cartão usar o banco da conta.',
-        topicos: ['Clique em “editar” no cartão.'],
-        detalhes: [
-          'Clique em “editar” no cartão.',
-          'Em “Conta do cartão”, escolha a conta do mesmo banco.',
-          'Salve. O cartão passa a mostrar “da conta …”, e a conta mostra “Cartões: …”.'
-        ],
-        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }]
+        paraQueServe: 'Mostrar de qual conta o cartão é e de onde a fatura é paga.',
+        topicos: ['“editar” no cartão → “Conta do cartão” → escolha a conta do mesmo banco e salve.'],
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
+        detalhes: ['O cartão passa a mostrar “da conta …”, e a conta mostra “Cartões: …”.']
       },
       {
         id: 'fatura-e-divida',
         titulo: 'Fatura do mês × dívida total',
         paraQueServe: 'Não confundir o que entrou no cartão neste mês com tudo o que você deve nele.',
-        topicos: ['“Fatura de <mês>” é a fatura do cartão que fecha no mês: as compras desde o fechamento anterior e a parcela…'],
-        detalhes: [
-          '“Fatura de <mês>” é a fatura do cartão que fecha no mês: as compras desde o fechamento anterior e a parcela das compras parceladas, menos os estornos. Depois de fechada, vale o total que o banco informou.',
-          'Abaixo dela aparecem quando a fatura fecha, quando vence e a situação (paga, fechada ou em aberto). Ela aparece como paga quando o banco informa o pagamento ou quando o pagamento (por exemplo, “Pagamento recebido”) está nas transações do cartão, entre o vencimento anterior e o vencimento dela. Pagar antes do fechamento também conta.',
-          'Para ver as faturas de outro mês, use o seletor de mês em “Cartões de crédito” (como no Painel). Muda a “Fatura de <mês>” de cada cartão e o total; saldo, dívida total, limite e “Fatura em aberto” continuam sendo os de hoje. “Voltar para o mês atual” volta. O link “Faturas do mês” do Painel abre esta tela no mesmo mês.',
-          'Depois que a fatura do mês fecha, aparece embaixo a “Próxima fatura”: o que já entrou na fatura seguinte, que ainda está aberta, com o dia em que ela fecha e vence.',
-          '“Dívida total” é tudo o que você deve no cartão hoje, inclusive as parcelas que ainda vão vencer.',
-          'A barra mostra quanto do limite está em uso e quanto ainda está disponível (ou quanto passou do limite).',
-          '“Melhor dia de compra” é o dia seguinte ao fechamento: o que você compra a partir dele só entra na fatura seguinte.',
-          'Ligue “Fatura no Painel” no cartão para somar a fatura em aberto dele no card “Fatura em aberto”, no topo desta tela e no Painel, em “Situação hoje”. “ver detalhes” mostra a fatura de cada cartão. Vale na hora e fica guardado neste navegador: em outro computador ou celular, ligue de novo.'
+        topicos: [
+          '“Fatura de <mês>” → o que entrou na fatura que fecha no mês, com fechamento, vencimento e situação.',
+          '“Dívida total” → tudo o que você deve no cartão hoje, com as parcelas futuras.',
+          'Seletor de mês em “Cartões de crédito” → vê a fatura de outro mês.',
+          '“Fatura no Painel” → liga a fatura em aberto do cartão no Painel.'
         ],
         abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
-        termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra']
+        termos: ['faturaDoMes', 'dividaCartao', 'melhorDiaCompra'],
+        detalhes: [
+          'A fatura aparece como paga quando o banco informa o pagamento ou quando ele está nas transações do cartão.',
+          'Com outro mês escolhido, saldo, dívida total e limite continuam os de hoje. “Voltar para o mês atual” desfaz.',
+          'Depois que a fatura fecha, aparece a “Próxima fatura”, ainda aberta.',
+          'A barra mostra quanto do limite está em uso e quanto resta.',
+          '“Melhor dia de compra” é o dia seguinte ao fechamento: o que você compra daí em diante só entra na fatura seguinte.',
+          '“Fatura no Painel” fica guardado neste navegador: em outro computador ou celular, ligue de novo.'
+        ]
       },
       {
         id: 'conferir-banco',
         titulo: 'Conferir com o banco',
         paraQueServe: 'Ver se o site bate com o app de cada banco e, quando não bate, por quê.',
         print: { id: 'conferir-banco', alt: 'Conferir com o banco: tabela de contas com o saldo no site, o campo para informar o valor do app do banco e o resultado.' },
-        topicos: ['Em Contas e cartões, clique em “Conferir com o banco”.'],
-        detalhes: [
-          'Em Contas e cartões, clique em “Conferir com o banco”.',
-          'Abra o app de cada banco e digite o valor que aparece lá: o saldo de cada conta, a fatura do mês de cada cartão e o valor de cada investimento e reserva.',
-          'O site compara na hora: “bate”, ou quanto o app (ou o site) mostra a mais.',
-          'Quando não bate, aparecem as pistas: quando o banco atualizou, reservas da conta, lançamentos pendentes, parcelas, estornos e compras repetidas. A pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”.',
-          'Cada pista tem o link “ver” para a tela com o detalhe. Nada é gravado: os valores digitados ficam só na tela.',
-          'Faça isso depois de sincronizar: o banco atualiza o Open Finance mais ou menos uma vez por dia, e o app mostra o que aconteceu depois disso.'
+        topicos: [
+          'Abrir → “Conferir com o banco”, em Contas e cartões.',
+          'Digitar → saldo de cada conta, fatura de cada cartão e valor de cada investimento.',
+          'Resultado → “bate”, ou quanto difere, com pistas e o link “ver”.'
         ],
-        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }]
+        abrir: [{ rotulo: 'Conferir com o banco', rota: '/conferir-banco' }],
+        detalhes: [
+          'A pista com o mesmo valor da diferença vem primeiro, marcada “Explica a diferença”.',
+          'As pistas cobrem: atualização do banco, reservas, pendentes, parcelas, estornos e compras repetidas.',
+          'Nada é gravado: o que você digita fica só na tela.',
+          'Faça depois de sincronizar; o banco atualiza o Open Finance mais ou menos uma vez por dia.'
+        ]
       },
       {
         id: 'limite-reduzido',
         titulo: 'Limite reduzido no app do banco',
         paraQueServe: 'Não confundir o limite que você tirou do cartão no app com dívida.',
-        topicos: ['Se você reduz o limite no app do banco (por segurança, enquanto não usa), o “limite usado” que o banco…'],
-        detalhes: [
-          'Se você reduz o limite no app do banco (por segurança, enquanto não usa), o “limite usado” que o banco informa fica bem maior que a dívida do cartão.',
-          'Quando isso acontece, o cartão em Contas e cartões pergunta: “Você reduziu o limite no app?”. Clique em “responder” (ou em “editar”).',
-          '“Sim, ajustei o limite”: o site usa o limite que ficou no app, e o cartão mostra “limite reduzido por você no app”.',
-          '“Não”: a diferença conta como compromisso (compras em processamento ou parcelas). A barra passa a usar o limite aprovado e inclui essa diferença.',
-          'Mudou de ideia? Em “editar”, clique em “desfazer”. Depois de um “não”, a pergunta só volta se a diferença mudar bastante.'
+        topicos: [
+          'Pergunta no cartão → “Você reduziu o limite no app?”: clique em “responder”.',
+          '“Sim, ajustei o limite” → o site usa o limite do app.',
+          '“Não” → a diferença conta como compromisso (compras em processamento ou parcelas).'
         ],
         abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
-        termos: ['limiteUsado']
+        termos: ['limiteUsado'],
+        detalhes: [
+          'Mudou de ideia? Em “editar”, clique em “desfazer”.',
+          'Depois de um “não”, a pergunta só volta se a diferença mudar bastante.'
+        ]
       },
       {
         id: 'historico-faturas',
         titulo: 'Histórico de faturas',
         paraQueServe: 'Ver as faturas anteriores de um cartão, sem sair da tela.',
-        topicos: ['No cartão, clique em “Histórico de faturas”.'],
-        detalhes: [
-          'No cartão, clique em “Histórico de faturas”.',
-          'Aparecem as faturas mais recentes: vencimento, quando fechou, total e situação.',
-          'Use “Mostrar mais antigas” para ver o resto.',
-          'No Painel, clicar no nome de um cartão em “Faturas do mês” abre direto este histórico.',
-          'Cartão manual não tem histórico: as faturas vêm do banco pelo Open Finance.'
+        topicos: [
+          'No cartão → “Histórico de faturas”: vencimento, fechamento, total e situação.',
+          'Faturas antigas → “Mostrar mais antigas”.'
         ],
-        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }]
+        abrir: [{ rotulo: 'Abrir Contas e cartões', rota: '/contas' }],
+        detalhes: [
+          'No Painel, o nome de um cartão em “Faturas do mês” abre direto este histórico.',
+          'Cartão manual não tem histórico: as faturas vêm do banco pelo Open Finance.'
+        ]
       }
     ]
   },
@@ -582,24 +583,21 @@ export const MANUAL: CapituloManual[] = [
         id: 'por-que',
         titulo: 'Por que categorizar faz diferença',
         paraQueServe: 'Quase tudo no site depende da categoria de cada transação.',
-        topicos: ['Gastos por categoria no Painel e nos Relatórios.'],
-        detalhes: [
-          'Gastos por categoria no Painel e nos Relatórios.',
-          'Orçamentos e a sugestão de orçamentos.',
-          'O assistente de metas (a sobra prevista) e a distribuição da renda (50/30/20).',
-          'Categoria errada distorce tudo isso — e “Sem categoria” some das análises por categoria.',
-          'Uma rotina de 10 minutos por semana revisando “Sem categoria” e “Descrição pouco informativa” mantém tudo em dia.'
-        ]
+        topicos: [
+          'Dependem dela → gastos por categoria, orçamentos, metas e a divisão 50/30/20.',
+          '“Sem categoria” → some das análises por categoria.',
+          'Rotina → 10 minutos por semana em “Sem categoria” e “Descrição pouco informativa”.'
+        ],
+        detalhes: ['Categoria errada distorce o Painel, os Relatórios, a sugestão de orçamentos e a sobra prevista nas metas.']
       },
       {
         id: 'automatica-x-manual',
         titulo: 'Categoria automática × escolhida à mão',
         paraQueServe: 'Saber o que muda sozinho e o que fica como você deixou.',
-        topicos: ['Ao chegar, cada transação recebe uma categoria automática: primeiro pelas suas regras, depois pela categoria…'],
-        detalhes: [
-          'Ao chegar, cada transação recebe uma categoria automática: primeiro pelas suas regras, depois pela categoria que o banco informa.',
-          'Quando você escolhe a categoria, ela passa a ser “escolhida à mão” e não muda mais sozinha.',
-          'Para devolver à categorização automática, escolha “Automática (regras)”.'
+        topicos: [
+          'Automática → vem das suas regras e, depois, da categoria do banco.',
+          'Escolhida à mão → não muda mais sozinha.',
+          '“Automática (regras)” → devolve a transação à categorização automática.'
         ]
       },
       {
@@ -607,86 +605,91 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Várias de uma vez: “Editar categorias”',
         paraQueServe: 'Arrumar dezenas de transações rápido, sem abrir uma por uma.',
         print: { id: 'modo-edicao', alt: 'Lista de transações no modo de edição, com uma lista suspensa de categoria em cada linha.' },
-        topicos: ['Em Transações, filtre o que quer arrumar (ex.: o mês, “Sem categoria”).'],
-        detalhes: [
-          'Em Transações, filtre o que quer arrumar (ex.: o mês, “Sem categoria”).',
-          'Clique em “✎ Editar categorias”. Cada linha ganha um seletor de categoria.',
-          'Troque a categoria nas linhas. A linha fica marcada “alterada” — nada é gravado ainda. Esc numa linha desfaz a troca dela.',
-          'Para várias linhas iguais: marque-as e use “Trocar nas selecionadas” na barra de seleção.',
-          'Para tudo o que está no filtro (inclusive outras páginas): use “Todas as N transações do filtro” e confirme.',
-          'Clique em “Salvar alterações (N)”. O aviso que aparece tem “Desfazer”.',
-          'Se várias transações iguais foram para a mesma categoria, a tela oferece “Criar regra” para as próximas.',
-          'Mudar de página ou de filtro com trocas não salvas pede confirmação — salve antes para não perder.'
+        topicos: [
+          'Filtre em Transações (ex.: o mês e “Sem categoria”) e clique em “✎ Editar categorias”.',
+          'Troque a categoria em cada linha; nada é gravado até “Salvar alterações (N)”.',
+          'Linhas iguais → marque e use “Trocar nas selecionadas”.'
         ],
-        abrir: [{ rotulo: 'Editar as sem categoria', rota: '/transacoes', params: { categoria: 'sem', editar: '1' } }]
+        abrir: [{ rotulo: 'Editar as sem categoria', rota: '/transacoes', params: { categoria: 'sem', editar: '1' } }],
+        detalhes: [
+          'Esc numa linha desfaz a troca dela.',
+          'Para tudo o que está no filtro, inclusive outras páginas, use “Todas as N transações do filtro” e confirme.',
+          'Depois de salvar, o aviso tem “Desfazer”.',
+          'Se várias iguais foram para a mesma categoria, a tela oferece “Criar regra” para as próximas.',
+          'Mudar de página ou de filtro com trocas não salvas pede confirmação.'
+        ]
       },
       {
         id: 'sugestoes',
         titulo: 'Sugestões de categoria',
         paraQueServe: 'Deixar o site propor a categoria pelo seu histórico, em grupos de transações parecidas.',
-        topicos: ['Em Transações, clique em “✦ Sugestões de categoria”.'],
-        detalhes: [
-          'Em Transações, clique em “✦ Sugestões de categoria”.',
-          'Escolha “Sem categoria” ou “Revisar automáticas”.',
-          'Cada grupo mostra quantas transações tem, a sugestão e a confiança (alta, média, palavra-chave).',
-          'Ajuste a categoria se precisar, marque a caixa da coluna “Regra” se quiser que as próximas venham sozinhas, e clique em “Aplicar”.',
-          '“Aplicar as N de confiança alta” resolve de uma vez os grupos mais certos.',
-          'O texto da regra sai da descrição do banco, que é o que a regra confere. A caixa vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em transações de outras categorias, ou quando outra linha pede a mesma regra para outra categoria. Sem um texto que identifique só aquele grupo (ex.: Pix para pessoas diferentes), não há regra: categorize sem ela.',
-          'Duas linhas com a mesma regra (ex.: “contém MERCADOLIVRE”) e categorias diferentes: só uma regra pode valer. “Aplicar as N de confiança alta” categoriza as duas, mas não cria essa regra; escolha a categoria certa e crie a regra numa das linhas, ou em Categorias e regras.'
+        topicos: [
+          'Abrir → “✦ Sugestões de categoria”, em Transações; escolha “Sem categoria” ou “Revisar automáticas”.',
+          'Cada grupo → mostra a sugestão e a confiança; ajuste a categoria se precisar.',
+          'Aplicar → “Aplicar”, ou “Aplicar as N de confiança alta” para os mais certos.'
         ],
-        abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }]
+        abrir: [{ rotulo: 'Abrir Transações', rota: '/transacoes' }],
+        detalhes: [
+          'Marque a caixa da coluna “Regra” para as próximas transações iguais virem sozinhas.',
+          'A caixa vem desmarcada, com o motivo embaixo, quando a regra já existe, quando o texto também aparece em outras categorias ou quando outra linha pede a mesma regra para outra categoria.',
+          'Sem um texto que identifique só aquele grupo (ex.: Pix para pessoas diferentes), não há regra: categorize sem ela.',
+          'Duas linhas com a mesma regra e categorias diferentes: só uma regra vale. Crie a regra numa delas ou em Categorias e regras.'
+        ]
       },
       {
         id: 'zerar-a-fila',
         titulo: 'Zerar a fila: sem categoria e descrição pouco informativa',
         paraQueServe: 'Encontrar o que ainda não tem categoria certa.',
-        topicos: ['Abra Transações com o filtro “Sem categoria” e categorize (de preferência no “Editar categorias”).'],
-        detalhes: [
-          'Abra Transações com o filtro “Sem categoria” e categorize (de preferência no “Editar categorias”).',
-          'Marque o filtro “Descrição pouco informativa”: aparecem as transações cuja descrição não diz o que foi (“PIX ENVIADO”, “PAGAMENTO”).',
-          'Para cada uma: escolha a categoria, dê um nome melhor na descrição ou clique em “✓ marcar como revisada”.',
-          'As notificações (o sino da barra de cima) mostram, discretamente, quantas descrições pouco informativas há nos últimos 90 dias, com o link “Revisar”.'
+        topicos: [
+          '“Sem categoria” → filtre em Transações e categorize, de preferência em “Editar categorias”.',
+          '“Descrição pouco informativa” → “PIX ENVIADO” e parecidas: categorize, renomeie ou “✓ marcar como revisada”.'
         ],
         abrir: [
           { rotulo: 'Ver as sem categoria', rota: '/transacoes', params: { categoria: 'sem' } },
           { rotulo: 'Ver as de descrição pouco informativa', rota: '/transacoes', params: { generica: '1' } }
         ],
-        termos: ['descricaoPoucoInformativa']
+        termos: ['descricaoPoucoInformativa'],
+        detalhes: ['O sino da barra de cima mostra quantas descrições pouco informativas há nos últimos 90 dias, com o link “Revisar”.']
       },
       {
         id: 'gasto-em-dobro',
         titulo: 'Pagamento de fatura e transferências contando em dobro',
         paraQueServe: 'Evitar que o pagamento da fatura (ou dinheiro passando entre suas contas) apareça como gasto novo.',
-        topicos: ['As compras do cartão já entram como gasto. Pagar a fatura não é um gasto novo — só tira dinheiro da conta…'],
-        detalhes: [
-          'As compras do cartão já entram como gasto. Pagar a fatura não é um gasto novo — só tira dinheiro da conta para o cartão.',
-          'Filtre “Lançamento” por “Pagamento de fatura” (ou “Entre suas contas”) e procure a etiqueta “somando nos gastos”.',
-          'Entre no “Editar categorias”, use “Todas as N transações do filtro” e escolha a categoria “Pagamento de fatura” (ou “Transferências”).',
-          'Essas categorias são do tipo transferência: as transações passam a ficar “fora dos gastos”.',
-          'Na categoria “Transferências”, só fica fora o que é entre contas suas: o par aparece na outra conta (mesmo valor, até 5 dias), o banco informa o mesmo titular, a transferência foi lançada pelo site ou é dinheiro guardado numa reserva. Pix e TED para outra pessoa (ou recebidos de outra pessoa, como salário) contam como despesa ou receita.',
-          'Mandou dinheiro para uma conta sua que não está conectada? O site não vê o par: crie uma categoria do tipo transferência (ex.: “Entre minhas contas”) e use nela. Outras categorias do tipo transferência ficam sempre fora.',
-          'Seu banco não informa se o Pix foi para você mesmo? Em Configurações › Open Finance, preencha “Seu nome como aparece nos Pix”: Pix e TED que citam o seu primeiro e último nome passam a contar como entre contas suas.',
-          'Pagamento de fatura que o banco mandou como boleto ou “outros” fica fora dos gastos sozinho quando o crédito do mesmo valor aparece num cartão seu em até 5 dias. Sem esse crédito, ele fica como está: “fatura” também pode ser conta de telefone ou de luz.'
+        topicos: [
+          'Achar → filtre “Lançamento” por “Pagamento de fatura” (ou “Entre suas contas”) e procure “somando nos gastos”.',
+          'Corrigir → em “Editar categorias”, troque todas do filtro para “Pagamento de fatura” (ou “Transferências”).',
+          'Seu nome nos Pix → Configurações › Open Finance, “Seu nome como aparece nos Pix”.'
         ],
-        abrir: [{ rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } },
-          { rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }],
-        termos: ['tipoLancamento']
+        abrir: [
+          { rotulo: 'Ver os pagamentos de fatura', rota: '/transacoes', params: { lancamento: 'fatura' } },
+          { rotulo: 'Abrir Configurações › Open Finance', rota: '/configuracoes' }
+        ],
+        termos: ['tipoLancamento'],
+        detalhes: [
+          'As compras do cartão já entram como gasto; pagar a fatura só move dinheiro da conta para o cartão.',
+          'Categorias do tipo transferência deixam as transações “fora dos gastos”.',
+          'Em “Transferências”, só fica fora o que é entre contas suas. Pix e TED para ou de outra pessoa contam como despesa ou receita.',
+          'Dinheiro para uma conta sua que não está conectada? Crie uma categoria do tipo transferência (ex.: “Entre minhas contas”) e use nela.',
+          'Pagamento de fatura que veio como boleto ou “outros” sai dos gastos sozinho quando o crédito do mesmo valor aparece num cartão seu em até 5 dias.'
+        ]
       },
       {
         id: 'estornos',
         titulo: 'Estornos no cartão',
         paraQueServe: 'Entender por que um estorno aparece em verde, mas não aumenta a sua receita.',
-        topicos: ['No cartão, todo crédito que não é o pagamento da fatura é estorno: compra devolvida, “crédito de confiança”…'],
-        detalhes: [
-          'No cartão, todo crédito que não é o pagamento da fatura é estorno: compra devolvida, “crédito de confiança”, cashback.',
-          'O estorno abate o gasto da categoria no mês (ex.: compra de R$ 100 em Compras + estorno de R$ 100 = R$ 0 em Compras) e não conta como receita.',
-          'O crédito do pagamento da fatura no cartão (“Pagamento recebido”) fica fora dos gastos, mesmo quando chega sem a categoria “Pagamento de fatura”.',
-          'Estorno que o banco manda como transferência (ex.: “Estorno de Uber - NuPay”) ganha a categoria do texto (Uber → Transporte) ou fica sem categoria para você escolher.',
-          'Os estornos que já estavam no site foram acertados sozinhos.',
-          'Compra parcelada devolvida inteira (o estorno do valor total, ex.: 12 × R$ 460 = R$ 5.527) é uma compra cancelada: o estorno e as parcelas dela já lançadas ficam fora dos relatórios, e no total ela não custa nada. Sem isso, o estorno do valor total abatia o gasto de um mês em que só a 1ª parcela tinha sido cobrada, e as despesas do mês ficavam negativas. Estorno de parte da compra continua abatendo o gasto do mês.'
+        topicos: [
+          'Estorno → todo crédito no cartão que não é pagamento de fatura (compra devolvida, cashback).',
+          'Efeito → abate o gasto da categoria no mês e não conta como receita.',
+          'Ver → Transações, “Lançamento” = cartão.'
         ],
         abrir: [{ rotulo: 'Ver os estornos', rota: '/transacoes', params: { lancamento: 'cartao' } }],
-        termos: ['tipoLancamento']
+        termos: ['tipoLancamento'],
+        detalhes: [
+          'O crédito “Pagamento recebido” fica fora dos gastos, mesmo sem a categoria “Pagamento de fatura”.',
+          'Estorno que o banco manda como transferência (ex.: “Estorno de Uber - NuPay”) ganha a categoria do texto ou fica sem categoria.',
+          'Compra parcelada devolvida inteira é compra cancelada: o estorno e as parcelas já lançadas ficam fora dos relatórios.',
+          'Estorno de parte da compra continua abatendo o gasto do mês.'
+        ]
       }
     ]
   },
@@ -770,39 +773,41 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Criar e organizar categorias',
         paraQueServe: 'Ter as categorias do seu jeito.',
         print: { id: 'criar-categoria', alt: 'Janela Nova categoria com nome, tipo, subcategoria de, natureza do gasto, cor e a caixa Ativa.' },
-        topicos: ['Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.'],
-        detalhes: [
-          'Abra Categorias e regras › “Categorias” e clique em “+ Categoria”.',
-          'Dê um “Nome”, escolha o “Tipo” (despesa, receita ou transferência) e uma cor.',
-          'Cada categoria aparece com um ícone na cor dela (talheres em Alimentação, casa em Moradia…) no Painel, nas Análises, em Categorias e regras e em Orçamentos. Categoria criada por você aparece com a primeira letra do nome.',
-          'Para uma subcategoria (ex.: Lazer › Cinema), escolha a categoria em “Subcategoria de”.',
-          'No filtro de Transações, escolher uma categoria inclui as subcategorias dela.'
+        topicos: [
+          'Criar → Categorias e regras › “Categorias” › “+ Categoria”.',
+          'Preencher → “Nome”, “Tipo” (despesa, receita ou transferência) e cor.',
+          'Subcategoria (ex.: Lazer › Cinema) → escolha a categoria em “Subcategoria de”.'
         ],
-        abrir: [{ rotulo: 'Abrir Categorias e regras', rota: '/categorias' }]
+        abrir: [{ rotulo: 'Abrir Categorias e regras', rota: '/categorias' }],
+        detalhes: [
+          'No filtro de Transações, escolher uma categoria inclui as subcategorias dela.',
+          'O ícone na cor da categoria aparece no Painel, nas Análises e em Orçamentos. Categoria criada por você usa a primeira letra do nome.'
+        ]
       },
       {
         id: 'tipo-transferencia',
         titulo: 'Por que transferência não conta como gasto',
         paraQueServe: 'Evitar contar o mesmo dinheiro duas vezes.',
-        topicos: ['Categorias do tipo transferência (como “Transferências” e “Pagamento de fatura”) ficam fora das despesas e…'],
-        detalhes: [
-          'Categorias do tipo transferência (como “Transferências” e “Pagamento de fatura”) ficam fora das despesas e receitas.',
-          'Dinheiro que só muda de conta não é gasto; o pagamento da fatura não é gasto novo, porque as compras já entraram no cartão.',
-          'Na lista de Transações, elas aparecem com a etiqueta “fora dos gastos”.'
-        ]
+        topicos: [
+          'Tipo transferência (“Transferências”, “Pagamento de fatura”) → fica fora das despesas e das receitas.',
+          'Em Transações → aparece com a etiqueta “fora dos gastos”.'
+        ],
+        detalhes: ['Dinheiro que só muda de conta não é gasto. O pagamento da fatura também não, porque as compras já entraram no cartão.']
       },
       {
         id: 'natureza',
         titulo: 'Essencial × estilo de vida (50/30/20)',
         paraQueServe: 'Ver quanto da renda vai para o necessário e quanto para o resto.',
-        topicos: ['Em cada categoria de despesa, escolha a “Natureza do gasto”: essencial (moradia, mercado, saúde) ou estilo de…'],
-        detalhes: [
-          'Em cada categoria de despesa, escolha a “Natureza do gasto”: essencial (moradia, mercado, saúde) ou estilo de vida (lazer, restaurantes).',
-          'A Visão anual e a sugestão de orçamentos usam isso na divisão 50/30/20: até 50% para essenciais, 30% para estilo de vida e pelo menos 20% para guardar.',
-          'Na Visão anual, clique em Essenciais, Estilo de vida ou Guardado (na barra ou na legenda) para ver em Transações o que forma cada parte.'
+        topicos: [
+          'Marcar → em cada categoria de despesa, “Natureza do gasto”: essencial ou estilo de vida.',
+          'Ver → Visão anual: clique em Essenciais, Estilo de vida ou Guardado para abrir as transações.'
         ],
         abrir: [{ rotulo: 'Abrir a Visão anual', rota: '/anual' }],
-        termos: ['comprometimento']
+        termos: ['comprometimento'],
+        detalhes: [
+          'Essencial: moradia, mercado, saúde. Estilo de vida: lazer, restaurantes.',
+          'A Visão anual e a sugestão de orçamentos usam a divisão 50/30/20: até 50% para essenciais, 30% para estilo de vida e pelo menos 20% para guardar.'
+        ]
       }
     ]
   },
@@ -816,42 +821,44 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Definir os limites do mês',
         paraQueServe: 'Combinar consigo mesmo quanto gastar em cada categoria.',
         print: { id: 'definir-limites', alt: 'Orçamentos do mês: totais orçado, gasto e disponível e a tabela de categorias com o campo de limite de cada uma.' },
-        topicos: ['Abra Orçamentos e escolha o mês no seletor.'],
-        detalhes: [
-          'Abra Orçamentos e escolha o mês no seletor.',
-          'Na coluna “Limite (R$)”, digite o limite de cada categoria. Em branco = sem orçamento.',
-          'Subcategorias somam no orçamento da categoria pai.',
-          'Para repetir os limites, use “Copiar do mês anterior”.'
+        topicos: [
+          'Mês → seletor no topo de Orçamentos.',
+          'Limite → digite na coluna “Limite (R$)”; em branco é sem orçamento.',
+          'Repetir → “Copiar do mês anterior”.'
         ],
-        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }]
+        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }],
+        detalhes: ['Subcategorias somam no orçamento da categoria pai.']
       },
       {
         id: 'sugerir',
         titulo: '✨ Sugerir orçamentos',
         paraQueServe: 'Partir de valores que cabem na sua renda, calculados pelos seus gastos.',
-        topicos: ['Clique em “✨ Sugerir orçamentos”.'],
-        detalhes: [
-          'Clique em “✨ Sugerir orçamentos”.',
-          'Cada categoria recebe um valor pela mediana dos últimos 6 meses (sem emergências, compras parceladas e picos isolados), com o motivo.',
-          'A soma cabe na renda média menos as parcelas e a meta de poupança; quando não cabe, a tela diz quanto falta.',
-          'Revise e edite os valores; categoria que já tem orçamento vem desmarcada.',
-          'Clique em aplicar para gravar os marcados.',
-          'A meta de poupança e os níveis de uso do cartão ficam em Configurações › Parametrização › Orçamentos.'
+        topicos: [
+          'Abrir → “✨ Sugerir orçamentos”; cada categoria vem com um valor e o motivo.',
+          'Revisar → edite os valores; quem já tem orçamento vem desmarcado.',
+          'Gravar → aplicar os marcados.'
         ],
-        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }]
+        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }],
+        detalhes: [
+          'O valor vem da mediana dos últimos 6 meses, sem emergências, parceladas e picos isolados.',
+          'A soma cabe na renda média menos as parcelas e a meta de poupança; se não cabe, a tela diz quanto falta.',
+          'A meta de poupança e os níveis de uso do cartão ficam em Configurações › Parametrização › Orçamentos.'
+        ]
       },
       {
         id: 'acompanhar',
         titulo: 'Acompanhar durante o mês',
         paraQueServe: 'Perceber cedo quando uma categoria está passando do limite.',
-        topicos: ['A barra de cada categoria mostra quanto do limite já foi.'],
-        detalhes: [
-          'A barra de cada categoria mostra quanto do limite já foi.',
-          'Laranja quer dizer que passou do limite só por causa de gastos de emergência.',
-          'O sino da barra do topo junta os orçamentos estourados num card, com o link para as despesas de cada categoria. O menu “Ocultar” minimiza o card ou o oculta até o mês que vem.',
-          'Clique no gasto de uma categoria para ver as transações por trás dele.'
+        topicos: [
+          'Barra da categoria → quanto do limite já foi.',
+          'Sino da barra de cima → junta os orçamentos estourados, com link para as despesas.',
+          'Gasto de uma categoria → clique para ver as transações por trás.'
         ],
-        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }, { rotulo: 'Abrir o Painel', rota: '/painel' }]
+        abrir: [{ rotulo: 'Abrir Orçamentos', rota: '/orcamentos' }, { rotulo: 'Abrir o Painel', rota: '/painel' }],
+        detalhes: [
+          'Laranja quer dizer que passou do limite só por gastos de emergência.',
+          'No card do sino, o menu “Ocultar” minimiza o card ou o oculta até o mês que vem.'
+        ]
       }
     ]
   },
@@ -865,68 +872,72 @@ export const MANUAL: CapituloManual[] = [
         titulo: 'Criar uma meta',
         paraQueServe: 'Dar nome, valor e prazo a um objetivo.',
         print: { id: 'criar-meta', alt: 'Janela Nova meta com nome, valor alvo, data alvo, conta, valor inicial, quanto guardar por mês, ícone e cor.' },
-        topicos: ['Abra Metas e clique em “+ Nova meta”.'],
-        detalhes: [
-          'Abra Metas e clique em “+ Nova meta”.',
-          'Informe o nome, o “Valor alvo” e, se tiver, a “Data alvo”.',
-          'Em “Valor inicial já guardado”, coloque o que você já tem para essa meta.',
-          'Não sabe a data? Deixe “Data alvo” em branco (a meta fica “sem data definida”), ou diga em “Quanto vou guardar por mês” quanto vai guardar: o site calcula quando a meta chega ao alvo, contando o mês atual, e preenche a data alvo. A data continua podendo ser mudada à mão. O valor por mês fica gravado na meta (aparece de novo ao editar) e o plano passa a usá-lo; apague o campo para o plano voltar a decidir. O valor não pode passar do que sobra para as metas (a maior sobra dos próximos 12 meses, já descontado o que as outras metas guardam por mês): acima disso, o campo diz o máximo e “Salvar” fica desabilitado.',
-          'Escolha um ícone (casa, carro, viagem, estudo, reserva…) e uma cor, e salve. O ícone aparece no cartão da meta e, translúcido, no centro do anel do percentual; o anel e o miolo dele enchem na cor escolhida, conforme o dinheiro guardado.',
-          'Cada meta é uma barra que abre e fecha: clique no nome. Fechada, ela mostra o percentual, quanto já foi guardado e quanto guardar no mês. Aberta, o anel, os valores e a prioridade ficam à esquerda, e o plano do mês à direita (no celular, um embaixo do outro). Todas começam abertas; as que você fechar ficam fechadas neste navegador. “Fechar todas” e “Abrir todas” ficam no topo da lista.',
-          'Meta sem data alvo mostra “sem data definida”.',
-          'Quando a meta chega ao valor alvo, ela fica “Concluída” e sai do plano do mês. Se depois você aumentar o alvo, ela volta para o plano sozinha. Marcada como concluída antes de chegar ao alvo, o cartão diz “Concluída por você”; para ela voltar, desmarque “Concluída” em “Editar”. Aberta, a meta concluída mostra uma caixa verde “Meta alcançada!” com o quanto foi guardado.',
-          'Para mudar ou apagar uma meta, use “Editar” ou “Excluir”, no rodapé dela. “Excluir” pergunta antes, com o nome da meta; “Cancelar” (ou Esc) não apaga nada.'
+        topicos: [
+          'Criar → Metas › “+ Nova meta”.',
+          'Preencher → nome, “Valor alvo”, “Data alvo” e “Valor inicial já guardado”.',
+          'Sem data → deixe em branco ou diga em “Quanto vou guardar por mês”; o site calcula a data.',
+          'Mudar ou apagar → “Editar” ou “Excluir”, no rodapé da meta.'
         ],
-        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }]
+        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }],
+        detalhes: [
+          'O valor por mês fica gravado na meta e o plano passa a usá-lo; apague o campo para o plano voltar a decidir.',
+          'Esse valor não pode passar do que sobra para as metas: acima disso, o campo diz o máximo e “Salvar” fica desabilitado.',
+          'Escolha um ícone e uma cor: eles aparecem no cartão e no anel do percentual.',
+          'Cada meta abre e fecha ao clicar no nome; “Fechar todas” e “Abrir todas” ficam no topo. O que você fecha fica guardado neste navegador.',
+          'Ao chegar no valor alvo, a meta fica “Concluída” e sai do plano do mês; se você aumentar o alvo, ela volta sozinha. Marcada à mão antes do alvo, diz “Concluída por você”; desmarque em “Editar” para voltar.',
+          '“Excluir” pergunta antes, com o nome da meta; “Cancelar” (ou Esc) não apaga nada.'
+        ]
       },
       {
         id: 'acompanhar-meta',
         titulo: 'Acompanhar o progresso',
         paraQueServe: 'Fazer a meta andar sozinha ou registrar cada aporte.',
-        topicos: ['Sem conta ligada: registre cada valor guardado em “+ Aporte”.'],
-        detalhes: [
-          'Sem conta ligada: registre cada valor guardado em “+ Aporte”.',
-          'Com uma conta ligada (“Acompanhar saldo de uma conta”): o progresso é o valor inicial mais o saldo da conta.',
-          'Na conta do Mercado Pago, dá para escolher um cofrinho (reserva): o progresso usa o saldo dele.',
-          '“confira em Reservas” aparece quando o saldo do cofrinho é estimado: confira o saldo real em Investimentos › Reservas.'
+        topicos: [
+          'Sem conta ligada → registre cada valor em “+ Aporte”.',
+          'Com conta ligada (“Acompanhar saldo de uma conta”) → progresso = valor inicial + saldo da conta.',
+          'Mercado Pago → dá para escolher um cofrinho; o progresso usa o saldo dele.'
         ],
-        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Conferir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }]
+        abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Conferir as reservas', rota: '/investimentos', params: { aba: 'reservas' } }],
+        detalhes: ['“confira em Reservas” aparece quando o saldo do cofrinho é estimado: confira o real em Investimentos › Reservas.']
       },
       {
         id: 'quanto-guardar',
         titulo: 'Prioridade e quanto guardar por mês',
         paraQueServe: 'Saber quanto guardar este mês em cada meta, pelo dinheiro que de fato entra e sai, contando a fatura do cartão.',
-        topicos: ['Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence −…'],
-        detalhes: [
-          'Com pelo menos 3 meses de extrato, o topo de Metas mostra a sobra do mês (receitas − fatura que vence − outras despesas) e, numa caixa em destaque, quanto guardar no total (e o limite, quando houver).',
-          'Em “Guardar X% da sobra”, escolha quanto da sobra vai para as metas; o resto fica livre para imprevistos.',
-          'Use ↑ e ↓ em cada meta para definir a prioridade.',
-          'Cada meta mostra “Este mês: guarde R$ X”, com “Consigo guardar outro valor” na mesma linha, e o “Plano mês a mês” já aberto: menos nos meses de fatura alta, mais quando ela cai.',
-          'Em “Consigo guardar outro valor”, diga quanto dá para guardar este mês: o resto do plano é refeito na hora e mostra se ainda fecha no prazo.',
-          'Na meta em que você disse “Quanto vou guardar por mês”, o plano guarda esse valor todo mês, antes das outras e pela prioridade, mas nunca mais do que a parte da sobra que vai para as metas: se num mês não der, um aviso amarelo diz quanto dá e o resto fica para os meses seguintes.',
-          'Quando o prazo não cabe, a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
-          '“Plano mês a mês” mostra os próximos 5 meses e para no mês em que a meta é alcançada; “Mostrar mais” acrescenta 5 de cada vez, até 12, e “Mostrar menos” volta aos 5. “Como calculei” explica a conta.',
-          '“Como está indo” abre o gráfico da meta: a linha cheia é o total guardado no fim de cada mês, a tracejada é o plano até o valor alvo, e a pontilhada é o alvo. Cada “+ Aporte” muda o gráfico, e embaixo ficam os últimos aportes, com a data e a hora. A escala acompanha os aportes: todos no mesmo dia, um ponto por aporte, na hora e minuto; todos no mesmo mês, um ponto por dia; em meses diferentes, mês a mês, com o plano. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.',
-          'Dinheiro que vai para cofrinho ou investimento precisa estar como transferência; lançado como despesa, ele diminui a sobra.',
-          'O valor de “Consigo guardar” é só uma simulação: para valer, registre o aporte na meta.'
+        topicos: [
+          'Topo de Metas → a sobra do mês e quanto guardar no total (precisa de 3 meses de extrato).',
+          '“Guardar X% da sobra” → escolha quanto da sobra vai para as metas.',
+          'Prioridade → ↑ e ↓ em cada meta.',
+          'Cada meta → “Este mês: guarde R$ X” e o “Plano mês a mês”.'
         ],
         abrir: [{ rotulo: 'Abrir Metas', rota: '/metas' }, { rotulo: 'Ver a Projeção', rota: '/projecao' }],
-        termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas']
+        termos: ['sobraDoCaixa', 'parteDaSobra', 'recomendacaoMetas'],
+        detalhes: [
+          'A sobra é receitas menos a fatura que vence e as outras despesas.',
+          'Em “Consigo guardar outro valor”, diga quanto dá neste mês: o resto do plano é refeito na hora. É só simulação; para valer, registre o aporte.',
+          'Meta com “Quanto vou guardar por mês”: o plano guarda esse valor todo mês, antes das outras, até o limite da parte da sobra. Se um mês não der, um aviso amarelo diz quanto dá.',
+          'Prazo que não cabe: a meta mostra a data provável, quanto os próximos meses precisariam e onde mexer (prazo, valor ou gastos).',
+          '“Plano mês a mês” mostra 5 meses; “Mostrar mais” acrescenta 5 de cada vez, até 12. “Como calculei” explica a conta.',
+          '“Como está indo” abre o gráfico: linha cheia é o guardado, tracejada é o plano e pontilhada é o alvo. O histórico começa no primeiro aporte registrado a partir da versão 2.31.0.',
+          'Dinheiro para cofrinho ou investimento precisa estar como transferência; como despesa, ele diminui a sobra.'
+        ]
       },
       {
         id: 'ideias-de-metas',
         titulo: 'Ideias de metas (e como definir valor e prazo)',
         paraQueServe: 'Começar por objetivos que costumam fazer diferença.',
-        topicos: ['Reserva de emergência: de 3 a 6 meses dos seus gastos essenciais (veja a média na Visão anual). Sem data…'],
-        detalhes: [
-          'Reserva de emergência: de 3 a 6 meses dos seus gastos essenciais (veja a média na Visão anual). Sem data, prioridade 1.',
-          'Quitar o cartão ou um empréstimo: o valor da dívida total; prazo curto, porque juros de cartão crescem rápido.',
-          'Viagem: o custo estimado (passagem, hospedagem, dia a dia) e a data da viagem.',
-          'Entrada de imóvel: em geral 20% do valor do imóvel; prazo de alguns anos.',
-          'Troca de carro ou estudos: o valor e a data em que vai precisar.'
+        topicos: [
+          'Reserva de emergência → de 3 a 6 meses de gastos essenciais, sem data, prioridade 1.',
+          'Quitar cartão ou empréstimo → a dívida total, com prazo curto.',
+          'Viagem, entrada de imóvel, carro ou estudos → o custo e a data em que vai precisar.'
         ],
         abrir: [{ rotulo: 'Criar uma meta', rota: '/metas' }],
-        termos: ['reservaEmergencia']
+        termos: ['reservaEmergencia'],
+        detalhes: [
+          'Para a reserva de emergência, veja a média dos essenciais na Visão anual.',
+          'Juros de cartão crescem rápido: quitar com prazo curto.',
+          'Entrada de imóvel: em geral 20% do valor, em alguns anos.'
+        ]
       }
     ]
   },
