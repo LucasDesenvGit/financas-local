@@ -152,7 +152,9 @@ garantir_pasta "$destino"
 if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete "$preparo/" "$destino/"
 else
-    cp -a "$preparo/." "$destino/"
+    # -f: o financas-go do servico esta rodando e nao pode ser sobrescrito ("Text file busy"); o cp apaga e
+    # cria de novo, e o processo segue com o antigo ate o restart (o rsync faz o mesmo, com temporario e rename).
+    cp -af "$preparo/." "$destino/"
     while IFS= read -r -d '' arquivo; do
         relativo="${arquivo#"$destino"/}"
         [[ -e "$preparo/$relativo" ]] || rm -rf "$arquivo"
