@@ -25,10 +25,8 @@ garantir_pasta "$Dados"
 garantir_pasta "$PastaSql"
 garantir_pasta "$PastaChaves"
 garantir_pasta "$PastaBackups"
-# chmod 700 e melhor esforco: no Git Bash/Windows isso tem efeito limitado (nao
-# ha conceito de dono/modo como no Linux); a protecao real por la seria via
-# ACLs do NTFS, o que ficou fora de escopo agora que nao existe mais uma
-# identidade de pool de aplicativo do IIS para quem conceder acesso.
+# chmod 700 vale no Linux; no Git Bash/Windows nao faz nada: la quem protege as
+# pastas (ACL do NTFS) e o instalar-windows.ps1 (Proteger-Pasta, #68).
 chmod 700 "$Dados" 2>/dev/null || true
 chmod 700 "$PastaBackups" 2>/dev/null || true
 ok 'pastas criadas e protegidas (melhor esforco)'

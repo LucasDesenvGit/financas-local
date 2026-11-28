@@ -132,6 +132,7 @@ python3 scripts/ci/versao/verificar-changelog.py                     # changelog
 | **CodeQL** (#451, [ADR 0054](docs/adr/0054-analise-de-seguranca-do-codigo-com-o-codeql.md)) | todo PR e push, toda quinta e à mão | segurança do código (Go, TS, Python, workflows); achados em Security › Code scanning, sem bloquear. Na quinta, porque as consultas ganham regras novas mesmo sem o código mudar |
 | **Teste de instalação no Linux** | PR e push que mexem em `scripts/geral/`, `scripts/linux/`, `banco/`, `src/gerenciador-go/` ou no `go.mod` do Go | instala do zero num runner limpo e restaura uma cópia, seguindo o [guia de operação](docs/OPERACAO.md) |
 | **Teste de instalação no Windows** | PR e push que mexem em `scripts/windows/`, nos `.cmd` da raiz, no `instalar.sh`, no `3-publicar-atualizar.sh`, no `comum.sh`, no `2-criar-banco.sh`, em `banco/` ou no `go.mod` do Go | o mesmo, pelo `instalar-windows.ps1` e pelo repasse do Git Bash |
+| **Prints do Manual** ([ADR 0071](docs/adr/0071-manual-do-site-com-prints-gerados-das-telas.md)) | só à mão, na branch da versão estável | regera os prints do Manual no `windows-latest` (`npm run prints:manual`) e os entrega no artefato `prints-manual`, para copiar por cima de `src/frontend/` e commitar |
 | **Versão (instalador .msi)** ([ADR 0050](docs/adr/0050-msi-gerado-no-merge-e-nao-no-pr.md)) | push do `develop`, tag `vX.Y.Z` e à mão | gera e testa o `.msi` (`instalador/gerar-msi.ps1`, WiX 5, ADR 0029), restaurando uma cópia pelo guia de operação (#527); na tag, publica o Release |
 
 ## Testes rápidos (padrões de CI)

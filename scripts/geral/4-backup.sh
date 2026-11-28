@@ -89,7 +89,8 @@ if [[ "$agendar" -eq 1 ]]; then
             else
                 tr_valor="\"$(cygpath -w "$(command -v bash)")\" -l \"$(cygpath -w "$script_path")\" --manter $manter"
             fi
-            schtasks.exe /Create /TN "FinancasLocal - Backup diario" /TR "$tr_valor" /SC DAILY /ST "$horario" /F >/dev/null
+            # /RL HIGHEST (#68): dados e backups so abrem para administradores; criar assim pede o Git Bash como Administrador.
+            schtasks.exe /Create /TN "FinancasLocal - Backup diario" /TR "$tr_valor" /SC DAILY /ST "$horario" /RL HIGHEST /F >/dev/null
             ok "Backup diario agendado para $horario (Agendador de Tarefas > 'FinancasLocal - Backup diario')."
             ;;
     esac
