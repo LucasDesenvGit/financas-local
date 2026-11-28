@@ -38,25 +38,25 @@ jobs:
       rotulo: ${{ steps.versao.outputs.rotulo }}
     steps:
       # Histórico inteiro: o número da versão é calculado pelos merges do git (ADR 0070, go run ./cmd/versao).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: src/frontend/package-lock.json
 
       # #231 (ADR 0049): o back-end em Go vai no .msi, ao lado da API (o gerar-msi.ps1 compila).
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: src/backend/go.mod
           cache-dependency-path: src/backend/go.sum
 
       # #255: o cache de build do Angular (o gerar-msi.ps1 compila o front-end).
       - name: Cache do build do Angular
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: src/frontend/.angular/cache
           key: angular-${{ runner.os }}-${{ hashFiles('src/frontend/package-lock.json') }}-${{ github.sha }}
@@ -295,7 +295,7 @@ jobs:
 
       - name: Logs do msiexec
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: logs-msiexec
           path: |
@@ -303,7 +303,7 @@ jobs:
             C:\ProgramData\FinancasLocal\dados\*.txt
 
       - name: Guardar o .msi (para testar antes da versão)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: instalador
           path: |
@@ -345,7 +345,7 @@ jobs:
     timeout-minutes: 60
     steps:
       # Histórico inteiro: o instalar-windows.ps1 calcula a versão pelos merges do git (ADR 0070).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
@@ -366,7 +366,7 @@ jobs:
           # antes da conferência). A migração tem de levá-la igual, junto das chaves do .NET.
           if (-not (Test-Path dados\chaves\segredos.chave)) { [IO.File]::WriteAllBytes("$PWD\dados\chaves\segredos.chave", [byte[]](1..64)) }
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: instalador
           path: saida-instalador
@@ -394,7 +394,7 @@ jobs:
 
       - name: Logs
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: logs-migracao
           path: |
@@ -415,16 +415,16 @@ jobs:
     steps:
       # Histórico inteiro: as notas listam os PRs desde a versão de desenvolvimento anterior (#294) e o notas.sh calcula
       # o número de cada merge para montar o CHANGELOG do que ainda não foi publicado (ADR 0070).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: src/backend/go.mod
           cache: false
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: instalador
           path: saida-instalador
