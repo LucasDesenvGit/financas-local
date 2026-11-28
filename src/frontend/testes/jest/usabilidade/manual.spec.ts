@@ -23,7 +23,7 @@ describe('Usabilidade: Manual', () => {
     expect(t.raiz.querySelector('[role=status]')!.textContent).toBe('1 seção encontrada');
     const link = t.raiz.querySelector('.resultados-busca a')!;
     expect(link.textContent!.trim()).toBe('Contas e cartões › Fatura do mês × dívida total');
-    expect(link.getAttribute('href')).toBe('/manual/contas#fatura-e-divida');
+    expect(link.getAttribute('href')).toBe('/manual/contas?busca=MELHOR%20dia%20de%20COMPRA#fatura-e-divida');
   });
 
   it('busca sem resultado diz o que fazer', async () => {
@@ -82,24 +82,41 @@ describe('Usabilidade: Manual', () => {
     expect(img.nextElementSibling!.classList).toContain('topicos');
   });
 
-  it('a lista numerada aparece só no passo a passo de verdade, depois dos tópicos', async () => {
+  it('a lista numerada aparece só no passo a passo de verdade, sem tópico solto antes dela', async () => {
     const t = await abrirManual('/manual/primeiros-passos');
     const passos = t.raiz.querySelector<HTMLElement>('#por-onde-comecar ol.passos')!;
     expect(passos.querySelectorAll('li').length).toBe(6);
-    expect(passos.previousElementSibling!.classList).toContain('topicos');
+    expect(t.raiz.querySelector('#por-onde-comecar ul.topicos')).toBeNull();
     expect(t.raiz.querySelectorAll('#conhecendo-a-tela ol.passos').length).toBe(0);
   });
 
   it('a busca acha o que está só em "Mais detalhes" e leva à seção', async () => {
     const t = await abrirManual('/manual?busca=condomínio');
     const link = t.raiz.querySelector('.resultados-busca a')!;
-    expect(link.getAttribute('href')).toBe('/manual/transacoes#renomear');
+    expect(link.getAttribute('href')).toBe('/manual/transacoes?busca=condom%C3%ADnio#renomear');
     const secao = MANUAL.find((c) => c.id === 'transacoes')!.secoes.find((s) => s.id === 'renomear')!;
-    expect(secao.topicos.join(' ')).not.toMatch(/condomínio/);
+    expect((secao.topicos ?? []).join(' ')).not.toMatch(/condomínio/);
   });
 
   it('a busca acha a seção pelo texto alternativo do print', async () => {
     const t = await abrirManual('/manual?busca=Pôr do sol Lavanda');
-    expect(t.raiz.querySelector('.resultados-busca a')!.getAttribute('href')).toBe('/manual/configuracoes#aparencia');
+    expect(t.raiz.querySelector('.resultados-busca a')!.getAttribute('href')).toBe('/manual/configuracoes?busca=P%C3%B4r%20do%20sol%20Lavanda#aparencia');
+  });
+
+  // #817: a busca leva à seção e, se as palavras só estão em "Mais detalhes", ele já vem aberto.
+  it('a busca abre o "Mais detalhes" da seção achada (palavra só lá) e deixa os das outras fechados', async () => {
+    const t = await abrirManual('/manual/transacoes?busca=condomínio');
+    expect(t.raiz.querySelector<HTMLDetailsElement>('#renomear details')!.open).toBe(true);
+    expect(t.raiz.querySelector<HTMLDetailsElement>('#filtros details')!.open).toBe(false);
+  });
+
+  it('sem busca, o "Mais detalhes" fica fechado', async () => {
+    const semBusca = await abrirManual('/manual/transacoes');
+    expect([...semBusca.raiz.querySelectorAll<HTMLDetailsElement>('details.mais-detalhes')].some((d) => d.open)).toBe(false);
+  });
+
+  it('com a palavra buscada já à vista, o "Mais detalhes" fica fechado', async () => {
+    const t = await abrirManual('/manual/transacoes?busca=Renomear');
+    expect(t.raiz.querySelector<HTMLDetailsElement>('#renomear details')!.open).toBe(false);
   });
 });
