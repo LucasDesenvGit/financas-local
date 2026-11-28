@@ -5,7 +5,19 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
+
+// Regra (#772): Centavos arredonda a 2 casas (meio centavo para longe do zero) e mostra sempre 2.
+func TestCentavos(t *testing.T) {
+	for entrada, esperado := range map[string]string{"1.005": "1.01", "1.004": "1.00", "-1.005": "-1.01", "3": "3.00", "0": "0.00"} {
+		v, _ := decimal.NewFromString(entrada)
+		if got := Centavos(v).String(); got != esperado {
+			t.Errorf("Centavos(%s) = %s, esperado %s", entrada, got, esperado)
+		}
+	}
+}
 
 func TestDecimalCasosLimite(t *testing.T) {
 	casos := []struct {

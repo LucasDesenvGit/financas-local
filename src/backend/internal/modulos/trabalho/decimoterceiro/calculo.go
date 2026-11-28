@@ -112,8 +112,6 @@ type Calculo struct {
 
 var doze = decimal.NewFromInt(12)
 
-func centavos(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v.Round(2)) }
-
 // Calcular monta o 13º do ano.
 func Calcular(e Entrada) Calculo {
 	avos := decimal.NewFromInt(int64(e.Avos))
@@ -125,12 +123,12 @@ func Calcular(e Entrada) Calculo {
 	c := Calculo{Ano: e.Ano, Avos: e.Avos, SalarioBase: e.SalarioBase, MediaVariaveis: tipos.DeDecimal(media), Total: tipos.DeDecimal(total),
 		MesesComHolerite: e.MesesComHolerite}
 
-	c.Primeira = Parcela{Valor: centavos(total.Div(decimal.NewFromInt(2))), Data: tipos.NovaData(e.Ano, 11, 30)}
+	c.Primeira = Parcela{Valor: tipos.Centavos(total.Div(decimal.NewFromInt(2))), Data: tipos.NovaData(e.Ano, 11, 30)}
 	if e.ValorDasFerias != nil {
-		c.Primeira.Valor = centavos(e.ValorDasFerias.Decimal())
+		c.Primeira.Valor = tipos.Centavos(e.ValorDasFerias.Decimal())
 	}
 	if e.PrimeiraValor != nil {
-		c.Primeira.Valor, c.Primeira.Informada, c.Primeira.ValorInformado = centavos(e.PrimeiraValor.Decimal()), true, true
+		c.Primeira.Valor, c.Primeira.Informada, c.Primeira.ValorInformado = tipos.Centavos(e.PrimeiraValor.Decimal()), true, true
 	}
 	if e.PrimeiraEm != nil {
 		c.Primeira.Data, c.Primeira.Informada, c.Primeira.ComFerias = *e.PrimeiraEm, true, e.PrimeiraComFerias
@@ -145,8 +143,8 @@ func Calcular(e Entrada) Calculo {
 	c.Irrf = encargos.CalcularIrrf(semSimplificado, c.Total, c.Inss.Valor, int(e.Dependentes), tipos.DeDecimal(decimal.Zero))
 	liquido := total.Sub(c.Inss.Valor.Decimal()).Sub(c.Irrf.Valor.Decimal())
 	segunda := liquido.Sub(c.Primeira.Valor.Decimal())
-	c.Segunda = Parcela{Valor: centavos(decimal.Max(segunda, decimal.Zero)), Data: tipos.NovaData(e.Ano, 12, 20)}
-	c.Excedente = centavos(decimal.Max(segunda.Neg(), decimal.Zero))
-	c.Liquido = centavos(liquido)
+	c.Segunda = Parcela{Valor: tipos.Centavos(decimal.Max(segunda, decimal.Zero)), Data: tipos.NovaData(e.Ano, 12, 20)}
+	c.Excedente = tipos.Centavos(decimal.Max(segunda.Neg(), decimal.Zero))
+	c.Liquido = tipos.Centavos(liquido)
 	return c
 }

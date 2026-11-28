@@ -158,8 +158,6 @@ var (
 	oito   = decimal.RequireFromString("0.08")
 )
 
-func centavos(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v.Round(2)) }
-
 // diasNoMes são os dias do mês da saída que entram no saldo de salário: o dia da saída (o último dia do mês vale 30).
 func diasNoMes(saida, admissao tipos.Data) int {
 	inicio := 1
@@ -179,7 +177,7 @@ func Calcular(e Entrada) Calculo {
 	remuneracao := e.SalarioMes.Decimal().Add(media)
 	diasPagos, projetada := AvisoPago(e.Tipo, e.Aviso, e.Admissao, e.Saida)
 	c := Calculo{Tipo: e.Tipo, NomeDoTipo: NomeDoTipo(e.Tipo), Aviso: e.Aviso, Saida: e.Saida, DataProjetada: projetada,
-		DiasDeAviso: DiasDeAviso(e.Admissao, e.Saida), Remuneracao: centavos(remuneracao), Verbas: []Linha{}, Descontos: []Linha{}}
+		DiasDeAviso: DiasDeAviso(e.Admissao, e.Saida), Remuneracao: tipos.Centavos(remuneracao), Verbas: []Linha{}, Descontos: []Linha{}}
 	verba := func(descricao, referencia string, v decimal.Decimal) decimal.Decimal {
 		v = v.Round(2)
 		if v.IsPositive() {
@@ -239,8 +237,8 @@ func Calcular(e Entrada) Calculo {
 	}
 
 	total := saldo.Add(aviso).Add(decimo).Add(ferias)
-	c.TotalVerbas, c.TotalDescontos = centavos(total), centavos(descontos)
-	c.Liquido = centavos(total.Sub(descontos))
+	c.TotalVerbas, c.TotalDescontos = tipos.Centavos(total), tipos.Centavos(descontos)
+	c.Liquido = tipos.Centavos(total.Sub(descontos))
 
 	// O FGTS: o depósito da rescisão (o mês da saída, o aviso e o 13º do ano, que o saldo de antes não tem), a multa
 	// sobre todos os depósitos (sem descontar os saques) e o saque.
@@ -261,8 +259,8 @@ func Calcular(e Entrada) Calculo {
 	valorMulta := base.Mul(decimal.NewFromInt(int64(multa))).Div(decimal.NewFromInt(100)).Round(2)
 	saldoSacavel := e.SaldoFgts.Decimal().Add(deposito)
 	sacavel := saldoSacavel.Mul(decimal.NewFromInt(int64(saque))).Div(decimal.NewFromInt(100)).Add(valorMulta)
-	c.Fgts = Fgts{Saldo: centavos(e.SaldoFgts.Decimal()), DepositoRescisao: tipos.DeDecimal(deposito), BaseDaMulta: centavos(base),
-		PercentualMulta: multa, Multa: tipos.DeDecimal(valorMulta), PercentualSaque: saque, Sacavel: centavos(sacavel),
+	c.Fgts = Fgts{Saldo: tipos.Centavos(e.SaldoFgts.Decimal()), DepositoRescisao: tipos.DeDecimal(deposito), BaseDaMulta: tipos.Centavos(base),
+		PercentualMulta: multa, Multa: tipos.DeDecimal(valorMulta), PercentualSaque: saque, Sacavel: tipos.Centavos(sacavel),
 		SaqueAniversario: e.SaqueAniversario}
 	// O seguro-desemprego: só na dispensa sem justa causa, com 12 meses ou mais de emprego (na 1ª vez que pede).
 	c.SeguroDesemprego = e.Tipo == SemJustaCausa && AnosCompletos(e.Admissao, e.Saida) >= 1

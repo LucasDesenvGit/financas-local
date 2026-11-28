@@ -15,6 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -212,7 +213,7 @@ func TestDecimoPelaApi(t *testing.T) {
 		{"valor absurdo", "PUT", caminho, `{"primeiraParcelaValor":10000000.01}`, 400, "O valor da 1ª parcela vai de R$ 0,00 a R$ 10.000.000,00."},
 		{"data em outro ano", "PUT", caminho, `{"primeiraParcelaEm":"2025-12-01"}`, 400, "A 1ª parcela do 13º de 2026 é paga em 2026."},
 		{"1ª maior que o 13º", "PUT", caminho, `{"primeiraParcelaValor":6039.15}`, 400, "A 1ª parcela não passa do 13º do ano inteiro (R$ 6.039,14)."},
-		{"JSON quebrado", "PUT", caminho, `{"primeira`, 400, MensagemJSONInvalido},
+		{"JSON quebrado", "PUT", caminho, `{"primeira`, 400, respostas.MensagemFormatoEsperado},
 		{"PUT no PJ", "PUT", fmt.Sprintf("/api/trabalho/empregos/%d/decimo-terceiro/2026", pj), `{"primeiraParcelaValor":1}`, 400, MensagemSemDecimo},
 	}
 	for _, k := range casos {

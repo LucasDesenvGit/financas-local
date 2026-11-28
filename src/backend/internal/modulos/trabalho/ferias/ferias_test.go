@@ -11,6 +11,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -258,7 +259,7 @@ func TestFeriasPelaApi(t *testing.T) {
 		{"13º adiantado com o pagamento no ano anterior", "POST", base,
 			`{"periodoInicio":"2025-03-11","inicio":"2027-01-02","dias":30,"adiantarDecimo":true}`, 400,
 			"As férias que começam em 1º ou 2 de janeiro são pagas no ano anterior: a 1ª parcela do 13º não vem com elas."},
-		{"JSON quebrado", "POST", base, `{"dias":`, 400, MensagemJSONInvalido},
+		{"JSON quebrado", "POST", base, `{"dias":`, 400, respostas.MensagemFormatoEsperado},
 		{"sem tabela (dezembro de 2024)", "GET", base + "/simular?inicio=2024-12-01&dias=30", "", 409, MensagemSemTabela},
 		{"simular sem os dias", "GET", base + "/simular?inicio=2026-12-01", "", 400, MensagemSimular},
 		{"simular vendendo 11", "GET", base + "/simular?inicio=2026-12-01&dias=19&vendidos=11", "", 400, MensagemSimular},
@@ -270,7 +271,7 @@ func TestFeriasPelaApi(t *testing.T) {
 		{"faltas demais", "PUT", base + "/faltas", `{"periodoInicio":"2024-03-11","faltas":367}`, 400, "As faltas vão de 0 a 366."},
 		{"faltas sem período", "PUT", base + "/faltas", `{"faltas":3}`, 400, MensagemPeriodo},
 		{"faltas de período que não existe", "PUT", base + "/faltas", `{"periodoInicio":"2020-01-01","faltas":3}`, 400, MensagemPeriodo},
-		{"faltas com JSON quebrado", "PUT", base + "/faltas", `{"faltas":`, 400, MensagemJSONInvalido},
+		{"faltas com JSON quebrado", "PUT", base + "/faltas", `{"faltas":`, 400, respostas.MensagemFormatoEsperado},
 		{"antes do salário", "GET", base + "/simular?inicio=2024-01-02&dias=30", "", 400, "Não há salário no mês do início."},
 	}
 	for _, c := range casos {

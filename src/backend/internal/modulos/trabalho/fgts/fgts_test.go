@@ -13,6 +13,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/ferias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -197,7 +198,7 @@ func TestFgtsPelaApi(t *testing.T) {
 		{"motivo desconhecido", `{"data":"2026-11-10","tipo":2,"valor":1,"motivo":5}`, "Escolha o motivo do saque."},
 		{"motivo zero", `{"data":"2026-11-10","tipo":2,"valor":1,"motivo":0}`, "Escolha o motivo do saque."},
 		{"sem data", `{"tipo":1,"valor":1}`, "Informe a data e o valor."},
-		{"JSON quebrado", `{"tipo":`, MensagemJSONInvalido},
+		{"JSON quebrado", `{"tipo":`, respostas.MensagemFormatoEsperado},
 	}
 	for _, k := range casos {
 		t.Run(k.nome, func(t *testing.T) {

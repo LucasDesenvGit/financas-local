@@ -118,8 +118,6 @@ var (
 	vinteDef = decimal.NewFromInt(20)
 )
 
-func centavos(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v.Round(2)) }
-
 func dec(p *tipos.Decimal) decimal.Decimal {
 	if p == nil {
 		return decimal.Zero
@@ -189,12 +187,12 @@ func Calcular(e Entrada) Calculo {
 	if e.JornadaHoras > 0 {
 		valorHora = contratual.Div(decimal.NewFromInt(e.JornadaHoras))
 	}
-	c.ValorHora = centavos(valorHora)
+	c.ValorHora = tipos.Centavos(valorHora)
 	ref := "30 dias"
 	if c.DiasTrabalhados < 30 {
 		ref = fmt.Sprintf("%d de 30 dias", c.DiasTrabalhados)
 	}
-	c.Proventos = append(c.Proventos, Linha{Tipo: TipoSalario, Descricao: "Salário", Referencia: ref, Valor: centavos(salarioMes)})
+	c.Proventos = append(c.Proventos, Linha{Tipo: TipoSalario, Descricao: "Salário", Referencia: ref, Valor: tipos.Centavos(salarioMes)})
 
 	baseInss, rendIrrf, variaveis := salarioMes, salarioMes, decimal.Zero
 	proventos := salarioMes
@@ -236,8 +234,8 @@ func Calcular(e Entrada) Calculo {
 		c.Proventos = append(c.Proventos, Linha{Tipo: TipoDSR, Descricao: "DSR sobre horas extras e adicional noturno",
 			Referencia: fmt.Sprintf("÷ %d dias úteis × %d de descanso", e.DiasUteis, e.DiasDescanso), Valor: tipos.DeDecimal(dsr)})
 	}
-	c.TotalProventos = centavos(proventos)
-	c.BaseInss = centavos(baseInss)
+	c.TotalProventos = tipos.Centavos(proventos)
+	c.BaseInss = tipos.Centavos(baseInss)
 
 	// Os descontos da pessoa; a pensão (e o que ela marcar) entra nas deduções do IR.
 	outros, deducoesIr := decimal.Zero, decimal.Zero
@@ -271,12 +269,12 @@ func Calcular(e Entrada) Calculo {
 		descontos = descontos.Add(inss.Valor.Decimal()).Add(irrf.Valor.Decimal())
 		c.Descontos = append(c.Descontos, Linha{Tipo: TipoInss, Descricao: "INSS", Valor: inss.Valor},
 			Linha{Tipo: TipoIrrf, Descricao: "IRRF", Valor: irrf.Valor})
-		c.FgtsDoMes = centavos(baseInss.Mul(oitoPct))
+		c.FgtsDoMes = tipos.Centavos(baseInss.Mul(oitoPct))
 	} else {
-		c.FgtsDoMes = centavos(decimal.Zero)
+		c.FgtsDoMes = tipos.Centavos(decimal.Zero)
 	}
 	c.Descontos = append(c.Descontos, linhasDescontos...)
-	c.TotalDescontos = centavos(descontos)
-	c.Liquido = centavos(proventos.Sub(descontos))
+	c.TotalDescontos = tipos.Centavos(descontos)
+	c.Liquido = tipos.Centavos(proventos.Sub(descontos))
 	return c
 }

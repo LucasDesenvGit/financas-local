@@ -165,3 +165,50 @@ func TestRespostaQueNaoViraJSON(t *testing.T) {
 		t.Errorf("%d %q", w.Code, w.Body)
 	}
 }
+
+// Regra (#772): LerJSON preenche o destino; JSON quebrado, de outro formato ou de outro tipo de conteúdo não passa,
+// e a rota responde sozinha.
+func TestLerJSON(t *testing.T) {
+	for _, c := range []struct {
+		nome, tipo, corpo string
+		status            int
+		mensagem          string
+	}{
+		{"válido", "application/json", `{"n":7}`, 0, ""},
+		{"JSON quebrado", "application/json", `{"n":`, 400, MensagemFormatoEsperado},
+		{"campo de outro tipo", "application/json", `{"n":"sete"}`, 400, MensagemFormatoEsperado},
+		{"outro tipo de conteúdo", "text/plain", `{"n":7}`, 415, ""},
+		{"corpo vazio", "application/json", ``, 400, ""},
+	} {
+		t.Run(c.nome, func(t *testing.T) {
+			r := httptest.NewRequest("POST", "/", strings.NewReader(c.corpo))
+			r.Header.Set("Content-Type", c.tipo)
+			w := httptest.NewRecorder()
+			var dto struct{ N int }
+			ok := LerJSON(w, r, &dto)
+			if c.status == 0 {
+				if !ok || dto.N != 7 || w.Body.Len() != 0 {
+					t.Fatalf("ok=%v dto=%+v corpo=%q", ok, dto, w.Body.String())
+				}
+				return
+			}
+			if ok || w.Code != c.status {
+				t.Fatalf("ok=%v status=%d, esperado %d", ok, w.Code, c.status)
+			}
+			if c.mensagem != "" && !strings.Contains(w.Body.String(), c.mensagem) {
+				t.Fatalf("corpo %q sem %q", w.Body.String(), c.mensagem)
+			}
+		})
+	}
+}
+
+// Regra (#772): id do caminho que não é número vira 0, que não existe.
+func TestIdDe(t *testing.T) {
+	for corpo, esperado := range map[string]int64{"12": 12, "-3": -3, "abc": 0, "": 0, "1.5": 0} {
+		r := httptest.NewRequest("GET", "/", nil)
+		r.SetPathValue("id", corpo)
+		if id := IdDe(r, "id"); id != esperado {
+			t.Errorf("IdDe(%q) = %d, esperado %d", corpo, id, esperado)
+		}
+	}
+}

@@ -4,16 +4,13 @@
 package recebimento
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/shopspring/decimal"
@@ -22,6 +19,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/movimentacao/tipolancamento"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
@@ -473,21 +471,11 @@ func (s *Servico) Desligar(ctx context.Context, holeriteId, recebimentoId int64)
 
 /* ------------------------------------------------------------ HTTP */
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do recebimento, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/holerites/{id}/recebimentos", s.obterHTTP)
 	r.HandleFunc("POST /api/trabalho/holerites/{id}/recebimentos", s.ligarHTTP)
 	r.HandleFunc("DELETE /api/trabalho/holerites/{id}/recebimentos/{recebimento}", s.desligarHTTP)
-}
-
-func idDe(r *http.Request, nome string) int64 {
-	id, _ := strconv.ParseInt(r.PathValue(nome), 10, 64) // id que não é número vira 0: não existe (404)
-	return id
 }
 
 func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Resposta, err error) {
@@ -506,28 +494,23 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo Respos
 }
 
 func (s *Servico) obterHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := s.Obter(r.Context(), idDe(r, "id"))
+	c, err := s.Obter(r.Context(), respostas.IdDe(r, "id"))
 	s.responder(w, r, c, err)
 }
 
 func (s *Servico) ligarHTTP(w http.ResponseWriter, r *http.Request) {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return
-	}
 	var dto struct {
 		TransacaoId int64          `json:"transacaoId"`
 		Valor       *tipos.Decimal `json:"valor"`
 	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(&dto); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, "Os dados enviados não estão no formato esperado.")
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
-	c, err := s.Ligar(r.Context(), idDe(r, "id"), dto.TransacaoId, dto.Valor)
+	c, err := s.Ligar(r.Context(), respostas.IdDe(r, "id"), dto.TransacaoId, dto.Valor)
 	s.responder(w, r, c, err)
 }
 
 func (s *Servico) desligarHTTP(w http.ResponseWriter, r *http.Request) {
-	c, err := s.Desligar(r.Context(), idDe(r, "id"), idDe(r, "recebimento"))
+	c, err := s.Desligar(r.Context(), respostas.IdDe(r, "id"), respostas.IdDe(r, "recebimento"))
 	s.responder(w, r, c, err)
 }

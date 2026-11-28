@@ -11,6 +11,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/texto"
@@ -62,6 +63,29 @@ func LerCorpo(w http.ResponseWriter, r *http.Request) ([]byte, bool) {
 		return nil, false
 	}
 	return corpo, true
+}
+
+// MensagemFormatoEsperado é o 400 do corpo que não é o JSON esperado, para as rotas que respondem só {mensagem}.
+const MensagemFormatoEsperado = "Os dados enviados não estão no formato esperado."
+
+// LerJSON lê o corpo (LerCorpo: 415, 413, 400) num destino; JSON quebrado ou de outro formato é 400 com
+// MensagemFormatoEsperado. Devolve false se já respondeu.
+func LerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
+	corpo, ok := LerCorpo(w, r)
+	if !ok {
+		return false
+	}
+	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(destino); err != nil {
+		Mensagem(w, http.StatusBadRequest, MensagemFormatoEsperado)
+		return false
+	}
+	return true
+}
+
+// IdDe é o id numérico do segmento {nome} do caminho; o que não é número vira 0, que não existe (404).
+func IdDe(r *http.Request, nome string) int64 {
+	id, _ := strconv.ParseInt(r.PathValue(nome), 10, 64)
+	return id
 }
 
 // CorpoVazio é o 400 do pedido sem corpo, ou com o corpo "null".

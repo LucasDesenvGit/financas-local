@@ -1,24 +1,18 @@
 package emprego
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo, que as guarda (desligado, 409).
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do emprego, todas em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/empregos", s.listarHTTP)
 	r.HandleFunc("POST /api/trabalho/empregos", s.criarHTTP)
 	r.HandleFunc("PUT /api/trabalho/empregos/{id}", s.atualizarHTTP)
@@ -31,10 +25,9 @@ func Registrar(r Registrador, s *Servico) {
 
 // Mensagens das respostas que a pessoa vê.
 const (
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
-	MensagemSemTabela    = "Ainda não há tabela do INSS ou do IRRF para esse mês."
-	MensagemUltimo       = "O emprego precisa de pelo menos um salário: mude o valor em vez de apagar."
-	MensagemPrimeiro     = "O primeiro salário é o da admissão e não sai. Para mudar o valor, grave outro valor no mesmo mês."
+	MensagemSemTabela = "Ainda não há tabela do INSS ou do IRRF para esse mês."
+	MensagemUltimo    = "O emprego precisa de pelo menos um salário: mude o valor em vez de apagar."
+	MensagemPrimeiro  = "O primeiro salário é o da admissão e não sai. Para mudar o valor, grave outro valor no mesmo mês."
 )
 
 // dadosDto é o corpo do POST e do PUT do emprego.
@@ -71,20 +64,6 @@ func (d dadosDto) dados() (Dados, error) {
 type salarioDto struct {
 	Inicio       *tipos.Data    `json:"inicio"`
 	SalarioBruto *tipos.Decimal `json:"salarioBruto"`
-}
-
-// lerJSON lê o corpo (415 e 413 pelo respostas.LerCorpo) num destino; false se já respondeu.
-func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return false
-	}
-	dec := json.NewDecoder(bytes.NewReader(corpo))
-	if err := dec.Decode(destino); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
-		return false
-	}
-	return true
 }
 
 func idDoCaminho(w http.ResponseWriter, r *http.Request, nome string) (int64, bool) {
@@ -129,7 +108,7 @@ func (s *Servico) listarHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Servico) criarHTTP(w http.ResponseWriter, r *http.Request) {
 	var dto dadosDto
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	d, err := dto.dados()
@@ -147,7 +126,7 @@ func (s *Servico) atualizarHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var dto dadosDto
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	d, err := dto.dados()
@@ -173,7 +152,7 @@ func (s *Servico) definirSalarioHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var dto salarioDto
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	if dto.Inicio == nil || dto.SalarioBruto == nil {

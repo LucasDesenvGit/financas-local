@@ -16,6 +16,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/ferias"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/fgts"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -315,8 +316,8 @@ func TestRescisaoPelaApi(t *testing.T) {
 		{"comparar sem a data", "GET", base + "/comparar", "", 400, "Informe a data de saída (AAAA-MM-DD)."},
 		{"PJ", "GET", fmt.Sprintf("/api/trabalho/empregos/%d/rescisao/simular?tipo=1&aviso=2&saida=2026-12-15", pj), "", 400, MensagemSemRescisao},
 		{"comparar no PJ", "GET", fmt.Sprintf("/api/trabalho/empregos/%d/rescisao/comparar?saida=2026-12-15", pj), "", 400, MensagemSemRescisao},
-		{"registrar sem a data", "POST", base, `{"tipo":1,"aviso":2}`, 400, MensagemJSONInvalido},
-		{"registrar com JSON quebrado", "POST", base, `{"tipo":`, 400, MensagemJSONInvalido},
+		{"registrar sem a data", "POST", base, `{"tipo":1,"aviso":2}`, 400, respostas.MensagemFormatoEsperado},
+		{"registrar com JSON quebrado", "POST", base, `{"tipo":`, 400, respostas.MensagemFormatoEsperado},
 		{"registrar tipo errado", "POST", base, `{"tipo":7,"aviso":2,"saida":"2026-12-15"}`, 400, MensagemTipo},
 	}
 	for _, k := range casos {

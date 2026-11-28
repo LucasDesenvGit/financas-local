@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -110,8 +111,8 @@ func TestCriarRecusaDadosErrados(t *testing.T) {
 		{"salário zero", `{"empregador":"E","admissao":"2026-01-01","salarioBruto":0}`, "Informe o salário bruto."},
 		{"salário absurdo", `{"empregador":"E","admissao":"2026-01-01","salarioBruto":10000000.01}`, "O salário bruto vai até R$ 10.000.000,00."},
 		{"conta que não existe", `{"empregador":"E","admissao":"2026-01-01","salarioBruto":1,"contaId":99}`, "A conta escolhida não existe mais."},
-		{"JSON quebrado", `{"empregador":`, MensagemJSONInvalido},
-		{"data em outro formato", `{"empregador":"E","admissao":"01/01/2026","salarioBruto":1}`, MensagemJSONInvalido},
+		{"JSON quebrado", `{"empregador":`, respostas.MensagemFormatoEsperado},
+		{"data em outro formato", `{"empregador":"E","admissao":"01/01/2026","salarioBruto":1}`, respostas.MensagemFormatoEsperado},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {

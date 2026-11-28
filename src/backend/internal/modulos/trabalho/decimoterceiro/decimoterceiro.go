@@ -1,10 +1,8 @@
 package decimoterceiro
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -17,6 +15,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -24,10 +23,9 @@ import (
 
 // Mensagens que a pessoa vê.
 const (
-	MensagemSemDecimo    = "Estágio e PJ não têm 13º salário pela CLT."
-	MensagemSemTabela    = "Ainda não há tabela do INSS ou do IRRF para esse ano."
-	MensagemForaDoAno    = "O emprego não estava ativo nesse ano."
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
+	MensagemSemDecimo = "Estágio e PJ não têm 13º salário pela CLT."
+	MensagemSemTabela = "Ainda não há tabela do INSS ou do IRRF para esse ano."
+	MensagemForaDoAno = "O emprego não estava ativo nesse ano."
 )
 
 // Resposta é o 13º do ano com o que a tela precisa dizer.
@@ -63,13 +61,8 @@ func (s *Servico) ComFerias(f Ferias) *Servico {
 	return s
 }
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas do 13º, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/decimo-terceiro/{ano}", s.obterHTTP)
 	r.HandleFunc("PUT /api/trabalho/empregos/{id}/decimo-terceiro/{ano}", s.definirHTTP)
 }
@@ -229,16 +222,11 @@ func (s *Servico) definirHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return
-	}
 	var dto struct {
 		PrimeiraParcelaEm    *tipos.Data    `json:"primeiraParcelaEm"`
 		PrimeiraParcelaValor *tipos.Decimal `json:"primeiraParcelaValor"`
 	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(&dto); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	c, err := s.DefinirPrimeira(r.Context(), id, ano, dto.PrimeiraParcelaEm, dto.PrimeiraParcelaValor)

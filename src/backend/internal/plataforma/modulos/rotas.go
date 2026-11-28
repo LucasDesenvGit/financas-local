@@ -13,6 +13,12 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tarefas"
 )
 
+// Registrador é onde as rotas de um assunto do módulo entram: o *Rotas, que as guarda (desligado, 409). Os pacotes
+// de assunto recebem esta interface, e os testes passam um mux simples.
+type Registrador interface {
+	HandleFunc(padrao string, h http.HandlerFunc)
+}
+
 // Rotas é o mux que o módulo recebe no Registrar: cada rota passa antes pela checagem de ligado.
 type Rotas struct {
 	mux    *http.ServeMux

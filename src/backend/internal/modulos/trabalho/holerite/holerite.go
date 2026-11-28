@@ -677,5 +677,5 @@ func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, f
 		}
 		total = total.Add(doMes)
 	}
-	return centavos(total), meses, nil
+	return tipos.Centavos(total), meses, nil
 }

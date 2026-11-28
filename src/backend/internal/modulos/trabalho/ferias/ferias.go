@@ -1,11 +1,9 @@
 package ferias
 
 import (
-	"bytes"
 	"cmp"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -16,6 +14,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/encargos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/holerite"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/modulos"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/relogio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
@@ -23,12 +22,11 @@ import (
 
 // Mensagens que a pessoa vê.
 const (
-	MensagemSemFerias    = "Estágio e PJ não têm férias pela CLT."
-	MensagemSemTabela    = "Ainda não há tabela do INSS ou do IRRF para esse mês."
-	MensagemJSONInvalido = "Os dados enviados não estão no formato esperado."
-	MensagemPeriodo      = "Escolha um período do emprego."
-	MensagemAntes        = "As férias de um período começam depois que ele termina (12 meses de trabalho)."
-	MensagemSimular      = "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10), até 30 dias somados."
+	MensagemSemFerias = "Estágio e PJ não têm férias pela CLT."
+	MensagemSemTabela = "Ainda não há tabela do INSS ou do IRRF para esse mês."
+	MensagemPeriodo   = "Escolha um período do emprego."
+	MensagemAntes     = "As férias de um período começam depois que ele termina (12 meses de trabalho)."
+	MensagemSimular   = "Informe o início (AAAA-MM-DD), os dias (1 a 30) e os vendidos (0 a 10), até 30 dias somados."
 )
 
 // AvisoVencendo: o concessivo termina em até 60 dias e ainda há dias para tirar.
@@ -353,35 +351,13 @@ func (s *Servico) DefinirFaltas(ctx context.Context, empregoId int64, periodoIni
 
 /* ------------------------------------------------------------ HTTP */
 
-// Registrador é onde as rotas entram: o modulos.Rotas do núcleo.
-type Registrador interface {
-	HandleFunc(padrao string, h http.HandlerFunc)
-}
-
 // Registrar põe as rotas das férias, em /api/trabalho/.
-func Registrar(r Registrador, s *Servico) {
+func Registrar(r modulos.Registrador, s *Servico) {
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/ferias", s.listarHTTP)
 	r.HandleFunc("POST /api/trabalho/empregos/{id}/ferias", s.agendarHTTP)
 	r.HandleFunc("DELETE /api/trabalho/empregos/{id}/ferias/{agendamento}", s.desmarcarHTTP)
 	r.HandleFunc("PUT /api/trabalho/empregos/{id}/ferias/faltas", s.faltasHTTP)
 	r.HandleFunc("GET /api/trabalho/empregos/{id}/ferias/simular", s.simularHTTP)
-}
-
-func idDe(r *http.Request, nome string) int64 {
-	id, _ := strconv.ParseInt(r.PathValue(nome), 10, 64) // id que não é número vira 0: não existe (404)
-	return id
-}
-
-func lerJSON(w http.ResponseWriter, r *http.Request, destino any) bool {
-	corpo, ok := respostas.LerCorpo(w, r)
-	if !ok {
-		return false
-	}
-	if err := json.NewDecoder(bytes.NewReader(corpo)).Decode(destino); err != nil {
-		respostas.Mensagem(w, http.StatusBadRequest, MensagemJSONInvalido)
-		return false
-	}
-	return true
 }
 
 func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo any, err error) {
@@ -404,7 +380,7 @@ func (s *Servico) responder(w http.ResponseWriter, r *http.Request, corpo any, e
 }
 
 func (s *Servico) listarHTTP(w http.ResponseWriter, r *http.Request) {
-	lista, err := s.Listar(r.Context(), idDe(r, "id"))
+	lista, err := s.Listar(r.Context(), respostas.IdDe(r, "id"))
 	s.responder(w, r, lista, err)
 }
 
@@ -418,19 +394,19 @@ type agendarDto struct {
 
 func (s *Servico) agendarHTTP(w http.ResponseWriter, r *http.Request) {
 	var dto agendarDto
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	if dto.PeriodoInicio == nil || dto.Inicio == nil {
 		respostas.Mensagem(w, http.StatusBadRequest, "Informe o período e o dia do início.")
 		return
 	}
-	lista, err := s.Agendar(r.Context(), idDe(r, "id"), *dto.PeriodoInicio, *dto.Inicio, dto.Dias, dto.DiasVendidos, dto.AdiantarDecimo)
+	lista, err := s.Agendar(r.Context(), respostas.IdDe(r, "id"), *dto.PeriodoInicio, *dto.Inicio, dto.Dias, dto.DiasVendidos, dto.AdiantarDecimo)
 	s.responder(w, r, lista, err)
 }
 
 func (s *Servico) desmarcarHTTP(w http.ResponseWriter, r *http.Request) {
-	lista, err := s.Desmarcar(r.Context(), idDe(r, "id"), idDe(r, "agendamento"))
+	lista, err := s.Desmarcar(r.Context(), respostas.IdDe(r, "id"), respostas.IdDe(r, "agendamento"))
 	s.responder(w, r, lista, err)
 }
 
@@ -439,14 +415,14 @@ func (s *Servico) faltasHTTP(w http.ResponseWriter, r *http.Request) {
 		PeriodoInicio *tipos.Data `json:"periodoInicio"`
 		Faltas        int         `json:"faltas"`
 	}
-	if !lerJSON(w, r, &dto) {
+	if !respostas.LerJSON(w, r, &dto) {
 		return
 	}
 	if dto.PeriodoInicio == nil {
 		respostas.Mensagem(w, http.StatusBadRequest, MensagemPeriodo)
 		return
 	}
-	lista, err := s.DefinirFaltas(r.Context(), idDe(r, "id"), *dto.PeriodoInicio, dto.Faltas)
+	lista, err := s.DefinirFaltas(r.Context(), respostas.IdDe(r, "id"), *dto.PeriodoInicio, dto.Faltas)
 	s.responder(w, r, lista, err)
 }
 
@@ -464,6 +440,6 @@ func (s *Servico) simularHTTP(w http.ResponseWriter, r *http.Request) {
 	if p, err := tipos.LerData(r.URL.Query().Get("periodo")); err == nil {
 		periodo = &p
 	}
-	c, err := s.Simular(r.Context(), idDe(r, "id"), periodo, inicio, dias, vendidos, r.URL.Query().Get("adiantar") == "true")
+	c, err := s.Simular(r.Context(), respostas.IdDe(r, "id"), periodo, inicio, dias, vendidos, r.URL.Query().Get("adiantar") == "true")
 	s.responder(w, r, c, err)
 }

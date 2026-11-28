@@ -12,6 +12,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/modulos/trabalho/emprego"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/testeapoio"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
@@ -182,7 +183,7 @@ func TestCriarHoleriteRecusa(t *testing.T) {
 			"Escolha um mês em que o emprego estava ativo."},
 		{"mês mal escrito", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", empregoId), `{"mes":"10/2026"}`, 400,
 			"O mês vai no formato AAAA-MM."},
-		{"JSON quebrado", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", empregoId), `{"mes":`, 400, MensagemJSONInvalido},
+		{"JSON quebrado", fmt.Sprintf("/api/trabalho/empregos/%d/holerites", empregoId), `{"mes":`, 400, respostas.MensagemFormatoEsperado},
 	}
 	for _, c := range casos {
 		t.Run(c.nome, func(t *testing.T) {

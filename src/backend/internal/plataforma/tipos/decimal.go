@@ -37,6 +37,9 @@ func NovoDecimal(texto string) (Decimal, error) {
 	return DeDecimal(v), nil
 }
 
+// Centavos é o valor arredondado a 2 casas, como o dinheiro das contas de folha.
+func Centavos(v decimal.Decimal) Decimal { return DeDecimal(v.Round(2)) }
+
 // DecimalDeInteiro cria um decimal sem casas.
 func DecimalDeInteiro(n int64) Decimal { return Decimal{v: decimal.NewFromInt(n)} }
 
