@@ -118,7 +118,7 @@ Fica em `C:\ProgramData\FinancasLocal\dados` na instalação pelo `.msi`, e na p
 | **Repúdio** | Apagar o rastro no banco | — | A auditoria não tem cópia fora do banco |
 | **Vazamento** | Alguém copia o banco ou uma cópia | Segredos cifrados com AES-256-GCM (`internal/plataforma/segredos`), com a chave em `dados/chaves/segredos.chave`, protegida pelo DPAPI no Windows e pela permissão do arquivo no Linux. As cópias automáticas (as 5 mais recentes, antes de mudar o esquema, `AplicarEsquema`) ficam em `dados/backups`, com a permissão da pasta; as outras, só onde você escolhe | Banco e cópias sem criptografia (#68, item 2): a decisão é a criptografia do disco, e o gerenciador avisa quando ela falta ou quando a pasta está numa pasta da nuvem (item 14). Só avisa com certeza: disco que o sistema não diz (pasta de rede, FUSE, ZFS, Windows sem a informação do BitLocker) fica sem aviso |
 | **Negação de serviço** | O banco corrompe ou some | Cópia antes de mudar a estrutura, e o [guia de restaurar](OPERACAO.md#restaurar-uma-cópia) | — |
-| **Aumento de privilégio** | O serviço é usado para rodar outra coisa | No Linux, roda na conta do usuário | O serviço do Linux sem isolamento (#68, item 6) |
+| **Aumento de privilégio** | O serviço é usado para rodar outra coisa | No Linux, roda na conta do usuário, com o isolamento do systemd (`NoNewPrivileges`, `ProtectSystem=strict` e gravação só em `dados/`, #68) | Um furo no site ainda lê o que a conta do usuário lê (a `ProtectHome` é só de leitura) |
 
 ### 6. Gerenciador ↔ API e banco
 
@@ -159,7 +159,7 @@ Só existe com o acesso pelo celular ligado (Configurações › Segurança, [AD
 | 3. Sair não invalida a sessão e a sessão sem teto (resolvido) | Fronteira 1, falsificação |
 | 4. Configuração inicial aberta | Fronteira 1, aumento de privilégio |
 | 5. Certificado confiável para a máquina inteira | Fronteira 1, vazamento |
-| 6. Serviço do Linux sem isolamento | Fronteira 5, aumento de privilégio |
+| 6. Serviço do Linux sem isolamento (resolvido) | Fronteira 5, aumento de privilégio |
 | 7. CI e cadeia de dependências | Fronteira 4, aumento de privilégio |
 | 8. Política de senha e bloqueio | Fronteira 1, falsificação. Resolvido: mudar o bloqueio pede a senha atual; o mínimo de 8 caracteres ficou por decisão |
 | 9. Sobras da instalação antiga com IIS | Fora daqui: não muda uma fronteira |
