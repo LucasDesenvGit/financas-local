@@ -4,9 +4,11 @@
 - **Data:** 2026-11-14
 - **Relacionadas:** [0068](0068-holerite-em-pdf-lido-no-go-com-ledongthuc-pdf.md) (o leitor do holerite em PDF), [0064](0064-modulos-compilados-no-executavel-e-ligados-no-banco.md) (módulos), [0029](0029-instalador-msi-com-wix-gerado-pela-ci.md) (`.msi`), [0034](0034-sem-sri-no-build-do-front-end.md) (CSP), [0049](0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md) (Go sem cgo)
 
+Os limites e o caminho do Tesseract em detalhe, com as revisões do #707, ficaram na [versão anterior desta ADR](https://github.com/LucasDesenvGit/financas-local/blob/2790797b27114f4f7561300c2084101cad9a57cd/docs/adr/0069-ocr-do-holerite-escaneado-ou-foto.md).
+
 ## Contexto
 
-A #228 lê o holerite em PDF **com texto** (ADR 0068). O leitor recebe as palavras com a posição na página e faz o resto: as linhas, as colunas, as rubricas, o dicionário, a prova real e a prévia. A #229 pede o holerite **sem texto**: o PDF escaneado, a foto do papel no celular, a imagem que o RH manda (JPG ou PNG).
+A #228 lê o holerite em PDF **com texto** (ADR 0068): das palavras com a posição, o leitor tira as linhas, as rubricas, a prova real e a prévia. A #229 pede o holerite **sem texto**: o PDF escaneado, a foto do papel no celular, a imagem que o RH manda (JPG ou PNG).
 
 **Falta só a primeira etapa:** um OCR que devolva as palavras **com a posição** e, de preferência, com a **confiança** de cada uma. A confiança serve para destacar as "linhas com leitura duvidosa" que a issue pede.
 
@@ -25,12 +27,12 @@ Restrições:
     - O modelo rápido (`tessdata_fast/por.traineddata`) tem cerca de 2 MB (*inferido*).
     - Dá a confiança de cada palavra.
     - Sem cgo, e o mesmo caminho no Windows e no Linux.
-    - O Go só lê o TSV e reaproveita o `leitor.Agrupar`/`Interpretar`: cada palavra entra como uma "letra" larga.
+    - O Go só lê o TSV e reaproveita o leitor da #228.
   - Contras:
     - **Um processo novo**, que é uma fronteira no modelo de ameaças.
     - **Precisa estar instalado**, no `.msi` ou à parte. O tamanho no Windows não foi medido: *inferido* na casa das dezenas de MB com as bibliotecas.
     - No Linux, a versão vem do pacote da distribuição (`tesseract-ocr`, `tesseract-ocr-por`).
-    - **Foto torta ou com sombra** pede preparo da imagem (endireitar, contraste). O Tesseract faz parte disso. A perspectiva da foto de celular, não.
+    - **Foto torta ou com sombra** pede preparo da imagem. O Tesseract endireita e ajusta o contraste, mas não corrige a perspectiva.
 - **tesseract.js** (Apache-2.0) **no navegador**, com WebAssembly.
   - Prós:
     - Nada a instalar além do site, igual no Windows e no Linux.
