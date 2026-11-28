@@ -98,7 +98,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ConferenciaInvestimentos (1 tipo, 1 compra, 1 troco, 0 rendimento, 0 taxa)",
-            "Id": 39,
+            "Id": 38,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -274,7 +274,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ConferenciaInvestimentosDesfeita (3)",
-            "Id": 40,
+            "Id": 39,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -699,7 +699,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "TrocosAutomaticosDesfeitos (0)",
-            "Id": 41,
+            "Id": 40,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"

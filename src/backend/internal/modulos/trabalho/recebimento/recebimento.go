@@ -129,6 +129,9 @@ type Recebimento struct {
 	Sumiu bool `json:"sumiu"`
 	// Debito: a transação virou débito; não conta como recebido, e dá para desligar.
 	Debito bool `json:"debito"`
+	// ValorMudou: a transação passou a valer menos que a parte ligada (o banco mudou o valor dela, no mesmo id). Conta
+	// só o valor dela no recebido; desligue e ligue de novo (#751).
+	ValorMudou bool `json:"valorMudou"`
 }
 
 // Resposta é o recebimento do holerite: o líquido, o que já foi ligado, a diferença e as sugestões.
@@ -233,19 +236,15 @@ func (s *Servico) Obter(ctx context.Context, holeriteId int64) (Resposta, error)
 	recebido := decimal.Zero
 	ligadas := map[int64]bool{}
 	for _, l := range ligacoes {
-		rec := Recebimento{Id: l.id, ValorLigado: tipos.DeDecimal(l.valor.Decimal().Round(2)), Sumiu: l.transacao == nil,
-			Transacao: Transacao{Data: l.data, Descricao: l.descricao, ContaId: l.contaId, Valor: l.valorTransacao}}
+		var lida []Transacao
 		if l.transacao != nil {
-			ts, err := s.lerTransacoesComDebitos(ctx, holeriteId, true, `t."Id" = ?`, *l.transacao)
-			if err != nil {
+			if lida, err = s.lerTransacoesComDebitos(ctx, holeriteId, true, `t."Id" = ?`, *l.transacao); err != nil {
 				return Resposta{}, err
 			}
-			rec.Transacao, rec.Debito = ts[0], !ts[0].Valor.Decimal().IsPositive()
 			ligadas[*l.transacao] = true
 		}
-		if !rec.Debito {
-			recebido = recebido.Add(l.valor.Decimal())
-		}
+		rec, conta := recebimentoDe(l, lida)
+		recebido = recebido.Add(conta)
 		r.Recebimentos = append(r.Recebimentos, rec)
 	}
 	r.Recebido = tipos.DeDecimal(recebido.Round(2))
@@ -375,6 +374,26 @@ func (s *Servico) ligacoes(ctx context.Context, holeriteId int64) ([]ligacao, er
 		lista = append(lista, l)
 	}
 	return lista, linhas.Err()
+}
+
+// recebimentoDe monta o recebimento de uma ligação com a transação lida agora e diz quanto ele conta no recebido. lida
+// vazia com a ligação apontando para uma transação: ela foi apagada entre as duas leituras (a sincronização no meio);
+// conta como sumiu, em vez de o ts[0] entrar em pânico (#751). O débito não conta; a transação que passou a valer menos
+// que a parte ligada conta só o valor dela (#751).
+func recebimentoDe(l ligacao, lida []Transacao) (Recebimento, decimal.Decimal) {
+	rec := Recebimento{Id: l.id, ValorLigado: tipos.DeDecimal(l.valor.Decimal().Round(2)), Sumiu: l.transacao == nil || len(lida) == 0,
+		Transacao: Transacao{Data: l.data, Descricao: l.descricao, ContaId: l.contaId, Valor: l.valorTransacao}}
+	if !rec.Sumiu {
+		rec.Transacao, rec.Debito = lida[0], !lida[0].Valor.Decimal().IsPositive()
+	}
+	if rec.Debito {
+		return rec, decimal.Zero
+	}
+	conta := l.valor.Decimal()
+	if !rec.Sumiu && conta.GreaterThan(rec.Valor.Decimal()) {
+		rec.ValorMudou, conta = true, rec.Valor.Decimal()
+	}
+	return rec, conta
 }
 
 // DiasParaReligar: a transação nova (a pendente que o banco efetivou com outro código) pode ter outra data, até 5 dias.

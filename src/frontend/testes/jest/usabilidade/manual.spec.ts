@@ -39,8 +39,13 @@ describe('Usabilidade: Manual', () => {
     const secao = t.raiz.querySelector<HTMLElement>('#modo-edicao')!;
     expect(secao.querySelector('h2')!.textContent).toBe('Várias de uma vez: “Editar categorias”');
     expect(secao.querySelector('.para-que')!.textContent!.length).toBeGreaterThan(20);
-    expect(Array.from(secao.querySelectorAll('h3')).map((h) => h.textContent)).toEqual(['Passo a passo', 'Erros comuns']);
-    expect(secao.querySelectorAll('ol.passos li').length).toBeGreaterThanOrEqual(5);
+    expect(secao.querySelectorAll('ul.topicos li').length).toBeGreaterThanOrEqual(1);
+    expect(secao.querySelector('ol.passos')).toBeNull();   // só quando a ordem importa (#817)
+    // "Mais detalhes": nativo (abre com Enter e Espaço, WCAG 2.1.1), fechado, com o resto do texto.
+    const detalhes = secao.querySelector<HTMLDetailsElement>('details.mais-detalhes')!;
+    expect(detalhes.querySelector('summary')!.textContent).toBe('Mais detalhes');
+    expect(detalhes.open).toBe(false);
+    expect(detalhes.querySelectorAll('li').length).toBeGreaterThanOrEqual(5);
     const abrir = secao.querySelector<HTMLAnchorElement>('.abrir-tela a')!;
     expect(abrir.textContent!.trim()).toBe('Editar as sem categoria →');
     expect(abrir.getAttribute('href')).toBe('/transacoes?categoria=sem&editar=1');
@@ -61,5 +66,40 @@ describe('Usabilidade: Manual', () => {
       ['Índice do manual', '/manual'],
       ['Transações: encontrar e entender ›', '/manual/transacoes']
     ]);
+  });
+
+  it('a seção com print mostra a imagem do tema aberto, com alt, tamanho e carga preguiçosa', async () => {
+    const t = await abrirManual('/manual/relatorios');
+    const img = t.raiz.querySelector<HTMLImageElement>('#painel img.print-manual')!;
+    const secao = MANUAL.find((c) => c.id === 'relatorios')!.secoes.find((s) => s.id === 'painel')!;
+    expect(img.getAttribute('src')).toMatch(/^\/imagens\/manual\/painel-(claro|escuro)\.webp$/);
+    expect(img.getAttribute('alt')).toBe(secao.print!.alt);
+    expect(Number(img.getAttribute('width'))).toBeGreaterThan(0);
+    expect(Number(img.getAttribute('height'))).toBeGreaterThan(0);
+    expect(img.getAttribute('loading')).toBe('lazy');
+    // Logo depois da linha "para que serve" e antes dos tópicos.
+    expect(img.previousElementSibling!.classList).toContain('para-que');
+    expect(img.nextElementSibling!.classList).toContain('topicos');
+  });
+
+  it('a lista numerada aparece só no passo a passo de verdade, depois dos tópicos', async () => {
+    const t = await abrirManual('/manual/primeiros-passos');
+    const passos = t.raiz.querySelector<HTMLElement>('#por-onde-comecar ol.passos')!;
+    expect(passos.querySelectorAll('li').length).toBe(6);
+    expect(passos.previousElementSibling!.classList).toContain('topicos');
+    expect(t.raiz.querySelectorAll('#conhecendo-a-tela ol.passos').length).toBe(0);
+  });
+
+  it('a busca acha o que está só em "Mais detalhes" e leva à seção', async () => {
+    const t = await abrirManual('/manual?busca=condomínio');
+    const link = t.raiz.querySelector('.resultados-busca a')!;
+    expect(link.getAttribute('href')).toBe('/manual/transacoes#renomear');
+    const secao = MANUAL.find((c) => c.id === 'transacoes')!.secoes.find((s) => s.id === 'renomear')!;
+    expect(secao.topicos.join(' ')).not.toMatch(/condomínio/);
+  });
+
+  it('a busca acha a seção pelo texto alternativo do print', async () => {
+    const t = await abrirManual('/manual?busca=Pôr do sol Lavanda');
+    expect(t.raiz.querySelector('.resultados-busca a')!.getAttribute('href')).toBe('/manual/configuracoes#aparencia');
   });
 });

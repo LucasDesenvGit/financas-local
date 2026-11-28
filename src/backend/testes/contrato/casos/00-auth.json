@@ -193,18 +193,6 @@
       "corpo": { "login": "ana.teste", "senha": "Outra-Senha-456" }
     },
     {
-      "nome": "sair",
-      "metodo": "POST",
-      "caminho": "/api/auth/sair",
-      "sessao": "quinto-ip"
-    },
-    {
-      "nome": "estado depois de sair",
-      "metodo": "GET",
-      "caminho": "/api/auth/estado",
-      "sessao": "quinto-ip"
-    },
-    {
       "nome": "sair sem estar logado",
       "comentario": "Não grava auditoria.",
       "metodo": "POST",

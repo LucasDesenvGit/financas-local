@@ -4,7 +4,7 @@ import { situacaoDoRecebimento } from '../../../src/app/paginas/trabalho/recebim
 /** #212: a situação do recebimento em palavras (a conta é da API, testada no Go). */
 describe('Trabalho › recebimento do holerite (#212)', () => {
   const base: RecebimentosHolerite = { liquido: 4738.02, recebido: 0, diferenca: -4738.02, recebimentos: [], sugestoes: [], outros: [] };
-  const ligado = { id: 1, data: '2026-11-05', descricao: 'X', contaId: 1, conta: 'C', valor: 1, livre: 0, valorLigado: 1, sumiu: false, debito: false };
+  const ligado = { id: 1, data: '2026-11-05', descricao: 'X', contaId: 1, conta: 'C', valor: 1, livre: 0, valorLigado: 1, sumiu: false, debito: false, valorMudou: false };
 
   it('sem cálculo, sem crédito, igual, faltando e sobrando', () => {
     expect(situacaoDoRecebimento({ ...base, liquido: null, diferenca: null }).tom).toBe('neutro');

@@ -15,12 +15,14 @@ Sempre por HTTPS, com o mínimo de dados; quantidades, valores e dados pessoais 
 | `olinda.bcb.gov.br` | cotação PTAX de moedas estrangeiras | só o código da moeda e datas |
 | `query1.finance.yahoo.com` | cotações e proventos de ações e FIIs (fonte gratuita e não oficial; a brapi saiu na #763, [ADR 0072](adr/0072-cotacoes-de-acoes-e-fiis-so-pelo-yahoo-sem-a-brapi.md)) | o código do ativo |
 | `g1.globo.com` / `feeds.bbci.co.uk` / `www.tabnews.com.br` | só com o módulo **Notícias** ligado (vem desligado): as notícias do dia, a cada 45 minutos ([ADR 0067](adr/0067-noticias-g1-bbc-e-tabnews-so-com-o-modulo-ligado.md)) | só o pedido do feed, sem nada seu |
-| `api.mercadobitcoin.net` | cotação de criptomoedas em reais, a cada 30 minutos ([ADR 0048](adr/0048-cotacao-de-criptomoedas-pelo-mercado-bitcoin.md)) | só os pares fixos (BTC-BRL, ETH-BRL, SOL-BRL, USDT-BRL) |
+| `api.binance.com` | cotação de criptomoedas em reais, a cada 30 minutos ([ADR 0073](adr/0073-cotacao-de-criptomoedas-pela-binance.md); até 14/11/2026, o Mercado Bitcoin) | só os pares fixos (BTCBRL, ETHBRL, SOLBRL, USDTBRL) |
 | `api.github.com` / `github.com` | só o **Gerenciador** do Windows, para achar e baixar a versão nova, conferindo o SHA256 ([ADR 0028](adr/0028-gerenciador-do-windows-e-atualizacao-pelo-github.md)) | só o pedido da página de versões. O gerenciador do Linux não acessa a internet (só na instalação de desenvolvimento, pelo `git`, quando se clica em "Atualizar para a última do develop"; [ADR 0040](adr/0040-atualizar-pelo-develop-so-na-instalacao-de-desenvolvimento.md)) |
 
 ## Recomendações
 
-- Ative a criptografia do disco (**BitLocker** no Windows, **LUKS** no Linux): o arquivo do banco não é criptografado.
+- Ative a criptografia do disco (**BitLocker** no Windows, **LUKS** no Linux): o banco e as cópias não são criptografados, e quem levar o computador ou o disco lê tudo.
+- Não instale numa pasta sincronizada com a nuvem (OneDrive, Dropbox, Google Drive, iCloud): o banco e as cópias da pasta `dados` iriam sem criptografia para lá, e a sincronização pode estragar o banco aberto.
+- O gerenciador avisa, em **Mais opções**, quando tem certeza de que o disco da pasta `dados` está sem criptografia ou de que ela está numa pasta da nuvem (#68). Ele só avisa: não recusa nada.
 - De vez em quando, salve uma cópia do banco pelo gerenciador (**Mais opções**) num pendrive ou disco externo.
 - Vai ligar o **acesso pelo celular**? Use uma senha forte (quem está no seu Wi-Fi chega à tela de entrar), ligue só na rede de casa e reserve o IP do computador no roteador.
 
@@ -36,8 +38,8 @@ Sempre por HTTPS, com o mínimo de dados; quantidades, valores e dados pessoais 
 - **Um processo só** ([ADR 0049](adr/0049-back-end-em-go-trocado-aos-poucos-atras-do-dotnet.md)): até a #86, o Go rodava atrás de uma API em .NET, numa porta interna protegida por um segredo; hoje o site é um executável só, sem porta interna.
 - **Sem senhas em arquivos.** O SQLite não tem login de banco: o acesso é a permissão do sistema operacional sobre a pasta `dados`, que só a conta do serviço (Serviço do Windows ou systemd) e os administradores leem.
 - **Client Secret da Pluggy criptografado** no banco com AES-256-GCM (`internal/plataforma/segredos`, prefixo `v2:`). A chave fica em `dados\chaves\segredos.chave`: no Windows, protegida pelo DPAPI; no Linux, pela permissão do arquivo (0600). A API nunca devolve o secret.
-- **Login:** senha com hash PBKDF2-SHA512 (no formato do ASP.NET Identity, para as senhas de antes continuarem valendo), bloqueio depois de errar a senha (padrão: 15 min após 5 erros, ajustável em **Configurações › Parametrização**, de 3 a 20 tentativas e de 1 a 1.440 minutos), limite de 5 tentativas por minuto por IP (cada aparelho da rede tem o seu) e tempo de resposta igual para usuário inexistente.
-- **Sessão:** cookie `__Host-` HttpOnly + Secure + SameSite=Strict, que expira em 2 h sem uso. Trocar a senha derruba as outras sessões.
+- **Login:** senha com hash PBKDF2-SHA512 (no formato do ASP.NET Identity, para as senhas de antes continuarem valendo), bloqueio depois de errar a senha (padrão: 15 min após 5 erros, ajustável em **Configurações › Parametrização**, de 3 a 20 tentativas e de 1 a 1.440 minutos; mudar esses parâmetros, ou o tempo de guarda do histórico de acessos, pede a senha atual), limite de 5 tentativas por minuto por IP (cada aparelho da rede tem o seu) e tempo de resposta igual para usuário inexistente.
+- **Sessão:** cookie `__Host-` HttpOnly + Secure + SameSite=Strict, que expira em 2 h sem uso e, mesmo em uso, 12 h depois do login. Trocar a senha derruba as outras sessões, e "Sair" derruba todas (computador e celular), para um cookie copiado não valer depois.
 - **CSRF:** token antifalsificação validado em todo POST, PUT, PATCH e DELETE.
 - **Cabeçalhos:** CSP restritiva (sem scripts de terceiros nem script inline; nada é carregado da internet), X-Frame-Options, nosniff, Referrer-Policy e `no-store` nas respostas da API.
 - **Validação de host:** só `localhost`/`127.0.0.1` (e, no servidor do acesso pelo celular, só o IP escolhido), contra DNS rebinding.

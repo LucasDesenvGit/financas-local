@@ -19,23 +19,44 @@ import (
 func Avos(ano int, admissao tipos.Data, saida *tipos.Data) int {
 	avos := 0
 	for mes := 1; mes <= 12; mes++ {
-		inicio := tipos.NovaData(ano, time.Month(mes), 1)
-		fim := inicio.SomarMeses(1).SomarDias(-1)
-		de, ate := inicio, fim
-		if admissao.Depois(de) {
-			de = admissao
-		}
-		if saida != nil && saida.Antes(ate) {
-			ate = *saida
-		}
-		if ate.Antes(de) {
-			continue
-		}
-		if ate.NumeroDoDia()-de.NumeroDoDia()+1 >= 15 {
+		if temAvo(ano, mes, admissao, saida) {
 			avos++
 		}
 	}
 	return avos
+}
+
+// MesesComAvo é a faixa [inicio, fim) dos meses do ano que contam avo. A média das variáveis soma só os holerites dela
+// (#750, ADR 0065): o mês da admissão ou da saída com menos de 15 dias não conta para o 13º e não pesa na média dele.
+// Só esses dois meses podem ficar de fora (os do meio são inteiros), então a faixa é contínua; sem avo, inicio == fim.
+func MesesComAvo(ano int, admissao tipos.Data, saida *tipos.Data) (inicio, fim tipos.Data) {
+	primeiro, ultimo := 0, 0
+	for mes := 1; mes <= 12; mes++ {
+		if temAvo(ano, mes, admissao, saida) {
+			if primeiro == 0 {
+				primeiro = mes
+			}
+			ultimo = mes
+		}
+	}
+	if primeiro == 0 {
+		vazio := tipos.NovaData(ano, 1, 1)
+		return vazio, vazio
+	}
+	return tipos.NovaData(ano, time.Month(primeiro), 1), tipos.NovaData(ano, time.Month(ultimo), 1).SomarMeses(1)
+}
+
+// temAvo: no mês, a pessoa trabalhou 15 dias ou mais (de calendário), entre a admissão e a saída.
+func temAvo(ano, mes int, admissao tipos.Data, saida *tipos.Data) bool {
+	de := tipos.NovaData(ano, time.Month(mes), 1)
+	ate := de.SomarMeses(1).SomarDias(-1)
+	if admissao.Depois(de) {
+		de = admissao
+	}
+	if saida != nil && saida.Antes(ate) {
+		ate = *saida
+	}
+	return !ate.Antes(de) && ate.NumeroDoDia()-de.NumeroDoDia()+1 >= 15
 }
 
 // Entrada é o que o cálculo precisa.
@@ -64,6 +85,9 @@ type Parcela struct {
 	Informada bool          `json:"informada"` // a pessoa disse quanto e quando veio
 	// ValorInformado: o valor veio da pessoa (e não da metade calculada); a tela não grava o calculado como informado.
 	ValorInformado bool `json:"valorInformado"`
+	// DataInformada: a data veio da pessoa (e não o 30/11 padrão nem a das férias); a tela não grava a padrão como
+	// informada ao salvar só o valor (#750).
+	DataInformada bool `json:"dataInformada"`
 	// ComFerias: a 1ª veio com as férias (a data é a do pagamento delas, e o valor, o que elas pagaram).
 	ComFerias bool `json:"comFerias"`
 }
@@ -110,6 +134,7 @@ func Calcular(e Entrada) Calculo {
 	}
 	if e.PrimeiraEm != nil {
 		c.Primeira.Data, c.Primeira.Informada, c.Primeira.ComFerias = *e.PrimeiraEm, true, e.PrimeiraComFerias
+		c.Primeira.DataInformada = !e.PrimeiraComFerias
 	}
 
 	// O IR do 13º é exclusivo na fonte, separado do salário de dezembro: base = total - INSS - dependentes, sem o

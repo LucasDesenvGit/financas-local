@@ -16,7 +16,9 @@ export interface ApiFalsa {
   chamadasComQuery: string[];
 }
 
-const hoje = new Date();
+/** Dia fixo dos prints do Manual (ADR 0071): o mesmo dia no navegador e aqui, para o print não mudar sozinho. */
+export const DATA_DOS_PRINTS = new Date(2026, 10, 15, 12, 0, 0);
+const hoje = process.env['PRINTS_MANUAL'] ? DATA_DOS_PRINTS : new Date();
 /** "AAAA-MM-DD" na data local. */
 const dataIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const ano = hoje.getFullYear();
@@ -322,9 +324,9 @@ const respostas: Record<string, unknown> = {
   ] },
   // #279 (ADR 0048): criptomoedas em reais (valores fictícios); a SOL ainda sem variação em 24 h, a USDT sem cotação.
   '/api/cripto/cotacoes': { atualizadoEm: hoje.toISOString(), cotacoes: [
-    { moeda: 'BTC', preco: 419262, dataHora: hoje.toISOString(), variacao24h: 2.04, fonte: 'Mercado Bitcoin' },
-    { moeda: 'ETH', preco: 12382, dataHora: hoje.toISOString(), variacao24h: -1.37, fonte: 'Mercado Bitcoin' },
-    { moeda: 'SOL', preco: 538.82, dataHora: hoje.toISOString(), variacao24h: null, fonte: 'Mercado Bitcoin' }
+    { moeda: 'BTC', preco: 419262, dataHora: hoje.toISOString(), variacao24h: 2.04, fonte: 'Binance' },
+    { moeda: 'ETH', preco: 12382, dataHora: hoje.toISOString(), variacao24h: -1.37, fonte: 'Binance' },
+    { moeda: 'SOL', preco: 538.82, dataHora: hoje.toISOString(), variacao24h: null, fonte: 'Binance' }
   ] },
   '/api/carteira': {
     selic: { metaAnual: 15, acumulado12Meses: 14.2, acumuladoAno: 11.5, atualizadaAte: iso(hoje) },
@@ -373,7 +375,15 @@ const respostas: Record<string, unknown> = {
   '/api/carteira/conferencia': { tipos: [], cotas: [], comprasSemOperacao: [], trocos: [], rendimentos: [], categoriaDoTroco: null,
     taxas: [{ data: dataIso(new Date(ano, hoje.getMonth() - 1, 8)), conta: 'Nubank', debitado: 1010.4, trocos: 10.1, valorDasCotas: 1000,
       taxa: 0.3, operacoes: [{ operacaoId: 31, ticker: 'MXRF11', quantidade: 100, taxa: 0.3 }] }] },
-  '/api/parametros': [],
+  // #68: um parâmetro comum e um de segurança (pedeSenha): mudar o segundo pede a senha atual.
+  '/api/parametros': [
+    { chave: 'Painel.DiasProximosVencimentos', grupo: 'Painel', nome: 'Próximos vencimentos',
+      descricao: 'Até quantos dias à frente o painel lista as contas a pagar.', tipo: 1, valor: 15, padrao: 15, minimo: 1,
+      maximo: 90, unidade: 'dias', pedeSenha: false },
+    { chave: 'Seguranca.MinutosBloqueio', grupo: 'Segurança', nome: 'Tempo de bloqueio',
+      descricao: 'Por quanto tempo o login fica bloqueado depois do limite de tentativas.', tipo: 1, valor: 15, padrao: 15,
+      minimo: 1, maximo: 1440, unidade: 'minutos', pedeSenha: true }
+  ],
   '/api/parametros/sistema': { versao: '0.0.0-teste', dotNet: '10.0', sistemaOperacional: 'Teste', iniciadoEm: hoje.toISOString(),
     caminhoBanco: '/teste/FinancasLocal.db', tamanhoBancoBytes: 1024, pastaChaves: '/teste/chaves', contas: 2, transacoes: 2,
     conexoesAtivas: 1, ultimaSincronizacao: hoje.toISOString() },
