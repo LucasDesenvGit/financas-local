@@ -1,0 +1,30 @@
+// Gerado por `npm run prints:manual` (testes/navegador/prints-manual.spec.ts): não edite à mão.
+// Largura e altura de cada print do Manual, em px (o <img> as usa para a página não pular).
+export const MEDIDAS_PRINTS: Record<string, { largura: number; altura: number }> = {
+  'acesso-pelo-celular': { largura: 720, altura: 480 },
+  'aparencia': { largura: 720, altura: 480 },
+  'assinaturas-recorrentes': { largura: 720, altura: 480 },
+  'cadastrar-conta': { largura: 620, altura: 897 },
+  'carteira': { largura: 720, altura: 480 },
+  'conferir-banco': { largura: 720, altura: 480 },
+  'conhecendo-a-tela': { largura: 901, altura: 480 },
+  'credenciais': { largura: 720, altura: 480 },
+  'criar-categoria': { largura: 620, altura: 386 },
+  'criar-meta': { largura: 620, altura: 796 },
+  'criar-regra': { largura: 720, altura: 480 },
+  'definir-limites': { largura: 720, altura: 600 },
+  'erros-do-sistema': { largura: 720, altura: 480 },
+  'etiquetas': { largura: 808, altura: 389 },
+  'filtros': { largura: 720, altura: 520 },
+  'lancamento-manual': { largura: 620, altura: 692 },
+  'mes-a-mes': { largura: 720, altura: 480 },
+  'modo-edicao': { largura: 808, altura: 389 },
+  'modulos': { largura: 720, altura: 472 },
+  'painel': { largura: 720, altura: 480 },
+  'projecao': { largura: 720, altura: 480 },
+  'relatorios-tela': { largura: 720, altura: 480 },
+  'reservas': { largura: 808, altura: 480 },
+  'seguranca': { largura: 720, altura: 480 },
+  'tipos-de-conta': { largura: 720, altura: 480 },
+  'visao-anual': { largura: 720, altura: 480 }
+};

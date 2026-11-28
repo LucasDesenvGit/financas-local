@@ -50,6 +50,9 @@ func PeriodicaOuAoSinal(ctx context.Context, log *slog.Logger, nome string, atra
 			return
 		case <-ticker.C:
 		case <-sinal:
+			// O próximo ciclo fica um intervalo depois deste (#750): sem isso, o tick que já vinha rodaria de novo logo
+			// depois do sinal. Desde o Go 1.23, o Reset não deixa tick antigo no canal.
+			ticker.Reset(intervalo)
 		}
 	}
 }

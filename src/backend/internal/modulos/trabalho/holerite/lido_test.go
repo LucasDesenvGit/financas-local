@@ -35,7 +35,7 @@ func TestGravarEDesfazerOLido(t *testing.T) {
 		t.Fatalf("novo: %+v %t %v", h, existia, err)
 	}
 	// As horas extras lidas entram nas variáveis do ano, como as digitadas.
-	if soma, meses, _ := a.s.VariaveisDoAno(ctx, id, 2026, tipos.DeDecimal(decimal.RequireFromString("4000"))); soma.Decimal().String() != "100" || meses != 1 {
+	if soma, meses, _ := a.s.VariaveisEntre(ctx, id, tipos.NovaData(2026, 1, 1), tipos.NovaData(2027, 1, 1), tipos.DeDecimal(decimal.RequireFromString("4000"))); soma.Decimal().String() != "100" || meses != 1 {
 		t.Errorf("variáveis: %s %d", soma.Decimal().String(), meses)
 	}
 	if _, _, err := a.s.GravarLido(ctx, id, lido("2026-09-01")); !errors.Is(err, ErrFechado) {

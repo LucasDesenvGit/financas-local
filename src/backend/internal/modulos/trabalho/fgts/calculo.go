@@ -53,6 +53,9 @@ type Conferencia struct {
 	Informado tipos.Decimal `json:"informado"`
 	Estimado  tipos.Decimal `json:"estimado"`
 	Diferenca tipos.Decimal `json:"diferenca"` // informado - estimado
+	// Pendente: os depósitos que o app ainda não mostrava naquele dia, somados ao informado no saldo do mês. A tela
+	// explica o saldo acima do digitado: "3000 no app + 619,57 a depositar" (#751).
+	Pendente tipos.Decimal `json:"pendente"`
 }
 
 // Estimativa é o FGTS até o mês.
@@ -64,9 +67,17 @@ type Estimativa struct {
 
 func centavos(v decimal.Decimal) tipos.Decimal { return tipos.DeDecimal(v.Round(2)) }
 
-// DiaDoDeposito é até quando a empresa deposita o FGTS do mês, no mês seguinte (o FGTS Digital, desde 03/2024; antes
-// era o dia 7). O app só mostra o depósito de uma competência depois disso (*inferido*: há empresa que paga antes).
-const DiaDoDeposito = 20
+// DiaDoDeposito é até quando a empresa deposita o FGTS do mês, no mês seguinte: o dia 20 desde a competência 03/2024
+// (FGTS Digital; Lei 8.036, art. 15, na redação da Lei 14.438/2022) e o dia 7 até a 02/2024 (#751). O app só mostra o
+// depósito de uma competência depois disso (*inferido*: há empresa que paga antes).
+func DiaDoDeposito(competencia tipos.Data) int {
+	if competencia.Antes(inicioDoFgtsDigital) {
+		return 7
+	}
+	return 20
+}
+
+var inicioDoFgtsDigital = tipos.NovaData(2024, 3, 1)
 
 // Estimar monta o saldo mês a mês, de inicio até ate (os dois no dia 1). depositos[mes.String()] é o depósito de cada
 // mês (a competência). A ordem de cada mês: a correção do saldo de antes, o depósito, a distribuição e os saques do mês;
@@ -111,12 +122,12 @@ func Estimar(inicio, ate tipos.Data, depositos map[string]decimal.Decimal, lanca
 		if conferencia != nil {
 			informado := conferencia.Valor.Decimal()
 			pendente := deposito
-			if conferencia.Data.Dia() < DiaDoDeposito && len(r.Meses) > 0 {
+			if len(r.Meses) > 0 && conferencia.Data.Dia() < DiaDoDeposito(r.Meses[len(r.Meses)-1].Mes) {
 				pendente = pendente.Add(r.Meses[len(r.Meses)-1].Deposito.Decimal())
 			}
 			estimado := saldo.Sub(pendente)
 			r.Conferencias = append(r.Conferencias, Conferencia{Data: conferencia.Data, Informado: centavos(informado),
-				Estimado: centavos(estimado), Diferenca: centavos(informado.Sub(estimado))})
+				Estimado: centavos(estimado), Diferenca: centavos(informado.Sub(estimado)), Pendente: centavos(pendente)})
 			saldo, m.Conferido = informado.Add(pendente), true
 		}
 		saldo = saldo.Add(depois)

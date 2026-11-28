@@ -340,6 +340,8 @@ O SQLite não tem `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, então essa idempo
 4. Tabela nova: entra em `ASSUNTOS` no `scripts/dev/gerar-diagrama-banco.py`. Rode `python3 scripts/dev/gerar-diagrama-banco.py` e suba os diagramas desta página (a CI confere com `--conferir`).
 5. No commit, use `feat(banco)!:` para marcar que a estrutura mudou. Quem atualiza não precisa fazer nada: o site aplica o esquema ao iniciar ([ADR 0003](adr/0003-esquema-por-scripts-sql-idempotentes.md)).
 
+**Tabela que mudou antes do merge:** o `CREATE TABLE IF NOT EXISTS` não altera uma tabela que já existe. Quem rodou em desenvolvimento um commit intermediário de um PR fica com a versão antiga dela, e o site falha com "no such column". Caso conhecido: a `HoleriteRecebimento` de um commit antigo da #703 (#751). Sem dado de produção, basta apagar a tabela no banco de desenvolvimento (`DROP TABLE "HoleriteRecebimento";`) e reiniciar o site, que a cria de novo.
+
 Regras:
 - Nunca apague ou renomeie colunas em uso sem um bloco de transição.
 - Nada de sintaxe do SQL Server (`GO`, `dbo.`, `[...]`, `IDENTITY`, `N'...'`, `OBJECT_ID`, `COL_LENGTH`): o `verificar-sql.py` recusa.

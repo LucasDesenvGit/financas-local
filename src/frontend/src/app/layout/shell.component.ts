@@ -153,6 +153,16 @@ export function roteiroDaTela(rota: string): string {
              as telas continuam links. Vários grupos podem ficar abertos (NN/g, Accordions on Desktop). Tocar num
              grupo não fecha a gaveta do celular; tocar numa tela, sim. data-roteiro: alvos estáveis do roteiro (#194). -->
         <nav class="menu" aria-label="Menu principal" data-roteiro="menu">
+          <!-- #750: sem a lista, os módulos somem do menu; quem não abre Configurações › Módulos nem a tela de um
+               módulo precisa ver por quê e poder tentar de novo ali (Nielsen 1 e 9). No topo: no fim do menu, ficava
+               abaixo da dobra, no computador e no celular. -->
+          @if (modulos.falhou()) {
+            <p class="menu-aviso" role="status">
+              Não deu para ler os módulos: as telas deles estão fora do menu.
+              <button type="button" class="link" [disabled]="modulos.carregando()" (click)="modulos.carregar()">
+                {{ modulos.carregando() ? 'Tentando…' : 'Tentar de novo' }}</button>
+            </p>
+          }
           @for (entrada of entradas(); track entrada.rotulo) {
             @if (grupoDe(entrada); as grupo) {
               <div class="grupo-menu">
@@ -249,6 +259,8 @@ export function roteiroDaTela(rota: string): string {
   styles: [`
     .botao-ajuda { text-decoration: none; }
     .menu-espaco { flex: 1 0 10px; }
+    .menu-aviso { margin: 0 12px 8px; font-size: 0.85rem; color: var(--texto-suave); }
+    .menu-aviso .link { padding-left: 0; }
     .item-manual { border-top: 1px solid var(--linha); padding-top: 12px; }
     @media (max-width: 760px) { .rotulo-ajuda { display: none; } }
   `]
@@ -286,7 +298,7 @@ export class ShellComponent {
   readonly Icones = Icones;
   readonly roteiroDaTela = roteiroDaTela;
 
-  private readonly modulos = inject(ModulosService);
+  protected readonly modulos = inject(ModulosService);
   /**
    * Quais telas aparecem no menu: a de um módulo (#191, ADR 0064) só com ele ligado, e some do grupo (e o grupo, se
    * ficar vazio). Ligar ou desligar em Configurações › Módulos muda o menu na hora.

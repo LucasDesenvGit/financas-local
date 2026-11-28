@@ -71,6 +71,10 @@ func TestGeraOCertificado(t *testing.T) {
 	if !slices.Contains(folha.ExtKeyUsage, x509.ExtKeyUsageServerAuth) {
 		t.Errorf("uso = %v", folha.ExtKeyUsage)
 	}
+	// #68: a restrição de CA vem explícita (BasicConstraints presente, e não CA), e não por omissão.
+	if !folha.BasicConstraintsValid || folha.IsCA {
+		t.Errorf("BasicConstraintsValid=%v IsCA=%v", folha.BasicConstraintsValid, folha.IsCA)
+	}
 }
 
 // Regra: o .pem é só a parte pública: é o que quem instala importa no navegador, e nele não há chave.

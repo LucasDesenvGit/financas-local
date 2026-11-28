@@ -108,7 +108,7 @@ Cada assunto com rotas tem a própria regra no pacote dele. Quando a regra serve
 | `investimentos` (os do Open Finance) | `carteira`, `cambio` |
 | `conferenciabanco` (Conferir com o banco) | `contas`, `faturas`, `carteira`, `reservas`, `bancos`, `cambio` |
 | `openfinance` (Conexões) | `sincronizacao`, `pluggy`, `contas`, `cotacoes`, `categorizacao`, `transferencias`, `transacoes` |
-| `reservas`, `cambio`, `cripto`, `parametros`, `saude` | só a própria, a base e os transversais (`reservas` usa o `cambio`) |
+| `reservas`, `cambio`, `cripto`, `parametros`, `saude` | só a própria, a base e os transversais (`reservas` usa o `cambio`; `parametros` confere a senha atual pela `autenticacao`, #68) |
 
 ## Regras de dependência
 

@@ -495,6 +495,8 @@ export enum TipoParametro { Inteiro = 1, Booleano = 2 }
 export interface Parametro {
   chave: string; grupo: string; nome: string; descricao: string; tipo: TipoParametro;
   valor: number; padrao: number; minimo: number | null; maximo: number | null; unidade: string | null;
+  /** #68: mudar o valor pede a senha atual (os parâmetros de segurança do login). */
+  pedeSenha: boolean;
 }
 export interface InfoSistema {
   versao: string; dotNet: string; sistemaOperacional: string; iniciadoEm: string; caminhoBanco: string;
@@ -979,8 +981,13 @@ export interface ConfirmarHoleritePdf {
 export interface HoleritePdfGravado { holerite: Holerite; desfazer: string; }
 
 /** #214: o 13º salário do ano (estimativa). */
-/** valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). */
-export interface ParcelaDecimo { valor: number; data: string; informada: boolean; valorInformado: boolean; comFerias?: boolean; }
+/**
+ * valorInformado: o valor veio da pessoa (sem ele, é a metade calculada, mesmo com a data informada). dataInformada: a
+ * data veio da pessoa (sem ela, é o 30/11 padrão ou a das férias; #750).
+ */
+export interface ParcelaDecimo {
+  valor: number; data: string; informada: boolean; valorInformado: boolean; dataInformada: boolean; comFerias?: boolean;
+}
 export interface DecimoTerceiro {
   ano: number; avos: number; salarioBase: number; mediaVariaveis: number; total: number;
   primeira: ParcelaDecimo; inss: CalculoInss; irrf: CalculoIrrf; segunda: ParcelaDecimo; liquido: number;
@@ -1015,14 +1022,15 @@ export enum TipoLancamentoFgts { Conferencia = 1, Saque = 2, Distribuicao = 3 }
 export enum MotivoSaqueFgts { Rescisao = 1, SaqueAniversario = 2, Imovel = 3, Outro = 4 }
 export interface LancamentoFgts { id: number; data: string; tipo: TipoLancamentoFgts; valor: number; motivo: MotivoSaqueFgts | null; }
 export interface MesFgts { mes: string; correcao: number; deposito: number; distribuicao: number; saques: number; saldo: number; conferido: boolean; }
-export interface ConferenciaFgts { data: string; informado: number; estimado: number; diferenca: number; }
+/** pendente: os depósitos que o app ainda não mostrava naquele dia, somados ao informado no saldo (#751). */
+export interface ConferenciaFgts { data: string; informado: number; estimado: number; diferenca: number; pendente: number; }
 export interface Fgts { saldo: number; ate: string; meses: MesFgts[]; conferencias: ConferenciaFgts[]; lancamentos: LancamentoFgts[]; }
 
 /** #212: o crédito do salário ligado ao holerite (não conta duas vezes: a receita é a transação). */
 export interface CreditoSalario { id: number; data: string; descricao: string; contaId: number; conta: string; valor: number; livre: number; }
 /** sumiu: a sincronização trocou a transação e o site ainda não achou a nova (conta como recebida); debito: virou
- * débito (não conta). */
-export interface RecebimentoHolerite extends CreditoSalario { valorLigado: number; sumiu: boolean; debito: boolean; }
+ * débito (não conta); valorMudou: a transação passou a valer menos que a parte ligada (conta só o valor dela, #751). */
+export interface RecebimentoHolerite extends CreditoSalario { valorLigado: number; sumiu: boolean; debito: boolean; valorMudou: boolean; }
 export interface SugestaoRecebimento extends CreditoSalario { motivos: string[]; }
 export interface RecebimentosHolerite {
   liquido: number | null; recebido: number; diferenca: number | null;
@@ -1038,7 +1046,9 @@ export interface CalculoRescisao {
   tipo: TipoRescisao; nomeDoTipo: string; aviso: AvisoRescisao; saida: string; dataProjetada: string; diasDeAviso: number;
   remuneracao: number; verbas: LinhaRescisao[]; descontos: LinhaRescisao[]; totalVerbas: number; totalDescontos: number;
   liquido: number; seguroDesemprego: boolean;
-  fgts: { saldo: number; depositoRescisao: number; percentualMulta: number; multa: number; percentualSaque: number; sacavel: number; };
+  /** saqueAniversario: o que vale na conta, a resposta da pessoa ou o que o site deduziu dos saques (#751). */
+  fgts: { saldo: number; depositoRescisao: number; percentualMulta: number; multa: number; percentualSaque: number; sacavel: number;
+    saqueAniversario: boolean; };
 }
 export interface ComparacaoRescisao {
   tipo: TipoRescisao; nome: string; aviso: AvisoRescisao; liquido: number; multa: number; sacavel: number; seguroDesemprego: boolean;
