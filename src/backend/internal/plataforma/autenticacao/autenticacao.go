@@ -137,7 +137,7 @@ func (a *Autenticacao) Proteger(rotas *http.ServeMux) http.Handler {
 					expirarSessao(w)
 				} else {
 					if s.precisaRenovar(agora) {
-						s.Emitido, s.Expira = agora.Unix(), agora.Add(a.duracao).Unix()
+						s.Inicio, s.Emitido, s.Expira = s.inicio(), agora.Unix(), agora.Add(a.duracao).Unix()
 						definirSessao(w, a.o.Chave, s)
 					}
 					req.sessao = &s

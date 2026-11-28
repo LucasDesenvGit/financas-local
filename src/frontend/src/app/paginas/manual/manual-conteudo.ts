@@ -67,8 +67,8 @@ export const MANUAL: CapituloManual[] = [
         passos: [
           'Na primeira vez que o site abre, ele pede para criar um usuário e uma senha (pelo menos 8 caracteres).',
           'Nas próximas vezes, entre com esse usuário e senha.',
-          'Para sair, use o menu do usuário (as iniciais, no canto superior direito) e “Sair”.',
-          'A sessão termina sozinha depois de um tempo sem uso; é só entrar de novo.'
+          'Para sair, use o menu do usuário (as iniciais, no canto superior direito) e “Sair”. Isso encerra o acesso em todos os aparelhos (computador e celular): em cada um, é preciso entrar de novo.',
+          'A sessão termina sozinha depois de 2 horas sem uso e, mesmo usando sempre, 12 horas depois de entrar; é só entrar de novo.'
         ],
         abrir: [{ rotulo: 'Trocar a senha', rota: '/configuracoes', params: { aba: 'seguranca' } }],
         erros: ['Muitas senhas erradas seguidas bloqueiam o login por alguns minutos. Espere e tente de novo; o limite e o tempo ficam em Configurações › Parametrização.']

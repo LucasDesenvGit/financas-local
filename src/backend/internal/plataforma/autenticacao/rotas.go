@@ -199,13 +199,21 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
 }
 
-// sair encerra a sessão (logada ou não) e reemite o CSRF para quem agora é anônimo.
+// sair encerra a sessão (logada ou não), em todos os aparelhos, e reemite o CSRF para quem agora é anônimo.
 func (a *Autenticacao) sair(w http.ResponseWriter, r *http.Request) {
 	req := daRequisicao(r.Context())
 	if req.sessao != nil {
-		login := req.sessao.Login
-		if err := a.auditar(r.Context(), a.o.DB, r, "Logout", &login); err != nil {
-			a.erroInterno(w, r, "auditar", err)
+		// Trocar o carimbo invalida o cookie, inclusive o copiado antes: a sessão é só um HMAC sem estado. Custo: cai
+		// também a sessão dos outros aparelhos (computador e celular), como em "sair de todos os aparelhos".
+		usuario, err := usuarioPorId(r.Context(), a.o.DB, req.sessao.Usuario)
+		if err != nil {
+			a.erroInterno(w, r, "sair", err)
+			return
+		}
+		usuario.CarimboSeguranca = tipos.NovoGuid()
+		login := usuario.Login
+		if err := a.salvarComAuditoria(r.Context(), r, usuario, "Logout", &login); err != nil {
+			a.erroInterno(w, r, "sair", err)
 			return
 		}
 	}
@@ -296,7 +304,7 @@ func (a *Autenticacao) auditoria(w http.ResponseWriter, r *http.Request) {
 // está logado).
 func (a *Autenticacao) iniciarSessao(w http.ResponseWriter, req *requisicao, u Usuario) error {
 	agora := a.o.Relogio.Agora()
-	s := conteudoSessao{Usuario: u.Id, Login: u.Login, Carimbo: u.CarimboSeguranca, Emitido: agora.Unix(), Expira: agora.Add(a.duracao).Unix()}
+	s := conteudoSessao{Usuario: u.Id, Login: u.Login, Carimbo: u.CarimboSeguranca, Emitido: agora.Unix(), Expira: agora.Add(a.duracao).Unix(), Inicio: agora.Unix()}
 	definirSessao(w, a.o.Chave, s)
 	req.sessao = &s
 	return a.emitirCsrf(w, req)
