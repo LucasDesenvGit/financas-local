@@ -26,7 +26,7 @@ import { esperadoEmPartes, situacaoDoRecebimento } from './recebimento';
         @if (r.recebimentos.length) {
           <ul class="creditos">
             @for (c of r.recebimentos; track c.id) {
-              <li><span>{{ c.data | date: 'dd/MM' }} · {{ c.descricao }}@if (c.conta) { <span class="texto-suave">({{ c.conta }})</span> }
+              <li><span>{{ c.data | date: 'dd/MM' }} · {{ c.descricao }}@if (c.conta) { <span class="texto-suave"> ({{ c.conta }})</span> }
                   @if (c.sumiu) { <span class="aviso-linha">A transação sumiu na sincronização (o banco pode ter trocado o código dela): o site religa
                     quando a nova aparecer. Se não voltar, desligue.</span> }
                   @if (c.debito) { <span class="aviso-linha">Virou débito: não conta como recebido. Desligue.</span> }

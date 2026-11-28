@@ -234,6 +234,7 @@ test('Trabalho › Holerites: recebido com o adiantamento descontado', async ({ 
   const recebido = page.locator('section.recebimento');
   await expect(recebido).toContainText(/Esperado: adiantamento R\$\s3\.200,00 \+ saldo R\$\s3\.723,75 = R\$\s6\.923,75/);
   await expect(recebido).toContainText('Parece o saldo (o líquido do holerite)');
+  await expect(recebido).toContainText('ADIANTAMENTO (Conta salário)'); // o nome da conta separado da descrição
   await expect(recebido).toContainText(/Faltam R\$\s3\.723,75 para o esperado/);
   await expect(recebido).toContainText(/Recebido: R\$\s3\.200,00 de R\$\s6\.923,75 esperados/);
   const pasta = process.env['FOTOS_PASTA'];
