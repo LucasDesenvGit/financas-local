@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -68,6 +69,8 @@ type gerenciador struct {
 	exemplo     bool // -mostrar: a situação fica fixa
 	ocupado     bool // ligando, desligando ou reiniciando
 	consultando bool
+	// pedindoLink: o UAC do link do primeiro acesso está aberto (#68).
+	pedindoLink atomic.Bool
 	maisOpcoes  bool
 	ultimaCopia string // o arquivo da última cópia do banco, para "Abrir a pasta"
 	nova        versaoNova
@@ -410,12 +413,22 @@ func (g *gerenciador) abrirPasta() {
 	}
 }
 
-// enderecoDoSite é o que "Abrir o site" abre: uma página do site, ou, enquanto o site não tem usuário e dá para ler o
-// segredo da pasta das chaves, o link do primeiro acesso (#68, ADR 0075).
+// enderecoDoSite é o que "Abrir o site" abre: uma página do site, ou, enquanto o site não tem usuário, o link do primeiro
+// acesso (#68, ADR 0075). No Windows, se a pasta das chaves não abre para esta conta, o link vem de uma instância elevada
+// (UAC, uma vez); sem o UAC, abre a página de sempre e avisa na bandeja. O navegador abre aqui, sem elevação. Um pedido
+// de cada vez: outro clique enquanto o aviso do UAC está aberto só abre a página de sempre.
 func (g *gerenciador) enderecoDoSite(pagina string) string {
+	if !g.pedindoLink.CompareAndSwap(false, true) {
+		return g.inst.Pagina(pagina)
+	}
+	defer g.pedindoLink.Store(false)
 	ctx, cancelar := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelar()
-	return primeiroacesso.Endereco(ctx, g.consulta.Cliente, g.inst, pagina, time.Now())
+	endereco, aviso := primeiroacesso.Endereco(ctx, g.consulta.Cliente, g.inst, pagina, time.Now(), primeiroacesso.Pedir)
+	if aviso != "" {
+		go avisarNaBandeja(tela.AvisoNaBandeja{Texto: aviso, Alerta: true})
+	}
+	return endereco
 }
 
 func (g *gerenciador) abrirNoNavegador(endereco string) {
