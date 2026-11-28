@@ -24,8 +24,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-# Confiar-No-Certificado (#775). Vem de instalador\ (o gerar-msi.ps1 o copia). Fica antes das variaveis abaixo, porque o
-# comum.ps1 define pastas (as do repositorio) que nao valem aqui.
+# Confiar-No-Certificado (#775) e Proteger-Pasta (#68). Vem de instalador\ (o gerar-msi.ps1 o copia). Fica antes das
+# variaveis abaixo, porque o comum.ps1 define pastas (as do repositorio) que nao valem aqui.
 . (Join-Path $PSScriptRoot "comum.ps1")
 $NomeServico = "FinancasLocal"
 $Raiz = Join-Path $env:ProgramData "FinancasLocal"
@@ -45,11 +45,7 @@ function Garantir-Pasta([string]$pasta) {
 function Preparar-Dados {
     foreach ($p in $Raiz, $Dados, (Join-Path $Dados "sql"), (Join-Path $Dados "chaves"), (Join-Path $Dados "backups"),
                    (Join-Path $Dados "certificado")) { Garantir-Pasta $p }
-    # So SYSTEM (S-1-5-18) e Administradores (S-1-5-32-544), por SID: o nome do grupo muda com o idioma.
-    # So na raiz e sem /T: o que ja existe la dentro herda sozinho. Com /T, os arquivos de uma instalacao anterior
-    # perdiam a heranca e ficavam sem permissao nenhuma (nem o SYSTEM lia o banco e o certificado).
-    & icacls.exe $Raiz /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" /Q | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "icacls falhou ($LASTEXITCODE) ao proteger $Raiz." }
+    Proteger-Pasta $Raiz   # so SYSTEM e Administradores (scripts\windows\comum.ps1, o mesmo da instalacao pelos scripts)
     Log "pasta de dados protegida: $Dados"
 }
 

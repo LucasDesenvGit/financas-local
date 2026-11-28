@@ -2,8 +2,9 @@
 # FinancasLocal - o que os scripts de scripts\windows\ repetiam: pastas e mensagens (#655).
 # Carregado com '. (Join-Path $PSScriptRoot "comum.ps1")' (nao execute direto). Como o comum.sh no bash.
 # So ASCII e compativel com o Windows PowerShell 5.1.
-# O instalador do .msi (instalador\configurar.ps1) carrega este arquivo so para o Confiar-No-Certificado (#775): o
-# gerar-msi.ps1 o leva para instalador\. As pastas daqui nao valem la: o configurar.ps1 define as dele depois.
+# O instalador do .msi (instalador\configurar.ps1) carrega este arquivo so para o Confiar-No-Certificado (#775) e o
+# Proteger-Pasta (#68): o gerar-msi.ps1 o leva para instalador\. As pastas daqui nao valem la: o configurar.ps1 define
+# as dele depois.
 # =====================================================================
 
 # ---------------------------------------------------------------- Pastas (mesma convencao do comum.sh)
@@ -54,6 +55,22 @@ function Confiar-No-Certificado([string]$pem) {
         }
         if (-not ($loja.Certificates | Where-Object { $_.Thumbprint -eq $publico.Thumbprint })) { $loja.Add($publico) }
     } finally { $loja.Close() }
+}
+
+# Pasta do servico (#68, item 1): o servico roda como SYSTEM, entao so SYSTEM (S-1-5-18) e Administradores (S-1-5-32-544)
+# mudam o que ele executa ou le. Por SID: o nome do grupo muda com o idioma. Com -UsuariosLeem, Usuarios (S-1-5-32-545)
+# leem e executam (o gerenciador, na conta de quem usa, le os appsettings da pasta da API).
+# A permissao so na raiz e sem /T: o que ja existe la dentro herda sozinho. Com /T, os arquivos de uma instalacao
+# anterior perdiam a heranca e ficavam sem permissao nenhuma (nem o SYSTEM lia o banco e o certificado).
+# O dono passa a ser Administradores, com /T: o dono de um arquivo sempre pode trocar a permissao dele, e um arquivo
+# criado pela conta comum (ex.: o 2-criar-banco.sh sem elevacao) devolveria o acesso a ela.
+function Proteger-Pasta([string]$pasta, [switch]$UsuariosLeem) {
+    $permissoes = @("*S-1-5-18:(OI)(CI)F", "*S-1-5-32-544:(OI)(CI)F")
+    if ($UsuariosLeem) { $permissoes += "*S-1-5-32-545:(OI)(CI)RX" }
+    & icacls.exe $pasta /inheritance:r /grant:r @permissoes /Q | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "icacls falhou ($LASTEXITCODE) ao proteger $pasta." }
+    & icacls.exe $pasta /setowner "*S-1-5-32-544" /T /C /Q | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "icacls falhou ($LASTEXITCODE) ao passar $pasta para os Administradores." }
 }
 
 # Erros previstos (com mensagem pronta) sao marcados para o catch final nao mostrar a linha do

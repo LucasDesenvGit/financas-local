@@ -13,7 +13,7 @@ cd financas-local/scripts/geral
 ./instalar.sh                # roda 1, 2 e 3 em sequência e para no primeiro erro
 ```
 
-**Etapa por etapa (bash).** Só no Linux e no macOS: abra um terminal com bash. No Windows, as etapas 1 e 3 existem só no `instalar-windows.ps1` (o `3-publicar-atualizar.sh` repassa para ele, e o `1-preparar-ambiente.sh` recusa); o `2-criar-banco.sh` e o backup (`4-backup.sh`) continuam em bash, pelo **Git Bash** do [Git for Windows](https://git-scm.com/download/win).
+**Etapa por etapa (bash).** Só no Linux e no macOS: abra um terminal com bash. No Windows, as etapas 1 e 3 existem só no `instalar-windows.ps1` (o `3-publicar-atualizar.sh` repassa para ele, e o `1-preparar-ambiente.sh` recusa); o `2-criar-banco.sh` e o backup (`4-backup.sh`) continuam em bash, pelo **Git Bash** do [Git for Windows](https://git-scm.com/download/win), aberto como Administrador: a instalação deixa `dados` e `backups` só para o sistema e os administradores.
 
 ```bash
 cd financas-local/scripts/geral
