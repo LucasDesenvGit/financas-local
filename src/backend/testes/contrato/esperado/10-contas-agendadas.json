@@ -766,7 +766,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 177,
+            "Id": 11001,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -804,7 +804,7 @@
           "descricaoOriginal": null,
           "emergencia": false,
           "estabelecimento": null,
-          "id": 177,
+          "id": 11001,
           "ignorarRelatorios": false,
           "observacao": null,
           "openFinance": false,
@@ -1002,7 +1002,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Id": 1,
             "ProximoVencimento": "2026-11-20",
-            "TransacaoId": 178,
+            "TransacaoId": 11002,
             "UltimoPagamentoAnterior": null,
             "Vencimento": "2026-10-20"
           }
@@ -1024,7 +1024,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 178,
+            "Id": 11002,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1069,7 +1069,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 178
+              "Id": 11002
             },
             "colunas": {
               "AtualizadoEm": {
@@ -1305,7 +1305,7 @@
           "data": "2026-10-14",
           "podeDesfazer": true,
           "reservaNome": "Caixinha viagem",
-          "transacaoId": 178,
+          "transacaoId": 11002,
           "valor": 118.4
         },
         "ultimoSemDespesa": null,
@@ -1414,7 +1414,7 @@
             },
             "colunas": {
               "TransacaoId": {
-                "antes": 178,
+                "antes": 11002,
                 "depois": null
               }
             }
@@ -1437,7 +1437,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 178,
+            "Id": 11002,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1478,7 +1478,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 177,
+            "Id": 11001,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,

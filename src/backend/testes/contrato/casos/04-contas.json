@@ -1,5 +1,6 @@
 {
   "descricao": "Contas (#77, ContasController): lista, obter, criar, editar e excluir; a fatura do mês de cada cartão (#144, #167, #251, #323), as faturas importadas do cartão, os bancos (ADR 0024) e a resposta do limite ajustado (#171). Roda com a sessão 'principal', logada pelo 00-auth. Cria só as contas 7 a 11 e as apaga no fim: as da base voltam como estavam, menos o AtualizadoEm. A conferência com o banco (/api/conferencia-banco) não entra aqui: ela depende das reservas e da carteira, e vai junto com os investimentos.",
+  "tabelas": ["Conta", "Transacao"],
   "casos": [
     {
       "nome": "listar",
@@ -138,7 +139,10 @@
         "incluirNoSaldo": true,
         "arquivada": false,
         "banco": null,
-        "contaVinculadaId": 7
+        "contaVinculadaId": "{{#idCorrente}}"
+      },
+      "capturar": {
+        "idCartao": "/id"
       }
     },
     {
@@ -159,6 +163,9 @@
         "arquivada": true,
         "banco": "outro",
         "contaVinculadaId": null
+      },
+      "capturar": {
+        "idItau": "/id"
       }
     },
     {
@@ -179,6 +186,9 @@
         "arquivada": false,
         "banco": null,
         "contaVinculadaId": null
+      },
+      "capturar": {
+        "idBolsa": "/id"
       }
     },
     {
@@ -199,6 +209,9 @@
         "arquivada": false,
         "banco": null,
         "contaVinculadaId": null
+      },
+      "capturar": {
+        "idArvore": "/id"
       }
     },
     {
@@ -363,7 +376,7 @@
       "metodo": "POST",
       "caminho": "/api/transacoes",
       "corpo": {
-        "contaId": 8,
+        "contaId": "{{#idCartao}}",
         "data": "2026-10-10",
         "descricao": "Compra de teste",
         "valor": 120.35,
@@ -376,7 +389,7 @@
       "nome": "obter o cartão novo com a compra",
       "comentario": "Saldo -120.35; limite disponível = limite + saldo; fatura aberta do ciclo 29/09 a 28/10, que vence em 05/11.",
       "metodo": "GET",
-      "caminho": "/api/contas/8"
+      "caminho": "/api/contas/{{idCartao}}"
     },
     {
       "nome": "faturas do mês com os cartões novos",
@@ -399,7 +412,7 @@
       "nome": "editar a conta nova",
       "comentario": "Conta manual: tudo muda, inclusive o tipo; número em branco fica texto vazio.",
       "metodo": "PUT",
-      "caminho": "/api/contas/7",
+      "caminho": "/api/contas/{{idCorrente}}",
       "corpo": {
         "nome": " Conta Nova Editada ",
         "tipo": 5,
@@ -498,7 +511,7 @@
     {
       "nome": "editar conta manual para cartão vinculado",
       "metodo": "PUT",
-      "caminho": "/api/contas/9",
+      "caminho": "/api/contas/{{idItau}}",
       "corpo": {
         "nome": "Conta Itaú Sem Selo",
         "tipo": 3,
@@ -511,7 +524,7 @@
         "incluirNoSaldo": false,
         "arquivada": true,
         "banco": "outro",
-        "contaVinculadaId": 7
+        "contaVinculadaId": "{{#idCorrente}}"
       }
     },
     {
@@ -597,7 +610,7 @@
       "nome": "limite ajustado do cartão manual",
       "comentario": "Sem limite disponível gravado (manual): a diferença fica null.",
       "metodo": "PUT",
-      "caminho": "/api/contas/8/limite-ajustado",
+      "caminho": "/api/contas/{{idCartao}}/limite-ajustado",
       "corpo": {
         "ajustado": true
       }
@@ -627,13 +640,13 @@
       "nome": "excluir a conta nova com cartões vinculados",
       "comentario": "Os cartões 8 e 9 ficam sem conta vinculada (não há FK).",
       "metodo": "DELETE",
-      "caminho": "/api/contas/7"
+      "caminho": "/api/contas/{{idCorrente}}"
     },
     {
       "nome": "excluir o cartão com a compra",
       "comentario": "A compra sai junto, pela FK em cascata.",
       "metodo": "DELETE",
-      "caminho": "/api/contas/8"
+      "caminho": "/api/contas/{{idCartao}}"
     },
     {
       "nome": "excluir inexistente",
@@ -649,17 +662,17 @@
       "nome": "excluir a conta 9",
       "comentario": "Limpeza: os arquivos seguintes veem as contas da base.",
       "metodo": "DELETE",
-      "caminho": "/api/contas/9"
+      "caminho": "/api/contas/{{idItau}}"
     },
     {
       "nome": "excluir a conta 10",
       "metodo": "DELETE",
-      "caminho": "/api/contas/10"
+      "caminho": "/api/contas/{{idBolsa}}"
     },
     {
       "nome": "excluir a conta 11",
       "metodo": "DELETE",
-      "caminho": "/api/contas/11"
+      "caminho": "/api/contas/{{idArvore}}"
     },
     {
       "nome": "listar no fim",

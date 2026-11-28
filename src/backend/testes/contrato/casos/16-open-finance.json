@@ -1,5 +1,6 @@
 {
   "descricao": "Open Finance (#83, OpenFinanceController). Os que falam com a Pluggy usam a Pluggy falsa (pluggyfalsa, dados/pluggy). A remoção da conexão (#575) vem por último, porque apaga a conexão 2.",
+  "tabelas": ["Transacao", "Investimento", "Configuracao", "Conta", "Emprestimo", "ConexaoBancaria", "PagamentoEmprestimo", "HistoricoInvestimento", "FaturaCartao", "OperacaoAtivo", "SincronizacaoLog", "AuditoriaAcesso", "CategoriaPluggy", "Ativo", "Categoria"],
   "casos": [
     {"nome": "configuração sem login", "metodo": "GET", "caminho": "/api/open-finance/configuracao", "sessao": "visitante"},
     {"nome": "configuração", "metodo": "GET", "caminho": "/api/open-finance/configuracao"},

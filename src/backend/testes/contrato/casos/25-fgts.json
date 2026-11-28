@@ -1,5 +1,6 @@
 {
   "descricao": "FGTS do módulo Trabalho (#216, ADR 0066). Usa o emprego 1 do 21-trabalho (admissão em 11/03/2024), o holerite de outubro de 2026 do 22-holerite e o 13º do 23. O saldo é estimado até o mês do relógio do contrato. O 22-holerite deixa o módulo ligado. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["FgtsLancamento"],
   "casos": [
     {
       "nome": "o FGTS estimado",

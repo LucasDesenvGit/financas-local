@@ -68,7 +68,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ModuloLigado (noticias)",
-            "Id": 52,
+            "Id": 30001,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -110,7 +110,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ModuloDesligado (noticias)",
-            "Id": 53,
+            "Id": 30002,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"

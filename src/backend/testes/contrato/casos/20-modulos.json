@@ -1,5 +1,6 @@
 {
   "descricao": "Módulos (#191, ADR 0064): GET /api/modulos e PUT /api/modulos/{id}. Nesta versão o catálogo ainda não tem módulo: a lista vem vazia e ligar um id qualquer é 404. Os módulos entram com os casos deles. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["Configuracao"],
   "casos": [
     {
       "nome": "lista vazia, sem módulo nesta versão",

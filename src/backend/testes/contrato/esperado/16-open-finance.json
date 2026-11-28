@@ -134,7 +134,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CredencialPluggyAlterada",
-            "Id": 41,
+            "Id": 17001,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -231,7 +231,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CredencialPluggyRemovida",
-            "Id": 42,
+            "Id": 17002,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -260,7 +260,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CredencialPluggyRemovida",
-            "Id": 43,
+            "Id": 17003,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -906,7 +906,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CredencialPluggyAlterada",
-            "Id": 44,
+            "Id": 17004,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -1007,16 +1007,16 @@
       "lancamentos": {
         "fim": "2026-10-08",
         "ids": [
-          181,
-          182,
-          183,
-          184,
-          185,
-          186,
-          187,
-          188,
-          189,
-          190
+          17001,
+          17002,
+          17003,
+          17004,
+          17005,
+          17006,
+          17007,
+          17008,
+          17009,
+          17010
         ],
         "inicio": "2026-10-02"
       },
@@ -1031,7 +1031,7 @@
           {
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "FonteCotacao": "Open Finance",
-            "Id": 8,
+            "Id": 17001,
             "Moeda": "BRL",
             "Nome": null,
             "PrecoAnterior": null,
@@ -1045,7 +1045,7 @@
           {
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "FonteCotacao": "Open Finance",
-            "Id": 9,
+            "Id": 17002,
             "Moeda": "BRL",
             "Nome": null,
             "PrecoAnterior": null,
@@ -1059,7 +1059,7 @@
           {
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "FonteCotacao": "Open Finance",
-            "Id": 10,
+            "Id": 17003,
             "Moeda": "BRL",
             "Nome": null,
             "PrecoAnterior": null,
@@ -1077,7 +1077,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ConexaoAdicionada",
-            "Id": 45,
+            "Id": 17005,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -1178,7 +1178,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": null,
             "DiaVencimento": null,
-            "Id": 12,
+            "Id": 17001,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -1205,7 +1205,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": null,
             "DiaVencimento": null,
-            "Id": 13,
+            "Id": 17002,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -1232,7 +1232,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": 19,
             "DiaVencimento": 28,
-            "Id": 14,
+            "Id": 17003,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": "5000.0",
@@ -1340,7 +1340,7 @@
         "inseridas": [
           {
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "ContaId": 14,
+            "ContaId": 17003,
             "DataFechamento": "2026-10-20",
             "DataVencimento": "2026-10-28",
             "Id": 13,
@@ -1351,7 +1351,7 @@
           },
           {
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "ContaId": 14,
+            "ContaId": 17003,
             "DataFechamento": null,
             "DataVencimento": "2026-09-28",
             "Id": 14,
@@ -1521,11 +1521,11 @@
       "OperacaoAtivo": {
         "inseridas": [
           {
-            "AtivoId": 8,
+            "AtivoId": 17001,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-01-10",
-            "Id": 14,
+            "Id": 17001,
             "Observacao": "Posição do Open Finance sem histórico de compras: confira a data e o preço pago.",
             "Origem": 2,
             "PluggyTransacaoId": "posicao:eq-fii",
@@ -1536,11 +1536,11 @@
             "TransacaoId": null
           },
           {
-            "AtivoId": 9,
+            "AtivoId": 17002,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-02-01",
-            "Id": 15,
+            "Id": 17002,
             "Observacao": "Importada do Open Finance",
             "Origem": 2,
             "PluggyTransacaoId": "mov-1",
@@ -1551,11 +1551,11 @@
             "TransacaoId": null
           },
           {
-            "AtivoId": 9,
+            "AtivoId": 17002,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-03-01",
-            "Id": 16,
+            "Id": 17003,
             "Observacao": "Importada do Open Finance",
             "Origem": 2,
             "PluggyTransacaoId": "mov-2",
@@ -1566,11 +1566,11 @@
             "TransacaoId": null
           },
           {
-            "AtivoId": 10,
+            "AtivoId": 17003,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-14",
-            "Id": 17,
+            "Id": 17004,
             "Observacao": "Posição do Open Finance sem histórico de compras: confira a data e o preço pago.",
             "Origem": 2,
             "PluggyTransacaoId": "posicao:et-sem-historico",
@@ -1628,7 +1628,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": 19,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-02",
             "Descricao": "SALARIO EMPRESA FALSA",
@@ -1638,7 +1638,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 181,
+            "Id": 17001,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "TED",
             "MesmaTitularidade": null,
@@ -1658,7 +1658,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": 2,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-02",
             "Descricao": "SUPERMERCADO EXEMPLO FALSO",
@@ -1668,7 +1668,7 @@
             "Emergencia": 0,
             "Estabelecimento": "Mercado Falso LTDA",
             "FaturaCartaoId": null,
-            "Id": 182,
+            "Id": 17002,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PIX",
             "MesmaTitularidade": 0,
@@ -1688,7 +1688,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-04",
             "Descricao": "PIX ENTRE MINHAS CONTAS",
@@ -1698,7 +1698,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 183,
+            "Id": 17003,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PIX",
             "MesmaTitularidade": 1,
@@ -1718,7 +1718,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-05",
             "Descricao": "PENDENTE QUE VAI SUMIR",
@@ -1728,7 +1728,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 184,
+            "Id": 17004,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1748,7 +1748,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-06",
             "Descricao": "(sem descrição)",
@@ -1758,7 +1758,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 185,
+            "Id": 17005,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1778,7 +1778,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-07",
             "Descricao": "DOCUMENTO MASCARADO",
@@ -1788,7 +1788,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 186,
+            "Id": 17006,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1808,7 +1808,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-08",
             "Descricao": "SEGUNDA PAGINA",
@@ -1818,7 +1818,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 187,
+            "Id": 17007,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1838,7 +1838,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": 9,
             "CategoriaManual": 0,
-            "ContaId": 14,
+            "ContaId": 17003,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-05",
             "Descricao": "LOJA FALSA 02/06",
@@ -1848,7 +1848,7 @@
             "Emergencia": 0,
             "Estabelecimento": "Loja Falsa",
             "FaturaCartaoId": 13,
-            "Id": 188,
+            "Id": 17008,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "CARTAO",
             "MesmaTitularidade": null,
@@ -1868,7 +1868,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 14,
+            "ContaId": 17003,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-06",
             "Descricao": "ESTORNO LOJA FALSA",
@@ -1878,7 +1878,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 189,
+            "Id": 17009,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1898,7 +1898,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 14,
+            "ContaId": 17003,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-07",
             "Descricao": "PAGAMENTO DE FATURA",
@@ -1908,7 +1908,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 190,
+            "Id": 17010,
             "IgnorarRelatorios": 0,
             "MeioPagamento": "PAGAMENTO_FATURA",
             "MesmaTitularidade": null,
@@ -1999,11 +1999,11 @@
       "lancamentos": {
         "fim": "2026-10-10",
         "ids": [
-          185,
-          186,
-          189,
-          190,
-          191
+          17005,
+          17006,
+          17009,
+          17010,
+          17011
         ],
         "inicio": "2026-10-06"
       },
@@ -2071,7 +2071,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 12
+              "Id": 17001
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2082,7 +2082,7 @@
           },
           {
             "chave": {
-              "Id": 13
+              "Id": 17002
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2093,7 +2093,7 @@
           },
           {
             "chave": {
-              "Id": 14
+              "Id": 17003
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2266,11 +2266,11 @@
       "OperacaoAtivo": {
         "inseridas": [
           {
-            "AtivoId": 8,
+            "AtivoId": 17001,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-01-10",
-            "Id": 18,
+            "Id": 17005,
             "Observacao": "Importada do Open Finance",
             "Origem": 2,
             "PluggyTransacaoId": "mov-fii-1",
@@ -2283,11 +2283,11 @@
         ],
         "removidas": [
           {
-            "AtivoId": 8,
+            "AtivoId": 17001,
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-01-10",
-            "Id": 14,
+            "Id": 17001,
             "Observacao": "Posição do Open Finance sem histórico de compras: confira a data e o preço pago.",
             "Origem": 2,
             "PluggyTransacaoId": "posicao:eq-fii",
@@ -2368,7 +2368,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-10",
             "Descricao": "NOVA NA SEGUNDA RODADA",
@@ -2378,7 +2378,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 191,
+            "Id": 17011,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2398,7 +2398,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 185
+              "Id": 17005
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2417,7 +2417,7 @@
           },
           {
             "chave": {
-              "Id": 186
+              "Id": 17006
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2440,7 +2440,7 @@
           },
           {
             "chave": {
-              "Id": 189
+              "Id": 17009
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2455,7 +2455,7 @@
           },
           {
             "chave": {
-              "Id": 190
+              "Id": 17010
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2474,7 +2474,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-05",
             "Descricao": "PENDENTE QUE VAI SUMIR",
@@ -2484,7 +2484,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 184,
+            "Id": 17004,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2513,9 +2513,9 @@
       "lancamentos": {
         "fim": "2026-10-07",
         "ids": [
-          185,
-          186,
-          192
+          17005,
+          17006,
+          17012
         ],
         "inicio": "2026-10-05"
       },
@@ -2583,7 +2583,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 12
+              "Id": 17001
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2594,7 +2594,7 @@
           },
           {
             "chave": {
-              "Id": 13
+              "Id": 17002
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2605,7 +2605,7 @@
           },
           {
             "chave": {
-              "Id": 14
+              "Id": 17003
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2844,7 +2844,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 12,
+            "ContaId": 17001,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-05",
             "Descricao": "PENDENTE QUE VAI SUMIR",
@@ -2854,7 +2854,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 192,
+            "Id": 17012,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2874,7 +2874,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 185
+              "Id": 17005
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2893,7 +2893,7 @@
           },
           {
             "chave": {
-              "Id": 186
+              "Id": 17006
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2969,7 +2969,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 12
+              "Id": 17001
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2980,7 +2980,7 @@
           },
           {
             "chave": {
-              "Id": 13
+              "Id": 17002
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2991,7 +2991,7 @@
           },
           {
             "chave": {
-              "Id": 14
+              "Id": 17003
             },
             "colunas": {
               "AtualizadoEm": {
@@ -3285,7 +3285,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 12
+              "Id": 17001
             },
             "colunas": {
               "AtualizadoEm": {
@@ -3296,7 +3296,7 @@
           },
           {
             "chave": {
-              "Id": 13
+              "Id": 17002
             },
             "colunas": {
               "AtualizadoEm": {
@@ -3307,7 +3307,7 @@
           },
           {
             "chave": {
-              "Id": 14
+              "Id": 17003
             },
             "colunas": {
               "AtualizadoEm": {
@@ -3652,7 +3652,7 @@
         {
           "banco": null,
           "cartao": "Cartão Falso",
-          "contaId": 14,
+          "contaId": 17003,
           "faturaId": 13,
           "fechamento": "2026-10-20",
           "parcelasMes": 25.5,
@@ -3872,7 +3872,7 @@
           "descricaoOriginal": null,
           "emergencia": false,
           "estabelecimento": null,
-          "id": 176,
+          "id": 8005,
           "ignorarRelatorios": true,
           "observacao": null,
           "openFinance": false,
@@ -3896,7 +3896,7 @@
           "descricaoOriginal": null,
           "emergencia": false,
           "estabelecimento": null,
-          "id": 175,
+          "id": 8004,
           "ignorarRelatorios": true,
           "observacao": null,
           "openFinance": false,
@@ -3920,7 +3920,7 @@
           "descricaoOriginal": null,
           "emergencia": false,
           "estabelecimento": null,
-          "id": 174,
+          "id": 8003,
           "ignorarRelatorios": true,
           "observacao": null,
           "openFinance": false,
@@ -4147,7 +4147,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CredencialPluggyRemovida",
-            "Id": 46,
+            "Id": 17006,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -4190,7 +4190,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ConexaoRemovida",
-            "Id": 47,
+            "Id": 17007,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"

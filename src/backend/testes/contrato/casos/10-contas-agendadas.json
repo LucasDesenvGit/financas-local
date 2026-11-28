@@ -1,5 +1,6 @@
 {
   "descricao": "Contas a pagar (#79, ContasAgendadasController): lista, avisos (#158), sugestões do extrato (#62, #205), criar e editar com a conciliação da cobrança automática (#158, ADR 0043), o 'é a mesma' (#205), pagar com e sem lançar a despesa (#69), pagar pelo cofrinho, ajustar e desfazer (#691) e excluir. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. Só mexe nas contas a pagar que cria (ids 7 a 12) e nas transações que o 'Pagar' lança, e apaga tudo no fim: as da base ficam como estavam, para os arquivos seguintes.",
+  "tabelas": ["ContaAgendada", "Transacao", "PagamentoCofrinho"],
   "casos": [
     {
       "nome": "listar",

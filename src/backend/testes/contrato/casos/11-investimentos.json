@@ -1,5 +1,6 @@
 {
   "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita; parte 6, o extrato; parte 7, o painel dos FIIs. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07. No fim, as 3 rotas de /api/investimentos (#80): os investimentos do Open Finance, o histórico e o renomear, que volta ao nome automático.",
+  "tabelas": ["Ativo", "OperacaoAtivo", "Investimento", "ReservaConferencia", "Transacao"],
   "casos": [
     {
       "nome": "listar reservas",
@@ -367,12 +368,16 @@
         "quantidade": 2.5,
         "precoUnitario": 150.55,
         "taxas": 0.1
+      },
+      "capturar": {
+        "idAtivoNovo": "/ativoId",
+        "idCompra": "/id"
       }
     },
     {
       "nome": "as operações do ativo novo",
       "metodo": "GET",
-      "caminho": "/api/carteira/ativos/6/operacoes"
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}/operacoes"
     },
     {
       "nome": "criar a venda",
@@ -387,6 +392,9 @@
         "precoUnitario": 150.55,
         "taxas": 0.1,
         "observacao": "  Venda parcial  "
+      },
+      "capturar": {
+        "idVenda": "/id"
       }
     },
     {
@@ -765,7 +773,7 @@
     {
       "nome": "alterar a compra",
       "metodo": "PUT",
-      "caminho": "/api/carteira/operacoes/8",
+      "caminho": "/api/carteira/operacoes/{{idCompra}}",
       "corpo": {
         "ticker": "KNRI11",
         "tipo": 1,
@@ -779,12 +787,12 @@
     {
       "nome": "as operações depois da alteração",
       "metodo": "GET",
-      "caminho": "/api/carteira/ativos/6/operacoes"
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}/operacoes"
     },
     {
       "nome": "alterar deixando a venda maior",
       "metodo": "PUT",
-      "caminho": "/api/carteira/operacoes/8",
+      "caminho": "/api/carteira/operacoes/{{idCompra}}",
       "corpo": {
         "ticker": "KNRI11",
         "tipo": 1,
@@ -797,7 +805,7 @@
     {
       "nome": "alterar trocando o ativo",
       "metodo": "PUT",
-      "caminho": "/api/carteira/operacoes/8",
+      "caminho": "/api/carteira/operacoes/{{idCompra}}",
       "corpo": {
         "ticker": "MXRF11",
         "tipo": 1,
@@ -836,7 +844,7 @@
     {
       "nome": "alterar com a data no futuro",
       "metodo": "PUT",
-      "caminho": "/api/carteira/operacoes/8",
+      "caminho": "/api/carteira/operacoes/{{idCompra}}",
       "corpo": {
         "ticker": "KNRI11",
         "tipo": 1,
@@ -849,7 +857,7 @@
     {
       "nome": "alterar com a quantidade zero",
       "metodo": "PUT",
-      "caminho": "/api/carteira/operacoes/8",
+      "caminho": "/api/carteira/operacoes/{{idCompra}}",
       "corpo": {
         "ticker": "KNRI11",
         "tipo": 1,
@@ -862,17 +870,17 @@
     {
       "nome": "excluir a compra de que a venda depende",
       "metodo": "DELETE",
-      "caminho": "/api/carteira/operacoes/8"
+      "caminho": "/api/carteira/operacoes/{{idCompra}}"
     },
     {
       "nome": "excluir a venda",
       "metodo": "DELETE",
-      "caminho": "/api/carteira/operacoes/9"
+      "caminho": "/api/carteira/operacoes/{{idVenda}}"
     },
     {
       "nome": "excluir a compra",
       "metodo": "DELETE",
-      "caminho": "/api/carteira/operacoes/8"
+      "caminho": "/api/carteira/operacoes/{{idCompra}}"
     },
     {
       "nome": "excluir uma operação que não existe",
@@ -887,7 +895,7 @@
     {
       "nome": "alterar o ativo",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "nome": "  Kinea Renda  ",
         "tipo": 1,
@@ -898,7 +906,7 @@
     {
       "nome": "alterar o ativo para preço manual",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "tipo": 1,
         "precoManual": true,
@@ -909,13 +917,13 @@
       "nome": "as operações com o preço manual",
       "comentario": "Sem operações, a lista vazia.",
       "metodo": "GET",
-      "caminho": "/api/carteira/ativos/6/operacoes"
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}/operacoes"
     },
     {
       "nome": "tirar o preço manual",
       "comentario": "Busca a cotação de novo: sem rede, fica o último preço.",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "tipo": 1,
         "precoManual": false
@@ -924,7 +932,7 @@
     {
       "nome": "preço manual sem o preço",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "tipo": 1,
         "precoManual": true
@@ -933,7 +941,7 @@
     {
       "nome": "tipo de ativo fora da lista",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "tipo": 9
       }
@@ -941,7 +949,7 @@
     {
       "nome": "segmento fora da lista",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "tipo": 1,
         "segmento": "Fazendas"
@@ -974,7 +982,7 @@
     {
       "nome": "nome longo demais",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "tipo": 1,
         "nome": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -983,7 +991,7 @@
     {
       "nome": "preço negativo no ativo",
       "metodo": "PUT",
-      "caminho": "/api/carteira/ativos/6",
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}",
       "corpo": {
         "tipo": 1,
         "precoManual": true,
@@ -993,12 +1001,12 @@
     {
       "nome": "excluir o ativo",
       "metodo": "DELETE",
-      "caminho": "/api/carteira/ativos/6"
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}"
     },
     {
       "nome": "excluir um ativo que não existe",
       "metodo": "DELETE",
-      "caminho": "/api/carteira/ativos/6"
+      "caminho": "/api/carteira/ativos/{{idAtivoNovo}}"
     },
     {
       "nome": "excluir o ativo com o id que não é número",

@@ -1,7 +1,7 @@
 [
   {
     "nome": "o recebimento de outubro",
-    "requisicao": "GET /api/trabalho/holerites/1/recebimentos",
+    "requisicao": "GET /api/trabalho/holerites/{{idHoleriteOutubro}}/recebimentos",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -15,7 +15,7 @@
   },
   {
     "nome": "ligar uma transação que não existe",
-    "requisicao": "POST /api/trabalho/holerites/1/recebimentos",
+    "requisicao": "POST /api/trabalho/holerites/{{idHoleriteOutubro}}/recebimentos",
     "status": 400,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -117,7 +117,7 @@
       "diasUteis": 26,
       "empregoId": 1,
       "fechadoEm": null,
-      "id": 3,
+      "id": 27001,
       "lancamentos": [],
       "mes": "2026-01-01",
       "origem": 1,
@@ -133,7 +133,7 @@
             "DiasUteis": 26,
             "EmpregoId": 1,
             "FechadoEm": null,
-            "Id": 3,
+            "Id": 27001,
             "Mes": "2026-01-01",
             "Origem": 1,
             "Situacao": 1
@@ -240,7 +240,7 @@
           {
             "ContaId": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "HoleriteId": 3,
+            "HoleriteId": 27001,
             "Id": 1,
             "TransacaoData": "2026-02-05",
             "TransacaoDescricao": "SALARIO EMPRESA FICTICIA LTDA",
@@ -331,7 +331,7 @@
           {
             "ContaId": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "HoleriteId": 3,
+            "HoleriteId": 27001,
             "Id": 1,
             "TransacaoData": "2026-02-05",
             "TransacaoDescricao": "SALARIO EMPRESA FICTICIA LTDA",
@@ -357,7 +357,7 @@
             "DiasUteis": 26,
             "EmpregoId": 1,
             "FechadoEm": null,
-            "Id": 3,
+            "Id": 27001,
             "Mes": "2026-01-01",
             "Origem": 1,
             "Situacao": 1

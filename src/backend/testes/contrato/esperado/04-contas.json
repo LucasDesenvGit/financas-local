@@ -760,7 +760,7 @@
       "diaFechamento": null,
       "diaVencimento": null,
       "faturaMes": null,
-      "id": 7,
+      "id": 5001,
       "incluirNoSaldo": true,
       "limiteAjustadoNoApp": null,
       "limiteCredito": null,
@@ -788,7 +788,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": null,
             "DiaVencimento": null,
-            "Id": 7,
+            "Id": 5001,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -820,14 +820,14 @@
       "banco": "nubank",
       "bancoDefinido": false,
       "conexaoBancariaId": null,
-      "contaVinculadaId": 7,
+      "contaVinculadaId": 5001,
       "cor": "#820AD1",
       "diaFechamento": 28,
       "diaVencimento": 5,
       "faturaMes": {
         "banco": "nubank",
         "cartao": "Cartão Nubank Roxinho",
-        "contaId": 8,
+        "contaId": 5002,
         "faturaId": null,
         "fechamento": "2026-10-28",
         "parcelasMes": 0,
@@ -836,7 +836,7 @@
         "valorMes": 0,
         "vencimento": "2026-11-05"
       },
-      "id": 8,
+      "id": 5002,
       "incluirNoSaldo": true,
       "limiteAjustadoNoApp": null,
       "limiteCredito": 2000.0,
@@ -859,12 +859,12 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Banco": null,
             "ConexaoBancariaId": null,
-            "ContaVinculadaId": 7,
+            "ContaVinculadaId": 5001,
             "Cor": "#820AD1",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": 28,
             "DiaVencimento": 5,
-            "Id": 8,
+            "Id": 5002,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": "2000.0",
@@ -901,7 +901,7 @@
       "diaFechamento": null,
       "diaVencimento": null,
       "faturaMes": null,
-      "id": 9,
+      "id": 5003,
       "incluirNoSaldo": false,
       "limiteAjustadoNoApp": null,
       "limiteCredito": null,
@@ -929,7 +929,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": null,
             "DiaVencimento": null,
-            "Id": 9,
+            "Id": 5003,
             "IncluirNoSaldo": 0,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -968,7 +968,7 @@
       "faturaMes": {
         "banco": null,
         "cartao": "Bolsa",
-        "contaId": 10,
+        "contaId": 5004,
         "faturaId": null,
         "fechamento": null,
         "parcelasMes": 0,
@@ -977,7 +977,7 @@
         "valorMes": 0,
         "vencimento": null
       },
-      "id": 10,
+      "id": 5004,
       "incluirNoSaldo": true,
       "limiteAjustadoNoApp": null,
       "limiteCredito": null,
@@ -1005,7 +1005,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": null,
             "DiaVencimento": null,
-            "Id": 10,
+            "Id": 5004,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -1044,14 +1044,14 @@
       "faturaMes": {
         "banco": null,
         "cartao": "árvore",
-        "contaId": 11,
+        "contaId": 5005,
         "faturaId": null,
         "fechamento": "2026-10-01",
         "parcelasMes": 0,
         "proxima": {
           "banco": null,
           "cartao": "árvore",
-          "contaId": 11,
+          "contaId": 5005,
           "faturaId": null,
           "fechamento": "2026-11-01",
           "parcelasMes": 0,
@@ -1064,7 +1064,7 @@
         "valorMes": 0,
         "vencimento": "2026-10-31"
       },
-      "id": 11,
+      "id": 5005,
       "incluirNoSaldo": true,
       "limiteAjustadoNoApp": null,
       "limiteCredito": null,
@@ -1092,7 +1092,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": 1,
             "DiaVencimento": 31,
-            "Id": 11,
+            "Id": 5005,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -1246,14 +1246,14 @@
       "categoriaCor": null,
       "categoriaId": null,
       "categoriaNome": null,
-      "contaId": 8,
+      "contaId": 5002,
       "contaNome": "Cartão Nubank Roxinho",
       "data": "2026-10-10",
       "descricao": "Compra de teste",
       "descricaoOriginal": null,
       "emergencia": false,
       "estabelecimento": null,
-      "id": 171,
+      "id": 5001,
       "ignorarRelatorios": false,
       "observacao": null,
       "openFinance": false,
@@ -1273,7 +1273,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 8,
+            "ContaId": 5002,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-10",
             "Descricao": "Compra de teste",
@@ -1283,7 +1283,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 171,
+            "Id": 5001,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -1305,7 +1305,7 @@
   },
   {
     "nome": "obter o cartão novo com a compra",
-    "requisicao": "GET /api/contas/8",
+    "requisicao": "GET /api/contas/{{idCartao}}",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -1314,14 +1314,14 @@
       "banco": "nubank",
       "bancoDefinido": false,
       "conexaoBancariaId": null,
-      "contaVinculadaId": 7,
+      "contaVinculadaId": 5001,
       "cor": "#820AD1",
       "diaFechamento": 28,
       "diaVencimento": 5,
       "faturaMes": {
         "banco": "nubank",
         "cartao": "Cartão Nubank Roxinho",
-        "contaId": 8,
+        "contaId": 5002,
         "faturaId": null,
         "fechamento": "2026-10-28",
         "parcelasMes": 0,
@@ -1330,7 +1330,7 @@
         "valorMes": 120.35,
         "vencimento": "2026-11-05"
       },
-      "id": 8,
+      "id": 5002,
       "incluirNoSaldo": true,
       "limiteAjustadoNoApp": null,
       "limiteCredito": 2000.0,
@@ -1378,7 +1378,7 @@
       {
         "banco": "nubank",
         "cartao": "Cartão Nubank Roxinho",
-        "contaId": 8,
+        "contaId": 5002,
         "faturaId": null,
         "fechamento": "2026-10-28",
         "parcelasMes": 0,
@@ -1390,14 +1390,14 @@
       {
         "banco": null,
         "cartao": "árvore",
-        "contaId": 11,
+        "contaId": 5005,
         "faturaId": null,
         "fechamento": "2026-10-01",
         "parcelasMes": 0,
         "proxima": {
           "banco": null,
           "cartao": "árvore",
-          "contaId": 11,
+          "contaId": 5005,
           "faturaId": null,
           "fechamento": "2026-11-01",
           "parcelasMes": 0,
@@ -1413,7 +1413,7 @@
       {
         "banco": null,
         "cartao": "Bolsa",
-        "contaId": 10,
+        "contaId": 5004,
         "faturaId": null,
         "fechamento": null,
         "parcelasMes": 0,
@@ -1433,7 +1433,7 @@
       {
         "banco": null,
         "cartao": "árvore",
-        "contaId": 11,
+        "contaId": 5005,
         "faturaId": null,
         "fechamento": "2028-02-01",
         "parcelasMes": 0,
@@ -1445,7 +1445,7 @@
       {
         "banco": null,
         "cartao": "Bolsa",
-        "contaId": 10,
+        "contaId": 5004,
         "faturaId": null,
         "fechamento": null,
         "parcelasMes": 0,
@@ -1469,7 +1469,7 @@
       {
         "banco": "nubank",
         "cartao": "Cartão Nubank Roxinho",
-        "contaId": 8,
+        "contaId": 5002,
         "faturaId": null,
         "fechamento": "2028-02-28",
         "parcelasMes": 0,
@@ -1489,7 +1489,7 @@
       {
         "banco": null,
         "cartao": "árvore",
-        "contaId": 11,
+        "contaId": 5005,
         "faturaId": null,
         "fechamento": "2027-02-01",
         "parcelasMes": 0,
@@ -1501,7 +1501,7 @@
       {
         "banco": null,
         "cartao": "Bolsa",
-        "contaId": 10,
+        "contaId": 5004,
         "faturaId": null,
         "fechamento": null,
         "parcelasMes": 0,
@@ -1525,7 +1525,7 @@
       {
         "banco": "nubank",
         "cartao": "Cartão Nubank Roxinho",
-        "contaId": 8,
+        "contaId": 5002,
         "faturaId": null,
         "fechamento": "2027-02-28",
         "parcelasMes": 0,
@@ -1538,7 +1538,7 @@
   },
   {
     "nome": "editar a conta nova",
-    "requisicao": "PUT /api/contas/7",
+    "requisicao": "PUT /api/contas/{{idCorrente}}",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -1552,7 +1552,7 @@
       "diaFechamento": null,
       "diaVencimento": null,
       "faturaMes": null,
-      "id": 7,
+      "id": 5001,
       "incluirNoSaldo": true,
       "limiteAjustadoNoApp": null,
       "limiteCredito": null,
@@ -1572,7 +1572,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 7
+              "Id": 5001
             },
             "colunas": {
               "AtualizadoEm": {
@@ -1797,7 +1797,7 @@
   },
   {
     "nome": "editar conta manual para cartão vinculado",
-    "requisicao": "PUT /api/contas/9",
+    "requisicao": "PUT /api/contas/{{idItau}}",
     "status": 200,
     "tipo": "application/json; charset=utf-8",
     "corpo": {
@@ -1806,12 +1806,12 @@
       "banco": null,
       "bancoDefinido": true,
       "conexaoBancariaId": null,
-      "contaVinculadaId": 7,
+      "contaVinculadaId": 5001,
       "cor": "#123abc",
       "diaFechamento": 15,
       "diaVencimento": 25,
       "faturaMes": null,
-      "id": 9,
+      "id": 5003,
       "incluirNoSaldo": false,
       "limiteAjustadoNoApp": null,
       "limiteCredito": 300.5,
@@ -1831,7 +1831,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 9
+              "Id": 5003
             },
             "colunas": {
               "AtualizadoEm": {
@@ -1840,7 +1840,7 @@
               },
               "ContaVinculadaId": {
                 "antes": null,
-                "depois": 7
+                "depois": 5001
               },
               "DiaFechamento": {
                 "antes": null,
@@ -2110,14 +2110,14 @@
   },
   {
     "nome": "limite ajustado do cartão manual",
-    "requisicao": "PUT /api/contas/8/limite-ajustado",
+    "requisicao": "PUT /api/contas/{{idCartao}}/limite-ajustado",
     "status": 204,
     "banco": {
       "Conta": {
         "alteradas": [
           {
             "chave": {
-              "Id": 8
+              "Id": 5002
             },
             "colunas": {
               "AtualizadoEm": {
@@ -2163,29 +2163,29 @@
   },
   {
     "nome": "excluir a conta nova com cartões vinculados",
-    "requisicao": "DELETE /api/contas/7",
+    "requisicao": "DELETE /api/contas/{{idCorrente}}",
     "status": 204,
     "banco": {
       "Conta": {
         "alteradas": [
           {
             "chave": {
-              "Id": 8
+              "Id": 5002
             },
             "colunas": {
               "ContaVinculadaId": {
-                "antes": 7,
+                "antes": 5001,
                 "depois": null
               }
             }
           },
           {
             "chave": {
-              "Id": 9
+              "Id": 5003
             },
             "colunas": {
               "ContaVinculadaId": {
-                "antes": 7,
+                "antes": 5001,
                 "depois": null
               }
             }
@@ -2202,7 +2202,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": null,
             "DiaVencimento": null,
-            "Id": 7,
+            "Id": 5001,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -2225,7 +2225,7 @@
   },
   {
     "nome": "excluir o cartão com a compra",
-    "requisicao": "DELETE /api/contas/8",
+    "requisicao": "DELETE /api/contas/{{idCartao}}",
     "status": 204,
     "banco": {
       "Conta": {
@@ -2240,7 +2240,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": 28,
             "DiaVencimento": 5,
-            "Id": 8,
+            "Id": 5002,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": 1,
             "LimiteCredito": "2000.0",
@@ -2265,7 +2265,7 @@
             "AtualizadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "CategoriaId": null,
             "CategoriaManual": 0,
-            "ContaId": 8,
+            "ContaId": 5002,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2026-10-10",
             "Descricao": "Compra de teste",
@@ -2275,7 +2275,7 @@
             "Emergencia": 0,
             "Estabelecimento": null,
             "FaturaCartaoId": null,
-            "Id": 171,
+            "Id": 5001,
             "IgnorarRelatorios": 0,
             "MeioPagamento": null,
             "MesmaTitularidade": null,
@@ -2311,7 +2311,7 @@
   },
   {
     "nome": "excluir a conta 9",
-    "requisicao": "DELETE /api/contas/9",
+    "requisicao": "DELETE /api/contas/{{idItau}}",
     "status": 204,
     "banco": {
       "Conta": {
@@ -2326,7 +2326,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": 15,
             "DiaVencimento": 25,
-            "Id": 9,
+            "Id": 5003,
             "IncluirNoSaldo": 0,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": "300.5",
@@ -2349,7 +2349,7 @@
   },
   {
     "nome": "excluir a conta 10",
-    "requisicao": "DELETE /api/contas/10",
+    "requisicao": "DELETE /api/contas/{{idBolsa}}",
     "status": 204,
     "banco": {
       "Conta": {
@@ -2364,7 +2364,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": null,
             "DiaVencimento": null,
-            "Id": 10,
+            "Id": 5004,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,
@@ -2387,7 +2387,7 @@
   },
   {
     "nome": "excluir a conta 11",
-    "requisicao": "DELETE /api/contas/11",
+    "requisicao": "DELETE /api/contas/{{idArvore}}",
     "status": 204,
     "banco": {
       "Conta": {
@@ -2402,7 +2402,7 @@
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "DiaFechamento": 1,
             "DiaVencimento": 31,
-            "Id": 11,
+            "Id": 5005,
             "IncluirNoSaldo": 1,
             "LimiteAjustadoNoApp": null,
             "LimiteCredito": null,

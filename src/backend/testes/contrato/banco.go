@@ -4,19 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
-	"slices"
 	"strings"
 
 	_ "modernc.org/sqlite" // driver "sqlite", Go puro
 )
 
-// TabelasIgnoradas ficam fora da comparação do banco: são gravadas por tarefas em segundo plano do .NET, em
-// momentos que não dependem dos casos. ErroSistema recebe os avisos do log (ADR 0022), como o do câmbio e o da
-// cripto, que tentam a internet 1 minuto depois de subir e falham, porque o servidor roda sem rede. Noticia e
-// NoticiaFonte: ligar o Notícias roda a busca na hora (#697), que falha sem rede num momento que não depende dos casos.
-var TabelasIgnoradas = []string{"ErroSistema", "Noticia", "NoticiaFonte"}
+// TabelasComJanela são as tabelas AUTOINCREMENT que mais de um arquivo de casos grava. Cada arquivo começa os ids dela na
+// própria janela, então um caso novo num arquivo não muda os ids dos seguintes. Caso que escreve o id de uma linha criada
+// por outro caso usa `capturar` (README, "Ids estáveis"), nunca o número fixo.
+var TabelasComJanela = []string{"AuditoriaAcesso", "RegraDescricao", "Transacao", "Conta", "Ativo", "OperacaoAtivo", "Holerite"}
+
+// TamanhoDaJanela é quantos ids cada arquivo de casos pode criar por tabela (janelaDeIds). 1000, e não 100, porque o
+// base.sql já tem 170 transações: a primeira janela (00-auth) tem de começar acima delas.
+const TamanhoDaJanela = 1000
 
 // Foto é o conteúdo do banco num momento: tabela → linhas em ordem de chave primária.
 type Foto map[string]*fotoTabela
@@ -69,37 +72,24 @@ func abrirSoLeitura(caminho string) (*sql.DB, error) {
 	return db, nil
 }
 
-// fotografar lê todas as tabelas (menos as ignoradas), com o tipo e o texto cru de cada coluna, numa transação só
-// de leitura (todas as tabelas no mesmo instante).
-func fotografar(ctx context.Context, db *sql.DB) (Foto, error) {
+// fotografar lê as tabelas dadas, com o tipo e o texto cru de cada coluna, numa transação só de leitura (todas as
+// tabelas no mesmo instante). Cada arquivo de casos diz as suas (campo "tabelas"): tabela que não existe é erro.
+func fotografar(ctx context.Context, db *sql.DB, tabelas []string) (Foto, error) {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
-	var tabelas []string
-	linhas, err := tx.QueryContext(ctx, `SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name`)
-	if err != nil {
-		return nil, err
-	}
-	for linhas.Next() {
-		var nome string
-		if err := linhas.Scan(&nome); err != nil {
-			linhas.Close()
-			return nil, err
-		}
-		if !slices.Contains(TabelasIgnoradas, nome) {
-			tabelas = append(tabelas, nome)
-		}
-	}
-	linhas.Close()
-	if err := linhas.Err(); err != nil {
-		return nil, err
-	}
-
 	foto := Foto{}
 	for _, tabela := range tabelas {
+		var existe int
+		if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, tabela).Scan(&existe); err != nil {
+			return nil, err
+		}
+		if existe == 0 {
+			return nil, fmt.Errorf("a tabela %q não existe no banco", tabela)
+		}
 		ft, err := fotografarTabela(ctx, tx, tabela)
 		if err != nil {
 			return nil, fmt.Errorf("ler %s: %w", tabela, err)
@@ -107,6 +97,35 @@ func fotografar(ctx context.Context, db *sql.DB) (Foto, error) {
 		foto[tabela] = ft
 	}
 	return foto, nil
+}
+
+// janelaDeIds põe o próximo id de cada tabela de TabelasComJanela no começo da janela do arquivo de casos ((número+1)*TamanhoDaJanela). Sem isso, um caso novo num arquivo desloca os ids de todos os arquivos seguintes e muda os esperados
+// deles. Os ids continuam os de verdade, só que estáveis. Falha se um arquivo anterior estourou a janela.
+func janelaDeIds(ctx context.Context, caminho string, numero int) error {
+	p := url.Values{}
+	p.Add("_pragma", "busy_timeout(30000)")
+	db, err := sql.Open("sqlite", "file:"+caminho+"?"+p.Encode())
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	inicio := int64(numero+1) * TamanhoDaJanela
+	for _, tabela := range TabelasComJanela {
+		var atual int64
+		err := db.QueryRowContext(ctx, `SELECT seq FROM sqlite_sequence WHERE name = ?`, tabela).Scan(&atual)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			_, err = db.ExecContext(ctx, `INSERT INTO sqlite_sequence (name, seq) VALUES (?, ?)`, tabela, inicio)
+		case err == nil && atual >= inicio:
+			return fmt.Errorf("%s já passou de %d (%d): um arquivo anterior criou mais de %d linhas; aumente TamanhoDaJanela", tabela, inicio, atual, TamanhoDaJanela)
+		case err == nil:
+			_, err = db.ExecContext(ctx, `UPDATE sqlite_sequence SET seq = ? WHERE name = ?`, inicio, tabela)
+		}
+		if err != nil {
+			return fmt.Errorf("janela de ids de %s: %w", tabela, err)
+		}
+	}
+	return nil
 }
 
 func aspas(nome string) string { return `"` + strings.ReplaceAll(nome, `"`, `""`) + `"` }

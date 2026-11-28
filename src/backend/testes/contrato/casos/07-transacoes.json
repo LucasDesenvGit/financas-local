@@ -1,5 +1,6 @@
 {
   "descricao": "Transações (#78, TransacoesController): parte 1, a lista com os filtros, a ordem, a paginação e os totais, e obter; parte 2, as sugestões de categoria; parte 3, alterar, ajustar, excluir, as alterações em lote e a transferência; parte 4, o renomear e a categoria em lote, com o Desfazer. Roda com a sessão 'principal', logada pelo 00-auth, depois do 05 e do 06, que mudam categorias e regras (e o reaplicar recategoriza as transações da base). Os de leitura vêm primeiro; os que gravam, no fim.",
+  "tabelas": ["Transacao", "RegraDescricao", "AuditoriaAcesso"],
   "casos": [
     {
       "nome": "listar",
@@ -988,6 +989,15 @@
       }
     },
     {
+      "nome": "achar o lado da transferência entre contas manuais",
+      "comentario": "A transferência não devolve os ids: o id de um lado vem daqui, para o caso de excluir mais adiante (#725).",
+      "metodo": "GET",
+      "caminho": "/api/transacoes?contaId=3&busca=Saque%20para%20Carteira&tamanhoPagina=5",
+      "capturar": {
+        "idLadoDaTransferencia": "/itens/0/id"
+      }
+    },
+    {
       "nome": "transferir sem descrição",
       "metodo": "POST",
       "caminho": "/api/transacoes/transferencia",
@@ -1098,7 +1108,7 @@
     {
       "nome": "excluir um lado da transferência entre contas manuais",
       "metodo": "DELETE",
-      "caminho": "/api/transacoes/172",
+      "caminho": "/api/transacoes/{{idLadoDaTransferencia}}",
       "corpo": "Os dois lados saem (o mesmo TransferenciaGrupo)."
     },
     {

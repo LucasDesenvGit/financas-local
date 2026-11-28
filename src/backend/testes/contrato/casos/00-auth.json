@@ -1,5 +1,6 @@
 {
   "descricao": "Autenticação (AuthController): configurar o usuário, entrar, sair, trocar a senha, auditoria, bloqueio por tentativas e o limite de 5 logins por minuto por IP (Program.cs). O banco fictício começa sem usuário; o primeiro 'configurar' cria o usuário e deixa a sessão 'principal' logada, e ela continua logada para os assuntos seguintes. Cada IP tem a própria cota de 5 tentativas por minuto: os casos estão distribuídos entre IPs para nunca cair no 429 sem querer.",
+  "tabelas": ["Usuario", "AuditoriaAcesso"],
   "sessoes": {
     "segundo-ip": { "origem": "127.0.0.2" },
     "terceiro-ip": { "origem": "127.0.0.3" },

@@ -6,17 +6,22 @@ package contrato
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 // ArquivoCasos é um casos/NN-assunto.json: os casos de um assunto, rodados em ordem.
 type ArquivoCasos struct {
 	Descricao string `json:"descricao"`
+	// Tabelas são as tabelas do assunto: o banco é conferido só nelas, e uma mudança em outra não aparece. Obrigatório
+	// (pode ser vazio, []). ErroSistema não entra: recebe avisos do log em momentos que não dependem dos casos.
+	Tabelas []string `json:"tabelas"`
 	// Sessoes dá opções às sessões (navegadores) usadas no arquivo. Sessão sem opção nenhuma não precisa estar aqui.
 	Sessoes map[string]OpcoesSessao `json:"sessoes"`
 	Casos   []Caso                  `json:"casos"`
@@ -56,6 +61,10 @@ type Caso struct {
 
 var nomeVariavel = regexp.MustCompile(`\{\{([A-Za-z0-9_.-]+)\}\}`)
 
+// numeroCapturado é `"{{#nome}}"` num corpo: o arquivo de casos tem de ser JSON válido, então o número vai entre aspas
+// e sai sem elas (`"contaId": "{{#idCartao}}"` vira `"contaId": 8`).
+var numeroCapturado = regexp.MustCompile(`"\{\{#([A-Za-z0-9_.-]+)\}\}"`)
+
 // lerCasos lê todos os casos/*.json, em ordem de nome.
 func lerCasos(pasta string) ([]string, map[string]ArquivoCasos, error) {
 	arquivos, err := filepath.Glob(filepath.Join(pasta, "*.json"))
@@ -87,6 +96,9 @@ func lerCasos(pasta string) ([]string, map[string]ArquivoCasos, error) {
 }
 
 func validarArquivo(a ArquivoCasos) error {
+	if a.Tabelas == nil {
+		return errors.New(`faltou "tabelas": as do assunto (ou [], se o arquivo não mexe no banco)`)
+	}
 	vistos := map[string]bool{}
 	for i, c := range a.Casos {
 		switch {
@@ -111,9 +123,22 @@ func validarArquivo(a ArquivoCasos) error {
 	return nil
 }
 
-// substituir troca {{nome}} pelo valor capturado num caso anterior.
+// substituir troca {{nome}} pelo valor capturado num caso anterior (e "{{#nome}}" pelo número, sem as aspas).
 func substituir(texto string, variaveis map[string]string) (string, error) {
 	var faltando []string
+	texto = numeroCapturado.ReplaceAllStringFunc(texto, func(m string) string {
+		nome := numeroCapturado.FindStringSubmatch(m)[1]
+		valor, ok := variaveis[nome]
+		if !ok {
+			faltando = append(faltando, nome)
+			return m
+		}
+		if _, err := strconv.ParseInt(valor, 10, 64); err != nil {
+			faltando = append(faltando, nome+" (não é inteiro)")
+			return m
+		}
+		return valor
+	})
 	resultado := nomeVariavel.ReplaceAllStringFunc(texto, func(m string) string {
 		nome := nomeVariavel.FindStringSubmatch(m)[1]
 		valor, ok := variaveis[nome]

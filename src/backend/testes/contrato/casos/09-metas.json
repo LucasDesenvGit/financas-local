@@ -1,5 +1,6 @@
 {
   "descricao": "Metas (#79, MetasController): lista com o progresso (saldo da conta ou do cofrinho), o plano do caixa (#90, #149), a ordem de prioridade, criar, editar, aportes e excluir. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. As metas da base são os ids 1 a 3 (a 2 guarda no cofrinho 'Caixinha viagem' da conta 1). Cria as metas 4 e 5 (com aportes) e as apaga no fim, com os aportes junto. A ordem de prioridade volta a 1, 2 e 3: a meta 3, sem ordem na base (0), fica com a 3, porque a API não tem como voltar ao 0. Não lista os aportes novos: a hora deles sai do relógio, que anda.",
+  "tabelas": ["Meta", "MetaAporte"],
   "casos": [
     {
       "nome": "listar",

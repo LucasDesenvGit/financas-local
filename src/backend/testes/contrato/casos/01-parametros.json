@@ -1,5 +1,6 @@
 {
   "descricao": "Parametrização (ParametrosController, ParametroService): o catálogo de parâmetros com valor, padrão e faixa, a gravação que valida tudo antes (ou grava todos, ou nenhum) e o diagnóstico do sistema. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["Configuracao", "AuditoriaAcesso"],
   "casos": [
     {
       "nome": "listar",

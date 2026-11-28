@@ -1,5 +1,6 @@
 {
   "descricao": "Holerite em PDF do módulo Trabalho (#228, ADR 0068). Usa o emprego 1 do 21-trabalho. Os PDFs são os fictícios do leitor/ficticios (o estilo clássico, com o mês trocado para setembro de 2026 e o CNPJ do emprego), em base64. Lê, recusa o PDF com senha e o que não é PDF, grava setembro e desfaz no fim, para não mudar os arquivos seguintes. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["Holerite"],
   "casos": [
     {
       "nome": "ler o holerite de setembro",

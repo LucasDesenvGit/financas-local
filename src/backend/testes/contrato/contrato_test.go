@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -83,7 +84,7 @@ func TestContrato(t *testing.T) {
 	}
 	defer db.Close()
 
-	ex := &execucao{alvo: enderecoAlvo, raizes: raizes, n: n, db: db, sessoes: map[string]*Sessao{}, variaveis: map[string]string{}}
+	ex := &execucao{caminhoBanco: caminhoBanco, alvo: enderecoAlvo, raizes: raizes, n: n, db: db, sessoes: map[string]*Sessao{}, variaveis: map[string]string{}}
 	escolhidos := map[string]bool{}
 	for _, nome := range strings.Split(*somente, ",") {
 		if nome = strings.TrimSpace(nome); nome != "" {
@@ -100,16 +101,20 @@ func TestContrato(t *testing.T) {
 }
 
 type execucao struct {
-	alvo      *url.URL
-	raizes    *x509.CertPool
-	n         Normalizador
-	db        *sql.DB
-	sessoes   map[string]*Sessao
-	variaveis map[string]string
+	caminhoBanco string
+	alvo         *url.URL
+	raizes       *x509.CertPool
+	n            Normalizador
+	db           *sql.DB
+	sessoes      map[string]*Sessao
+	variaveis    map[string]string
 }
 
 func (ex *execucao) rodarArquivo(t *testing.T, nome string, arquivo ArquivoCasos) {
 	caminhoEsperado := filepath.Join("esperado", nome+".json")
+	if err := ex.reservarIds(t, nome); err != nil {
+		t.Fatal(err)
+	}
 	esperados := map[string]any{}
 	if !*atualizar {
 		dados, err := os.ReadFile(caminhoEsperado)
@@ -178,6 +183,15 @@ func (ex *execucao) rodarArquivo(t *testing.T, nome string, arquivo ArquivoCasos
 	}
 }
 
+// reservarIds põe os ids novos do arquivo na janela dele (banco.go, janelaDeIds); o número vem do nome (07-...).
+func (ex *execucao) reservarIds(t *testing.T, nome string) error {
+	numero, err := strconv.Atoi(strings.SplitN(nome, "-", 2)[0])
+	if err != nil {
+		return fmt.Errorf("o arquivo %q começa com o número que dá a ordem (NN-assunto): %w", nome, err)
+	}
+	return janelaDeIds(t.Context(), ex.caminhoBanco, numero)
+}
+
 func temCaso(a ArquivoCasos, nome string) bool {
 	for _, c := range a.Casos {
 		if c.Nome == nome {
@@ -235,7 +249,7 @@ func (ex *execucao) rodarCaso(ctx context.Context, arquivo ArquivoCasos, caso Ca
 		}
 	}
 
-	antes, err := fotografar(ctx, ex.db)
+	antes, err := fotografar(ctx, ex.db, arquivo.Tabelas)
 	if err != nil {
 		return nil, fmt.Errorf("ler o banco antes: %w", err)
 	}
@@ -243,7 +257,7 @@ func (ex *execucao) rodarCaso(ctx context.Context, arquivo ArquivoCasos, caso Ca
 	if err != nil {
 		return nil, err
 	}
-	depois, err := fotografar(ctx, ex.db)
+	depois, err := fotografar(ctx, ex.db, arquivo.Tabelas)
 	if err != nil {
 		return nil, fmt.Errorf("ler o banco depois: %w", err)
 	}

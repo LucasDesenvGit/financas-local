@@ -98,7 +98,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ConferenciaInvestimentos (1 tipo, 1 compra, 1 troco, 0 rendimento, 0 taxa)",
-            "Id": 38,
+            "Id": 13001,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -112,7 +112,7 @@
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2025-11-15",
-            "Id": 13,
+            "Id": 13001,
             "Observacao": "Compra que faltou no Open Finance (Conferir investimentos)",
             "Origem": 3,
             "PluggyTransacaoId": null,
@@ -204,7 +204,7 @@
         "ativoId": 2,
         "cambio": 1.0,
         "data": "2025-11-15",
-        "id": 13,
+        "id": 13001,
         "moeda": "BRL",
         "observacao": "Compra que faltou no Open Finance (Conferir investimentos)",
         "origem": 3,
@@ -274,7 +274,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ConferenciaInvestimentosDesfeita (3)",
-            "Id": 39,
+            "Id": 13002,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -288,7 +288,7 @@
             "Cambio": "1.0",
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Data": "2025-11-15",
-            "Id": 13,
+            "Id": 13001,
             "Observacao": "Compra que faltou no Open Finance (Conferir investimentos)",
             "Origem": 3,
             "PluggyTransacaoId": null,
@@ -699,7 +699,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "TrocosAutomaticosDesfeitos (0)",
-            "Id": 40,
+            "Id": 13003,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
