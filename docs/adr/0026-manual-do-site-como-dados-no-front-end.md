@@ -45,7 +45,7 @@ Ela deixou em aberto o formato do conteúdo. O risco principal de um manual é *
 ## Decisão
 
 O manual é um arquivo de dados, `paginas/manual/manual-conteudo.ts`:
-- **capítulos → seções**, cada seção com: para que serve, passos, links "Abrir a tela" (rota + parâmetros), dicas, erros comuns e termos do glossário;
+- **capítulos → seções**, cada seção com: para que serve, tópicos curtos, passo a passo (só quando a ordem importa), links "Abrir a tela" (rota + parâmetros), "Mais detalhes" (o resto) e termos do glossário (formato atual: ADR 0071);
 - desenhado pelo `ManualComponent`.
 
 **Endereços:**
