@@ -69,7 +69,7 @@ configurar_ambiente_build
 nome_go=financas-go
 if [[ "$pular_build" -eq 0 ]]; then
     etapa 'Compilando o front-end (Angular)'
-    (cd "$pasta_front" && npm ci --no-audit --no-fund && npm run build)
+    (cd "$pasta_front" && npm ci --ignore-scripts --no-audit --no-fund && npm run build)
     ok 'front-end compilado'
 
     # #86: sem a API em .NET. A publicacao e o executavel do Go, o appsettings.json dele e o front-end.
@@ -200,6 +200,15 @@ ExecStart=$exe_servico $args_servico
 WorkingDirectory=$destino
 Restart=on-failure
 Environment=ASPNETCORE_ENVIRONMENT=Production
+# #68: isolamento. O site so grava em dados/ (banco, cofre, certificado e dados/backups); o resto fica so de leitura.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths="$Dados"
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
 
 [Install]
 WantedBy=default.target

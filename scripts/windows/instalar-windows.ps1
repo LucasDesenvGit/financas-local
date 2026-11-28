@@ -378,7 +378,7 @@ function Publicar {
         Encerrar-UsoDoFrontEnd $pastaFront
         Push-Location $pastaFront
         try {
-            Executar "npm.cmd" @("ci", "--no-audit", "--no-fund")
+            Executar "npm.cmd" @("ci", "--ignore-scripts", "--no-audit", "--no-fund")
             Executar "npm.cmd" @("run", "build")
         } finally { Pop-Location }
         Ok "front-end compilado"
