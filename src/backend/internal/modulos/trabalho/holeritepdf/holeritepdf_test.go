@@ -173,7 +173,7 @@ func TestLerConfirmarEDesfazer(t *testing.T) {
 		t.Errorf("cálculo: %+v", c)
 	}
 	// As horas extras e o DSR lidos entram nas médias do 13º e das férias.
-	soma, meses, err := a.holerites.VariaveisDoAno(context.Background(), id, 2026, c.SalarioContratual)
+	soma, meses, err := a.holerites.VariaveisEntre(context.Background(), id, tipos.NovaData(2026, 1, 1), tipos.NovaData(2027, 1, 1), c.SalarioContratual)
 	if err != nil || soma.Decimal().StringFixed(2) != "409.09" || meses != 1 {
 		t.Errorf("variáveis: %s em %d meses (%v)", soma.Decimal().StringFixed(2), meses, err)
 	}

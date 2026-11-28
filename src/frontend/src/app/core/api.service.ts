@@ -299,8 +299,9 @@ export class ApiService {
 
   // Open Finance
   parametros(): Observable<Parametro[]> { return this.http.get<Parametro[]>(`${this.base}/parametros`); }
-  salvarParametros(valores: Record<string, number>): Observable<Parametro[]> {
-    return this.http.put<Parametro[]>(`${this.base}/parametros`, { valores });
+  /** #68: a senha atual vai só quando muda um parâmetro de segurança (`Parametro.pedeSenha`). */
+  salvarParametros(valores: Record<string, number>, senhaAtual?: string): Observable<Parametro[]> {
+    return this.http.put<Parametro[]>(`${this.base}/parametros`, senhaAtual ? { valores, senhaAtual } : { valores });
   }
   infoSistema(): Observable<InfoSistema> { return this.http.get<InfoSistema>(`${this.base}/parametros/sistema`); }
 
@@ -440,18 +441,25 @@ export class ApiService {
   desligarRecebimento(holeriteId: number, id: number): Observable<RecebimentosHolerite> {
     return this.http.delete<RecebimentosHolerite>(`${this.base}/trabalho/holerites/${holeriteId}/recebimentos/${id}`);
   }
-  /** #215: a rescisão (saida: "AAAA-MM-DD"). */
-  simularRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string): Observable<CalculoRescisao> {
-    return this.http.get<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/simular`, { params: this.params({ tipo, aviso, saida }) });
+  /**
+   * #215: a rescisão (saida: "AAAA-MM-DD"). saqueAniversario: a resposta da pessoa; null, o site deduz dos saques do
+   * FGTS (#751).
+   */
+  simularRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string,
+    saqueAniversario: boolean | null = null): Observable<CalculoRescisao> {
+    return this.http.get<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/simular`,
+      { params: this.params({ tipo, aviso, saida, saqueAniversario }) });
   }
-  compararRescisao(empregoId: number, saida: string): Observable<ComparacaoRescisao[]> {
-    return this.http.get<ComparacaoRescisao[]>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/comparar`, { params: this.params({ saida }) });
+  compararRescisao(empregoId: number, saida: string, saqueAniversario: boolean | null = null): Observable<ComparacaoRescisao[]> {
+    return this.http.get<ComparacaoRescisao[]>(`${this.base}/trabalho/empregos/${empregoId}/rescisao/comparar`,
+      { params: this.params({ saida, saqueAniversario }) });
   }
   rescisaoRegistrada(empregoId: number): Observable<{ registrada: CalculoRescisao | null }> {
     return this.http.get<{ registrada: CalculoRescisao | null }>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`);
   }
-  registrarRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string): Observable<CalculoRescisao> {
-    return this.http.post<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`, { tipo, aviso, saida });
+  registrarRescisao(empregoId: number, tipo: TipoRescisao, aviso: AvisoRescisao, saida: string,
+    saqueAniversario: boolean): Observable<CalculoRescisao> {
+    return this.http.post<CalculoRescisao>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`, { tipo, aviso, saida, saqueAniversario });
   }
   desfazerRescisao(empregoId: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/trabalho/empregos/${empregoId}/rescisao`);

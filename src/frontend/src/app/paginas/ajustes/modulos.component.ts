@@ -20,7 +20,8 @@ import { Modulo } from '../../core/modelos';
       @if (modulos.falhou()) {
         <div class="aviso-inline" role="alert">
           <p>Não deu para ler os módulos agora (o site pode estar reiniciando depois de uma atualização).</p>
-          <button type="button" class="botao" (click)="modulos.carregar()">Tentar de novo</button>
+          <button type="button" class="botao" [disabled]="modulos.carregando()" (click)="modulos.carregar()">
+            {{ modulos.carregando() ? 'Tentando…' : 'Tentar de novo' }}</button>
         </div>
       } @else if (modulos.lista(); as lista) {
         @if (lista.length) {

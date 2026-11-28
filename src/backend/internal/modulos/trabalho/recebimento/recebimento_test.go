@@ -219,6 +219,49 @@ func TestRecebimentoNaoContaDuasVezes(t *testing.T) {
 	if depois := receitaDe(); depois != antes {
 		t.Fatalf("a receita mudou com um crédito em dois holerites: %s → %s", antes, depois)
 	}
+	// #751: o banco muda o valor do saldo (2738,02) para 2000 no mesmo id: conta só os 2000, com o aviso; antes, o
+	// recebido somava a parte ligada inteira (4738,02 + 500 = 3238,02 seguia igual).
+	if _, err := db.ExecContext(t.Context(), `UPDATE "Transacao" SET "Valor" = '2000.00' WHERE "Id" = ?`, saldo.Id); err != nil {
+		t.Fatal(err)
+	}
+	c = ler(chamar("GET", caminho, ""))
+	if c.Recebido.String() != "2500.00" {
+		t.Fatalf("com o valor mudado = recebido %s; quer 2500.00 (500 + 2000)", c.Recebido)
+	}
+	for _, rec := range c.Recebimentos {
+		if rec.ValorMudou != (rec.Descricao == "CREDITO") { // o id da transação não vai no JSON (o do recebimento ganha)
+			t.Fatalf("o aviso do valor mudado é só o do saldo: %+v", rec)
+		}
+	}
 	chamar("GET", "/api/trabalho/holerites/999/recebimentos", "").ConferirStatus(t, http.StatusNotFound)
 	chamar("POST", "/api/trabalho/holerites/x/recebimentos", `{"transacaoId":1}`).ConferirStatus(t, http.StatusNotFound)
+}
+
+// Regressão (#751): a ligação cuja transação some entre as duas leituras (a sincronização no meio) entrava em pânico no
+// ts[0]; agora conta como sumiu. A transação que passou a valer menos que a parte ligada conta só o valor dela.
+func TestRecebimentoDe(t *testing.T) {
+	t.Parallel()
+	id := int64(7)
+	l := ligacao{id: 1, transacao: &id, valor: v("3000.00"), contaId: 2, data: testeapoio.Dia(2026, 11, 5), valorTransacao: v("3000.00"),
+		descricao: "SALARIO"}
+	casos := []struct {
+		nome              string
+		lida              []Transacao
+		sumiu, mudou, deb bool
+		conta             string
+	}{
+		{"apagada entre as duas leituras: sumiu, e conta", nil, true, false, false, "3000"},
+		{"igual", []Transacao{{Id: 7, Valor: v("3000.00")}}, false, false, false, "3000"},
+		{"o valor caiu para 2500", []Transacao{{Id: 7, Valor: v("2500.00")}}, false, true, false, "2500"},
+		{"virou débito", []Transacao{{Id: 7, Valor: v("-3000.00")}}, false, false, true, "0"},
+	}
+	for _, c := range casos {
+		t.Run(c.nome, func(t *testing.T) {
+			t.Parallel()
+			rec, conta := recebimentoDe(l, c.lida)
+			if rec.Sumiu != c.sumiu || rec.ValorMudou != c.mudou || rec.Debito != c.deb || conta.String() != c.conta {
+				t.Fatalf("= %+v, conta %s", rec, conta)
+			}
+		})
+	}
 }

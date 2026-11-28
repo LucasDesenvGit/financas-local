@@ -228,7 +228,8 @@
           "livre": 6500.00,
           "sumiu": false,
           "valor": 6500.00,
-          "valorLigado": 4498.49
+          "valorLigado": 4498.49,
+          "valorMudou": false
         }
       ],
       "sugestoes": []

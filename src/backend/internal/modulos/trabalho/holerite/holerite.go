@@ -45,15 +45,37 @@ var (
 	ErrSemSalario    = errors.New("sem salário no mês")
 	ErrForaDoEmprego = errors.New("mês fora do emprego")
 	ErrNaoELido      = errors.New("o holerite não é mais o lido do PDF")
+	// ErrReabrirSemCalculo: reaberto, o holerite ficaria sem o cálculo (um dos semCalculo) e perderia o congelado, que
+	// nem o Fechar devolve depois (#750). Vem embrulhado com o erro do cálculo.
+	ErrReabrirSemCalculo = errors.New("reaberto, o holerite ficaria sem o cálculo")
 	// ErrInvalido é a família dos erros de validação, para quem chama de fora do pacote (a mensagem é o Error()).
 	ErrInvalido = errors.New("dados inválidos")
 )
 
-// avisos dos holerites sem cálculo: o holerite existe, e a lista e a tela continuam funcionando (revisão do #699).
-var avisos = map[error]string{
-	ErrSemTabela:     "Ainda não há tabela do INSS ou do IRRF para esse mês: o holerite fica sem o cálculo.",
-	ErrSemSalario:    "Não há salário para esse mês: cadastre em Trabalho › Salário. O holerite fica sem o cálculo.",
-	ErrForaDoEmprego: "Esse mês é de antes da admissão ou depois da saída: o holerite fica sem o cálculo. Exclua-o ou corrija o emprego.",
+// semCalculo são os erros que deixam o holerite sem o cálculo: o holerite existe, e a lista e a tela continuam
+// funcionando (revisão do #699). Lidos com errors.Is, e não como chave de mapa (#750): o erro embrulhado também vale, e um
+// de tipo não comparável não faz o mapa entrar em pânico.
+var semCalculo = []struct {
+	err    error
+	aviso  string // na tela do holerite aberto e no "Não dá para fechar"
+	motivo string // no "Não dá para reabrir"
+}{
+	{ErrSemTabela, "Ainda não há tabela do INSS ou do IRRF para esse mês: o holerite fica sem o cálculo.",
+		"ainda não há tabela do INSS ou do IRRF para esse mês."},
+	{ErrSemSalario, "Não há salário para esse mês: cadastre em Trabalho › Salário. O holerite fica sem o cálculo.",
+		"não há salário para esse mês. Cadastre em Trabalho › Salário e reabra."},
+	{ErrForaDoEmprego, "Esse mês é de antes da admissão ou depois da saída: o holerite fica sem o cálculo. Exclua-o ou corrija o emprego.",
+		"esse mês ficou antes da admissão ou depois da saída. Corrija o emprego e reabra."},
+}
+
+// avisoDe diz se o erro deixa o holerite sem o cálculo e, se deixa, o aviso e o motivo.
+func avisoDe(err error) (aviso, motivo string, ok bool) {
+	for _, s := range semCalculo {
+		if errors.Is(err, s.err) {
+			return s.aviso, s.motivo, true
+		}
+	}
+	return "", "", false
 }
 
 type erroDeValidacao struct{ mensagem string }
@@ -191,7 +213,7 @@ func (s *Servico) Obter(ctx context.Context, id int64) (Holerite, error) {
 		return h, nil
 	}
 	c, err := s.calcular(ctx, h)
-	if aviso, ok := avisos[err]; ok {
+	if aviso, _, ok := avisoDe(err); ok {
 		h.Aviso, h.semCalculo = &aviso, err
 		return h, nil
 	}
@@ -411,6 +433,9 @@ func (s *Servico) Fechar(ctx context.Context, id int64) (Holerite, error) {
 		if h.Situacao == Fechado {
 			return ErrFechado
 		}
+		// O calcular lê o emprego e as tabelas pelo s.db, fora da tx (#750): outra conexão do pool, que não tem limite.
+		// Com SetMaxOpenConns(1) travaria esperando a conexão que a tx segura. Ler fora dela não muda o resultado: a tx
+		// só escreve no holerite, e o que o cálculo lê (emprego, salários, tabelas) não é escrito aqui.
 		c, err := s.calcular(ctx, h)
 		if err != nil {
 			return err
@@ -436,21 +461,28 @@ func (s *Servico) Fechar(ctx context.Context, id int64) (Holerite, error) {
 }
 
 // Reabrir volta o holerite para aberto, para corrigir, e registra na auditoria (r: o pedido de quem reabriu). O lido do
-// PDF volta a ser o calculado, com os lançamentos que tinha antes de ler.
+// PDF volta a ser o calculado, com os lançamentos que tinha antes de ler. Recusa (ErrReabrirSemCalculo) quando o
+// cálculo de agora daria um aviso, como o mês que ficou fora do emprego depois de corrigir a saída (#750): reaberto, o
+// número congelado sumiria, e o Fechar recusaria congelar de novo. O lido do PDF reabre sempre: não tem cálculo a
+// preservar (volta sem os números) e, preso, não poderia nem ser excluído.
 func (s *Servico) Reabrir(ctx context.Context, r *http.Request, id int64) (Holerite, error) {
 	err := banco.EmTransacao(ctx, s.db, func(tx *sql.Tx) error {
-		var situacao int64
-		var mes tipos.Data
-		err := tx.QueryRowContext(ctx, `SELECT "Situacao", "Mes" FROM "Holerite" WHERE "Id" = ?`, id).Scan(&situacao, &mes)
-		if errors.Is(err, sql.ErrNoRows) {
-			return ErrNaoEncontrado
-		}
+		h, _, err := s.ler(ctx, tx, id)
 		if err != nil {
-			return fmt.Errorf("ler o holerite: %w", err)
+			return err
 		}
-		if situacao != Fechado {
+		if h.Situacao != Fechado {
 			return ErrAberto
 		}
+		if h.Origem == Calculado { // o lido do PDF perde os números ao reabrir de qualquer jeito: reabre sempre, para poder excluir
+			if _, err := s.calcular(ctx, h); err != nil { // o mesmo cálculo que o Obter fará depois de reabrir
+				if _, _, ok := avisoDe(err); ok {
+					return fmt.Errorf("%w: %w", ErrReabrirSemCalculo, err)
+				}
+				return err
+			}
+		}
+		mes := h.Mes
 		if _, err := tx.ExecContext(ctx, `UPDATE "Holerite" SET "Situacao" = ?, "Origem" = ?, "Calculo" = NULL, "FechadoEm" = NULL
 			WHERE "Id" = ?`, Aberto, Calculado, id); err != nil {
 			return fmt.Errorf("reabrir o holerite: %w", err)
@@ -568,7 +600,7 @@ func (s *Servico) Estimativa(ctx context.Context, empregoId int64, mes tipos.Dat
 	}
 	c, err := s.calcular(ctx, h)
 	var validacao erroDeValidacao
-	_, semCalculo := avisos[err]
+	_, _, semCalculo := avisoDe(err)
 	switch {
 	case semCalculo || errors.As(err, &validacao):
 		return nil, nil
@@ -599,19 +631,13 @@ func (s *Servico) Excluir(ctx context.Context, id int64) error {
 	return nil
 }
 
-// VariaveisDoAno soma as horas extras, o adicional noturno e o DSR dos holerites do ano (abertos e fechados) e diz em
-// quantos meses havia holerite. É a base da média do 13º e das férias (#213, #214). Holerite sem cálculo (sem tabela
+// VariaveisEntre soma as horas extras, o adicional noturno e o DSR dos holerites de inicio (incluído) até fim (fora),
+// abertos e fechados, e diz em quantos meses havia holerite. É a base da média do 13º e das férias (#213, #214). Holerite sem cálculo (sem tabela
 // do mês) não entra.
 //
 // Súmula 347 do TST (revisão do #700): as horas extras entram na média pelas horas, com o salário-hora de agora, e
 // não pelo valor em reais da época. O valor de cada mês vai corrigido pela razão salarioAtual ÷ o salário daquele mês:
 // é o mesmo que refazer as horas com a hora de agora, e vale também para o holerite lido do PDF, que não guarda as horas.
-func (s *Servico) VariaveisDoAno(ctx context.Context, empregoId int64, ano int, salarioAtual tipos.Decimal) (soma tipos.Decimal, meses int, err error) {
-	return s.VariaveisEntre(ctx, empregoId, tipos.NovaData(ano, 1, 1), tipos.NovaData(ano+1, 1, 1), salarioAtual)
-}
-
-// VariaveisEntre é o VariaveisDoAno de um intervalo de meses: de inicio (incluído) até fim (fora). As férias usam os 12
-// meses antes do início delas (#213).
 func (s *Servico) VariaveisEntre(ctx context.Context, empregoId int64, inicio, fim tipos.Data, salarioAtual tipos.Decimal) (soma tipos.Decimal, meses int, err error) {
 	linhas, err := s.db.QueryContext(ctx, `SELECT "Id" FROM "Holerite" WHERE "EmpregoId" = ? AND "Mes" >= ? AND "Mes" < ?
 		ORDER BY "Mes"`, empregoId, inicio, fim)

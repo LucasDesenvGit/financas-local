@@ -14,6 +14,7 @@ import (
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/auditoria"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/banco"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/respostas"
+	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/sessao"
 	"github.com/LucasDesenvGit/financas-local/src/backend/internal/plataforma/tipos"
 )
 
@@ -198,13 +199,21 @@ func (a *Autenticacao) entrar(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, http.StatusOK, respostas.ConteudoJSON, estadoDto{Configurado: true, Autenticado: true, Login: &usuario.Login, Versao: a.o.Versao})
 }
 
-// sair encerra a sessão (logada ou não) e reemite o CSRF para quem agora é anônimo.
+// sair encerra a sessão (logada ou não), em todos os aparelhos, e reemite o CSRF para quem agora é anônimo.
 func (a *Autenticacao) sair(w http.ResponseWriter, r *http.Request) {
 	req := daRequisicao(r.Context())
 	if req.sessao != nil {
-		login := req.sessao.Login
-		if err := a.auditar(r.Context(), a.o.DB, r, "Logout", &login); err != nil {
-			a.erroInterno(w, r, "auditar", err)
+		// Trocar o carimbo invalida o cookie, inclusive o copiado antes: a sessão é só um HMAC sem estado. Custo: cai
+		// também a sessão dos outros aparelhos (computador e celular), como em "sair de todos os aparelhos".
+		usuario, err := usuarioPorId(r.Context(), a.o.DB, req.sessao.Usuario)
+		if err != nil {
+			a.erroInterno(w, r, "sair", err)
+			return
+		}
+		usuario.CarimboSeguranca = tipos.NovoGuid()
+		login := usuario.Login
+		if err := a.salvarComAuditoria(r.Context(), r, usuario, "Logout", &login); err != nil {
+			a.erroInterno(w, r, "sair", err)
 			return
 		}
 	}
@@ -226,13 +235,13 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	req := daRequisicao(ctx)
-	usuario, err := usuarioPorId(ctx, a.o.DB, req.usuario())
+	usuario, confere, err := usuarioComSenha(ctx, a.o.DB, req.usuario(), *atual.Valor)
 	if err != nil {
 		a.erroInterno(w, r, "alterar a senha", err)
 		return
 	}
-	if VerificarHash(usuario.SenhaHash, *atual.Valor) == SenhaErrada {
-		respostas.Mensagem(w, http.StatusBadRequest, "A senha atual não confere.")
+	if !confere {
+		respostas.Mensagem(w, http.StatusBadRequest, MensagemSenhaAtualErrada)
 		return
 	}
 	if problema := validarSenha(*nova.Valor, usuario.Login); problema != "" {
@@ -256,6 +265,31 @@ func (a *Autenticacao) alterarSenha(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// MensagemSenhaAtualErrada é o 400 de quem pede a senha atual e recebe outra (alterar a senha, parâmetros de
+// segurança).
+const MensagemSenhaAtualErrada = "A senha atual não confere."
+
+// ConfereSenha diz se a senha é a do usuário logado na requisição (sessao.Usuario): a conferência da senha atual do
+// alterar-senha, para quem pede a senha antes de mudar algo de segurança (#68). Sem usuário logado, não confere. Como
+// no alterar-senha, a senha errada não conta como tentativa de login: quem chega aqui já entrou.
+func ConfereSenha(ctx context.Context, q banco.DBTX, senha string) (bool, error) {
+	id, ok := sessao.Usuario(ctx)
+	if !ok {
+		return false, nil
+	}
+	_, confere, err := usuarioComSenha(ctx, q, id, senha)
+	return confere, err
+}
+
+// usuarioComSenha lê o usuário e diz se a senha é a dele (certa, mesmo que o hash precise ser refeito).
+func usuarioComSenha(ctx context.Context, q banco.DBTX, id int64, senha string) (Usuario, bool, error) {
+	usuario, err := usuarioPorId(ctx, q, id)
+	if err != nil {
+		return Usuario{}, false, err
+	}
+	return usuario, VerificarHash(usuario.SenhaHash, senha) != SenhaErrada, nil
+}
+
 // auditoria devolve os 100 registros mais novos.
 func (a *Autenticacao) auditoria(w http.ResponseWriter, r *http.Request) {
 	registros, err := ultimosAcessos(r.Context(), a.o.DB)
@@ -270,7 +304,7 @@ func (a *Autenticacao) auditoria(w http.ResponseWriter, r *http.Request) {
 // está logado).
 func (a *Autenticacao) iniciarSessao(w http.ResponseWriter, req *requisicao, u Usuario) error {
 	agora := a.o.Relogio.Agora()
-	s := conteudoSessao{Usuario: u.Id, Login: u.Login, Carimbo: u.CarimboSeguranca, Emitido: agora.Unix(), Expira: agora.Add(a.duracao).Unix()}
+	s := conteudoSessao{Usuario: u.Id, Login: u.Login, Carimbo: u.CarimboSeguranca, Emitido: agora.Unix(), Expira: agora.Add(a.duracao).Unix(), Inicio: agora.Unix()}
 	definirSessao(w, a.o.Chave, s)
 	req.sessao = &s
 	return a.emitirCsrf(w, req)
