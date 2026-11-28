@@ -1,5 +1,6 @@
 {
   "descricao": "Holerite do mês do módulo Trabalho (#211, ADR 0065). Usa o emprego 1 do 21-trabalho (5000 até maio de 2026 e 6000 de junho em diante). O 21-trabalho termina com o módulo desligado: este liga de novo. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["Holerite", "HoleriteLancamento", "AuditoriaAcesso"],
   "casos": [
     {
       "nome": "ligar o Trabalho",

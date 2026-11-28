@@ -1,5 +1,6 @@
 {
   "descricao": "Contas (#77, ContasController): lista, obter, criar, editar e excluir; a fatura do mês de cada cartão (#144, #167, #251, #323), as faturas importadas do cartão, os bancos (ADR 0024) e a resposta do limite ajustado (#171). Roda com a sessão 'principal', logada pelo 00-auth. Cria só as contas 7 a 11 e as apaga no fim: as da base voltam como estavam, menos o AtualizadoEm. A conferência com o banco (/api/conferencia-banco) não entra aqui: ela depende das reservas e da carteira, e vai junto com os investimentos.",
+  "tabelas": ["Conta", "Transacao"],
   "casos": [
     {
       "nome": "listar",

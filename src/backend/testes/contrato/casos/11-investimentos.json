@@ -1,5 +1,6 @@
 {
   "descricao": "Investimentos (#82, CarteiraController e ReservasController): parte 1, as reservas (ReservaService, ADRs 0010, 0037 e 0038): a lista, conferir e tirar a conferência; parte 3, a leitura da carteira; parte 4, as cotações; parte 5, a escrita; parte 6, o extrato; parte 7, o painel dos FIIs. Roda com a sessão 'principal', logada pelo 00-auth, depois do 07. No fim, as 3 rotas de /api/investimentos (#80): os investimentos do Open Finance, o histórico e o renomear, que volta ao nome automático.",
+  "tabelas": ["Ativo", "OperacaoAtivo", "Investimento", "ReservaConferencia", "Transacao"],
   "casos": [
     {
       "nome": "listar reservas",

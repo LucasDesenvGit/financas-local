@@ -1,5 +1,6 @@
 {
   "descricao": "Férias do módulo Trabalho (#213, ADR 0065). Usa o emprego 1 do 21-trabalho (admissão em 11/03/2024; 6000 de junho de 2026 em diante) e o holerite de outubro de 2026 do 22-holerite, que entra na média. Os períodos dependem do relógio do contrato. O 22-holerite deixa o módulo ligado. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["FeriasAgendamento", "FeriasFaltas"],
   "casos": [
     {
       "nome": "os períodos",

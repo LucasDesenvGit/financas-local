@@ -1,5 +1,6 @@
 {
   "descricao": "Câmbio pela PTAX (#81, ADR 0007): GET /api/cambio/moedas, /cotacoes e /cotacao. O contrato roda sem rede: a lista de moedas não vem do Banco Central (fica a guardada, vazia no base.sql), e toda consulta à PTAX falha, como sem internet; o que vale é o que está guardado em CotacaoMoeda (USD de 05/03, 09, 13 e 14/10; EUR de 14/10). Hoje é 14/10 em Brasília (o relógio começa em 15/10 01:00 UTC). Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["CotacaoMoeda"],
   "casos": [
     {
       "nome": "moedas sem internet: a lista guardada",

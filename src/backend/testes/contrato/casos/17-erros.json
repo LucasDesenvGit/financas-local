@@ -1,5 +1,6 @@
 {
   "descricao": "Erros do sistema (ErrosController, ADR 0022): lista com filtros (situação, origem, nível, período em dias de Brasília, página), detalhe, resolver um ou todos os do filtro e o erro do front-end, gravado em segundo plano já limpo de dados sensíveis e somado quando se repete. Os erros vêm do base.sql; a tabela fica fora da comparação do banco (TabelasIgnoradas), então as respostas é que mostram o que mudou. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": [],
   "casos": [
     {
       "nome": "listar",

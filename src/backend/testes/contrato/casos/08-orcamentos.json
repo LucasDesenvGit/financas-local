@@ -1,5 +1,6 @@
 {
   "descricao": "Orçamentos (#79, OrcamentosController): lista do mês, salvar (cria ou altera), excluir, a sugestão por categoria (#39) e aplicá-la, e copiar do mês anterior. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília. Os orçamentos da base são os ids 1 a 7 (setembro e outubro de 2026). Cria os ids 8 a 15 e os apaga no fim, e devolve o de outubro do Mercado (id 4) aos 650.0: os arquivos seguintes veem a base como estava.",
+  "tabelas": ["Orcamento"],
   "casos": [
     {
       "nome": "listar o mês atual",

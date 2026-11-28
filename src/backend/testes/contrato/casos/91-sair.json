@@ -1,5 +1,6 @@
 {
   "descricao": "Sair derruba a sessão em todos os aparelhos (#68): troca o carimbo de segurança do usuário, e por isso roda por último, depois dos assuntos que usam a sessão 'principal'.",
+  "tabelas": ["Usuario", "AuditoriaAcesso"],
   "sessoes": {
     "quinto-ip": { "origem": "127.0.0.5" }
   },

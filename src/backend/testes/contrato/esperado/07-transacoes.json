@@ -479,7 +479,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -839,7 +839,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -1579,7 +1579,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -1786,7 +1786,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -2803,7 +2803,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -2827,7 +2827,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -2851,7 +2851,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -2875,7 +2875,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -4177,7 +4177,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -4225,7 +4225,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -5042,7 +5042,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -5066,7 +5066,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -5090,7 +5090,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -5114,7 +5114,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -5138,7 +5138,7 @@
           "openFinance": true,
           "parcelaNumero": null,
           "parcelaTotal": null,
-          "regraDescricaoId": 3,
+          "regraDescricaoId": 701,
           "reservaNome": null,
           "status": 1,
           "tipo": 1,
@@ -9497,7 +9497,7 @@
                 "depois": 1
               },
               "RegraDescricaoId": {
-                "antes": 3,
+                "antes": 701,
                 "depois": null
               }
             }
@@ -10677,7 +10677,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "TransacaoRenomeada",
-            "Id": 18,
+            "Id": 801,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -10723,7 +10723,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearDesfeito (1)",
-            "Id": 19,
+            "Id": 802,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -10789,7 +10789,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "TransacaoRenomeada",
-            "Id": 20,
+            "Id": 803,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -10839,7 +10839,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearDesfeito (1)",
-            "Id": 21,
+            "Id": 804,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -10891,7 +10891,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "TransacaoRenomeada",
-            "Id": 22,
+            "Id": 805,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -10927,7 +10927,7 @@
     "corpo": {
       "alteradas": 1,
       "desfazer": "<texto>",
-      "regraId": 6
+      "regraId": 801
     },
     "banco": {
       "AuditoriaAcesso": {
@@ -10935,7 +10935,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RegraDescricaoCriada (1)",
-            "Id": 23,
+            "Id": 806,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -10947,7 +10947,7 @@
           {
             "Ativa": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "Id": 6,
+            "Id": 801,
             "NovaDescricao": "Rendimento da poupança",
             "Texto": "RENDIMENTO POUPANCA",
             "TipoCorrespondencia": 3,
@@ -10973,7 +10973,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 6
+                "depois": 801
               }
             }
           }
@@ -10995,7 +10995,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearDesfeito (1)",
-            "Id": 24,
+            "Id": 807,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -11007,7 +11007,7 @@
           {
             "Ativa": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "Id": 6,
+            "Id": 801,
             "NovaDescricao": "Rendimento da poupança",
             "Texto": "RENDIMENTO POUPANCA",
             "TipoCorrespondencia": 3,
@@ -11032,7 +11032,7 @@
                 "depois": "RENDIMENTO POUPANCA"
               },
               "RegraDescricaoId": {
-                "antes": 6,
+                "antes": 801,
                 "depois": null
               }
             }
@@ -11049,7 +11049,7 @@
     "corpo": {
       "alteradas": 12,
       "desfazer": "<texto>",
-      "regraId": 7
+      "regraId": 802
     },
     "banco": {
       "AuditoriaAcesso": {
@@ -11057,7 +11057,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RegraDescricaoCriada (12)",
-            "Id": 25,
+            "Id": 808,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -11069,7 +11069,7 @@
           {
             "Ativa": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "Id": 7,
+            "Id": 802,
             "NovaDescricao": "Aluguel do apartamento",
             "Texto": "PIX ENVIADO IMOB",
             "TipoCorrespondencia": 2,
@@ -11095,7 +11095,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11114,7 +11114,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11133,7 +11133,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11152,7 +11152,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11171,7 +11171,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11190,7 +11190,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11209,7 +11209,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11228,7 +11228,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11247,7 +11247,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11266,7 +11266,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11285,7 +11285,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           },
@@ -11304,7 +11304,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 7
+                "depois": 802
               }
             }
           }
@@ -11326,7 +11326,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearDesfeito (12)",
-            "Id": 26,
+            "Id": 809,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -11338,7 +11338,7 @@
           {
             "Ativa": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "Id": 7,
+            "Id": 802,
             "NovaDescricao": "Aluguel do apartamento",
             "Texto": "PIX ENVIADO IMOB",
             "TipoCorrespondencia": 2,
@@ -11363,7 +11363,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11382,7 +11382,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11401,7 +11401,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11420,7 +11420,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11439,7 +11439,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11458,7 +11458,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11477,7 +11477,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11496,7 +11496,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11515,7 +11515,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11534,7 +11534,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11553,7 +11553,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11572,7 +11572,7 @@
                 "depois": "PIX ENVIADO IMOBILIARIA FICTICIA"
               },
               "RegraDescricaoId": {
-                "antes": 7,
+                "antes": 802,
                 "depois": null
               }
             }
@@ -11693,7 +11693,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearEmLote (2, 0 regra)",
-            "Id": 27,
+            "Id": 810,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -11758,7 +11758,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearDesfeito (2)",
-            "Id": 28,
+            "Id": 811,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -11826,7 +11826,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearEmLote (24, 1 regra)",
-            "Id": 29,
+            "Id": 812,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -11838,7 +11838,7 @@
           {
             "Ativa": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "Id": 8,
+            "Id": 803,
             "NovaDescricao": "Salário da empresa",
             "Texto": "SALARIO EMPRESA FICTICIA LTDA",
             "TipoCorrespondencia": 3,
@@ -11849,7 +11849,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 3
+              "Id": 701
             },
             "colunas": {
               "NovaDescricao": {
@@ -11877,7 +11877,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -11911,7 +11911,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -11945,7 +11945,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -11979,7 +11979,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12013,7 +12013,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12047,7 +12047,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12081,7 +12081,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12115,7 +12115,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12149,7 +12149,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12183,7 +12183,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12217,7 +12217,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12251,7 +12251,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 8
+                "depois": 803
               }
             }
           },
@@ -12295,7 +12295,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearEmLote (1, 0 regra)",
-            "Id": 30,
+            "Id": 813,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -12319,7 +12319,7 @@
               },
               "RegraDescricaoId": {
                 "antes": null,
-                "depois": 3
+                "depois": 701
               }
             }
           },
@@ -12352,7 +12352,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "RenomearDesfeito (24)",
-            "Id": 31,
+            "Id": 814,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -12363,7 +12363,7 @@
         "alteradas": [
           {
             "chave": {
-              "Id": 3
+              "Id": 701
             },
             "colunas": {
               "NovaDescricao": {
@@ -12377,7 +12377,7 @@
           {
             "Ativa": 1,
             "CriadoEm": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-            "Id": 8,
+            "Id": 803,
             "NovaDescricao": "Salário da empresa",
             "Texto": "SALARIO EMPRESA FICTICIA LTDA",
             "TipoCorrespondencia": 3,
@@ -12402,7 +12402,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12436,7 +12436,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12470,7 +12470,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12504,7 +12504,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12538,7 +12538,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12572,7 +12572,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12606,7 +12606,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12640,7 +12640,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12674,7 +12674,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12708,7 +12708,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12742,7 +12742,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12765,7 +12765,7 @@
                 "depois": 1
               },
               "RegraDescricaoId": {
-                "antes": 3,
+                "antes": 701,
                 "depois": null
               }
             }
@@ -12784,7 +12784,7 @@
                 "depois": "SALARIO EMPRESA FICTICIA LTDA"
               },
               "RegraDescricaoId": {
-                "antes": 8,
+                "antes": 803,
                 "depois": null
               }
             }
@@ -12884,7 +12884,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CategoriaEmLote (2)",
-            "Id": 32,
+            "Id": 815,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -12949,7 +12949,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CategoriaEmLoteDesfeita (2)",
-            "Id": 33,
+            "Id": 816,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -13024,7 +13024,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CategoriaEmLote (11)",
-            "Id": 34,
+            "Id": 817,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -13311,7 +13311,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CategoriaEmLoteDesfeita (10)",
-            "Id": 35,
+            "Id": 818,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -13539,7 +13539,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CategoriaEmLote (1)",
-            "Id": 36,
+            "Id": 819,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
@@ -13581,7 +13581,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "CategoriaEmLoteDesfeita (1)",
-            "Id": 37,
+            "Id": 820,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"

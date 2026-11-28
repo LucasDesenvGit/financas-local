@@ -6,6 +6,7 @@ package contrato
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,6 +18,9 @@ import (
 // ArquivoCasos é um casos/NN-assunto.json: os casos de um assunto, rodados em ordem.
 type ArquivoCasos struct {
 	Descricao string `json:"descricao"`
+	// Tabelas são as tabelas do assunto: o banco é conferido só nelas, e uma mudança em outra não aparece. Obrigatório
+	// (pode ser vazio, []). ErroSistema não entra: recebe avisos do log em momentos que não dependem dos casos.
+	Tabelas []string `json:"tabelas"`
 	// Sessoes dá opções às sessões (navegadores) usadas no arquivo. Sessão sem opção nenhuma não precisa estar aqui.
 	Sessoes map[string]OpcoesSessao `json:"sessoes"`
 	Casos   []Caso                  `json:"casos"`
@@ -87,6 +91,9 @@ func lerCasos(pasta string) ([]string, map[string]ArquivoCasos, error) {
 }
 
 func validarArquivo(a ArquivoCasos) error {
+	if a.Tabelas == nil {
+		return errors.New(`faltou "tabelas": as do assunto (ou [], se o arquivo não mexe no banco)`)
+	}
 	vistos := map[string]bool{}
 	for i, c := range a.Casos {
 		switch {

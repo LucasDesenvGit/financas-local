@@ -18,29 +18,10 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "ModuloLigado (trabalho)",
-            "Id": 50,
+            "Id": 2301,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"
-          }
-        ]
-      },
-      "Configuracao": {
-        "alteradas": [
-          {
-            "chave": {
-              "Chave": "Modulos.trabalho.Ligado"
-            },
-            "colunas": {
-              "AtualizadoEm": {
-                "antes": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
-                "depois": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>"
-              },
-              "Valor": {
-                "antes": "false",
-                "depois": "true"
-              }
-            }
           }
         ]
       }
@@ -1134,7 +1115,7 @@
           {
             "DataHora": "<relógio +0 min, AAAA-MM-DD hh:mm:ss.f>",
             "Evento": "HoleriteReaberto (2026-10)",
-            "Id": 51,
+            "Id": 2302,
             "Ip": "127.0.0.1",
             "Login": "ana.teste",
             "UserAgent": "contrato-financas-local"

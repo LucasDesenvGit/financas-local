@@ -1,5 +1,6 @@
 {
   "descricao": "Rescisão do módulo Trabalho (#215, ADR 0065). Usa o emprego 1 do 21-trabalho (admissão em 11/03/2024; 6000 de junho de 2026 em diante), o holerite do 22, o 13º do 23, as férias do 24 e o FGTS do 25. Simula e compara; o registro é desfeito no fim, para não mudar os arquivos seguintes. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["Rescisao", "Emprego"],
   "casos": [
     {
       "nome": "simular a dispensa sem justa causa",

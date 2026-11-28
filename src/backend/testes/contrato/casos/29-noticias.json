@@ -1,5 +1,6 @@
 {
   "descricao": "Módulo Notícias (#10, ADRs 0064 e 0067). Nasce desligado: as rotas respondem 409. Ligado, o módulo busca as fontes na hora (#697); o contrato não acessa a internet, então a lista e o \"Atualizar agora\" ficam de fora (estão nos testes do Go). Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["Configuracao", "AuditoriaAcesso"],
   "casos": [
     {
       "nome": "desligado: a lista responde 409",

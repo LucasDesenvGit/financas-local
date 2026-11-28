@@ -1,5 +1,6 @@
 {
   "descricao": "Módulo Trabalho (#210, ADRs 0064 e 0065): o emprego, o salário com vigência, a estimativa do mês e as tabelas do INSS e do IRRF. Nasce desligado: as rotas respondem 409 até ligar em Configurações › Módulos. Dados fictícios. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["Emprego", "SalarioVigencia", "InssVigencia", "InssFaixa", "IrrfVigencia", "IrrfFaixa", "Configuracao", "AuditoriaAcesso"],
   "casos": [
     {
       "nome": "desligado: a rota responde 409",

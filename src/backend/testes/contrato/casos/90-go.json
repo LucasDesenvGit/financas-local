@@ -1,5 +1,6 @@
 {
   "descricao": "Rotas que só existem no Go (#231, #363): não havia .NET a imitar, então o esperado é o que o Go respondeu, e o caso confere que nada muda sem querer. O /api/go/saude devolve a hora do relógio do Go: ela tem de cair na janela do relógio do contrato (-inicio-do-relogio) e 'hoje' tem de ser 14/10, a data de Brasília. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": [],
   "casos": [
     {
       "nome": "saúde pelo Go, com o relógio de teste",

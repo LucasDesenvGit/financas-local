@@ -1,5 +1,6 @@
 {
   "descricao": "Criptomoedas (#81, ADR 0048): GET /api/cripto/cotacoes. Sem rede, a tarefa não grava nada (e só tentaria 1 minuto depois de subir); vale o que está guardado em CotacaoCripto: o bitcoin de 13/10 e de 14/10, às 21h UTC, 24 h um do outro. Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["CotacaoCripto"],
   "casos": [
     {
       "nome": "cotações guardadas, com a variação em 24 h",

@@ -1,5 +1,6 @@
 {
   "descricao": "Conferir investimentos (#299, ConferenciaInvestimentosService, ADRs 0027 e 0044): a conferência, corrigir, desfazer e os trocos automáticos. Roda com a sessão 'principal', logada pelo 00-auth, depois do 11.",
+  "tabelas": ["OperacaoAtivo", "Ativo", "Transacao", "Configuracao", "AuditoriaAcesso"],
   "casos": [
     {
       "nome": "conferir",

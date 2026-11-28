@@ -1,5 +1,6 @@
 {
   "descricao": "Regras de categorização (#77, RegrasController) e regras de descrição (#123/#241/#250, ADR 0030, RegrasDescricaoController). O 'reaplicar' recategoriza todas as transações de categoria automática (CategorizacaoService.Resolver, AplicarTipo) e depois as transferências (ADR 0031); criar, editar ou apagar uma regra de descrição renomeia as transações de nome automático e recategoriza as que mudaram. O banco de depois do 05-categorias (a regra PADARIA saiu com a categoria). Roda com a sessão 'principal', logada pelo 00-auth.",
+  "tabelas": ["RegraCategorizacao", "RegraDescricao", "Transacao"],
   "casos": [
     {
       "nome": "listar regras",

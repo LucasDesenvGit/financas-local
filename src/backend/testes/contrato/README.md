@@ -41,7 +41,7 @@ O cliente confere o certificado do Go e confia só no `.pem` do `-raiz` (#638): 
 
 ## Adicionar um caso
 
-1. Escreva o caso no `casos/NN-assunto.json` do assunto (ou crie o arquivo, com o número da [tabela](#numeração-dos-arquivos-de-casos); o número dá a ordem).
+1. Escreva o caso no `casos/NN-assunto.json` do assunto (ou crie o arquivo, com o número da [tabela](#numeração-dos-arquivos-de-casos); o número dá a ordem). Arquivo novo diz no topo as `tabelas` do assunto (veja [Campos de um caso](#campos-de-um-caso)).
 2. Grave os esperados: `rodar.sh --atualizar`.
 3. Leia a diferença de `esperado/` no `git diff`: é a descrição exata do que o site faz. Confira que **só** o caso novo apareceu, e que nenhum esperado de outro assunto mudou.
 4. Rode de novo **sem** `--atualizar`, duas vezes: tem de passar as duas.
@@ -122,7 +122,9 @@ O número dá a ordem dos dados: o painel lê o que as transações gravam, e n�
 | `capturar` | `{"chave": "/resultado/chave"}`: guarda um valor da resposta (JSON Pointer) para os casos seguintes, como a chave do desfazer |
 | `normalizar` | `{"/campo": "texto" \| "numero" \| "datahora"}`: troca um campo do ambiente por um marcador, conferindo só o tipo |
 
-No topo do arquivo, `sessoes` dá a uma sessão um IP de origem (`{"segundo-ip": {"origem": "127.0.0.2"}}`). O limite de login é de 5 tentativas por minuto **por IP**: para testar login sem cair no 429 sem querer, use outro IP. O `00-auth` testa o 429 de propósito, na 6ª tentativa de `127.0.0.1`.
+No topo do arquivo, `tabelas` é **obrigatória**: as tabelas do assunto, as únicas que o banco confere (`[]`, se o arquivo não mexe no banco). Ponha as que o assunto grava ou lê; mudança numa tabela que não está na lista não aparece. Tabela que o caso novo passa a gravar entra na lista, e o `git diff` mostra o que passou a ser conferido. `ErroSistema` não entra: recebe avisos do log em momentos que não dependem dos casos.
+
+`sessoes` dá a uma sessão um IP de origem (`{"segundo-ip": {"origem": "127.0.0.2"}}`). O limite de login é de 5 tentativas por minuto **por IP**: para testar login sem cair no 429 sem querer, use outro IP. O `00-auth` testa o 429 de propósito, na 6ª tentativa de `127.0.0.1`.
 
 ## O que é comparado
 
@@ -130,7 +132,7 @@ Para cada caso, `esperado/` guarda:
 - **status** e **Content-Type** (`application/json` e `application/problem+json` são diferentes);
 - **cookies** criados ou apagados (nome e atributos; o valor vira `<valor>`, porque é cifrado);
 - **corpo**: JSON comparado por valor, ou o texto, se não for JSON;
-- **banco**: as linhas inseridas, alteradas (só as colunas que mudaram, com antes e depois) e removidas em **todas as tabelas**, com o tipo e o texto cru de cada coluna, como o SQLite guarda. É o que garante que decimal, data e GUID continuam no formato do EF Core (ADR 0049), o de todos os bancos que já existem.
+- **banco**: as linhas inseridas, alteradas (só as colunas que mudaram, com antes e depois) e removidas nas **tabelas do assunto** (`tabelas`, no topo do arquivo), com o tipo e o texto cru de cada coluna, como o SQLite guarda. É o que garante que decimal, data e GUID continuam no formato do EF Core (ADR 0049), o de todos os bancos que já existem.
 
 Regras da comparação do JSON (`json.go`):
 - número compara pelo texto, sem passar por `float64`: `10.50` ≠ `10.5`, `100` ≠ `100.0`;
@@ -155,7 +157,7 @@ Só o que muda sozinho a cada execução é trocado por um marcador (`normalizar
 
 **Exceção documentada:** em `GET /api/parametros/sistema`, a versão do runtime (`dotNet`) e do sistema operacional, a hora em que o processo subiu (`iniciadoEm`) e o tamanho do arquivo do banco são do ambiente: o caso confere só o tipo (`normalizar`).
 
-Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são sempre os mesmos.
+Os ids do `AUTOINCREMENT` não viram marcador, mas ficam estáveis: no começo de cada arquivo, o próximo id de `AuditoriaAcesso` e de `RegraDescricao` vai para a janela dele (`(NN+1)*100`, `janelaDeIds` em `banco.go`). Um caso novo no `04-contas` não muda mais o id da auditoria do `07-transacoes`. Passar de 100 linhas numa tabela dentro de um arquivo dá erro no arquivo seguinte (`TamanhoDaJanela`). Ficaram de fora, com o id como vem, as tabelas cujo id um caso escreve à mão no caminho ou no corpo (`Transacao`, `Conta`, `Ativo`, `OperacaoAtivo`, `Holerite`): para entrar na janela, o caso troca o id fixo por `capturar` e a tabela entra em `TabelasComJanela`.
 
 ## O ambiente no contrato
 
@@ -163,7 +165,7 @@ Os ids do `AUTOINCREMENT` **não** são normalizados: num banco novo eles são s
 - **Sem rede:** no Linux, o Go roda num namespace de rede só com o loopback (`unshare -rn`). Sem o namespace, o roteiro sobe o Go com `HTTPS_PROXY=http://127.0.0.1:9`, uma porta fechada: o `http.Client` do Go segue o proxy ([`ProxyFromEnvironment`](https://pkg.go.dev/net/http#ProxyFromEnvironment)), e o loopback (o teste e a Pluggy falsa) nunca passa por ele. As tarefas do câmbio e da cripto tentam a internet 1 minuto depois de subir; o `base.sql` já marca o câmbio como atualizado hoje, e a cripto falha sem gravar nada além do aviso no log (#416). A sincronização automática é desligada pelo próprio roteiro em `01-parametros`.
 - **Pluggy falsa:** `pluggyfalsa`, em `127.0.0.1:5452`, com um certificado próprio. O Go a usa por `Pluggy__UrlBase` e confia nela por `SSL_CERT_FILE`.
 - **Estado inicial:** o de **depois** de subir. O Go aplica o esquema e roda as rotinas de partida (#444), que acertam dados; o contrato só compara o que cada caso muda.
-- **Tabela ignorada:** `ErroSistema`, que recebe os avisos do log em momentos que não dependem dos casos (`TabelasIgnoradas`, em `banco.go`). O aviso do Go de que o relógio de teste está ligado também cai nela.
+- **Tabela fora de toda lista:** `ErroSistema`, que recebe os avisos do log em momentos que não dependem dos casos (o do relógio de teste ligado também cai nela). `Noticia` e `NoticiaFonte` (busca ao ligar o Notícias, sem rede) só entram se o caso for sobre elas.
 
 ## O que ficou de fora
 

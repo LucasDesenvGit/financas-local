@@ -1,5 +1,6 @@
 {
   "descricao": "Relatórios (#80, RelatoriosController): gasto por categoria, fluxo mês a mês, visão anual com a saúde financeira, projeção e maiores despesas. Roda com a sessão 'principal', logada pelo 00-auth; hoje é 14/10/2026 em Brasília, e a base tem transações de 2025-04 em diante. Só lê: não muda o banco.",
+  "tabelas": ["Transacao"],
   "casos": [
     {
       "nome": "despesas por categoria em setembro",
